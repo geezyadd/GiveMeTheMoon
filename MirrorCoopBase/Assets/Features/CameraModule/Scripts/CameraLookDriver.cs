@@ -16,6 +16,7 @@ namespace Features.CameraModule.Scripts {
         private float _pitch;
         private bool _synced;
         private bool _cursorLocked;
+        private bool _cursorWantedLocked = true;
 
         public CameraLookDriver(IInputService input, GameCameraModel model, CameraCatalog catalog) {
             _input = input;
@@ -26,11 +27,13 @@ namespace Features.CameraModule.Scripts {
         public void Initialize() {
             _input.Look.VectorChangedPerformed += OnLook;
             _input.Look.VectorChangedCanceled += OnLook;
+            _input.ToggleCursor.Performed += OnToggleCursor;
         }
 
         public void Dispose() {
             _input.Look.VectorChangedPerformed -= OnLook;
             _input.Look.VectorChangedCanceled -= OnLook;
+            _input.ToggleCursor.Performed -= OnToggleCursor;
             UnlockCursor();
         }
 
@@ -39,6 +42,7 @@ namespace Features.CameraModule.Scripts {
             Transform follow = _model.Follow;
             if (follow == null) {
                 _synced = false;
+                _cursorWantedLocked = true;
                 if (rig != null)
                     rig.Anchor = null;
 
@@ -52,6 +56,13 @@ namespace Features.CameraModule.Scripts {
                 _pitch = 0f;
                 _synced = true;
                 _pendingLook = Vector2.zero;
+            }
+
+            if (_cursorWantedLocked == false) {
+                UnlockCursor();
+                _pendingLook = Vector2.zero;
+                ApplyRig(rig, follow);
+                return;
             }
 
             Vector2 look = _pendingLook;
@@ -69,13 +80,17 @@ namespace Features.CameraModule.Scripts {
                     _yaw = Mathf.Repeat(_yaw + 180f, 360f) - 180f;
             }
 
+            ApplyRig(rig, follow);
+            LockCursor();
+        }
+
+        private void ApplyRig(CameraLookRig rig, Transform follow) {
             if (rig == null)
                 return;
 
             rig.Anchor = _model.Eye != null ? _model.Eye : follow;
             rig.Yaw = _yaw;
             rig.Pitch = _pitch;
-            LockCursor();
         }
 
         private CameraLookRig EnsureRig() {
@@ -94,7 +109,18 @@ namespace Features.CameraModule.Scripts {
         }
 
         private void OnLook(Vector2 value) {
+            if (_cursorWantedLocked == false)
+                return;
+
             _pendingLook += value;
+        }
+
+        private void OnToggleCursor() {
+            _cursorWantedLocked = !_cursorWantedLocked;
+            if (_cursorWantedLocked)
+                LockCursor();
+            else
+                UnlockCursor();
         }
 
         private void LockCursor() {

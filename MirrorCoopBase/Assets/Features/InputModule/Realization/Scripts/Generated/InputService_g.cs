@@ -16,6 +16,7 @@ namespace Features.InputModule.Realization.Scripts.Generated {
         public InputVector2Actions Look { get; set; } = new();
         public InputDefaultActions Grab { get; set; } = new();
         public InputDefaultActions Release { get; set; } = new();
+        public InputDefaultActions ToggleCursor { get; set; } = new();
         public InputService(InputActions inputActions) {
             _inputActions = inputActions;
         }
@@ -98,6 +99,12 @@ namespace Features.InputModule.Realization.Scripts.Generated {
             if(context.started)Release.Started?.Invoke();
             if(context.performed)Release.Performed?.Invoke();
             if(context.canceled)Release.Canceled?.Invoke();
+        }
+        public void OnToggleCursor(InputAction.CallbackContext context)
+         {
+            if(context.started)ToggleCursor.Started?.Invoke();
+            if(context.performed)ToggleCursor.Performed?.Invoke();
+            if(context.canceled)ToggleCursor.Canceled?.Invoke();
         }
     }
 }
