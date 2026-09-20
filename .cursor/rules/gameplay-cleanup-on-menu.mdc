@@ -1,0 +1,30 @@
+---
+description: Gameplay must fully cleanup on menu and restart from scratch on session start
+alwaysApply: true
+---
+
+# Gameplay cleanup on menu
+
+ProjectContext models and Global services survive scene unloads. After Leave (or any transition into `MenuGameFlowState`) every gameplay system must drop match state. Entering `SessionGameFlowState` must start from scratch, not reuse leftover objects or fields.
+
+Implement `IGameplaySession` on the owning service (not the model). Bind so Zenject collects it (`BindInterfacesTo` / `BindInterfacesAndSelfTo`). `GameplaySessionLifecycle` calls `CleanupGameplay` on menu and `RestartGameplay` on session.
+
+```csharp
+// BAD — look pivot stays parented to a destroyed player after Leave
+public override void OnStopLocalPlayer() { }
+
+// GOOD — service tears down runtime and resets the model
+public sealed class GameCameraService : IGameCameraService, IGameplaySession {
+    public void CleanupGameplay() {
+        TearDownCameras();
+        _model.Clear();
+        SpawnIdleCameras();
+    }
+
+    public void RestartGameplay() => CleanupGameplay();
+}
+```
+
+- Cleanup is idempotent. Destroy `DontDestroyOnLoad` gameplay objects; do not keep destroyed Transform refs
+- Models only store state; the service resets them (`Clear` / `ResetMatch`)
+- Do not rely on scene unload alone. Players, cameras, and spawn flags live in Global / DDOL

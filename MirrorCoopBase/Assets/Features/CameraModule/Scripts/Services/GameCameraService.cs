@@ -1,12 +1,13 @@
 using System;
 using Features.CameraModule.Scripts.Models;
+using Features.GameCoreModule.Scripts;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Zenject;
 
 namespace Features.CameraModule.Scripts.Services {
-    public sealed class GameCameraService : IGameCameraService, IInitializable, IDisposable {
+    public sealed class GameCameraService : IGameCameraService, IInitializable, IDisposable, IGameplaySession {
         private const int LivePriority = 100;
         private const int StandbyPriority = 10;
 
@@ -33,22 +34,29 @@ namespace Features.CameraModule.Scripts.Services {
 
         public void Initialize() {
             SceneManager.sceneLoaded += OnSceneLoaded;
-            EnsureRoot();
-            EnsureOutputCamera();
-            EnsureBrain();
-            DisableLoadedSceneCameras();
-            SpawnCameras();
+            SpawnIdleCameras();
         }
 
         public void Dispose() {
             SceneManager.sceneLoaded -= OnSceneLoaded;
-            if (_root != null)
-                UnityEngine.Object.Destroy(_root.gameObject);
+            TearDownCameras();
+        }
 
-            _root = null;
-            _output = null;
-            _brain = null;
-            _model.Clear();
+        public void CleanupGameplay() {
+            TearDownCameras();
+            SpawnIdleCameras();
+        }
+
+        public void RestartGameplay() {
+            Transform follow = _model.Follow;
+            Transform lookAt = _model.LookAt;
+            Transform eye = _model.Eye;
+            string activeId = _model.ActiveId;
+            CleanupGameplay();
+            if (follow != null)
+                BindToLocalPlayer(follow, lookAt, eye);
+            if (string.IsNullOrEmpty(activeId) == false)
+                BlendTo(activeId, 0f);
         }
 
         public void Register(GameCamera camera) {
@@ -65,6 +73,9 @@ namespace Features.CameraModule.Scripts.Services {
         }
 
         public void BindToLocalPlayer(Transform follow, Transform lookAt, Transform eye) {
+            EnsureRoot();
+            EnsureLookPivot();
+
             _model.Follow = follow;
             _model.LookAt = lookAt;
             _model.Eye = eye;
@@ -77,6 +88,7 @@ namespace Features.CameraModule.Scripts.Services {
         }
 
         public void ClearLocalPlayer() {
+            ReturnLookPivotToRoot();
             _model.Follow = null;
             _model.LookAt = null;
             _model.Eye = null;
@@ -108,6 +120,24 @@ namespace Features.CameraModule.Scripts.Services {
         public void ToggleFpAndTp() {
             string next = ActiveId == CameraIds.FPCamera ? CameraIds.TPCamera : CameraIds.FPCamera;
             BlendTo(next);
+        }
+
+        private void SpawnIdleCameras() {
+            EnsureRoot();
+            EnsureOutputCamera();
+            EnsureBrain();
+            DisableLoadedSceneCameras();
+            SpawnCameras();
+        }
+
+        private void TearDownCameras() {
+            if (_root != null)
+                UnityEngine.Object.Destroy(_root.gameObject);
+
+            _root = null;
+            _output = null;
+            _brain = null;
+            _model.Clear();
         }
 
         private void SpawnCameras() {
@@ -155,6 +185,15 @@ namespace Features.CameraModule.Scripts.Services {
             pivotObject.transform.SetParent(_root, false);
             pivotObject.AddComponent<CameraLookRig>();
             _model.LookPivot = pivotObject.transform;
+        }
+
+        private void ReturnLookPivotToRoot() {
+            Transform pivot = _model.LookPivot;
+            if (pivot == null || _root == null)
+                return;
+
+            if (pivot.parent != _root)
+                pivot.SetParent(_root, true);
         }
 
         private void EnsureOutputCamera() {

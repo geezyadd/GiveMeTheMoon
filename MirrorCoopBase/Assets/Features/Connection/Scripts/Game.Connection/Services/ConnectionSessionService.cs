@@ -71,12 +71,11 @@ namespace Game.Connection
             }
         }
 
-        public Task StopToMenuAsync()
+        public async Task StopToMenuAsync()
         {
             ConnectionNetworkManager networkManager = RequireNetworkManager();
-            networkManager.StopSession();
+            await networkManager.StopSessionToMenuAsync();
             ResetSteam(networkManager);
-            return Task.CompletedTask;
         }
 
         public void StartGame()

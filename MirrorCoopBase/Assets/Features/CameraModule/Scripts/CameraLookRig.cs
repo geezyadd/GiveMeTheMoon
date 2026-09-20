@@ -1,7 +1,6 @@
 using UnityEngine;
 
 namespace Features.CameraModule.Scripts {
-    [DefaultExecutionOrder(-200)]
     public sealed class CameraLookRig : MonoBehaviour {
         public Transform Anchor { get; set; }
         public float Yaw { get; set; }
@@ -9,11 +8,8 @@ namespace Features.CameraModule.Scripts {
 
         private void LateUpdate() {
             Transform anchor = Anchor;
-            if (anchor == null) {
-                if (transform.parent != null)
-                    transform.SetParent(null, true);
+            if (anchor == null)
                 return;
-            }
 
             if (transform.parent != anchor) {
                 transform.SetParent(anchor, false);

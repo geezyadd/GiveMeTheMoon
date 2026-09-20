@@ -18,6 +18,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             ShipModuleInstaller.Install(Container);
             ConnectionModuleInstaller.Install(Container);
             WindowsModuleInstaller.Install(Container);
+            Container.Bind<IGameplaySession>().To<ConnectionGameplaySession>().AsSingle();
+            Container.BindInterfacesTo<GameplaySessionLifecycle>().AsSingle().NonLazy();
         }
     }
 }

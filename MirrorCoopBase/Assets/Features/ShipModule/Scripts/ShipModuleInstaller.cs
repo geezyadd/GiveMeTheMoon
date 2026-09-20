@@ -7,7 +7,7 @@ namespace Features.ShipModule.Scripts {
             Container.Bind<ItemViewCatalog>().FromMethod(LoadCatalog).AsSingle();
             Container.Bind<EngineCatalog>().FromMethod(LoadEngines).AsSingle();
             Container.Bind<ShipStationCatalog>().FromMethod(LoadStations).AsSingle();
-            Container.Bind<ShipRunService>().AsSingle();
+            Container.BindInterfacesAndSelfTo<ShipRunService>().AsSingle();
         }
 
         private static ItemViewCatalog LoadCatalog() {

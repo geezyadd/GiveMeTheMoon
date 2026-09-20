@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using Features.GameCoreModule.Scripts;
 using Game.Connection;
 using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    public sealed class ShipRunService {
+    public sealed class ShipRunService : IGameplaySession {
         private readonly ShipRunModel _model;
         private readonly ShipRunConfig _config;
         private readonly ShipStationCatalog _stations;
@@ -32,6 +33,14 @@ namespace Features.ShipModule.Scripts {
             _engines = engines;
         }
 
+        public void CleanupGameplay() {
+            ResetRun();
+        }
+
+        public void RestartGameplay() {
+            ResetRun();
+        }
+
         internal void Bind(ShipRunDirector director, ShipBase ship, ShipLandingPad startPad) {
             _director = director;
             _ship = ship;
@@ -45,11 +54,20 @@ namespace Features.ShipModule.Scripts {
             if (_director != director)
                 return;
 
+            ResetRun();
+        }
+
+        private void ResetRun() {
             ClearRocks();
             _director = null;
             _ship = null;
             _currentPad = null;
             _previousPad = null;
+            _wreckUntil = 0f;
+            _launchForward = Vector3.forward;
+            _dodgeRangeScale = 1f;
+            _nextRockSpawn = 0f;
+            _model.ResetMatch();
         }
 
         internal bool ServerTryLaunch(ShipBase ship) {
@@ -192,15 +210,18 @@ namespace Features.ShipModule.Scripts {
             else
                 right.Normalize();
 
+            Vector3 incoming = (Vector3.up * 2f + forward).normalized;
             float corridor = _config.RockLateral * _dodgeRangeScale;
             float lateral = Random.value < 0.55f
                 ? Random.Range(-corridor * 0.35f, corridor * 0.35f)
                 : Random.Range(-corridor, corridor);
             Vector3 origin = _ship.transform.position
-                + forward * _config.RockSpawnAhead
-                + right * lateral
-                + Vector3.up * Random.Range(-1.2f, 1.8f);
-            GameObject instance = Object.Instantiate(prefab, origin, Quaternion.LookRotation(forward, Vector3.up));
+                + incoming * _config.RockSpawnAhead
+                + right * lateral;
+            GameObject instance = Object.Instantiate(
+                prefab,
+                origin,
+                Quaternion.LookRotation(-incoming, Vector3.up));
             NetworkServer.Spawn(instance);
             CruiseRock rock = instance.GetComponent<CruiseRock>();
             if (rock == null) {
@@ -209,7 +230,7 @@ namespace Features.ShipModule.Scripts {
             }
 
             float lifetime = _config.RockSpawnAhead / _config.RockSpeed + 3f;
-            rock.ServerLaunch(-forward * _config.RockSpeed, lifetime);
+            rock.ServerLaunch(-incoming * _config.RockSpeed, lifetime);
             _rocks.Add(rock);
         }
 
@@ -219,7 +240,10 @@ namespace Features.ShipModule.Scripts {
                 if (rock == null)
                     continue;
 
-                NetworkServer.Destroy(rock.gameObject);
+                if (NetworkServer.active)
+                    NetworkServer.Destroy(rock.gameObject);
+                else
+                    Object.Destroy(rock.gameObject);
             }
 
             _rocks.Clear();

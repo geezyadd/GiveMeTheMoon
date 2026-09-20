@@ -1,11 +1,12 @@
 using System;
 using Features.CameraModule.Scripts.Models;
+using Features.GameCoreModule.Scripts;
 using Features.InputModule.Realization.Scripts.Generated;
 using UnityEngine;
 using Zenject;
 
 namespace Features.CameraModule.Scripts {
-    public sealed class CameraLookDriver : ITickable, IInitializable, IDisposable {
+    public sealed class CameraLookDriver : ITickable, IInitializable, IDisposable, IGameplaySession {
         private readonly IInputService _input;
         private readonly GameCameraModel _model;
         private readonly CameraCatalog _catalog;
@@ -34,7 +35,15 @@ namespace Features.CameraModule.Scripts {
             _input.Look.VectorChangedPerformed -= OnLook;
             _input.Look.VectorChangedCanceled -= OnLook;
             _input.ToggleCursor.Performed -= OnToggleCursor;
-            UnlockCursor();
+            ResetLook();
+        }
+
+        public void CleanupGameplay() {
+            ResetLook();
+        }
+
+        public void RestartGameplay() {
+            ResetLook();
         }
 
         public void Tick() {
@@ -108,6 +117,16 @@ namespace Features.CameraModule.Scripts {
             return _rig;
         }
 
+        private void ResetLook() {
+            _rig = null;
+            _pendingLook = Vector2.zero;
+            _yaw = 0f;
+            _pitch = 0f;
+            _synced = false;
+            _cursorWantedLocked = true;
+            UnlockCursor(true);
+        }
+
         private void OnLook(Vector2 value) {
             if (_cursorWantedLocked == false)
                 return;
@@ -132,8 +151,8 @@ namespace Features.CameraModule.Scripts {
             _cursorLocked = true;
         }
 
-        private void UnlockCursor() {
-            if (_cursorLocked == false)
+        private void UnlockCursor(bool force = false) {
+            if (force == false && _cursorLocked == false)
                 return;
 
             Cursor.lockState = CursorLockMode.None;

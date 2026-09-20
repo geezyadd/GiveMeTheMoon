@@ -68,6 +68,13 @@ namespace Game.Connection
             HasSpawn = true;
         }
 
+        public static void ClearSpawn()
+        {
+            SpawnPosition = default;
+            SpawnRotation = Quaternion.identity;
+            HasSpawn = false;
+        }
+
         [Inject]
         void Construct(
             ISceneLoaderService sceneLoaderService,
@@ -172,7 +179,7 @@ namespace Game.Connection
             lookForReadyPlayers = false;
             joiningConnections = null;
             mapLoadedByConnection = null;
-            HasSpawn = false;
+            ClearSpawn();
             ServerStopped?.Invoke();
             base.OnStopServer();
             ResetTransportIfIdle();
@@ -211,6 +218,7 @@ namespace Game.Connection
             sceneToUnload = string.Empty;
             IsMapLoaded = false;
             IsChangingMap = false;
+            ClearSpawn();
             ClientStopped?.Invoke();
             base.OnStopClient();
             ResetTransportIfIdle();
@@ -405,16 +413,15 @@ namespace Game.Connection
 
         public void StopSession()
         {
-            if (returningToMenu)
-                return;
-
-            returningToMenu = true;
-            StopHost();
-            IsMapLoaded = false;
-            returningToMenu = false;
+            _ = StopSessionToMenuAsync();
         }
 
         public void StopSessionAndReturnToMenu()
+        {
+            _ = StopSessionToMenuAsync();
+        }
+
+        public async Task StopSessionToMenuAsync()
         {
             if (returningToMenu)
                 return;
@@ -422,7 +429,7 @@ namespace Game.Connection
             returningToMenu = true;
             StopHost();
             IsMapLoaded = false;
-            StartCoroutine(ReturnToMenuRoutine());
+            await ReturnToMenuAsync();
         }
 
         void OnMirrorSceneMessage(SceneMessage msg)
@@ -636,33 +643,39 @@ namespace Game.Connection
             conn?.Disconnect();
         }
 
-        IEnumerator ReturnToMenuRoutine()
+        async Task ReturnToMenuAsync()
         {
-            yield return null;
-
-            if (!string.IsNullOrEmpty(menuSceneName))
+            try
             {
-                yield return LoadAddressableScene(menuSceneName);
-                Scene menu = SceneManager.GetSceneByName(menuSceneName);
-                if (menu.IsValid())
-                    SceneManager.SetActiveScene(menu);
+                if (!string.IsNullOrEmpty(menuSceneName))
+                {
+                    await LoadAddressableSceneAsync(menuSceneName);
+                    Scene menu = SceneManager.GetSceneByName(menuSceneName);
+                    if (menu.IsValid())
+                        SceneManager.SetActiveScene(menu);
+                }
+
+                if (!string.IsNullOrEmpty(lobbySceneName))
+                    await UnloadSceneIfLoadedAsync(lobbySceneName);
+
+                if (!string.IsNullOrEmpty(gameSceneName))
+                    await UnloadSceneIfLoadedAsync(gameSceneName);
+
+                for (int i = SceneManager.sceneCount - 1; i >= 0; i--)
+                {
+                    Scene scene = SceneManager.GetSceneAt(i);
+                    if (scene.IsValid() == false)
+                        continue;
+                    if (scene.name == menuSceneName || scene.name == persistentSceneName || scene.name == "DontDestroyOnLoad")
+                        continue;
+
+                    await UnloadSceneIfLoadedAsync(scene.name);
+                }
             }
-
-            if (!string.IsNullOrEmpty(lobbySceneName))
-                yield return UnloadSceneIfLoaded(lobbySceneName);
-
-            for (int i = SceneManager.sceneCount - 1; i >= 0; i--)
+            finally
             {
-                Scene scene = SceneManager.GetSceneAt(i);
-                if (scene.IsValid() == false)
-                    continue;
-                if (scene.name == menuSceneName || scene.name == persistentSceneName || scene.name == "DontDestroyOnLoad")
-                    continue;
-
-                yield return UnloadSceneIfLoaded(scene.name);
+                returningToMenu = false;
             }
-
-            returningToMenu = false;
         }
 
         IEnumerator LoadAddressableScene(string sceneName)

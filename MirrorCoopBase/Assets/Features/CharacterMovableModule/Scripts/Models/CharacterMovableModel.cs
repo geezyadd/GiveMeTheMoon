@@ -30,5 +30,10 @@ namespace Features.CharacterMovableModule.Scripts.Models {
             if (LocalMovable == movable)
                 LocalMovable = null;
         }
+
+        internal void Clear() {
+            _movables.Clear();
+            LocalMovable = null;
+        }
     }
 }
