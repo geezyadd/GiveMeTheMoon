@@ -1,0 +1,24 @@
+---
+description: Item visuals live in ItemViewCatalog and are spawned, never baked into sockets
+alwaysApply: true
+---
+
+# Item views come from the catalog
+
+`ItemViewId` is a separate enum from socket type (`ShipModuleType`). Every pickup visual is a prefab registered in `ItemViewCatalog`. Sockets spawn that prefab at an install point. Do not leave a pre-placed mesh inside the socket.
+
+The same view prefab is instanced on the world item. If the item mesh is not that catalog prefab, the prefab is assembled wrong — say so and fix it.
+
+```csharp
+// BAD — view baked into the socket
+[SerializeField] private GameObject _installedView;
+
+// GOOD — catalog + spawn at a per-view point
+[SerializeField] private Transform _defaultInstallPoint;
+[SerializeField] private ItemViewInstallPoint[] _viewInstallPoints;
+_catalog.TryGetPrefab(item.View, out GameObject prefab);
+Instantiate(prefab, ResolveInstallPoint(item.View));
+```
+
+- Add a new look: new `ItemViewId`, view prefab, catalog entry, same prefab as child of the item, optional `ItemViewInstallPoint` on sockets that attach it differently
+- Sockets accept a `ShipModuleType`; they do not store view prefabs

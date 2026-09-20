@@ -106,7 +106,7 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         private void FixedUpdate() {
-            if (_rb == null)
+            if (_rb == null || _rb.isKinematic)
                 return;
 
             if (ControlsSelf)

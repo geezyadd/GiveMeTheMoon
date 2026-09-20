@@ -79,6 +79,11 @@ namespace Game.Connection
             return Task.CompletedTask;
         }
 
+        public void StartGame()
+        {
+            RequireNetworkManager().StartGame();
+        }
+
         void PrepareDirect(ConnectionNetworkManager networkManager)
         {
             ResetSteam(networkManager);

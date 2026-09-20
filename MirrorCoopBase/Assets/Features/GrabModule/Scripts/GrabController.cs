@@ -1,3 +1,4 @@
+using Features.CameraModule.Scripts.Services;
 using Features.InputModule.Realization.Scripts.Generated;
 using Mirror;
 using UnityEngine;
@@ -12,10 +13,20 @@ namespace Features.GrabModule.Scripts {
         [Inject]
         private IInputService _input;
 
+        [Inject]
+        private IGameCameraService _cameras;
+
+        [SyncVar(hook = nameof(OnHeldNetIdChanged))]
+        private uint _heldNetId;
+
         private Grabbable _held;
+        private Collider _hoverCollider;
+        private Grabbable _cachedOnCollider;
         private Grabbable _hovered;
 
         public Transform ArmPoint => _armPoint != null ? _armPoint : transform;
+        public bool IsHolding => _heldNetId != 0;
+        public Grabbable Held => _held;
 
         public override void OnStartLocalPlayer() {
             _input.Grab.Performed += OnGrab;
@@ -28,13 +39,41 @@ namespace Features.GrabModule.Scripts {
                 _input.Release.Performed -= OnRelease;
             }
 
-            ClearHover();
+            SetHovered(null);
             if (isOwned)
                 CmdRelease();
         }
 
         public override void OnStopServer() {
             ReleaseHeld();
+        }
+
+        internal void ServerConsumeHeld() {
+            if (isServer == false || _held == null)
+                return;
+
+            Grabbable held = _held;
+            SetHeld(null);
+            NetworkServer.Destroy(held.gameObject);
+        }
+
+        private void Update() {
+            if (isLocalPlayer == false)
+                return;
+
+            RefreshHover();
+        }
+
+        private void OnGrab() {
+            Grabbable item = ResolveGrabbable();
+            if (item == null || item.CanBeGrabbed == false || IsHolding)
+                return;
+
+            CmdTryGrab(item.netId);
+        }
+
+        private void OnRelease() {
+            CmdRelease();
         }
 
         [Command]
@@ -49,13 +88,11 @@ namespace Features.GrabModule.Scripts {
             if (item == null || item.CanBeGrabbed == false)
                 return;
 
-            Vector3 from = transform.position + Vector3.up;
-            float reach = _range + 1.5f;
-            if ((item.transform.position - from).sqrMagnitude > reach * reach)
+            if (IsInReach(item.transform.position) == false)
                 return;
 
             item.ServerBind(netId);
-            _held = item;
+            SetHeld(item);
         }
 
         [Command]
@@ -63,18 +100,33 @@ namespace Features.GrabModule.Scripts {
             ReleaseHeld();
         }
 
-        private void Update() {
-            if (isLocalPlayer == false)
+        private void RefreshHover() {
+            if (IsHolding) {
+                SetHovered(null);
+                _hoverCollider = null;
+                _cachedOnCollider = null;
                 return;
+            }
 
-            RefreshHover();
+            SetHovered(ResolveGrabbable());
         }
 
-        private void RefreshHover() {
-            Grabbable next = null;
-            if (_held == null && TryRaycast(out Grabbable item))
-                next = item;
+        private Grabbable ResolveGrabbable() {
+            if (TryRaycastHit(out RaycastHit hit) == false) {
+                _hoverCollider = null;
+                _cachedOnCollider = null;
+                return null;
+            }
 
+            if (hit.collider != _hoverCollider) {
+                _hoverCollider = hit.collider;
+                _cachedOnCollider = hit.collider.GetComponentInParent<Grabbable>();
+            }
+
+            return _cachedOnCollider != null && _cachedOnCollider.CanBeGrabbed ? _cachedOnCollider : null;
+        }
+
+        private void SetHovered(Grabbable next) {
             if (_hovered == next)
                 return;
 
@@ -86,45 +138,61 @@ namespace Features.GrabModule.Scripts {
                 _hovered.SetHovered(true);
         }
 
-        private void ClearHover() {
-            if (_hovered == null)
-                return;
-
-            _hovered.SetHovered(false);
-            _hovered = null;
-        }
-
-        private void OnGrab() {
-            if (TryRaycast(out Grabbable item) == false)
-                return;
-
-            CmdTryGrab(item.netId);
-        }
-
-        private void OnRelease() {
-            CmdRelease();
-        }
-
         private void ReleaseHeld() {
             if (_held == null)
                 return;
 
             _held.ServerUnbind();
-            _held = null;
+            SetHeld(null);
         }
 
-        private bool TryRaycast(out Grabbable item) {
-            item = null;
-            Camera camera = Camera.main;
+        private void SetHeld(Grabbable item) {
+            _held = item;
+            _heldNetId = item != null ? item.netId : 0u;
+        }
+
+        private void OnHeldNetIdChanged(uint previous, uint current) {
+            if (current == 0) {
+                _held = null;
+                return;
+            }
+
+            if (TryResolveGrabbable(current, out Grabbable item) == false) {
+                _held = null;
+                return;
+            }
+
+            _held = item;
+        }
+
+        private bool IsInReach(Vector3 worldPosition) {
+            Vector3 from = transform.position + Vector3.up;
+            float reach = _range + 1.5f;
+            return (worldPosition - from).sqrMagnitude <= reach * reach;
+        }
+
+        private bool TryRaycastHit(out RaycastHit hit) {
+            hit = default;
+            Camera camera = _cameras != null ? _cameras.OutputCamera : null;
             if (camera == null)
                 return false;
 
             Ray ray = new Ray(camera.transform.position, camera.transform.forward);
-            if (Physics.Raycast(ray, out RaycastHit hit, _range, _interactableMask, QueryTriggerInteraction.Ignore) == false)
+            return Physics.Raycast(ray, out hit, _range, _interactableMask, QueryTriggerInteraction.Collide);
+        }
+
+        private static bool TryResolveGrabbable(uint itemNetId, out Grabbable item) {
+            item = null;
+            NetworkIdentity identity = null;
+            if (NetworkServer.active && NetworkServer.spawned.TryGetValue(itemNetId, out identity) == false)
+                identity = null;
+            if (identity == null && NetworkClient.active && NetworkClient.spawned.TryGetValue(itemNetId, out identity) == false)
+                return false;
+            if (identity == null)
                 return false;
 
-            item = hit.collider.GetComponentInParent<Grabbable>();
-            return item != null && item.CanBeGrabbed;
+            item = identity.GetComponent<Grabbable>();
+            return item != null;
         }
     }
 }

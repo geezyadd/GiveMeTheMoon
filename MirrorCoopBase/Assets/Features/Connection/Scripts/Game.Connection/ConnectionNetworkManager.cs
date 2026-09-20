@@ -32,6 +32,7 @@ namespace Game.Connection
         [Header("Connection Scenes")]
         [SerializeField] string lobbySceneName = "LobbyScene";
         [SerializeField] string menuSceneName = "MenuScene";
+        [SerializeField] string gameSceneName = "GameScene";
         [SerializeField] string persistentSceneName = "GlobalScene";
 
         [Header("Map Change")]
@@ -52,6 +53,7 @@ namespace Game.Connection
 
         public string LobbySceneName => lobbySceneName;
         public string MenuSceneName => menuSceneName;
+        public string GameSceneName => gameSceneName;
         public bool IsMapLoaded { get; private set; }
         public bool IsChangingMap { get; private set; }
         public bool UsesSteamTransport { get; private set; }
@@ -244,6 +246,7 @@ namespace Game.Connection
             GameObject player = Instantiate(playerPrefab, position, rotation);
             player.name = $"{playerPrefab.name} [connId={conn.connectionId}]";
             NetworkServer.AddPlayerForConnection(conn, player);
+            MoveToPersistentScene(player);
             if (mapLoadedByConnection != null)
                 mapLoadedByConnection[conn] = false;
         }
@@ -309,6 +312,25 @@ namespace Game.Connection
             return true;
         }
 
+        public void StartGame()
+        {
+            if (!NetworkServer.active)
+                return;
+
+            if (IsChangingMap)
+                return;
+
+            if (string.IsNullOrWhiteSpace(gameSceneName))
+                return;
+
+            Scene gameScene = SceneManager.GetSceneByName(gameSceneName);
+            if (gameScene.IsValid() && gameScene.isLoaded)
+                return;
+
+            sceneToUnload = lobbySceneName;
+            ChangeMap(gameSceneName);
+        }
+
         public void ChangeMap(string newSceneName)
         {
             if (!NetworkServer.active)
@@ -329,7 +351,6 @@ namespace Game.Connection
                 return;
             }
 
-            NetworkServer.isLoadingScene = true;
             networkSceneName = newSceneName;
             lookForReadyPlayers = true;
             IsChangingMap = true;
@@ -459,23 +480,34 @@ namespace Game.Connection
             switch (msg.operation)
             {
                 case SceneOperation.LoadAdditive:
-                    if (!SceneManager.GetSceneByName(msg.sceneName).IsValid())
+                    Scene loaded = SceneManager.GetSceneByName(msg.sceneName);
+                    if (loaded.IsValid() == false)
                     {
                         NetworkClient.isLoadingScene = true;
+                        if (NetworkServer.active)
+                            NetworkServer.isLoadingScene = true;
+
                         yield return LoadAddressableScene(msg.sceneName);
 
-                        Scene loaded = SceneManager.GetSceneByName(msg.sceneName);
-                        if (!loaded.IsValid())
+                        loaded = SceneManager.GetSceneByName(msg.sceneName);
+                        if (loaded.IsValid() == false)
                         {
                             NetworkClient.isLoadingScene = false;
+                            if (NetworkServer.active)
+                                NetworkServer.isLoadingScene = false;
                             StopSessionAndReturnToMenu();
                             yield break;
                         }
 
                         SceneManager.SetActiveScene(loaded);
                         NetworkClient.isLoadingScene = false;
+                        if (NetworkServer.active)
+                            NetworkServer.isLoadingScene = false;
                     }
 
+                    PrepareSceneNetworkIdentities(loaded);
+                    if (NetworkClient.active)
+                        NetworkClient.PrepareToSpawnSceneObjects();
                     if (NetworkServer.active)
                         NetworkServer.SpawnObjects();
 
@@ -483,6 +515,7 @@ namespace Game.Connection
                     break;
 
                 case SceneOperation.UnloadAdditive:
+                    MovePlayersToPersistentScene();
                     yield return UnloadSceneIfLoaded(msg.sceneName);
                     Scene leftover = SceneManager.GetSceneByName(msg.sceneName);
                     if (leftover.IsValid() && leftover.isLoaded)
@@ -649,6 +682,89 @@ namespace Game.Connection
             }
 
             await sceneLoader.LoadSceneAsync(sceneName, false);
+        }
+
+        void MovePlayersToPersistentScene()
+        {
+            if (NetworkServer.active)
+            {
+                foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
+                {
+                    if (conn.identity != null)
+                        MoveToPersistentScene(conn.identity.gameObject);
+                }
+            }
+
+            if (NetworkClient.active == false)
+                return;
+
+            foreach (NetworkIdentity identity in NetworkClient.spawned.Values)
+            {
+                if (identity == null || identity.sceneId != 0)
+                    continue;
+
+                MoveToPersistentScene(identity.gameObject);
+            }
+        }
+
+        void MoveToPersistentScene(GameObject target)
+        {
+            if (target == null)
+                return;
+
+            Scene persistent = SceneManager.GetSceneByName(persistentSceneName);
+            if (persistent.IsValid() && persistent.isLoaded)
+            {
+                if (target.scene != persistent)
+                    SceneManager.MoveGameObjectToScene(target, persistent);
+                return;
+            }
+
+            DontDestroyOnLoad(target);
+        }
+
+        static void PrepareSceneNetworkIdentities(Scene scene)
+        {
+            if (scene.IsValid() == false || scene.isLoaded == false)
+                return;
+
+            GameObject[] roots = scene.GetRootGameObjects();
+            for (int i = 0; i < roots.Length; i++)
+            {
+                NetworkIdentity[] identities = roots[i].GetComponentsInChildren<NetworkIdentity>(true);
+                for (int j = 0; j < identities.Length; j++)
+                {
+                    NetworkIdentity identity = identities[j];
+                    if (identity.sceneId != 0)
+                        continue;
+
+                    identity.sceneId = StableSceneId(identity);
+                }
+            }
+        }
+
+        static ulong StableSceneId(NetworkIdentity identity)
+        {
+            string key = identity.gameObject.scene.name + ":" + GetHierarchyPath(identity.transform);
+            unchecked
+            {
+                ulong hash = 2166136261;
+                for (int i = 0; i < key.Length; i++)
+                {
+                    hash ^= key[i];
+                    hash *= 16777619;
+                }
+
+                return hash == 0 ? 1UL : hash;
+            }
+        }
+
+        static string GetHierarchyPath(Transform transform)
+        {
+            if (transform.parent == null)
+                return transform.name;
+
+            return GetHierarchyPath(transform.parent) + "/" + transform.name;
         }
 
         void RegisterInModel()

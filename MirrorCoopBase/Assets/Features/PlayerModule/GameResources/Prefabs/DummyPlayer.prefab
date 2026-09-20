@@ -50,6 +50,8 @@ GameObject:
   - component: {fileID: 337762568883164761}
   - component: {fileID: 6109845104136634492}
   - component: {fileID: 7209845104136634493}
+  - component: {fileID: 9209845104136634495}
+  - component: {fileID: 8209845104136634494}
   m_Layer: 0
   m_Name: DummyPlayer
   m_TagString: Untagged
@@ -318,6 +320,44 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   _range: 4
+--- !u!114 &9209845104136634495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2d3e4f5a6b74891a2b3c4d5e6f70812, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  _grab: {fileID: 7209845104136634493}
+  _interactableMask:
+    serializedVersion: 2
+    m_Bits: 128
+  _range: 4
+--- !u!114 &8209845104136634494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f3a1c2e9b4d47e6a5c0d1e2f3a4b5c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  _rb: {fileID: 7148192738405830123}
+  _floating: {fileID: 5109845104136634491}
+  _netBody: {fileID: 919415383680135416}
 --- !u!1 &2613348676932129866
 GameObject:
   m_ObjectHideFlags: 0

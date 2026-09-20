@@ -7,14 +7,17 @@ namespace Features.AddressablesConstantsGenerator.Generated {
         public static partial class Configurations {
             public const string ADDRESSABLE_GROUP_NAME = "Configurations";
             public const string ConnectionConfig_Default = "ConnectionConfig_Default";
-            public static List<string> AllAddressablesInGroup = new List<string>() {"ConnectionConfig_Default",};
+            public const string ShipRunConfig_Default = "ShipRunConfig_Default";
+            public const string ShipFlightConfig_Default = "ShipFlightConfig_Default";
+            public static List<string> AllAddressablesInGroup = new List<string>() {"ConnectionConfig_Default","ShipRunConfig_Default","ShipFlightConfig_Default",};
         }
         public static partial class Scenes {
             public const string ADDRESSABLE_GROUP_NAME = "Scenes";
             public const string GlobalScene = "GlobalScene";
             public const string MenuScene = "MenuScene";
             public const string LobbyScene = "LobbyScene";
-            public static List<string> AllAddressablesInGroup = new List<string>() {"GlobalScene","MenuScene","LobbyScene",};
+            public const string GameScene = "GameScene";
+            public static List<string> AllAddressablesInGroup = new List<string>() {"GlobalScene","MenuScene","LobbyScene","GameScene",};
         }
         public static partial class Groups {
             public static List<List<string>> AllAddressablesGroups = new List<List<string>>() {Configurations.AllAddressablesInGroup,Scenes.AllAddressablesInGroup,};

@@ -1,0 +1,28 @@
+---
+description: Do not use Unity script execution order to sequence gameplay
+alwaysApply: true
+---
+
+# No execution order
+
+Do not use `[DefaultExecutionOrder]`, and do not set `executionOrder` in a script `.meta`. Leave it at `0`.
+
+If one object must run after another, call it from the first (`ShipBase` moves, then tells riders to follow). Do not rely on Unity sorting `Update` / `LateUpdate` / `FixedUpdate`.
+
+```csharp
+// BAD
+[DefaultExecutionOrder(200)]
+public sealed class ShipBase : MonoBehaviour {
+    private void LateUpdate() {
+        transform.position = EvaluateFlightPosition();
+    }
+}
+
+// GOOD — explicit call, default order
+public sealed class ShipBase : MonoBehaviour {
+    private void LateUpdate() {
+        transform.position = EvaluateFlightPosition();
+        FollowRiders();
+    }
+}
+```

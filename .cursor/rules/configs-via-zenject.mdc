@@ -1,0 +1,23 @@
+---
+description: Game configurations bind through ConfigurationInstaller, never Resources
+alwaysApply: true
+---
+
+# Configurations go through Zenject
+
+Do not put gameplay configuration ScriptableObjects in a `Resources` folder, and do not `Resources.Load` them.
+
+Place the asset under the module `GameResources/Configurations/` folder, mark it Addressable in the `Configurations` group, and bind it in `ConfigurationInstaller` with `BindConfigurationFromAddressables`. Runtime code receives the config through Zenject inject or constructor.
+
+Catalogs of prefabs (`ItemViewCatalog`, `EngineCatalog`, `ShipStationCatalog`) are not this rule.
+
+```csharp
+// BAD
+Container.Bind<ShipRunConfig>().FromMethod(() => Resources.Load<ShipRunConfig>("ShipRunConfig"));
+
+// GOOD — ConfigurationInstaller
+Container.BindConfigurationFromAddressables<ShipRunConfig>(Address.Configurations.ShipRunConfig_Default)
+    .AsSingle();
+
+public ShipRunService(ShipRunConfig config) { }
+```

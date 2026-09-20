@@ -14,6 +14,7 @@ namespace Features.CameraModule.Scripts.Services {
         private readonly CameraCatalog _catalog;
 
         private Transform _root;
+        private Camera _output;
         private CinemachineBrain _brain;
 
         public GameCameraService(GameCameraModel model, CameraCatalog catalog) {
@@ -23,10 +24,19 @@ namespace Features.CameraModule.Scripts.Services {
 
         public string ActiveId => _model.ActiveId;
 
+        public Camera OutputCamera {
+            get {
+                EnsureOutputCamera();
+                return _output;
+            }
+        }
+
         public void Initialize() {
             SceneManager.sceneLoaded += OnSceneLoaded;
             EnsureRoot();
+            EnsureOutputCamera();
             EnsureBrain();
+            DisableLoadedSceneCameras();
             SpawnCameras();
         }
 
@@ -36,6 +46,7 @@ namespace Features.CameraModule.Scripts.Services {
                 UnityEngine.Object.Destroy(_root.gameObject);
 
             _root = null;
+            _output = null;
             _brain = null;
             _model.Clear();
         }
@@ -146,24 +157,72 @@ namespace Features.CameraModule.Scripts.Services {
             _model.LookPivot = pivotObject.transform;
         }
 
+        private void EnsureOutputCamera() {
+            if (_output != null)
+                return;
+
+            EnsureRoot();
+            var outputObject = new GameObject("GameCameraOutput");
+            outputObject.tag = "MainCamera";
+            outputObject.transform.SetParent(_root, false);
+            _output = outputObject.AddComponent<Camera>();
+            _output.nearClipPlane = 0.1f;
+            if (outputObject.GetComponent<AudioListener>() == null)
+                outputObject.AddComponent<AudioListener>();
+        }
+
         private void EnsureBrain() {
-            Camera output = Camera.main;
-            if (output == null)
+            EnsureOutputCamera();
+            if (_output == null)
                 return;
 
-            if (_brain != null && _brain.gameObject == output.gameObject)
+            if (_brain != null && _brain.gameObject == _output.gameObject)
                 return;
 
-            _brain = output.GetComponent<CinemachineBrain>();
+            _brain = _output.GetComponent<CinemachineBrain>();
             if (_brain == null)
-                _brain = output.gameObject.AddComponent<CinemachineBrain>();
+                _brain = _output.gameObject.AddComponent<CinemachineBrain>();
 
             _brain.UpdateMethod = CinemachineBrain.UpdateMethods.LateUpdate;
             _brain.BlendUpdateMethod = CinemachineBrain.BrainUpdateMethods.LateUpdate;
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode) {
+            DisableSceneCameras(scene);
             EnsureBrain();
+        }
+
+        private void DisableLoadedSceneCameras() {
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+                DisableSceneCameras(SceneManager.GetSceneAt(i));
+        }
+
+        private void DisableSceneCameras(Scene scene) {
+            if (scene.IsValid() == false || scene.isLoaded == false)
+                return;
+
+            GameObject[] roots = scene.GetRootGameObjects();
+            for (int i = 0; i < roots.Length; i++) {
+                Camera[] cameras = roots[i].GetComponentsInChildren<Camera>(true);
+                for (int j = 0; j < cameras.Length; j++)
+                    DisableSceneCamera(cameras[j]);
+            }
+        }
+
+        private void DisableSceneCamera(Camera camera) {
+            if (camera == null || camera == _output)
+                return;
+
+            if (_root != null && camera.transform.IsChildOf(_root))
+                return;
+
+            camera.enabled = false;
+            if (camera.CompareTag("MainCamera"))
+                camera.tag = "Untagged";
+
+            AudioListener listener = camera.GetComponent<AudioListener>();
+            if (listener != null)
+                listener.enabled = false;
         }
     }
 }

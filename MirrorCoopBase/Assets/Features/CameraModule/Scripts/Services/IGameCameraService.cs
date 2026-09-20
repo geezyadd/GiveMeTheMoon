@@ -3,6 +3,7 @@ using UnityEngine;
 namespace Features.CameraModule.Scripts.Services {
     public interface IGameCameraService {
         string ActiveId { get; }
+        Camera OutputCamera { get; }
 
         void Register(GameCamera camera);
         void Unregister(GameCamera camera);
