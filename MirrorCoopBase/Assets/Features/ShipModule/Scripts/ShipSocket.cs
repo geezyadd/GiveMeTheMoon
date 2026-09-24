@@ -10,8 +10,10 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private Transform _defaultInstallPoint;
         [SerializeField] private ItemViewInstallPoint[] _viewInstallPoints;
         [SerializeField] private int _unlockLoop;
+        [SerializeField] private ShipBase _ship;
 
         private ItemViewCatalog _catalog;
+        private ShipRadarCatalog _radarCatalog;
         private ShipSeat _seat;
         private ShipRunModel _run;
 
@@ -37,14 +39,24 @@ namespace Features.ShipModule.Scripts {
         public bool CanAccept(ShipModuleType type) =>
             _occupied == false && type == _acceptedType && IsUnlocked;
 
+        public bool CanUninstall =>
+            _occupied && IsBuildPhase && CanRemoveModule(_acceptedType);
+
         public bool IsUnlocked => _run == null || _run.LoopIndex >= _unlockLoop;
+
+        private bool IsBuildPhase =>
+            _run == null || _run.Phase == ShipRunPhase.Build;
 
         public bool HasHelmPilot =>
             _occupantNetId != 0 && _seat != null && _seat.Role == ShipSeatRole.Helm;
 
         [Inject]
-        private void Construct(ItemViewCatalog catalog, [Inject(Optional = true)] ShipRunModel run) {
+        private void Construct(
+            ItemViewCatalog catalog,
+            ShipRadarCatalog radarCatalog,
+            [Inject(Optional = true)] ShipRunModel run) {
             _catalog = catalog;
+            _radarCatalog = radarCatalog;
             _run = run;
             RefreshView();
         }
@@ -63,8 +75,10 @@ namespace Features.ShipModule.Scripts {
 
             if (_occupied && IsSittable)
                 _outline.enabled = hovered && _occupantNetId == 0;
+            else if (_occupied)
+                _outline.enabled = hovered && CanUninstall;
             else
-                _outline.enabled = hovered && _occupied == false && IsUnlocked;
+                _outline.enabled = hovered && IsUnlocked;
         }
 
         internal bool ServerTryInstall(ShipModuleType type, ItemViewId view) {
@@ -73,6 +87,8 @@ namespace Features.ShipModule.Scripts {
 
             _installedViewId = view;
             _occupied = true;
+            if (_ship != null)
+                _ship.ServerOnModuleInstalled(this);
             return true;
         }
 
@@ -102,6 +118,9 @@ namespace Features.ShipModule.Scripts {
         internal void ServerClearInstall() {
             if (isServer == false)
                 return;
+
+            if (_ship != null)
+                _ship.ServerOnModuleUninstalled(this);
 
             _occupantNetId = 0;
             _occupied = false;
@@ -141,6 +160,7 @@ namespace Features.ShipModule.Scripts {
             _spawnedView.transform.localRotation = Quaternion.identity;
             ApplyWorldScale(_spawnedView.transform, prefab.transform.localScale);
             _seat = _spawnedView.GetComponentInChildren<ShipSeat>();
+            BindRadarScreen(_spawnedView);
         }
 
         private Transform ResolveInstallPoint(ItemViewId view) {
@@ -171,9 +191,23 @@ namespace Features.ShipModule.Scripts {
                 parentScale.z == 0f ? worldScale.z : worldScale.z / parentScale.z);
         }
 
+        private void BindRadarScreen(GameObject view) {
+            ShipRadarScreen screen = view.GetComponentInChildren<ShipRadarScreen>(true);
+            if (screen != null)
+                screen.Bind(_radarCatalog, _run, _ship);
+        }
+
+        private static bool CanRemoveModule(ShipModuleType type) {
+            return type == ShipModuleType.Engine || type == ShipModuleType.Radar;
+        }
+
         private void ClearSpawnedView() {
             if (_spawnedView == null)
                 return;
+
+            ShipRadarScreen screen = _spawnedView.GetComponentInChildren<ShipRadarScreen>(true);
+            if (screen != null)
+                screen.Unbind();
 
             Destroy(_spawnedView);
             _spawnedView = null;

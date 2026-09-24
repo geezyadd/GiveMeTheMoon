@@ -13,6 +13,9 @@ namespace Features.GameCoreModule.Scripts.Installers {
                 .AsSingle();
             Container.BindConfigurationFromAddressables<ShipFlightSettings>(Address.Configurations.ShipFlightConfig_Default)
                 .AsSingle();
+            Container.BindConfigurationFromAddressables<ShipAccumulativeStatsConfiguration>(
+                    Address.Configurations.ShipAccumulativeStatsConfiguration_Default)
+                .AsSingle();
         }
     }
 }

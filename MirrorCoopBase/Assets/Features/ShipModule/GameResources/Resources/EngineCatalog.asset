@@ -15,7 +15,10 @@ MonoBehaviour:
   _engines:
   - _view: 1
     _thrust: 3
+    _flightSpeed: 0.5
   - _view: 2
     _thrust: 6
+    _flightSpeed: 1
   - _view: 3
     _thrust: 2
+    _flightSpeed: 0

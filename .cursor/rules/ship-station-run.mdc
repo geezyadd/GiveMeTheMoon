@@ -1,0 +1,32 @@
+---
+description: Station run is hover-in-place. Time to pad is heading alignment, not world travel.
+alwaysApply: true
+---
+
+# Station run: hover, turn, time
+
+After takeoff the ship **stays at the hover point**. It does not cruise through the world. Helm only yaws 360°. Radar is a heading to the next pad, not a place you physically fly to.
+
+## Loop
+
+1. Slow takeoff to the hover point.
+2. Cruise in place: rotate only (bank/dodge ok).
+3. Remaining work ticks: `work -= dt * FlightSpeed * Dot(nose, destDir)`.
+   - Face the pad (`dot = 1`): HUD time falls.
+   - Face away (`dot = -1`): HUD time rises by the same rate. Turn back.
+   - Sideways (`dot ≈ 0`): time barely changes, scaled by how much you recede.
+4. HUD shows `work / FlightSpeed` (not distance, not visual speed).
+5. Land **only** when `work <= 0`. That already means the nose was on course enough to burn the timer. Then lock helm, spawn the pad along `destDir`, level out, land.
+
+```csharp
+// BAD — translating in cruise, landing by world distance, auto-steering to a map point
+_cruiseOrigin += forward * cruiseSpeed * dt;
+
+// GOOD — hover loop
+CommitPose(_hover + CruiseDodge(), dt);
+alignment = Dot(Flatten(ship.forward), destDir);
+work -= dt * speed * alignment;
+if (work <= 0) BeginLanding();
+```
+
+Do not move the ship toward the radar blip. Do not auto-steer onto the pad during cruise. `CruiseSpeed` is not route progress. `FlightSpeed` only scales duration.

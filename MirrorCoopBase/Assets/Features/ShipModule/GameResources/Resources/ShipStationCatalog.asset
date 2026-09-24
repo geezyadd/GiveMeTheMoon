@@ -31,3 +31,6 @@ MonoBehaviour:
   - _prefab: {fileID: 8101338388048282597, guid: c4e8a91b2d3f40a5b6c7d8e9f0a1b2c3, type: 3}
     _minLoop: 1
     _count: 2
+  - _prefab: {fileID: 8601338388048282597, guid: f9a2b3c4d5e61728394a5b6c7d8e90f1, type: 3}
+    _minLoop: 0
+    _count: 1

@@ -1,0 +1,20 @@
+---
+description: Player-facing UI and code comments must be English.
+alwaysApply: true
+---
+
+# English UI and comments
+
+All player-facing text and all code comments are English. Do not add Russian (or any other language) to HUD, labels, prompts, prefab default strings, or comments.
+
+```csharp
+// BAD
+return $"до платформы {minutes}:{remainder:00}";
+// оставшееся время до посадки
+
+// GOOD
+return $"to platform {minutes}:{remainder:00}";
+// remaining time until landing
+```
+
+Chat with the user may be in Russian. Game strings and comments stay English.

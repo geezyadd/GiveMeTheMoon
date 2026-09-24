@@ -1,0 +1,19 @@
+{
+  "name": "com.rsg.statsmodule",
+  "version": "1.0.0",
+  "displayName": "Stats Module",
+  "description": "StatsModule",
+  "unity": "6.1",
+  "author": {
+    "name": "DevYuta",
+    "email": "",
+    "url": ""
+  },
+  "samples": [
+    {
+      "displayName": "Main realization example",
+      "description": "This is a sample showing how to use the stats module.",
+      "path": "Samples~/MainRealizationExample"
+    }
+  ]
+}

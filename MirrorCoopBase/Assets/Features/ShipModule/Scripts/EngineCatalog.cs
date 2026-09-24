@@ -10,9 +10,11 @@ namespace Features.ShipModule.Scripts {
         public sealed class EngineStats {
             [SerializeField] private ItemViewId _view = ItemViewId.Engine;
             [SerializeField] private float _thrust = 3f;
+            [SerializeField] private float _flightSpeed;
 
             public ItemViewId View => _view;
             public float Thrust => _thrust;
+            public float FlightSpeed => Mathf.Max(0f, _flightSpeed);
         }
 
         [SerializeField] private EngineStats[] _engines;

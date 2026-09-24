@@ -3,6 +3,7 @@ namespace Features.ShipModule.Scripts {
         Engine = 0,
         Control = 1,
         Seat = 2,
-        Turret = 3
+        Turret = 3,
+        Radar = 4
     }
 }

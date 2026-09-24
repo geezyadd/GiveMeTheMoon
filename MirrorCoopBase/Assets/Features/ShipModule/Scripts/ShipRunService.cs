@@ -9,7 +9,6 @@ namespace Features.ShipModule.Scripts {
         private readonly ShipRunModel _model;
         private readonly ShipRunConfig _config;
         private readonly ShipStationCatalog _stations;
-        private readonly EngineCatalog _engines;
         private readonly IFlightStatContributor[] _contributors = System.Array.Empty<IFlightStatContributor>();
         private readonly List<CruiseRock> _rocks = new List<CruiseRock>();
 
@@ -19,18 +18,22 @@ namespace Features.ShipModule.Scripts {
         private ShipLandingPad _previousPad;
         private float _wreckUntil;
         private Vector3 _launchForward = Vector3.forward;
+        private Vector3 _destinationPoint;
+        private Vector3 _destinationForward = Vector3.forward;
         private float _dodgeRangeScale = 1f;
         private float _nextRockSpawn;
+        private readonly ShipTransit _transit = new ShipTransit();
+        private ShipRadarService _radar;
 
         public ShipRunService(
             ShipRunModel model,
             ShipRunConfig config,
             ShipStationCatalog stations,
-            EngineCatalog engines) {
+            ShipRadarService radar) {
             _model = model;
             _config = config;
             _stations = stations;
-            _engines = engines;
+            _radar = radar;
         }
 
         public void CleanupGameplay() {
@@ -47,6 +50,9 @@ namespace Features.ShipModule.Scripts {
             _currentPad = startPad;
             _previousPad = null;
             _model.ResetMatch();
+            if (_radar != null)
+                _radar.BindShip(ship);
+            RefreshTransitPreview();
             Publish();
         }
 
@@ -65,8 +71,13 @@ namespace Features.ShipModule.Scripts {
             _previousPad = null;
             _wreckUntil = 0f;
             _launchForward = Vector3.forward;
+            _destinationPoint = Vector3.zero;
+            _destinationForward = Vector3.forward;
             _dodgeRangeScale = 1f;
             _nextRockSpawn = 0f;
+            _transit.Reset();
+            if (_radar != null)
+                _radar.UnbindShip();
             _model.ResetMatch();
         }
 
@@ -89,6 +100,9 @@ namespace Features.ShipModule.Scripts {
                 + Vector3.up * _config.TakeoffHeight;
             Quaternion heading = Quaternion.LookRotation(_launchForward, Vector3.up);
             ship.BeginTakeoff(from, hover, heading, _config.TakeoffSeconds, stats.DodgeRangeScale);
+            ChooseDestination(hover);
+            _transit.BeginRoute(stats.CruiseSeconds, _destinationForward);
+            ApplyTransitFrame(false);
             _model.LastAbortReason = ShipRunAbortReason.None;
             _model.Phase = ShipRunPhase.Takeoff;
             Publish();
@@ -118,18 +132,29 @@ namespace Features.ShipModule.Scripts {
                     return;
 
                 _model.Phase = ShipRunPhase.Build;
+                RefreshTransitPreview();
+                Publish();
+                return;
+            }
+
+            if (_model.Phase == ShipRunPhase.Build) {
+                RefreshTransitPreview();
                 Publish();
                 return;
             }
 
             if (_model.Phase == ShipRunPhase.Takeoff) {
+                ApplyTransitFrame(false);
+                Publish();
                 if (_ship.IsTakeoffComplete == false)
                     return;
 
                 _ship.BeginCruise();
-                float cruiseSeconds = SampleStats(_ship).CruiseSeconds;
+                FlightRunStats stats = SampleStats(_ship);
+                _dodgeRangeScale = stats.DodgeRangeScale;
+                _transit.SetSpeed(ReadFlightSpeed());
+                ApplyTransitFrame(false);
                 _model.Phase = ShipRunPhase.Cruise;
-                _model.CruiseEndNetworkTime = NetworkTime.time + cruiseSeconds;
                 _nextRockSpawn = Time.time;
                 Publish();
                 return;
@@ -137,10 +162,13 @@ namespace Features.ShipModule.Scripts {
 
             if (_model.Phase == ShipRunPhase.Cruise) {
                 TickRocks();
-                if (NetworkTime.time < _model.CruiseEndNetworkTime)
-                    return;
+                ApplyTransitFrame(true);
+                Publish();
+                if (_transit.HasArrived) {
+                    _ship.ServerLockFlight();
+                    BeginLanding();
+                }
 
-                BeginLanding();
                 return;
             }
 
@@ -152,13 +180,13 @@ namespace Features.ShipModule.Scripts {
 
         private void BeginLanding() {
             ClearRocks();
-            ShipLandingPad next = SpawnNextPad();
+            ShipLandingPad next = SpawnNextPad(_destinationPoint, _destinationForward);
             if (next == null) {
                 FinishAtCurrentPose();
                 return;
             }
 
-            _ship.BeginLanding(next.LandingPoint.position, _config.LandingSeconds);
+            _ship.BeginLanding(next.LandingPoint.position, _config.LandingSeconds, _destinationForward);
             _model.Phase = ShipRunPhase.Landing;
             Publish();
         }
@@ -170,8 +198,10 @@ namespace Features.ShipModule.Scripts {
             _ship.ServerFinishFlight();
             _director.ServerPlaceWreck(wreckPos, wreckRot);
 
-            if (_model.Phase != ShipRunPhase.Landing)
-                SpawnNextPad();
+            if (_model.Phase != ShipRunPhase.Landing) {
+                Vector3 origin = _ship != null ? _ship.transform.position : Vector3.zero;
+                SpawnNextPad(origin + _destinationForward * _config.StationSpacing, _destinationForward);
+            }
 
             ShipLandingPad pad = _currentPad;
 
@@ -185,7 +215,10 @@ namespace Features.ShipModule.Scripts {
             _model.LoopIndex += 1;
             _model.LaunchLocked = _config.MaxLoops > 0 && _model.LoopIndex >= _config.MaxLoops;
             _model.Phase = ShipRunPhase.Wreck;
-            _model.CruiseEndNetworkTime = 0d;
+            _transit.Reset();
+            _destinationPoint = Vector3.zero;
+            _destinationForward = Vector3.forward;
+            CopyTransitToModel();
             _wreckUntil = Time.time + _config.WreckSettleSeconds;
             Publish();
         }
@@ -203,7 +236,7 @@ namespace Features.ShipModule.Scripts {
             if (prefab == null || _ship == null)
                 return;
 
-            Vector3 forward = _launchForward;
+            Vector3 forward = FlattenForward(_ship.transform.forward);
             Vector3 right = Vector3.Cross(Vector3.up, forward);
             if (right.sqrMagnitude < 0.0001f)
                 right = Vector3.right;
@@ -249,16 +282,16 @@ namespace Features.ShipModule.Scripts {
             _rocks.Clear();
         }
 
-        private ShipLandingPad SpawnNextPad() {
+        private ShipLandingPad SpawnNextPad(Vector3 padPos, Vector3 face) {
             GameObject prefab = _stations != null ? _stations.PadPrefab : null;
             if (prefab == null)
                 return _currentPad;
 
-            Vector3 origin = _ship != null ? _ship.transform.position : Vector3.zero;
+            Vector3 origin = _ship != null ? _ship.transform.position : padPos;
             float padY = _currentPad != null ? _currentPad.transform.position.y : origin.y;
-            Vector3 padPos = origin + _launchForward * _config.StationSpacing;
             padPos.y = padY + _config.TakeoffHeight;
-            Quaternion padRot = Quaternion.LookRotation(_launchForward, Vector3.up);
+            Vector3 forward = FlattenForward(face.sqrMagnitude > 0.0001f ? face : _launchForward);
+            Quaternion padRot = Quaternion.LookRotation(forward, Vector3.up);
             GameObject instance = Object.Instantiate(prefab, padPos, padRot);
             NetworkServer.Spawn(instance);
             ShipLandingPad pad = instance.GetComponentInChildren<ShipLandingPad>();
@@ -336,26 +369,16 @@ namespace Features.ShipModule.Scripts {
 
         private FlightRunStats SampleStats(ShipBase ship) {
             FlightRunStats stats = new FlightRunStats {
-                DodgeRangeScale = 1f
+                DodgeRangeScale = 1f,
+                CruiseSeconds = EvaluateRouteWork()
             };
 
             ShipSocket[] sockets = ship != null ? ship.Sockets : null;
-            float thrust = 0f;
-            if (sockets != null && _engines != null) {
-                for (int i = 0; i < sockets.Length; i++) {
-                    ShipSocket socket = sockets[i];
-                    if (socket == null || _engines.TryGet(socket.InstalledView, out _) == false)
-                        continue;
+            stats.TotalThrust = ship != null ? ship.GetStatFull(ShipStatType.FlightSpeed) : 0f;
 
-                    thrust += 1f;
-                }
-            }
-
-            stats.TotalThrust = thrust;
-
-            stats.CruiseSeconds = _config.CruiseSeconds
-                + _model.LoopIndex * _config.PerLoopCruiseSeconds
-                + thrust * _config.ThrustCruiseBonus;
+            float dodge = ship != null ? ship.GetStatFull(ShipStatType.DodgeRange) : 0f;
+            if (dodge > 0f)
+                stats.DodgeRangeScale = dodge;
 
             for (int i = 0; i < _contributors.Length; i++) {
                 if (_contributors[i] != null)
@@ -367,9 +390,81 @@ namespace Features.ShipModule.Scripts {
             return stats;
         }
 
+        private float EvaluateRouteWork() {
+            return _config.RouteWorkSeconds + _model.LoopIndex * _config.PerLoopCruiseSeconds;
+        }
+
+        private void RefreshTransitPreview() {
+            float work = SampleStats(_ship).CruiseSeconds;
+            Vector3 destination = _ship != null
+                ? FlattenForward(_ship.transform.forward)
+                : _launchForward;
+            _transit.PreviewRoute(work, ReadFlightSpeed(), destination);
+            if (_destinationPoint.sqrMagnitude < 0.0001f)
+                _destinationPoint = RadarPoint(
+                    _ship != null ? _ship.transform.position : Vector3.zero,
+                    destination);
+            CopyTransitToModel();
+        }
+
+        private void ApplyTransitFrame(bool tickWork) {
+            _transit.SetSpeed(ReadFlightSpeed());
+            _transit.SetAlignment(EvaluateTransitAlignment());
+            if (tickWork)
+                _transit.Tick(Time.deltaTime);
+
+            CopyTransitToModel();
+        }
+
+        private float ReadFlightSpeed() {
+            float speed = _ship != null ? _ship.GetStatFull(ShipStatType.FlightSpeed) : 1f;
+            return Mathf.Max(ShipTransit.MinSpeed, speed);
+        }
+
+        private float EvaluateTransitAlignment() {
+            if (_ship == null)
+                return 1f;
+
+            return ShipTransit.EvaluateAlignment(
+                FlattenForward(_ship.transform.forward),
+                _destinationForward);
+        }
+
+        private void CopyTransitToModel() {
+            _model.TransitWorkRemaining = _transit.WorkRemaining;
+            _model.TransitSpeed = _transit.Speed;
+            _model.TransitAlignment = _transit.Alignment;
+            _model.TransitDestination = _destinationPoint.sqrMagnitude > 0.0001f
+                ? _destinationPoint
+                : RadarPoint(
+                    _ship != null ? _ship.transform.position : Vector3.zero,
+                    _transit.DestinationDirection);
+            _model.TransitSecondsRemaining = _transit.SecondsRemaining;
+            _model.CruiseEndNetworkTime = _model.Phase == ShipRunPhase.Cruise
+                ? NetworkTime.time + _model.TransitSecondsRemaining
+                : 0d;
+        }
+
+        private void ChooseDestination(Vector3 origin) {
+            float halfCone = _config.DestinationConeDegrees * 0.5f;
+            float yaw = Random.Range(-halfCone, halfCone);
+            _destinationForward = FlattenForward(Quaternion.AngleAxis(yaw, Vector3.up) * _launchForward);
+            _destinationPoint = RadarPoint(origin, _destinationForward);
+        }
+
+        private Vector3 RadarPoint(Vector3 origin, Vector3 direction) {
+            float range = Mathf.Max(80f, _config.StationSpacing);
+            float padY = _currentPad != null
+                ? _currentPad.transform.position.y + _config.TakeoffHeight
+                : origin.y;
+            Vector3 point = origin + FlattenForward(direction) * range;
+            point.y = padY;
+            return point;
+        }
+
         private void Publish() {
             if (_director != null)
-                _director.ServerPublish(_model.Phase, _model.LoopIndex, _model.CruiseEndNetworkTime, _model.LaunchLocked);
+                _director.ServerPublish();
         }
 
         private static Vector3 FlattenForward(Vector3 forward) {

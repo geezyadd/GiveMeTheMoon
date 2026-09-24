@@ -30,6 +30,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d1e2f3a4b5c64755d6e7f8091a2b3c4d
+    m_Address: ShipAccumulativeStatsConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: fe8a31fcc2789354e83d19e63902e854, type: 2}
   m_SchemaSet:

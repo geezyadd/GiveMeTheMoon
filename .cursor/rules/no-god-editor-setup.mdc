@@ -1,0 +1,30 @@
+---
+description: Do not use god-setup editor utilities that rebuild the whole project.
+alwaysApply: true
+---
+
+# No god editor setup
+
+Do not add or use editor menus / `[InitializeOnLoad]` scripts that create or rewrite **everything** (scenes, prefabs, catalogs, spawn lists, Addressables, build settings) in one shot.
+
+```csharp
+// BAD
+[MenuItem("GameCore/Setup Architecture (Scenes, Prefabs, Build Settings)")]
+public static void Setup() {
+    EnsureShipAssets();
+    CreateGameScene();
+    UpdateBuildSettings();
+}
+
+[InitializeOnLoadMethod]
+static void AutoSetupIfMissing() => Setup();
+```
+
+```csharp
+// GOOD — change only the asset you need, by hand or a tiny focused editor helper
+SerializedObject serialized = new SerializedObject(socket);
+serialized.FindProperty("_acceptedType").enumValueIndex = (int)ShipModuleType.Radar;
+serialized.ApplyModifiedPropertiesWithoutUndo();
+```
+
+Place prefabs in the scene and spawn list yourself. Do not resurrect `GameArchitectureSetup`.

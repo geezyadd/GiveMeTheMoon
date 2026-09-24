@@ -1,3 +1,4 @@
+using Features.StatsModule.EntityStatsModule.Scripts.StatsEntity.Factories;
 using UnityEngine;
 using Zenject;
 
@@ -7,6 +8,10 @@ namespace Features.ShipModule.Scripts {
             Container.Bind<ItemViewCatalog>().FromMethod(LoadCatalog).AsSingle();
             Container.Bind<EngineCatalog>().FromMethod(LoadEngines).AsSingle();
             Container.Bind<ShipStationCatalog>().FromMethod(LoadStations).AsSingle();
+            Container.Bind<ShipRadarCatalog>().FromMethod(LoadRadar).AsSingle();
+            Container.Bind<IStatFactory<ShipStatType>>().To<ShipStatFactory>().AsSingle();
+            Container.Bind<IStatEntityFactory<ShipStatType>>().To<ShipStatEntityFactory>().AsSingle();
+            Container.BindInterfacesAndSelfTo<ShipRadarService>().AsSingle();
             Container.BindInterfacesAndSelfTo<ShipRunService>().AsSingle();
         }
 
@@ -23,6 +28,11 @@ namespace Features.ShipModule.Scripts {
         private static ShipStationCatalog LoadStations() {
             ShipStationCatalog catalog = Resources.Load<ShipStationCatalog>(ShipStationCatalog.ResourceName);
             return catalog != null ? catalog : ScriptableObject.CreateInstance<ShipStationCatalog>();
+        }
+
+        private static ShipRadarCatalog LoadRadar() {
+            ShipRadarCatalog catalog = Resources.Load<ShipRadarCatalog>(ShipRadarCatalog.ResourceName);
+            return catalog != null ? catalog : ScriptableObject.CreateInstance<ShipRadarCatalog>();
         }
     }
 }

@@ -4,6 +4,7 @@ namespace Features.ShipModule.Scripts {
         Engine = 1,
         LargeEngine = 2,
         Propeller = 3,
-        Helm = 4
+        Helm = 4,
+        Radar = 5
     }
 }

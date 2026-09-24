@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0e1f2a3b4c5678901d2e3f4a5b6c7d8, type: 3}
+  m_Name: ShipRadarCatalog
+  m_EditorClassIdentifier: 
+  _mapStatusPrefab: {fileID: 7884106498990022775, guid: 8744ea31e8fbd4342971794a50b1b1ef, type: 3}
+  _camMapPrefab: {fileID: 4762945226235063864, guid: 66692875275d4f542a37db7a14fac6c1, type: 3}
+  _iconPrefab: {fileID: 402738660011239664, guid: 3d7185b66ab16fc479b0a502d3d2ebc1, type: 3}
+  _iconArrowPrefab: {fileID: 402738660011239664, guid: e1df2ebb153c1044587cd06a35cd3b0c, type: 3}
+  _arrowIconPrefab: {fileID: 605636022638668196, guid: 8f86c64edbf4e8f409f223c53b573e99, type: 3}
+  _destinationSprite: {fileID: 21300000, guid: 1f2530370322f6d44b08f8389141186f, type: 3}

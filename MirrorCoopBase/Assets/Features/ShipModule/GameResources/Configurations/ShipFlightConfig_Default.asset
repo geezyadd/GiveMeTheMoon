@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dodgeRange: 4
   _turnDegrees: 22
+  _turnRate: 80
+  _cruiseSpeed: 14
   _bankDegrees: 22
   _swayStiffness: 10
   _swayDamping: 0.32

@@ -5,12 +5,16 @@ namespace Features.ShipModule.Scripts {
     public sealed class ShipFlightSettings : ScriptableObject {
         [SerializeField] private float _dodgeRange = 4f;
         [SerializeField] private float _turnDegrees = 22f;
+        [SerializeField] private float _turnRate = 80f;
+        [SerializeField] private float _cruiseSpeed = 14f;
         [SerializeField] private float _bankDegrees = 22f;
         [SerializeField] private float _swayStiffness = 10f;
         [SerializeField] private float _swayDamping = 0.32f;
 
         public float DodgeRange => Mathf.Max(0f, _dodgeRange);
         public float TurnDegrees => _turnDegrees;
+        public float TurnRate => Mathf.Max(10f, _turnRate);
+        public float CruiseSpeed => Mathf.Max(0f, _cruiseSpeed);
         public float BankDegrees => _bankDegrees;
         public float SwayStiffness => Mathf.Max(0.5f, _swayStiffness);
         public float SwayDamping => Mathf.Clamp(_swayDamping, 0.05f, 0.95f);

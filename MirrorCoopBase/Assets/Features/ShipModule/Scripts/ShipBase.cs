@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using Mirror;
+using Features.StatsModule.EntityStatsModule.Scripts.Modifier;
+using Features.StatsModule.EntityStatsModule.Scripts.StatsEntity;
 using UnityEngine;
 using Zenject;
 
@@ -11,17 +13,22 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private Rigidbody _body;
         [SerializeField] private BoxCollider _rideVolume;
         [SerializeField] private BoxCollider _deck;
+        [SerializeField] private BoxCollider[] _deckColliders;
         [SerializeField] private EngineCatalog _engines;
         [SerializeField] private ShipPoseSync _poseSync;
+        [SerializeField] private ShipStatEntity _stats;
 
         private ShipFlightSettings _flightSettings;
 
         private readonly List<ShipRider> _riders = new List<ShipRider>();
         private readonly List<ShipRider> _insideVolume = new List<ShipRider>();
         private readonly ShipFlight _flight = new ShipFlight();
+        private BoxCollider[] _walkBoxes;
         private float _helmSteer;
         private bool _flying;
+        private bool _controlsLocked;
 
+        private readonly Dictionary<ShipSocket, StatModifier> _flightSpeedModifiers = new Dictionary<ShipSocket, StatModifier>();
         private ShipRunModel _run;
         private ShipRunService _runService;
 
@@ -29,46 +36,94 @@ namespace Features.ShipModule.Scripts {
         public Transform Destination => _destination;
         public bool IsFlying => _flying;
         internal ShipSocket[] Sockets => _sockets;
+        internal IStatEntity<ShipStatType> Stats => _stats;
 
         internal bool ContainsDeckWalk(Vector3 localOffset, float inset) {
-            GetDeckWalkLimits(inset, out float minX, out float maxX, out float minZ, out float maxZ);
-            return localOffset.x >= minX && localOffset.x <= maxX
-                && localOffset.z >= minZ && localOffset.z <= maxZ;
+            return TryClosestDeckWalk(localOffset, out _, out float dx, out float dz)
+                && dx * dx + dz * dz <= 0.0001f;
         }
 
         internal void ClampDeckWalk(ref Vector3 localOffset, float inset) {
-            GetDeckWalkLimits(inset, out float minX, out float maxX, out float minZ, out float maxZ);
-            localOffset.x = Mathf.Clamp(localOffset.x, minX, maxX);
-            localOffset.z = Mathf.Clamp(localOffset.z, minZ, maxZ);
-        }
-
-        private void GetDeckWalkLimits(float inset, out float minX, out float maxX, out float minZ, out float maxZ) {
-            inset = Mathf.Max(0f, inset);
-            if (_deck == null) {
-                minX = -2.2f + inset;
-                maxX = 2.2f - inset;
-                minZ = -3.8f + inset;
-                maxZ = 3.8f - inset;
+            if (TryClosestDeckWalk(localOffset, out Vector3 closestLocal, out float dx, out float dz) == false)
                 return;
-            }
 
-            Vector3 scale = _deck.transform.localScale;
-            Vector3 half = Vector3.Scale(_deck.size, scale) * 0.5f;
-            Vector3 center = _deck.transform.localPosition + Vector3.Scale(_deck.center, scale);
-            minX = center.x - half.x + inset;
-            maxX = center.x + half.x - inset;
-            minZ = center.z - half.z + inset;
-            maxZ = center.z + half.z - inset;
-            if (minX > maxX) {
-                minX = center.x;
-                maxX = center.x;
-            }
+            if (dx * dx + dz * dz <= 0.0001f)
+                return;
 
-            if (minZ > maxZ) {
-                minZ = center.z;
-                maxZ = center.z;
-            }
+            localOffset.x = closestLocal.x;
+            localOffset.z = closestLocal.z;
         }
+
+        private bool TryClosestDeckWalk(Vector3 localOffset, out Vector3 closestLocal, out float dx, out float dz) {
+            closestLocal = localOffset;
+            dx = 0f;
+            dz = 0f;
+            BoxCollider[] boxes = WalkBoxes();
+            Transform deckTransform = DeckTransform(boxes);
+            if (deckTransform == null)
+                return false;
+
+            Vector3 deckLocal = deckTransform.InverseTransformPoint(transform.TransformPoint(localOffset));
+            float best = float.MaxValue;
+            float bestX = deckLocal.x;
+            float bestZ = deckLocal.z;
+            bool found = false;
+            for (int i = 0; i < boxes.Length; i++) {
+                BoxCollider box = boxes[i];
+                if (box == null || box.enabled == false)
+                    continue;
+
+                Vector3 min = box.center - box.size * 0.5f;
+                Vector3 max = box.center + box.size * 0.5f;
+                float x = Mathf.Clamp(deckLocal.x, min.x, max.x);
+                float z = Mathf.Clamp(deckLocal.z, min.z, max.z);
+                float cx = x - deckLocal.x;
+                float cz = z - deckLocal.z;
+                float dist = cx * cx + cz * cz;
+                if (dist >= best)
+                    continue;
+
+                best = dist;
+                bestX = x;
+                bestZ = z;
+                found = true;
+            }
+
+            if (found == false)
+                return false;
+
+            closestLocal = transform.InverseTransformPoint(deckTransform.TransformPoint(new Vector3(bestX, deckLocal.y, bestZ)));
+            dx = closestLocal.x - localOffset.x;
+            dz = closestLocal.z - localOffset.z;
+            return true;
+        }
+
+        private Transform DeckTransform(BoxCollider[] boxes) {
+            if (_deck != null)
+                return _deck.transform;
+
+            for (int i = 0; i < boxes.Length; i++) {
+                if (boxes[i] != null)
+                    return boxes[i].transform;
+            }
+
+            return null;
+        }
+
+        private BoxCollider[] WalkBoxes() {
+            if (_walkBoxes != null)
+                return _walkBoxes;
+
+            if (_deck != null)
+                _walkBoxes = _deck.GetComponents<BoxCollider>();
+            else if (_deckColliders != null)
+                _walkBoxes = _deckColliders;
+            else
+                _walkBoxes = new BoxCollider[0];
+
+            return _walkBoxes;
+        }
+
         internal bool IsTakeoffComplete => _flight.IsTakeoffComplete;
         internal bool HasLanded => _flight.HasLanded;
 
@@ -110,9 +165,74 @@ namespace Features.ShipModule.Scripts {
             _runService = runService;
         }
 
+        internal void ServerOnModuleInstalled(ShipSocket socket) {
+            if (NetworkServer.active == false || socket == null || _stats == null || _engines == null)
+                return;
+
+            if (_engines.TryGet(socket.InstalledView, out EngineCatalog.EngineStats engine) == false)
+                return;
+
+            if (engine.FlightSpeed <= 0f)
+                return;
+
+            ServerClearFlightSpeedModifier(socket);
+            _stats.GetStat(ShipStatType.FlightSpeed);
+            StatModifier modifier = new StatModifier(engine.FlightSpeed, ModifierType.Flat);
+            _stats.AddModifier(ShipStatType.FlightSpeed, modifier);
+            _flightSpeedModifiers[socket] = modifier;
+        }
+
+        internal void ServerOnModuleUninstalled(ShipSocket socket) {
+            ServerClearFlightSpeedModifier(socket);
+        }
+
+        internal float GetStatFull(ShipStatType type) {
+            if (_stats == null)
+                return 0f;
+
+            return _stats.GetStat(type).FullValue;
+        }
+
+        private void ApplyDefaultStats() {
+            if (_stats == null)
+                return;
+
+            IStat thrust = _stats.GetStat(ShipStatType.Thrust);
+            thrust.MaxValue = 999f;
+
+            IStat flightSpeed = _stats.GetStat(ShipStatType.FlightSpeed);
+            flightSpeed.MaxValue = 99f;
+            flightSpeed.OverrideValue(1f);
+
+            IStat dodge = _stats.GetStat(ShipStatType.DodgeRange);
+            dodge.MaxValue = 20f;
+            dodge.OverrideValue(1f);
+
+            IStat handling = _stats.GetStat(ShipStatType.Handling);
+            handling.MaxValue = 20f;
+            handling.OverrideValue(1f);
+
+            IStat armor = _stats.GetStat(ShipStatType.Armor);
+            armor.MaxValue = 100f;
+            armor.OverrideValue(100f);
+        }
+
+        private void ServerClearFlightSpeedModifier(ShipSocket socket) {
+            if (socket == null || _stats == null)
+                return;
+
+            if (_flightSpeedModifiers.TryGetValue(socket, out StatModifier modifier) == false)
+                return;
+
+            _flightSpeedModifiers.Remove(socket);
+            _stats.RemoveModifier(ShipStatType.FlightSpeed, modifier);
+        }
+
         private void Awake() {
             if (_poseSync != null)
                 _poseSync.BindShip(this, transform);
+
+            ApplyDefaultStats();
         }
 
         internal void BindDestination(Transform destination) {
@@ -186,6 +306,7 @@ namespace Features.ShipModule.Scripts {
                 takeoffSeconds,
                 dodgeRangeScale);
             _helmSteer = 0f;
+            _controlsLocked = false;
             SleepBody();
             _flying = true;
             if (_poseSync != null)
@@ -199,16 +320,29 @@ namespace Features.ShipModule.Scripts {
             if (NetworkServer.active == false || _flying == false)
                 return;
 
+            _controlsLocked = false;
             _flight.BeginCruise();
         }
 
-        internal void BeginLanding(Vector3 padPoint, float landingSeconds) {
+        internal void BeginLanding(Vector3 padPoint, float landingSeconds, Vector3 faceDirection) {
             if (NetworkServer.active == false || _flying == false)
                 return;
 
+            _controlsLocked = true;
             _flight.SetManualHeading(false);
             _flight.SetSteer(0f);
-            _flight.BeginLanding(padPoint, landingSeconds);
+            Vector3 flat = faceDirection;
+            flat.y = 0f;
+            Quaternion heading = flat.sqrMagnitude > 0.0001f
+                ? Quaternion.LookRotation(flat.normalized, Vector3.up)
+                : transform.rotation;
+            _flight.BeginLanding(padPoint, landingSeconds, heading);
+        }
+
+        internal void ServerLockFlight() {
+            _controlsLocked = true;
+            _flight.SetManualHeading(false);
+            _flight.SetSteer(0f);
         }
 
         internal void ServerFinishFlight() {
@@ -230,6 +364,7 @@ namespace Features.ShipModule.Scripts {
 
             ClearAllOccupants();
             ClearInstalledModules();
+            _controlsLocked = false;
             if (_lever != null)
                 _lever.ServerReset();
 
@@ -291,14 +426,18 @@ namespace Features.ShipModule.Scripts {
 
         private void LateUpdate() {
             if (_flying && NetworkServer.active) {
-                _flight.SetManualHeading(_flight.AllowsSteer && HasControlModule());
-                _flight.SetSteer(_flight.AllowsSteer && HasHelmPilot() ? ReadHelmSteer() : 0f);
+                bool canSteer = _controlsLocked == false && _flight.AllowsSteer;
+                _flight.SetManualHeading(canSteer && HasControlModule());
+                _flight.SetSteer(canSteer && HasHelmPilot() ? ReadHelmSteer() : 0f);
                 SimulateFlight(Time.deltaTime);
                 if (_flight.IsActive)
                     ApplyDisplayPose(_flight.Position, _flight.Rotation);
 
                 if (_poseSync != null)
                     _poseSync.ServerPublish(transform.position, transform.rotation, _flight.Velocity);
+
+                if (_runService != null)
+                    _runService.ServerTick();
             }
             else if (_flying && _poseSync != null) {
                 _poseSync.ApplyInterpolated(HasOwnedHelmPilot());

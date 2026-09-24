@@ -13,7 +13,7 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private float _walkSpeed = 5f;
         [SerializeField] private float _sprintSpeed = 8f;
         [SerializeField] private float _jumpHeight = 4f;
-        [SerializeField] private float _deckInset = 0.35f;
+        [SerializeField] private float _deckInset = 0.08f;
 
         [SyncVar(hook = nameof(OnSyncedOffsetChanged))]
         private Vector3 _syncedLocalOffset;

@@ -20,6 +20,7 @@ MonoBehaviour:
   _perLoopCruiseSeconds: 8
   _thrustCruiseBonus: 1.5
   _stationSpacing: 48
+  _destinationConeDegrees: 170
   _wreckSettleSeconds: 0.6
   _maxLoops: 0
   _rockSpawnInterval: 1.4

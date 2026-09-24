@@ -9,7 +9,8 @@ namespace Features.AddressablesConstantsGenerator.Generated {
             public const string ConnectionConfig_Default = "ConnectionConfig_Default";
             public const string ShipRunConfig_Default = "ShipRunConfig_Default";
             public const string ShipFlightConfig_Default = "ShipFlightConfig_Default";
-            public static List<string> AllAddressablesInGroup = new List<string>() {"ConnectionConfig_Default","ShipRunConfig_Default","ShipFlightConfig_Default",};
+            public const string ShipAccumulativeStatsConfiguration_Default = "ShipAccumulativeStatsConfiguration_Default";
+            public static List<string> AllAddressablesInGroup = new List<string>() {"ConnectionConfig_Default","ShipRunConfig_Default","ShipFlightConfig_Default","ShipAccumulativeStatsConfiguration_Default",};
         }
         public static partial class Scenes {
             public const string ADDRESSABLE_GROUP_NAME = "Scenes";

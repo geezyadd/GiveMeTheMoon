@@ -57,6 +57,15 @@ namespace Features.GrabModule.Scripts {
             NetworkServer.Destroy(held.gameObject);
         }
 
+        internal bool ServerGive(Grabbable item) {
+            if (isServer == false || item == null || _held != null)
+                return false;
+
+            item.ServerBind(netId);
+            SetHeld(item);
+            return true;
+        }
+
         private void Update() {
             if (isLocalPlayer == false)
                 return;

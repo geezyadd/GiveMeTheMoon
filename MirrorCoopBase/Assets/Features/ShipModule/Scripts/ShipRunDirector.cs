@@ -20,6 +20,21 @@ namespace Features.ShipModule.Scripts {
         [SyncVar(hook = nameof(OnRunStateChangedBool))]
         private bool _launchLocked;
 
+        [SyncVar(hook = nameof(OnRunStateChangedFloat))]
+        private float _transitWorkRemaining;
+
+        [SyncVar(hook = nameof(OnRunStateChangedFloat))]
+        private float _transitSpeed = 1f;
+
+        [SyncVar(hook = nameof(OnRunStateChangedFloat))]
+        private float _transitAlignment = 1f;
+
+        [SyncVar(hook = nameof(OnRunStateChangedFloat))]
+        private float _transitSecondsRemaining;
+
+        [SyncVar(hook = nameof(OnRunStateChangedVector3))]
+        private Vector3 _transitDestination;
+
         [Inject]
         private ShipRunService _run;
 
@@ -33,7 +48,7 @@ namespace Features.ShipModule.Scripts {
         private GameObject _previousLocalWreck;
 
         private void LateUpdate() {
-            if (isServer && _run != null)
+            if (isServer && _run != null && (_ship == null || _ship.IsFlying == false))
                 _run.ServerTick();
         }
 
@@ -51,11 +66,19 @@ namespace Features.ShipModule.Scripts {
             ApplyToModel();
         }
 
-        internal void ServerPublish(ShipRunPhase phase, int loopIndex, double cruiseEndNetworkTime, bool launchLocked) {
-            _phase = phase;
-            _loopIndex = loopIndex;
-            _cruiseEndNetworkTime = cruiseEndNetworkTime;
-            _launchLocked = launchLocked;
+        internal void ServerPublish() {
+            if (_model == null)
+                return;
+
+            _phase = _model.Phase;
+            _loopIndex = _model.LoopIndex;
+            _cruiseEndNetworkTime = _model.CruiseEndNetworkTime;
+            _launchLocked = _model.LaunchLocked;
+            _transitWorkRemaining = _model.TransitWorkRemaining;
+            _transitSpeed = _model.TransitSpeed;
+            _transitAlignment = _model.TransitAlignment;
+            _transitSecondsRemaining = _model.TransitSecondsRemaining;
+            _transitDestination = _model.TransitDestination;
             ApplyToModel();
         }
 
@@ -107,6 +130,14 @@ namespace Features.ShipModule.Scripts {
             ApplyToModel();
         }
 
+        private void OnRunStateChangedFloat(float previous, float current) {
+            ApplyToModel();
+        }
+
+        private void OnRunStateChangedVector3(Vector3 previous, Vector3 current) {
+            ApplyToModel();
+        }
+
         private void ApplyToModel() {
             if (_model == null)
                 return;
@@ -115,6 +146,11 @@ namespace Features.ShipModule.Scripts {
             _model.LoopIndex = _loopIndex;
             _model.CruiseEndNetworkTime = _cruiseEndNetworkTime;
             _model.LaunchLocked = _launchLocked;
+            _model.TransitWorkRemaining = _transitWorkRemaining;
+            _model.TransitSpeed = _transitSpeed;
+            _model.TransitAlignment = _transitAlignment;
+            _model.TransitSecondsRemaining = _transitSecondsRemaining;
+            _model.TransitDestination = _transitDestination;
         }
     }
 }

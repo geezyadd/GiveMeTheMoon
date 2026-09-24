@@ -16,6 +16,8 @@ namespace Features.ShipModule.Scripts {
         private Vector3 _position;
         private Vector3 _velocity;
         private Quaternion _restHeading = Quaternion.identity;
+        private Quaternion _landFromHeading = Quaternion.identity;
+        private Quaternion _landHeading = Quaternion.identity;
         private float _yaw;
         private float _yawVel;
         private float _bank;
@@ -72,11 +74,19 @@ namespace Features.ShipModule.Scripts {
         }
 
         public void BeginCruise() {
-            _hover = _position - _restHeading * Vector3.right * _dodge;
             _phase = Phase.Cruise;
         }
 
         public void BeginLanding(Vector3 padPoint, float landingSeconds) {
+            BeginLanding(padPoint, landingSeconds, _restHeading);
+        }
+
+        public void BeginLanding(Vector3 padPoint, float landingSeconds, Quaternion restHeading) {
+            _landFromHeading = FlattenHeading(_restHeading);
+            _landHeading = FlattenHeading(restHeading);
+            _restHeading = _landFromHeading;
+            _manualHeading = false;
+            _steer = 0f;
             _from = _position;
             _landTo = padPoint;
             _landAge = 0f;
@@ -120,6 +130,15 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void SimulateCruise(float dt) {
+            if (_manualHeading && Mathf.Abs(_steer) >= 0.08f) {
+                float turnRate = _settings != null ? _settings.TurnRate : 80f;
+                _restHeading = Quaternion.AngleAxis(_steer * turnRate * dt, Vector3.up) * _restHeading;
+                Vector3 forward = _restHeading * Vector3.forward;
+                forward.y = 0f;
+                if (forward.sqrMagnitude > 0.0001f)
+                    _restHeading = Quaternion.LookRotation(forward.normalized, Vector3.up);
+            }
+
             ApplyAttitude(dt, true);
             CommitPose(_hover + CruiseDodge(), dt);
         }
@@ -127,6 +146,7 @@ namespace Features.ShipModule.Scripts {
         private void SimulateLanding(float dt) {
             _landAge += dt;
             float t = LandT;
+            _restHeading = Quaternion.Slerp(_landFromHeading, _landHeading, AlignT);
             ApplyAttitude(dt, false);
             CommitPose(Vector3.Lerp(_from, _landTo, t), dt);
             if (t < 1f)
@@ -134,7 +154,7 @@ namespace Features.ShipModule.Scripts {
 
             _position = _landTo;
             _velocity = Vector3.zero;
-            Rotation = _restHeading;
+            _restHeading = _landHeading;
             _landed = true;
         }
 
@@ -144,8 +164,7 @@ namespace Features.ShipModule.Scripts {
             float restDamping = _settings != null ? _settings.SwayDamping : 0.32f;
             float damping = Mathf.Lerp(restDamping, 0.78f, Mathf.SmoothStep(0f, 1f, held));
 
-            float turnDegrees = _settings != null ? _settings.TurnDegrees : 22f;
-            float yawTarget = allowSteer && _manualHeading ? _steer * turnDegrees : 0f;
+            float yawTarget = 0f;
             Spring(ref _yaw, ref _yawVel, yawTarget, stiffness, damping, dt);
 
             float dodgeRange = (_settings != null ? _settings.DodgeRange : 4f) * _dodgeRangeScale;
@@ -170,6 +189,23 @@ namespace Features.ShipModule.Scripts {
         private float TakeoffT => Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(_takeoffAge / _takeoffSeconds));
 
         private float LandT => Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(_landAge / _landingSeconds));
+
+        private float AlignT {
+            get {
+                float duration = Mathf.Clamp(_landingSeconds * 0.4f, 1.25f, 3f);
+                duration = Mathf.Min(duration, _landingSeconds);
+                return Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(_landAge / duration));
+            }
+        }
+
+        private static Quaternion FlattenHeading(Quaternion rotation) {
+            Vector3 forward = rotation * Vector3.forward;
+            forward.y = 0f;
+            if (forward.sqrMagnitude <= 0.0001f)
+                return Quaternion.identity;
+
+            return Quaternion.LookRotation(forward.normalized, Vector3.up);
+        }
 
         private static void Spring(
             ref float value,

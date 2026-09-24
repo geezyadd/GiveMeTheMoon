@@ -26,5 +26,26 @@ namespace Features.ShipModule.Scripts {
         public GameObject WreckPrefab => _wreckPrefab;
         public GameObject RockPrefab => _rockPrefab;
         public DropEntry[] Drops => _drops;
+
+        public bool TryGetItemPrefab(ItemViewId view, out GameObject prefab) {
+            prefab = null;
+            if (view == ItemViewId.None || _drops == null)
+                return false;
+
+            for (int i = 0; i < _drops.Length; i++) {
+                DropEntry entry = _drops[i];
+                if (entry == null || entry.Prefab == null)
+                    continue;
+
+                ShipItem item = entry.Prefab.GetComponent<ShipItem>();
+                if (item == null || item.View != view)
+                    continue;
+
+                prefab = entry.Prefab;
+                return true;
+            }
+
+            return false;
+        }
     }
 }
