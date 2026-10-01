@@ -340,7 +340,6 @@ MonoBehaviour:
   _rb: {fileID: 7148192738405830123}
   _floating: {fileID: 5109845104136634491}
   _netBody: {fileID: 919415383680135416}
-  _stats: {fileID: 8309845104136634496}
 --- !u!114 &8309845104136634496
 MonoBehaviour:
   m_ObjectHideFlags: 0
