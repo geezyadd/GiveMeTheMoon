@@ -3,6 +3,7 @@ using Features.MvpModule;
 using Features.ShopModule.Scripts.Configurations;
 using Features.ShopModule.Scripts.Core;
 using Features.ShopModule.Scripts.Data;
+using Features.ShopModule.Scripts.Generated;
 
 namespace Features.ShopModule.Scripts.UI {
     public sealed class ShopPresenter : PresenterBehaviour<ShopViewBase> {
@@ -10,7 +11,7 @@ namespace Features.ShopModule.Scripts.UI {
         private const string PRICE_FORMAT = "{0:N0}";
 
         private readonly ShopCatalog _shopCatalog;
-        private readonly IWalletModel _walletModel;
+        private readonly IReadOnlyWalletModel _walletModel;
         private readonly IShopItemStatsService _shopItemStatsService;
         private readonly IShopPurchaseService _shopPurchaseService;
         private readonly ShopPurchaseRequestEventClass _shopPurchaseRequestEventClass;
@@ -18,7 +19,7 @@ namespace Features.ShopModule.Scripts.UI {
 
         public ShopPresenter(
             ShopCatalog shopCatalog,
-            IWalletModel walletModel,
+            IReadOnlyWalletModel walletModel,
             IShopItemStatsService shopItemStatsService,
             IShopPurchaseService shopPurchaseService,
             ShopPurchaseRequestEventClass shopPurchaseRequestEventClass,

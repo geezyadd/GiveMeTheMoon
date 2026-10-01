@@ -2,44 +2,42 @@ using System;
 using Features.ShopModule.Scripts.Configurations;
 using Features.ShopModule.Scripts.Core;
 using Features.ShopModule.Scripts.Data;
+using Features.ShopModule.Scripts.Generated;
 using Mirror;
 using Zenject;
 
 namespace Features.ShopModule.Scripts.Network {
-    public sealed class CrewWallet : NetworkBehaviour, ICrewWallet {
+    public sealed class CrewWallet : WalletBridge, ICrewWallet {
         private WalletConfiguration _walletConfiguration;
-        private WalletModel _walletModel;
         private ShopPurchaseRequestEventClass _shopPurchaseRequestEventClass;
         private IShopPurchaseSystem _shopPurchaseSystem;
 
-        [SyncVar(hook = nameof(OnBalanceSynced))]
-        private long _balance;
-
-        public long Balance => _balance;
+        public long Balance =>
+            Model.Balance;
 
         [Inject]
         private void InjectDependencies(
             WalletConfiguration walletConfiguration,
-            WalletModel walletModel,
             ShopPurchaseRequestEventClass shopPurchaseRequestEventClass,
             IShopPurchaseSystem shopPurchaseSystem) {
             _walletConfiguration = walletConfiguration;
-            _walletModel = walletModel;
             _shopPurchaseRequestEventClass = shopPurchaseRequestEventClass;
             _shopPurchaseSystem = shopPurchaseSystem;
         }
 
-        public override void OnStartServer() =>
+        public override void OnStartServer() {
+            base.OnStartServer();
             ServerSetBalance(_walletConfiguration.StartingBalance);
+        }
 
         public override void OnStartClient() {
-            _walletModel.Connect(_balance);
+            base.OnStartClient();
             _shopPurchaseRequestEventClass.OnPurchaseRequested += OnPurchaseRequested;
         }
 
         public override void OnStopClient() {
             _shopPurchaseRequestEventClass.OnPurchaseRequested -= OnPurchaseRequested;
-            _walletModel.Disconnect();
+            base.OnStopClient();
         }
 
         [Server]
@@ -47,16 +45,12 @@ namespace Features.ShopModule.Scripts.Network {
             if (amount < 0)
                 throw new ArgumentOutOfRangeException(nameof(amount), amount, null);
 
-            if (_balance < amount)
+            if (Balance < amount)
                 return false;
 
-            _balance -= amount;
+            ServerSetBalance(Balance - amount);
             return true;
         }
-
-        [Server]
-        private void ServerSetBalance(long balance) =>
-            _balance = balance;
 
         [Command(requiresAuthority = false)]
         private void CmdPurchase(int entryIndex, NetworkConnectionToClient sender = null) {
@@ -68,8 +62,5 @@ namespace Features.ShopModule.Scripts.Network {
 
         private void OnPurchaseRequested(int entryIndex) =>
             CmdPurchase(entryIndex);
-
-        private void OnBalanceSynced(long previous, long current) =>
-            _walletModel.UpdateBalance(current);
     }
 }

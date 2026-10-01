@@ -14,6 +14,7 @@ namespace Game.Connection
             public ulong steamId;
             public string playerName;
             public string version;
+            public string clientId;
         }
 
         public struct AuthResponseMessage : NetworkMessage
@@ -131,7 +132,8 @@ namespace Game.Connection
             {
                 steamId = steamId,
                 playerName = name,
-                version = Application.version
+                version = Application.version,
+                clientId = ConnectionPlayerIdentityService.GetOrCreateClientId()
             });
         }
 

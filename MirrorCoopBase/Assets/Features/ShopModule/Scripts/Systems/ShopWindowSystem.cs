@@ -5,6 +5,7 @@ using Features.GameFlowStateMachineModule.Scripts.States;
 using Features.InputModule.Realization.Scripts.Generated;
 using Features.MvpModule;
 using Features.ShopModule.Scripts.Data;
+using Features.ShopModule.Scripts.Generated;
 using Features.ShopModule.Scripts.UI;
 using Zenject;
 
@@ -14,7 +15,7 @@ namespace Features.ShopModule.Scripts.Systems {
         private readonly IWindowsService _windowsService;
         private readonly IGameFlowStateMachineService _gameFlowStateMachineService;
         private readonly GameFlowStateLifecycleEventClass _gameFlowStateLifecycleEventClass;
-        private readonly IWalletModel _walletModel;
+        private readonly IReadOnlyWalletModel _walletModel;
         private readonly ShopModel _shopModel;
         private readonly CursorModel _cursorModel;
 
@@ -23,7 +24,7 @@ namespace Features.ShopModule.Scripts.Systems {
             IWindowsService windowsService,
             IGameFlowStateMachineService gameFlowStateMachineService,
             GameFlowStateLifecycleEventClass gameFlowStateLifecycleEventClass,
-            IWalletModel walletModel,
+            IReadOnlyWalletModel walletModel,
             ShopModel shopModel,
             CursorModel cursorModel) {
             _inputService = inputService;
@@ -40,6 +41,7 @@ namespace Features.ShopModule.Scripts.Systems {
             _inputService.CloseWindow.Performed += OnCloseWindowPressed;
             _gameFlowStateLifecycleEventClass.OnStateExited += OnGameFlowStateExited;
             _walletModel.OnBalanceChanged += OnWalletChanged;
+            _walletModel.OnAvailableChanged += OnWalletChanged;
             _shopModel.OnOpenChanged += OnShopOpenChanged;
         }
 
@@ -48,6 +50,7 @@ namespace Features.ShopModule.Scripts.Systems {
             _inputService.CloseWindow.Performed -= OnCloseWindowPressed;
             _gameFlowStateLifecycleEventClass.OnStateExited -= OnGameFlowStateExited;
             _walletModel.OnBalanceChanged -= OnWalletChanged;
+            _walletModel.OnAvailableChanged -= OnWalletChanged;
             _shopModel.OnOpenChanged -= OnShopOpenChanged;
             _shopModel.Close();
         }
