@@ -22,8 +22,6 @@ namespace Features.GrabModule.Scripts {
         private Collider _hoverCollider;
         private InteractableBase[] _onTarget = System.Array.Empty<InteractableBase>();
         private InteractableBase _hovered;
-        private InteractableBase _publishedSource;
-        private bool _publishedReady;
 
         public override void OnStartLocalPlayer() {
             _input.Grab.Performed += OnUse;
@@ -34,7 +32,7 @@ namespace Features.GrabModule.Scripts {
                 _input.Grab.Performed -= OnUse;
 
             SetHovered(null);
-            PublishHover(null, false);
+            _hoveredInteractableModel.SetInteractable(null, false);
         }
 
         private void Update() {
@@ -74,7 +72,7 @@ namespace Features.GrabModule.Scripts {
         private void RefreshHover() {
             InteractableBase usable = ResolveUsable(out InteractableBase lookedAt);
             SetHovered(usable);
-            PublishHover(usable != null ? usable : lookedAt, usable != null);
+            _hoveredInteractableModel.SetInteractable(usable != null ? usable : lookedAt, usable != null);
         }
 
         private InteractableBase ResolveUsable(out InteractableBase lookedAt) {
@@ -104,15 +102,6 @@ namespace Features.GrabModule.Scripts {
             }
 
             return usable;
-        }
-
-        private void PublishHover(InteractableBase source, bool isReady) {
-            if (_publishedSource == source && _publishedReady == isReady)
-                return;
-
-            _publishedSource = source;
-            _publishedReady = isReady;
-            _hoveredInteractableModel.SetInteractable(source, isReady);
         }
 
         private void SetHovered(InteractableBase next) {

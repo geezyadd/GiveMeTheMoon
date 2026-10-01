@@ -26,7 +26,6 @@ namespace Features.GrabModule.Scripts {
         private Collider _hoverCollider;
         private Grabbable _cachedOnCollider;
         private Grabbable _hovered;
-        private Grabbable _published;
 
         public Transform ArmPoint => _armPoint != null ? _armPoint : transform;
         public bool IsHolding => _heldNetId != 0;
@@ -44,7 +43,7 @@ namespace Features.GrabModule.Scripts {
             }
 
             SetHovered(null);
-            PublishHover(null);
+            _hoveredInteractableModel.SetGrabbable(null);
             if (isOwned)
                 CmdRelease();
         }
@@ -119,21 +118,13 @@ namespace Features.GrabModule.Scripts {
                 SetHovered(null);
                 _hoverCollider = null;
                 _cachedOnCollider = null;
-                PublishHover(null);
+                _hoveredInteractableModel.SetGrabbable(null);
                 return;
             }
 
             Grabbable next = ResolveGrabbable();
             SetHovered(next);
-            PublishHover(next);
-        }
-
-        private void PublishHover(Grabbable source) {
-            if (_published == source)
-                return;
-
-            _published = source;
-            _hoveredInteractableModel.SetGrabbable(source);
+            _hoveredInteractableModel.SetGrabbable(next);
         }
 
         private Grabbable ResolveGrabbable() {

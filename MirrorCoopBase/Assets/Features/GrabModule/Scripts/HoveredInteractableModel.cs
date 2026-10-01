@@ -7,7 +7,7 @@ namespace Features.GrabModule.Scripts {
         private bool _interactableReady;
         private Grabbable _grabbable;
 
-        public event Action OnChanged;
+        public event Action OnHoverChanged;
 
         public void SetInteractable(InteractableBase interactable, bool isReady) {
             if (_interactable == interactable && _interactableReady == isReady)
@@ -15,7 +15,7 @@ namespace Features.GrabModule.Scripts {
 
             _interactable = interactable;
             _interactableReady = isReady;
-            OnChanged?.Invoke();
+            OnHoverChanged?.Invoke();
         }
 
         public void SetGrabbable(Grabbable grabbable) {
@@ -23,7 +23,7 @@ namespace Features.GrabModule.Scripts {
                 return;
 
             _grabbable = grabbable;
-            OnChanged?.Invoke();
+            OnHoverChanged?.Invoke();
         }
 
         public void Clear() {

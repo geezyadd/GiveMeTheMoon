@@ -1,8 +1,10 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Features.TooltipModule.Scripts {
     public sealed class InteractionTooltip : MonoBehaviour {
-        [SerializeField] private TooltipData _data;
+        [FormerlySerializedAs("_data")]
+        [SerializeField] private TooltipData _idleData;
         [SerializeField] private TooltipData _readyData;
         [SerializeField] private Component _source;
 
@@ -12,7 +14,7 @@ namespace Features.TooltipModule.Scripts {
             _source == null || _source == source;
 
         public TooltipData Select(bool isReady) =>
-            isReady && _readyData != null ? _readyData : _data;
+            isReady && _readyData != null ? _readyData : _idleData;
 
         public static InteractionTooltip FindFor(Component source) {
             if (source == null)
