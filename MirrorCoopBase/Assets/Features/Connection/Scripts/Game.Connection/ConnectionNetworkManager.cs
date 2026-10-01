@@ -474,12 +474,32 @@ namespace Game.Connection
             StartCoroutine(HandleSceneChange(msg));
         }
 
+        void BeginSceneLoadPause()
+        {
+            if (NetworkClient.active)
+                NetworkClient.isLoadingScene = true;
+            if (NetworkServer.active)
+                NetworkServer.isLoadingScene = true;
+        }
+
+        void EndSceneLoadPause()
+        {
+            if (NetworkClient.active)
+                NetworkClient.isLoadingScene = false;
+            if (NetworkServer.active)
+                NetworkServer.isLoadingScene = false;
+        }
+
         IEnumerator HandleSceneChange(SceneChangeMessage msg)
         {
             if (msg.operation == SceneOperation.LoadAdditive)
             {
                 IsMapLoaded = false;
                 HasSpawn = false;
+                // Spawn messages that arrive before this scene's NetworkIdentities are
+                // registered are dropped. Pause the inbox for the whole load, including
+                // the wait, and resume only after they are registered.
+                BeginSceneLoadPause();
                 yield return new WaitForSeconds(0.1f);
                 MapUnloading?.Invoke(SceneManager.GetActiveScene().name);
             }
@@ -490,26 +510,17 @@ namespace Game.Connection
                     Scene loaded = SceneManager.GetSceneByName(msg.sceneName);
                     if (loaded.IsValid() == false)
                     {
-                        NetworkClient.isLoadingScene = true;
-                        if (NetworkServer.active)
-                            NetworkServer.isLoadingScene = true;
-
                         yield return LoadAddressableScene(msg.sceneName);
 
                         loaded = SceneManager.GetSceneByName(msg.sceneName);
                         if (loaded.IsValid() == false)
                         {
-                            NetworkClient.isLoadingScene = false;
-                            if (NetworkServer.active)
-                                NetworkServer.isLoadingScene = false;
+                            EndSceneLoadPause();
                             StopSessionAndReturnToMenu();
                             yield break;
                         }
 
                         SceneManager.SetActiveScene(loaded);
-                        NetworkClient.isLoadingScene = false;
-                        if (NetworkServer.active)
-                            NetworkServer.isLoadingScene = false;
                     }
 
                     PrepareSceneNetworkIdentities(loaded);
@@ -518,6 +529,7 @@ namespace Game.Connection
                     if (NetworkServer.active)
                         NetworkServer.SpawnObjects();
 
+                    EndSceneLoadPause();
                     NetworkClient.Send(new MapLoadedMessage());
                     break;
 
