@@ -85,6 +85,20 @@
 Play mode запускается из `BootstrapScene`, дальше меню → Host → игра. Мультиплеер на двух игроков проверяется через
 ParrelSync-клон (`MirrorCoopBase_clone_0`).
 
+### Автотест цикла
+PlayMode-тест `LoopSmokeTest` (`Assets/Tests/PlayMode/LoopSmoke/`) сам проходит цикл M1 на хосте: меню → Host → лобби →
+Start → `GameScene`, ставит 2 двигателя, дважды взлетает и садится, проверяет фазы, `LoopIndex`, двигатели после посадки,
+корабль на новой площадке, игрока на палубе, отсутствие обломков, выход в меню и отсутствие ошибок в логе. Тайминги
+полёта в тесте укорочены своей копией `ShipRunConfig`, ассеты не меняются. Тест идёт около 30 с.
+
+Запуск из корня воркспейса:
+`Invoke-AgentEditor.ps1 -AgentDir . -Command run-tests -Mode PlayMode -Filter LoopSmoke`
+(или Test Runner → PlayMode → `LoopSmokeTest`).
+
+**Запускать перед каждым мержем, который трогает корабль, посадку, шоп или сессию.** Тест лежит в Assembly-CSharp под
+`#if UNITY_INCLUDE_TESTS`, поэтому в `ProjectSettings` включено `playModeTestRunnerEnabled`. Новые разрешённые ошибки
+лога добавляются только в allow-list `LoopSmokeErrorLog`, с причиной.
+
 ## Синхронизированные модели
 
 Данные, которые должны совпадать у всех игроков, лежат в обычной C# модели. По сети их возит **bridge** (`NetworkBehaviour`). Модель только для чтения: UI и логика подписаны на события, писать в неё может только bridge.
