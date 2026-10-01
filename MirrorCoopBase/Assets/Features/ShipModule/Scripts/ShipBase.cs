@@ -37,6 +37,7 @@ namespace Features.ShipModule.Scripts {
         public bool IsFlying => _flying;
         internal float StandUpSpeed => _flightSettings.StandUpSpeed;
         internal ShipSocket[] Sockets => _sockets;
+        internal Bounds DeckBounds => _deck.bounds;
         internal IStatEntity<ShipStatType> Stats => _stats;
 
         internal bool ContainsDeckWalk(Vector3 localOffset, float inset) {
