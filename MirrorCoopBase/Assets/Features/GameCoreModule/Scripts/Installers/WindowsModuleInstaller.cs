@@ -3,6 +3,7 @@ using Features.GameCoreModule.Scripts;
 using Features.LobbyModule.Scripts;
 using Features.MenuModule.Scripts;
 using Features.MvpModule;
+using Features.ShopModule.Scripts.UI;
 using Zenject;
 
 namespace Features.GameCoreModule.Scripts.Installers {
@@ -15,6 +16,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind(typeof(IInitializable), typeof(IDisposable)).To<MenuWindow>().FromResolve().NonLazy();
             Container.Bind<GameHudWindow>().AsSingle();
             Container.Bind(typeof(IInitializable), typeof(IDisposable)).To<GameHudWindow>().FromResolve().NonLazy();
+            Container.Bind<ShopWindow>().AsSingle();
+            Container.Bind(typeof(IInitializable), typeof(IDisposable)).To<ShopWindow>().FromResolve().NonLazy();
             Container.BindInterfacesTo<GameFlowWindowsSystem>().AsSingle().NonLazy();
         }
     }

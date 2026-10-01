@@ -4,6 +4,7 @@ using Features.GameFlowStateMachineModule.Scripts.Installers;
 using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts;
 using Features.ShipModule.Scripts;
+using Features.ShopModule.Scripts.Installers;
 using Game.Connection;
 using Zenject;
 
@@ -16,6 +17,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             CameraModuleInstaller.Install(Container);
             GrabModuleInstaller.Install(Container);
             ShipModuleInstaller.Install(Container);
+            ShopModuleInstaller.Install(Container);
             ConnectionModuleInstaller.Install(Container);
             WindowsModuleInstaller.Install(Container);
             Container.Bind<IGameplaySession>().To<ConnectionGameplaySession>().AsSingle();

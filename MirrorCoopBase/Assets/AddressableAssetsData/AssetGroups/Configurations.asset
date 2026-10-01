@@ -30,6 +30,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ae144bf2cfcc83e41911d615c268f231
+    m_Address: ShopCatalog_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c3dde0722651bd54caf061cf9ac2aed3
+    m_Address: WalletConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d1e2f3a4b5c64755d6e7f8091a2b3c4d
     m_Address: ShipAccumulativeStatsConfiguration_Default
     m_ReadOnly: 0

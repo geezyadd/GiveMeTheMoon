@@ -257,6 +257,54 @@
                     "isPartOfComposite": false
                 }
             ]
+        },
+        {
+            "name": "UiMap",
+            "id": "5e1c7a2b-3d4f-4a60-9b8c-7d6e5f4a3b21",
+            "actions": [
+                {
+                    "name": "Shop",
+                    "type": "Button",
+                    "id": "6f2d8b3c-4e5a-4b71-8c9d-8e7f6a5b4c32",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "CloseWindow",
+                    "type": "Button",
+                    "id": "7a3e9c4d-5f6b-4c82-9dae-9f8a7b6c5d43",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "8b4fad5e-6a7c-4d93-aebf-a09b8c7d6e54",
+                    "path": "<Keyboard>/l",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard and Mouse",
+                    "action": "Shop",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "9c5abe6f-7b8d-4ea4-bfc0-b1ac9d8e7f65",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard and Mouse",
+                    "action": "CloseWindow",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
         }
     ],
     "controlSchemes": [
