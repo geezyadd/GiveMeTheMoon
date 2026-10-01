@@ -400,6 +400,31 @@ namespace Features.ShipModule.Scripts {
                 _poseSync.ServerSnap(berth, rotation);
         }
 
+        internal void ServerSettleAfterLanding() {
+            if (NetworkServer.active == false)
+                return;
+
+            _flight.Stop();
+            _controlsLocked = false;
+            FollowRiders(0f);
+            _flying = false;
+            if (_poseSync != null)
+                _poseSync.ServerSetFlying(false);
+
+            for (int i = 0; i < _riders.Count; i++) {
+                ShipRider rider = _riders[i];
+                if (rider != null)
+                    ServerStand(rider);
+            }
+
+            if (_lever != null)
+                _lever.ServerReset();
+
+            SleepBody();
+            if (_poseSync != null)
+                _poseSync.ServerSnap(transform.position, transform.rotation);
+        }
+
         internal void OnClientFlightChanged(bool flying) {
             if (NetworkServer.active)
                 return;
