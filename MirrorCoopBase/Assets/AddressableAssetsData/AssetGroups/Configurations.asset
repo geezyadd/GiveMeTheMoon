@@ -45,6 +45,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a9e63c1d4f0b4e8a1c2d3e4f5a6b7c8d
+    m_Address: PlayerDamageConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: fe8a31fcc2789354e83d19e63902e854, type: 2}
   m_SchemaSet:

@@ -1,4 +1,5 @@
 using Features.AddressablesConstantsGenerator.Generated;
+using Features.PlayerLifeModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Configurations;
 using Features.Zenject.Zenject.Addons.AddressablesConfigurationsLoader;
@@ -19,6 +20,9 @@ namespace Features.GameCoreModule.Scripts.Installers {
                 .AsSingle();
             Container.BindConfigurationFromAddressables<ShopCatalog>(ShopConfigurationAddresses.SHOP_CATALOG_DEFAULT).AsSingle();
             Container.BindConfigurationFromAddressables<WalletConfiguration>(ShopConfigurationAddresses.WALLET_CONFIGURATION_DEFAULT).AsSingle();
+            Container.BindConfigurationFromAddressables<PlayerDamageConfiguration>(
+                    PlayerDamageConfigurationAddresses.PLAYER_DAMAGE_CONFIGURATION_DEFAULT)
+                .AsSingle();
         }
     }
 }

@@ -51,6 +51,29 @@ namespace Features.ShipModule.Scripts {
             ResetRun();
         }
 
+        public bool TryGetFallReference(out bool inFlight, out float referenceY) {
+            inFlight = false;
+            referenceY = 0f;
+            ShipRunPhase phase = _model.Phase;
+            bool flying = phase == ShipRunPhase.Takeoff
+                || phase == ShipRunPhase.Cruise
+                || phase == ShipRunPhase.Landing;
+            if (flying) {
+                if (_ship == null)
+                    return false;
+
+                inFlight = true;
+                referenceY = DeckReferenceY(_ship);
+                return true;
+            }
+
+            if (_currentPad == null)
+                return false;
+
+            referenceY = _currentPad.BuildBerth.position.y;
+            return true;
+        }
+
         internal void Bind(ShipRunDirector director, ShipBase ship, ShipLandingPad startPad) {
             _director = director;
             _ship = ship;
@@ -489,6 +512,13 @@ namespace Features.ShipModule.Scripts {
         private void Publish() {
             if (_director != null)
                 _director.ServerPublish();
+        }
+
+        private static float DeckReferenceY(ShipBase ship) {
+            if (ship.TryGetDeckSurfaceY(Vector3.zero, out float surfaceLocalY) == false)
+                return ship.transform.position.y;
+
+            return ship.transform.TransformPoint(new Vector3(0f, surfaceLocalY, 0f)).y;
         }
 
         private static Vector3 FlattenForward(Vector3 forward) {
