@@ -44,7 +44,8 @@ namespace Features.GrabModule.Scripts {
 
             SetHovered(null);
             _hoveredInteractableModel.SetGrabbable(null);
-            if (isOwned)
+            // On disconnect the connection is already gone; OnStopServer releases the held item on the server side.
+            if (isOwned && NetworkClient.isConnected)
                 CmdRelease();
         }
 
