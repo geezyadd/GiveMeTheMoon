@@ -52,6 +52,7 @@ GameObject:
   - component: {fileID: 7209845104136634493}
   - component: {fileID: 9209845104136634495}
   - component: {fileID: 8209845104136634494}
+  - component: {fileID: 8309845104136634496}
   m_Layer: 0
   m_Name: DummyPlayer
   m_TagString: Untagged
@@ -198,26 +199,7 @@ MonoBehaviour:
   _capsuleCollider: {fileID: 6120488192738405830}
   _floatingController: {fileID: 5109845104136634491}
   _rotatablePart: {fileID: 3734261479117514419}
-  _lookTurnRate: 12
-  _locomotion:
-    walk: 5
-    sprint: 8
-    startRate: 40
-    haltRate: 80
-    haltWindow: 0.12
-    airborneScale: 0.075
-    maxDrive: 250
-    maxBrake: 800
-    cameraRelative: 1
-  _jump:
-    height: 4
-    cooldown: 0.1
-    edgeGrace: 0.2
-    pressGrace: 0.2
-    extraRiseGravity: 1.2
-    extraFallGravity: 3
-    shortHopGravity: 2
-    extraAirJumps: 0
+  _stats: {fileID: 8309845104136634496}
   _proxyReach: 0.2
   _proxyPadding: 0.1
 --- !u!114 &4109845104136634490
@@ -358,6 +340,18 @@ MonoBehaviour:
   _rb: {fileID: 7148192738405830123}
   _floating: {fileID: 5109845104136634491}
   _netBody: {fileID: 919415383680135416}
+--- !u!114 &8309845104136634496
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8c2a5e41b7d4e6c3a0f9b2d5e4c70b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2613348676932129866
 GameObject:
   m_ObjectHideFlags: 0

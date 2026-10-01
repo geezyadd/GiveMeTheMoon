@@ -1,3 +1,4 @@
+using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.FloatingControllerModule;
 using Mirror;
 using UnityEngine;
@@ -5,41 +6,12 @@ using Zenject;
 
 namespace Features.CharacterMovableModule.Scripts {
     public abstract class CharacterMovableBase : NetworkBehaviour {
-        [System.Serializable]
-        public class LocomotionTuning {
-            public float walk = 5f;
-            public float sprint = 8f;
-            public float startRate = 40f;
-            public float haltRate = 80f;
-            public float haltWindow = 0.12f;
-            public float airborneScale = 0.075f;
-            public float maxDrive = 250f;
-            public float maxBrake = 800f;
-            public bool cameraRelative = true;
-        }
-
-        [System.Serializable]
-        public class JumpTuning {
-            public float height = 4f;
-            public float cooldown = 0.1f;
-            public float edgeGrace = 0.2f;
-            public float pressGrace = 0.2f;
-            public float extraRiseGravity = 1.2f;
-            public float extraFallGravity = 3f;
-            public float shortHopGravity = 2f;
-            public int extraAirJumps;
-        }
-
         [Header("Body")]
         [SerializeField] private Rigidbody _rb;
         [SerializeField] private CapsuleCollider _capsuleCollider;
         [SerializeField] private FloatingController _floatingController;
         [SerializeField] private Transform _rotatablePart;
-        [SerializeField] private float _lookTurnRate = 12f;
-
-        [Header("Locomotion")]
-        [SerializeField] private LocomotionTuning _locomotion = new();
-        [SerializeField] private JumpTuning _jump = new();
+        [SerializeField] private PlayerStatEntity _stats;
 
         [Header("Proxy Shove")]
         [SerializeField] private float _proxyReach = 0.2f;
@@ -76,8 +48,8 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         public override void OnStartLocalPlayer() {
-            _moveSpeed = _locomotion.walk;
-            _airJumpsLeft = _jump.extraAirJumps;
+            _moveSpeed = ReadStat(PlayerStatType.WalkSpeed);
+            _airJumpsLeft = ExtraAirJumps;
             CacheWeight();
         }
 
@@ -121,7 +93,7 @@ namespace Features.CharacterMovableModule.Scripts {
 
             Vector3 planar = Flatten(_rb.linearVelocity);
             _locomoting = planar.magnitude > 0.1f;
-            _moveSpeed = _input.SprintHeld ? _locomotion.sprint : _locomotion.walk;
+            _moveSpeed = _input.SprintHeld ? ReadStat(PlayerStatType.SprintSpeed) : ReadStat(PlayerStatType.WalkSpeed);
 
             Vector3 wish = ReadWishDirection();
             DrivePlanar(wish, planar);
@@ -130,7 +102,7 @@ namespace Features.CharacterMovableModule.Scripts {
 
         private Vector3 ReadWishDirection() {
             Vector2 stick = _input.MoveStick;
-            Vector3 wish = _locomotion.cameraRelative
+            Vector3 wish = _stats.CameraRelative
                 ? CameraPlanar(stick)
                 : new Vector3(stick.x, 0f, stick.y);
 
@@ -151,20 +123,21 @@ namespace Features.CharacterMovableModule.Scripts {
 
             if (steering) {
                 desired = wish * _moveSpeed;
-                rate = _locomotion.startRate;
-                forceCap = _locomotion.maxDrive;
+                rate = ReadStat(PlayerStatType.Acceleration);
+                forceCap = ReadStat(PlayerStatType.MaxDrive);
             }
             else {
                 float speed = planar.magnitude;
-                float window = Mathf.Max(_locomotion.haltWindow, 0.01f);
-                float distanceBrake = speed > 0.01f ? (speed * speed) / (2f * window) : _locomotion.haltRate;
-                rate = Mathf.Max(_locomotion.haltRate, distanceBrake);
-                forceCap = Mathf.Max(_locomotion.maxBrake, rate);
+                float window = Mathf.Max(ReadStat(PlayerStatType.HaltWindow), 0.01f);
+                float deceleration = ReadStat(PlayerStatType.Deceleration);
+                float distanceBrake = speed > 0.01f ? (speed * speed) / (2f * window) : deceleration;
+                rate = Mathf.Max(deceleration, distanceBrake);
+                forceCap = Mathf.Max(ReadStat(PlayerStatType.MaxBrake), rate);
                 desired = Vector3.zero;
             }
 
             if (HasSupport() == false)
-                rate *= _locomotion.airborneScale;
+                rate *= ReadStat(PlayerStatType.AirControl);
 
             Vector3 next = Vector3.MoveTowards(planar, desired, rate * Time.fixedDeltaTime);
             Vector3 accel = (next - planar) / Time.fixedDeltaTime;
@@ -182,8 +155,8 @@ namespace Features.CharacterMovableModule.Scripts {
 
             _jumpReadyIn -= Time.fixedDeltaTime;
             bool supported = HasSupport();
-            bool fromLedge = _airTime <= _jump.edgeGrace && _jumpedThisAir == false;
-            bool buffered = _jumpPressedAgo <= _jump.pressGrace;
+            bool fromLedge = _airTime <= ReadStat(PlayerStatType.CoyoteTime) && _jumpedThisAir == false;
+            bool buffered = _jumpPressedAgo <= ReadStat(PlayerStatType.JumpBuffer);
             bool canGroundJump = (supported || fromLedge) && _jumpReadyIn <= 0f;
             bool canAirJump = _airJumpsLeft > 0 && _jumpReadyIn <= 0f;
 
@@ -194,21 +167,21 @@ namespace Features.CharacterMovableModule.Scripts {
 
                 _jumpedThisAir = true;
                 _jumpQueued = false;
-                _jumpPressedAgo = _jump.pressGrace;
-                _jumpReadyIn = _jump.cooldown;
+                _jumpPressedAgo = ReadStat(PlayerStatType.JumpBuffer);
+                _jumpReadyIn = ReadStat(PlayerStatType.JumpCooldown);
                 _floatingController.PauseSupport();
 
                 Vector3 velocity = _rb.linearVelocity;
                 if (groundedTakeoff == false)
                     velocity.y = 0f;
 
-                float takeoff = Mathf.Sqrt(2f * _jump.height * -Physics.gravity.y);
+                float takeoff = Mathf.Sqrt(2f * ReadStat(PlayerStatType.JumpHeight) * -Physics.gravity.y);
                 _rb.AddForce(new Vector3(0f, takeoff - velocity.y, 0f) * _rb.mass, ForceMode.Impulse);
             }
 
             if (supported && _jumpedThisAir && _rb.linearVelocity.y <= 0.05f) {
                 _jumpedThisAir = false;
-                _airJumpsLeft = _jump.extraAirJumps;
+                _airJumpsLeft = ExtraAirJumps;
             }
 
             if (supported)
@@ -217,9 +190,9 @@ namespace Features.CharacterMovableModule.Scripts {
             float vy = _rb.linearVelocity.y;
             float extra = 0f;
             if (vy > 0.15f)
-                extra = _jumpHeld ? _jump.extraRiseGravity : _jump.shortHopGravity;
+                extra = _jumpHeld ? ReadStat(PlayerStatType.RiseGravity) : ReadStat(PlayerStatType.ShortHopGravity);
             else if (vy < -0.15f)
-                extra = _jump.extraFallGravity;
+                extra = ReadStat(PlayerStatType.FallGravity);
 
             if (extra > 0f)
                 _rb.AddForce(_weight * extra);
@@ -288,7 +261,7 @@ namespace Features.CharacterMovableModule.Scripts {
                 return;
 
             Quaternion target = Quaternion.Euler(0f, _facingYaw, 0f);
-            float t = 1f - Mathf.Exp(-_lookTurnRate * Time.deltaTime);
+            float t = 1f - Mathf.Exp(-ReadStat(PlayerStatType.LookTurnRate) * Time.deltaTime);
             _rotatablePart.rotation = Quaternion.Slerp(_rotatablePart.rotation, target, t);
         }
 
@@ -318,6 +291,12 @@ namespace Features.CharacterMovableModule.Scripts {
         private bool HasSupport() {
             return _floatingController != null && _floatingController.HasSupport;
         }
+
+        private float ReadStat(PlayerStatType type) =>
+            _stats.Read(type);
+
+        private int ExtraAirJumps =>
+            Mathf.RoundToInt(ReadStat(PlayerStatType.ExtraAirJumps));
 
         private void CacheWeight() {
             if (_rb != null)
