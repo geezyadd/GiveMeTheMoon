@@ -35,11 +35,12 @@ namespace Features.ShipModule.Scripts.Debug {
         private readonly ShipRunModel _model;
         private readonly ShipStationCatalog _stations;
 
-        private readonly List<Vector3> _player = new List<Vector3>(900);
-        private readonly List<Vector3> _cameraPos = new List<Vector3>(900);
-        private readonly List<Quaternion> _cameraRot = new List<Quaternion>(900);
-        private readonly List<int> _steps = new List<int>(900);
-        private readonly List<float> _dts = new List<float>(900);
+        private readonly List<Vector3> _player = new List<Vector3>(4096);
+        private readonly List<Vector3> _cameraPos = new List<Vector3>(4096);
+        private readonly List<Quaternion> _cameraRot = new List<Quaternion>(4096);
+        private readonly List<int> _steps = new List<int>(4096);
+        private readonly List<float> _dts = new List<float>(4096);
+        private readonly StringBuilder _spikes = new StringBuilder(2048);
         private readonly StringBuilder _report = new StringBuilder(4096);
 
         private bool _gateChecked;
@@ -60,6 +61,24 @@ namespace Features.ShipModule.Scripts.Debug {
         private bool _approachReady;
         private bool _stationReady;
         private bool _cargoNoted;
+        private bool _shiftDock;
+        private bool _shiftCruise;
+        private int _shiftMarks;
+        private int _lastShifts;
+        private int _lastSpawns;
+        private int _lastDespawns;
+        private int _lastGc;
+        private int _spikeLines;
+        private string _pendingShot;
+        private int _pendingShotWait;
+        private bool _captureSample;
+        private bool _finishAfterSample;
+        private bool _finishCruise;
+        private string _finishLabel;
+        private string _finishCamera;
+        private int _finishState;
+        private float _dockFpJerkRms;
+        private float _dockTpJerkRms;
         private int _flightPass;
         private int _loopsSeen;
         private bool _shotStation;
@@ -87,8 +106,14 @@ namespace Features.ShipModule.Scripts.Debug {
         }
 
         public void Tick() {
-            if (_stopped)
+            if (_stopped) {
+                if (GameCameraService.AfterPresent == OnAfterPresent)
+                    GameCameraService.AfterPresent = null;
+
                 return;
+            }
+
+            GameCameraService.AfterPresent = OnAfterPresent;
 
             if (_gateChecked == false) {
                 _gateChecked = true;
@@ -100,6 +125,8 @@ namespace Features.ShipModule.Scripts.Debug {
                 Directory.CreateDirectory(Path.Combine(RunDir, "screenshots"));
                 Status = "armed";
                 Note("Deck feel harness armed.");
+                Note("BEFORE (filtered dt>0.05s dropped): dock-fp rms=0.0046 max=0.074; cruise-fp rms=0.022 max=0.605.");
+                Note("TARGET: all frames, cruise RMS <= 1.5x dock and max <= 0.1 m.");
             }
 
             if (_state == 0)
@@ -301,29 +328,69 @@ namespace Features.ShipModule.Scripts.Debug {
 
             if (cruise) {
                 _ship.SetDebugSteer(true, Mathf.Sin(Time.time * 1.7f) * 0.55f);
-                TryCaptureRock();
-                if (_model.Phase == ShipRunPhase.Landing && _shotApproach == false) {
-                    Capture("approach-pad");
-                    _shotApproach = true;
+                if (_shiftCruise == false && cameraId == CameraIds.FPCamera && _measureStep == 1 && _measureTime > 0.6f) {
+                    _shiftCruise = true;
+                    _shiftMarks = 3;
+                    _run.DebugForceRecenter();
                 }
             }
-
-            bool walking = _measureStep == 1 || _measureStep == 2 || _measureStep == 3;
-            if (cruise && walking && _measureTime > 0.4f && _measureTime < 0.55f)
-                Capture(cameraId == CameraIds.FPCamera ? "cruise-walk-fp" : "cruise-walk-tp");
+            else if (_shiftDock == false && _measureStep == 0 && _measureTime > 1f) {
+                _shiftDock = true;
+                _shiftMarks = 3;
+                _run.DebugForceRecenter();
+            }
 
             ApplyMeasureInput();
-            RecordSample();
+            _captureSample = true;
             if (AdvanceMeasureClock() == false)
                 return;
 
-            AppendMetrics(label);
-            _ship.SetDebugSteer(false, 0f);
-            Enter(_state == 7 ? 9 : _state + 1);
+            _finishAfterSample = true;
+            _finishCruise = cruise;
+            _finishLabel = label;
+            _finishCamera = cameraId;
+            _finishState = _state == 7 ? 9 : _state + 1;
+        }
+
+        private void OnAfterPresent() {
+            if (_captureSample) {
+                _captureSample = false;
+                RecordSample();
+            }
+
+            if (_finishAfterSample == false)
+                return;
+
+            _finishAfterSample = false;
+            AppendMetrics(_finishLabel);
+            if (_finishCruise)
+                ArmWalkShot(_finishCamera);
+
+            if (_ship != null)
+                _ship.SetDebugSteer(false, 0f);
+
+            Enter(_finishState);
+        }
+
+        private void ArmWalkShot(string cameraId) {
+            _pendingShot = cameraId == CameraIds.FPCamera ? "cruise-walk-fp" : "cruise-walk-tp";
+            _pendingShotWait = 2;
+            _input.SetScripted(new Vector2(0f, 1f), false, false);
         }
 
         private void TickFinishLeg(bool hoverDone) {
             Status = hoverDone ? "hover-land" : "travel-land";
+            if (_pendingShot != null) {
+                _input.SetScripted(new Vector2(0f, 1f), false, false);
+                if (_pendingShotWait > 0)
+                    _pendingShotWait -= 1;
+                else {
+                    Capture(_pendingShot);
+                    _pendingShot = null;
+                    _input.SetScripted(Vector2.zero, false, false);
+                }
+            }
+
             _ship.SetDebugSteer(false, 0f);
             if (_model.Phase == ShipRunPhase.Cruise || _model.Phase == ShipRunPhase.Takeoff) {
                 Vector3 to = _model.TransitDestination - _ship.transform.position;
@@ -461,20 +528,66 @@ namespace Features.ShipModule.Scripts.Debug {
             }
 
             _steps.Add(_measureStep);
-            _dts.Add(Mathf.Max(Time.deltaTime, 0.0001f));
+            float dt = Mathf.Max(Time.deltaTime, 0.0001f);
+            _dts.Add(dt);
+            NoteSpike(dt);
+        }
+
+        private void NoteSpike(float dt) {
+            int index = _player.Count - 1;
+            int shifts = _run.WorldShiftCount;
+            int spawns = _run.RockSpawns;
+            int despawns = _run.RockDespawns;
+            int gc = GC.CollectionCount(0);
+            int fixedSteps = _ship.ConsumeFixedSteps();
+            bool shifted = shifts != _lastShifts || _shiftMarks > 0;
+            float jerk = 0f;
+            float poseDrift = 0f;
+            if (index >= 0)
+                poseDrift = (_player[index] - _rider.DebugLocalOffset).magnitude;
+
+            if (index >= 2) {
+                Vector3 second = _player[index] - 2f * _player[index - 1] + _player[index - 2];
+                jerk = second.magnitude;
+            }
+
+            if ((jerk > 0.1f || shifted) && _spikeLines < 40) {
+                float norm = jerk / (dt * dt);
+                _spikes.Append("spike i=").Append(index)
+                    .Append(" frame=").Append(Time.frameCount)
+                    .Append(" dt=").Append(dt.ToString("0.000"))
+                    .Append(" fixed=").Append(fixedSteps)
+                    .Append(" shift=").Append(shifts != _lastShifts ? 1 : 0)
+                    .Append(" rock+=").Append(spawns - _lastSpawns)
+                    .Append(" rock-=").Append(despawns - _lastDespawns)
+                    .Append(" phase=").Append(_model.Phase)
+                    .Append(" gc=").Append(gc - _lastGc)
+                    .Append(" jerk=").Append(jerk.ToString("0.000"))
+                    .Append(" jerkDt2=").Append(norm.ToString("0.0"))
+                    .Append(" poseDrift=").Append(poseDrift.ToString("0.000"))
+                    .AppendLine();
+                _spikeLines += 1;
+            }
+
+            _lastShifts = shifts;
+            _lastSpawns = spawns;
+            _lastDespawns = despawns;
+            _lastGc = gc;
+            if (_shiftMarks > 0)
+                _shiftMarks -= 1;
         }
 
         private void AppendMetrics(string label) {
             Vector3 rest = AveragePlayerY(0);
             float restY = rest.y;
-            SecondDiff player = Diff(_player);
-            SecondDiff camera = Diff(_cameraPos);
+            SecondDiff player = Diff(_player, false);
+            SecondDiff playerNorm = Diff(_player, true);
+            SecondDiff camera = Diff(_cameraPos, false);
+            SecondDiff cameraNorm = Diff(_cameraPos, true);
             float rotRms = 0f;
             float rotMax = 0f;
             int rotCount = 0;
             for (int i = 2; i < _cameraRot.Count; i++) {
-                if (_dts[i] > 0.05f || _dts[i - 1] > 0.05f)
-                    continue;
                 Quaternion d0 = Quaternion.Inverse(_cameraRot[i - 2]) * _cameraRot[i - 1];
                 Quaternion d1 = Quaternion.Inverse(_cameraRot[i - 1]) * _cameraRot[i];
                 float jerk = Quaternion.Angle(d0, d1);
@@ -489,19 +602,36 @@ namespace Features.ShipModule.Scripts.Debug {
             float sprint = PlanarSpeed(3);
             float apex = MaxY(4, 7) - restY;
             float air = AirTime(restY);
+            if (label == "dock-fp")
+                _dockFpJerkRms = player.Rms;
+            else if (label == "dock-tp")
+                _dockTpJerkRms = player.Rms;
+
+            float dockRms = label.EndsWith("fp") ? _dockFpJerkRms : _dockTpJerkRms;
+            float ratio = dockRms > 0.0000001f ? player.Rms / dockRms : 0f;
             Note(
                 label
                 + " playerJerkRms=" + player.Rms.ToString("0.000000")
                 + " playerJerkMax=" + player.Max.ToString("0.000000")
+                + " playerJerkDt2Rms=" + playerNorm.Rms.ToString("0.0")
+                + " playerJerkDt2Max=" + playerNorm.Max.ToString("0.0")
                 + " camPosJerkRms=" + camera.Rms.ToString("0.000000")
                 + " camPosJerkMax=" + camera.Max.ToString("0.000000")
+                + " camPosJerkDt2Rms=" + cameraNorm.Rms.ToString("0.0")
+                + " camPosJerkDt2Max=" + cameraNorm.Max.ToString("0.0")
                 + " camRotJerkRms=" + (rotCount > 0 ? Mathf.Sqrt(rotRms / rotCount) : 0f).ToString("0.0000")
                 + " camRotJerkMax=" + rotMax.ToString("0.0000")
                 + " walkMps=" + walk.ToString("0.00")
                 + " sprintMps=" + sprint.ToString("0.00")
                 + " jumpApex=" + apex.ToString("0.00")
                 + " airTime=" + air.ToString("0.00")
+                + " rmsRatio=" + ratio.ToString("0.00")
                 + " samples=" + _player.Count);
+            if (_spikes.Length > 0) {
+                Note(_spikes.ToString().TrimEnd());
+                _spikes.Clear();
+                _spikeLines = 0;
+            }
             _player.Clear();
             _cameraPos.Clear();
             _cameraRot.Clear();
@@ -569,16 +699,18 @@ namespace Features.ShipModule.Scripts.Debug {
             return time;
         }
 
-        private SecondDiff Diff(List<Vector3> samples) {
+        private SecondDiff Diff(List<Vector3> samples, bool normalizeByDt2) {
             float sum = 0f;
             float max = 0f;
             int count = 0;
             for (int i = 2; i < samples.Count; i++) {
-                if (_dts[i] > 0.05f || _dts[i - 1] > 0.05f)
-                    continue;
-
                 Vector3 second = samples[i] - 2f * samples[i - 1] + samples[i - 2];
                 float magnitude = second.magnitude;
+                if (normalizeByDt2) {
+                    float dt = Mathf.Max(_dts[i], 0.0001f);
+                    magnitude /= dt * dt;
+                }
+
                 sum += magnitude * magnitude;
                 if (magnitude > max)
                     max = magnitude;

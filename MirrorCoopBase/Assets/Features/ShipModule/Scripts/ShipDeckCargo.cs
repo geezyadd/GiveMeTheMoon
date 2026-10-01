@@ -204,16 +204,19 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void Pin(Attached item, Transform ship) {
-            if (item.Body.parent != ship)
-                item.Body.SetParent(ship, true);
+            Vector3 world = ship.TransformPoint(item.LocalPosition);
+            Quaternion rotation = ship.rotation * item.LocalRotation;
+            if (item.Body.parent != null)
+                item.Body.SetParent(null, true);
 
-            item.Body.localPosition = item.LocalPosition;
-            item.Body.localRotation = item.LocalRotation;
+            item.Body.SetPositionAndRotation(world, rotation);
             if (item.Rigidbody != null) {
                 item.Rigidbody.isKinematic = true;
+                item.Rigidbody.interpolation = RigidbodyInterpolation.None;
+                item.Rigidbody.position = world;
+                item.Rigidbody.rotation = rotation;
                 item.Rigidbody.linearVelocity = Vector3.zero;
                 item.Rigidbody.angularVelocity = Vector3.zero;
-                item.Rigidbody.interpolation = RigidbodyInterpolation.None;
             }
 
             if (item.NetworkBody != null)

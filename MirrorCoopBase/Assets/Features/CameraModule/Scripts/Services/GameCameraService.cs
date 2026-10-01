@@ -21,6 +21,8 @@ namespace Features.CameraModule.Scripts.Services {
         private Camera _output;
         private CinemachineBrain _brain;
         private CameraLookRig _lookRig;
+        internal static Action AfterPresent;
+
         private static GameCameraService _presenting;
 
         public GameCameraService(GameCameraModel model, CameraCatalog catalog) {
@@ -340,6 +342,10 @@ namespace Features.CameraModule.Scripts.Services {
             EnsureBrain();
             if (_brain != null)
                 _brain.ManualUpdate();
+
+            Action after = AfterPresent;
+            if (after != null)
+                after();
         }
 
         private void ApplyLookRig() {

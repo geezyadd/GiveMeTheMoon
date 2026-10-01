@@ -52,6 +52,7 @@ namespace Features.ShipModule.Scripts {
         private float _rideRestY;
         private float _rideJumpVel;
 
+        internal Vector3 DebugLocalOffset => _localOffset;
         public bool IsRiding => _bound;
         public bool IsSeated => _seated;
         internal bool IsHelmSeat => _helmSeat;
@@ -97,9 +98,10 @@ namespace Features.ShipModule.Scripts {
             _rb.interpolation = RigidbodyInterpolation.None;
             _rb.linearVelocity = Vector3.zero;
             _rb.angularVelocity = Vector3.zero;
-            transform.SetParent(_platform, true);
-            transform.localPosition = _localOffset;
-            transform.localRotation = Quaternion.identity;
+            if (transform.parent != null)
+                transform.SetParent(null, true);
+
+            ApplyWorldPose();
 
             if (_floating != null)
                 _floating.HoverEnabled = false;
@@ -122,8 +124,7 @@ namespace Features.ShipModule.Scripts {
             if (_platform == null)
                 return;
 
-            transform.localPosition = localOffset;
-            transform.localRotation = Quaternion.identity;
+            ApplyWorldPose();
         }
 
         internal void ReleaseFromPlatform() {
@@ -192,14 +193,27 @@ namespace Features.ShipModule.Scripts {
             }
 
             Vector3 next = RideOffset();
-            transform.localPosition = next;
-            transform.localRotation = Quaternion.identity;
-            if (_rb != null) {
-                _rb.position = transform.position;
-                _rb.rotation = transform.rotation;
-            }
-
+            _localOffset = next;
+            ApplyWorldPose();
             _lastPlatformPos = _platform.position;
+        }
+
+        private void ApplyWorldPose() {
+            if (_platform == null)
+                return;
+
+            Vector3 world = _platform.TransformPoint(_localOffset);
+            Quaternion rotation = _platform.rotation;
+            transform.SetPositionAndRotation(world, rotation);
+            if (_rb == null)
+                return;
+
+            _rb.isKinematic = true;
+            _rb.interpolation = RigidbodyInterpolation.None;
+            _rb.position = world;
+            _rb.rotation = rotation;
+            _rb.linearVelocity = Vector3.zero;
+            _rb.angularVelocity = Vector3.zero;
         }
 
         private bool ConsumeJumpPress() {

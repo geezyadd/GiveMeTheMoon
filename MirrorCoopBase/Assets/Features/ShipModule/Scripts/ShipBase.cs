@@ -29,6 +29,7 @@ namespace Features.ShipModule.Scripts {
         private float _helmSteer;
         private bool _debugSteerActive;
         private float _debugSteer;
+        private int _fixedSteps;
         private bool _flying;
         private bool _controlsLocked;
 
@@ -562,6 +563,16 @@ namespace Features.ShipModule.Scripts {
             rider.ServerUnlockSeat();
             if (_flying == false && IsAboveDeck(rider.transform.position) == false)
                 rider.ReleaseFromPlatform();
+        }
+
+        private void FixedUpdate() {
+            _fixedSteps += 1;
+        }
+
+        internal int ConsumeFixedSteps() {
+            int steps = _fixedSteps;
+            _fixedSteps = 0;
+            return steps;
         }
 
         private void LateUpdate() {

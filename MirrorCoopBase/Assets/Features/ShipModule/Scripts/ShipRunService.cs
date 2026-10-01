@@ -19,6 +19,7 @@ namespace Features.ShipModule.Scripts {
         private readonly ShipStationCatalog _stations;
         private readonly IFlightStatContributor[] _contributors = System.Array.Empty<IFlightStatContributor>();
         private readonly List<CruiseRock> _rocks = new List<CruiseRock>();
+        private readonly List<CruiseRock> _rockPool = new List<CruiseRock>();
 
         private ShipRunDirector _director;
         private ShipBase _ship;
@@ -36,6 +37,8 @@ namespace Features.ShipModule.Scripts {
         private bool _hasModeOverride;
 
         internal int WorldShiftCount { get; private set; }
+        internal int RockSpawns { get; private set; }
+        internal int RockDespawns { get; private set; }
 
         public ShipRunService(
             ShipRunModel model,
@@ -146,6 +149,7 @@ namespace Features.ShipModule.Scripts {
             ApplyTransitFrame(false);
             _model.LastAbortReason = ShipRunAbortReason.None;
             _model.Phase = ShipRunPhase.Takeoff;
+            EnsureRockPool();
             Publish();
             return true;
         }
@@ -291,11 +295,61 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void TickRocks() {
+            ReclaimRocks();
             if (_ship == null || Time.time < _nextRockSpawn)
                 return;
 
             _nextRockSpawn = Time.time + _config.RockSpawnInterval;
             SpawnRock();
+        }
+
+        private void ReclaimRocks() {
+            for (int i = _rocks.Count - 1; i >= 0; i--) {
+                CruiseRock rock = _rocks[i];
+                if (rock == null) {
+                    _rocks.RemoveAt(i);
+                    continue;
+                }
+
+                if (rock.ServerExpired() == false)
+                    continue;
+
+                rock.ServerPark();
+                _rocks.RemoveAt(i);
+                _rockPool.Add(rock);
+                RockDespawns += 1;
+            }
+        }
+
+        private void EnsureRockPool() {
+            GameObject prefab = _stations != null ? _stations.RockPrefab : null;
+            if (prefab == null || NetworkServer.active == false)
+                return;
+
+            while (_rockPool.Count + _rocks.Count < 8) {
+                GameObject instance = Object.Instantiate(prefab, new Vector3(0f, -400f, 0f), Quaternion.identity);
+                NetworkServer.Spawn(instance);
+                CruiseRock rock = instance.GetComponent<CruiseRock>();
+                if (rock == null) {
+                    NetworkServer.Destroy(instance);
+                    return;
+                }
+
+                rock.ServerPark();
+                _rockPool.Add(rock);
+            }
+        }
+
+        private CruiseRock TakeRock() {
+            EnsureRockPool();
+            for (int i = _rockPool.Count - 1; i >= 0; i--) {
+                CruiseRock pooled = _rockPool[i];
+                _rockPool.RemoveAt(i);
+                if (pooled != null)
+                    return pooled;
+            }
+
+            return null;
         }
 
         private void SpawnRock() {
@@ -321,17 +375,13 @@ namespace Features.ShipModule.Scripts {
                 ? Mathf.Max(_config.RockSpawnAhead, ReadTravelMetersPerSecond() * 3.5f)
                 : _config.RockSpawnAhead;
             Vector3 origin = _ship.transform.position + ahead * spawnAhead + right * lateral;
-            GameObject instance = Object.Instantiate(
-                prefab,
+            CruiseRock rock = TakeRock();
+            if (rock == null)
+                return;
+
+            rock.transform.SetPositionAndRotation(
                 origin,
                 Quaternion.LookRotation(travel ? forward : -incoming, Vector3.up));
-            NetworkServer.Spawn(instance);
-            CruiseRock rock = instance.GetComponent<CruiseRock>();
-            if (rock == null) {
-                NetworkServer.Destroy(instance);
-                return;
-            }
-
             if (travel) {
                 float speed = Mathf.Max(1f, ReadTravelMetersPerSecond());
                 rock.ServerLaunch(Vector3.zero, spawnAhead / speed + 6f);
@@ -342,6 +392,7 @@ namespace Features.ShipModule.Scripts {
             }
 
             _rocks.Add(rock);
+            RockSpawns += 1;
         }
 
         private void ClearRocks() {
@@ -350,10 +401,8 @@ namespace Features.ShipModule.Scripts {
                 if (rock == null)
                     continue;
 
-                if (NetworkServer.active)
-                    NetworkServer.Destroy(rock.gameObject);
-                else
-                    Object.Destroy(rock.gameObject);
+                rock.ServerPark();
+                _rockPool.Add(rock);
             }
 
             _rocks.Clear();
@@ -573,6 +622,18 @@ namespace Features.ShipModule.Scripts {
                 _director.ServerPublish();
         }
 
+        internal void DebugForceRecenter() {
+            if (_ship == null)
+                return;
+
+            Vector3 position = _ship.transform.position;
+            Vector3 delta = new Vector3(-position.x, 0f, -position.z);
+            if (delta.sqrMagnitude < 1f)
+                delta = new Vector3(40f, 0f, -25f);
+
+            ApplyWorldShift(delta);
+        }
+
         private void RecenterIfFar() {
             if (_ship == null)
                 return;
@@ -582,7 +643,10 @@ namespace Features.ShipModule.Scripts {
             if (position.x * position.x + position.z * position.z < limit * limit)
                 return;
 
-            Vector3 delta = new Vector3(-position.x, 0f, -position.z);
+            ApplyWorldShift(new Vector3(-position.x, 0f, -position.z));
+        }
+
+        private void ApplyWorldShift(Vector3 delta) {
             _ship.ServerApplyWorldShift(delta);
             ShiftPad(_currentPad, delta);
             ShiftPad(_previousPad, delta);
