@@ -34,6 +34,7 @@ namespace Features.ShipModule.Scripts {
         private IGameCameraService _cameras;
 
         private const float OffsetSendSeconds = 0.05f;
+        private const float STAND_UP_SPEED = 6f;
 
         private bool _bound;
         private Vector3 _localOffset;
@@ -45,6 +46,7 @@ namespace Features.ShipModule.Scripts {
         private ShipBase _ship;
         private Transform _platform;
         private bool _wasKinematic;
+        private RigidbodyInterpolation _wasInterpolation;
         private bool _netBodyWasEnabled;
         private float _nextOffsetSend;
         private float _nextSteerSend;
@@ -77,16 +79,20 @@ namespace Features.ShipModule.Scripts {
 
             _ship = ship;
             _platform = ship.transform;
-            _localOffset = Quaternion.Inverse(_platform.rotation) * (transform.position - _platform.position);
+            Quaternion toLocal = Quaternion.Inverse(_platform.rotation);
+            float localVerticalSpeed = (toLocal * _rb.linearVelocity).y;
+            _localOffset = toLocal * (transform.position - _platform.position);
             _ship.ClampDeckWalk(ref _localOffset, _deckInset);
-            _rideRestY = _localOffset.y;
-            _rideJumpVel = 0f;
+            _rideRestY = ResolveRideRestY();
+            _rideJumpVel = isOwned && _localOffset.y > _rideRestY ? localVerticalSpeed : 0f;
+            _jumpHeldPrev = _input != null && _input.JumpHeld;
             _offsetFrom = _localOffset;
             _offsetTo = _localOffset;
             _offsetBlend = 1f;
             _lastPlatformPos = _platform.position;
             _bound = true;
             _wasKinematic = _rb.isKinematic;
+            _wasInterpolation = _rb.interpolation;
             _rb.isKinematic = true;
             _rb.detectCollisions = false;
             _rb.interpolation = RigidbodyInterpolation.None;
@@ -111,19 +117,23 @@ namespace Features.ShipModule.Scripts {
 
             _bound = false;
             _platform = null;
-            _seated = false;
-            _helmSeat = false;
+            if (isServer) {
+                _seated = false;
+                _helmSeat = false;
+            }
 
             if (_rb != null) {
                 _rb.isKinematic = _wasKinematic;
                 _rb.detectCollisions = true;
-                _rb.interpolation = RigidbodyInterpolation.Interpolate;
+                _rb.interpolation = _wasInterpolation;
             }
 
             if (_floating != null)
                 _floating.HoverEnabled = true;
 
             RestoreNetworkBody();
+            if (isOwned && NetworkClient.ready)
+                CmdSetRiding(false);
         }
 
         internal void ServerLockSeat(Vector3 localOffset, bool helm) {
@@ -148,10 +158,8 @@ namespace Features.ShipModule.Scripts {
                     if (_helmSeat)
                         SendSteerIfNeeded();
 
-                    if (jumped) {
+                    if (jumped)
                         CmdStand();
-                        return;
-                    }
                 }
                 else {
                     ApplyOwnedWalk(dt);
@@ -159,6 +167,7 @@ namespace Features.ShipModule.Scripts {
                         BeginRideJump();
 
                     SimulateRideJump(dt);
+                    SendOffsetIfNeeded();
                 }
             }
 
@@ -205,7 +214,7 @@ namespace Features.ShipModule.Scripts {
 
             bool grounded = _localOffset.y <= _rideRestY + 0.001f && _rideJumpVel <= 0f;
             if (grounded) {
-                _localOffset.y = _rideRestY;
+                _localOffset.y = Mathf.MoveTowards(_localOffset.y, _rideRestY, STAND_UP_SPEED * dt);
                 _rideJumpVel = 0f;
                 return;
             }
@@ -283,6 +292,13 @@ namespace Features.ShipModule.Scripts {
 
             if (current && _bound == false && _ship != null)
                 BindToPlatform(_ship);
+        }
+
+        private float ResolveRideRestY() {
+            if (_floating == null || _ship.TryGetDeckSurfaceY(_localOffset, out float deckSurfaceY) == false)
+                return _localOffset.y;
+
+            return deckSurfaceY + _floating.StandHeight;
         }
 
         private float CurrentSpeed() {

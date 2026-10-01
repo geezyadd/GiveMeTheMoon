@@ -115,26 +115,35 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void OnRunStateChanged(ShipRunPhase previous, ShipRunPhase current) {
-            ApplyToModel();
+            ApplyToClientModel();
         }
 
         private void OnRunStateChangedInt(int previous, int current) {
-            ApplyToModel();
+            ApplyToClientModel();
         }
 
         private void OnRunStateChangedDouble(double previous, double current) {
-            ApplyToModel();
+            ApplyToClientModel();
         }
 
         private void OnRunStateChangedBool(bool previous, bool current) {
-            ApplyToModel();
+            ApplyToClientModel();
         }
 
         private void OnRunStateChangedFloat(float previous, float current) {
-            ApplyToModel();
+            ApplyToClientModel();
         }
 
         private void OnRunStateChangedVector3(Vector3 previous, Vector3 current) {
+            ApplyToClientModel();
+        }
+
+        // Mirror runs these hooks on the host while ServerPublish is still assigning the SyncVars one by one;
+        // copying the half-updated set back would overwrite the server model (e.g. LoopIndex reset to 0).
+        private void ApplyToClientModel() {
+            if (isServer)
+                return;
+
             ApplyToModel();
         }
 

@@ -7,6 +7,10 @@ using Zenject;
 
 namespace Features.ShipModule.Scripts {
     public sealed class ShipBase : MonoBehaviour {
+        private const float BOARDING_EDGE_TOLERANCE = 0.5f;
+        private const float BOARDING_MIN_HEIGHT = -0.5f;
+        private const float BOARDING_MAX_HEIGHT = 6f;
+
         [SerializeField] private ShipSocket[] _sockets;
         [SerializeField] private ShipLaunchLever _lever;
         [SerializeField] private Transform _destination;
@@ -54,6 +58,23 @@ namespace Features.ShipModule.Scripts {
             localOffset.z = closestLocal.z;
         }
 
+        internal bool TryGetDeckSurfaceY(Vector3 localOffset, out float surfaceY) {
+            surfaceY = localOffset.y;
+            BoxCollider[] boxes = WalkBoxes();
+            Transform deckTransform = DeckTransform(boxes);
+            if (deckTransform == null)
+                return false;
+
+            Vector3 deckLocal = deckTransform.InverseTransformPoint(transform.TransformPoint(localOffset));
+            BoxCollider box = FindClosestWalkBox(boxes, deckLocal, out float x, out float z);
+            if (box == null)
+                return false;
+
+            Vector3 deckTop = new Vector3(x, box.center.y + box.size.y * 0.5f, z);
+            surfaceY = transform.InverseTransformPoint(deckTransform.TransformPoint(deckTop)).y;
+            return true;
+        }
+
         private bool TryClosestDeckWalk(Vector3 localOffset, out Vector3 closestLocal, out float dx, out float dz) {
             closestLocal = localOffset;
             dx = 0f;
@@ -64,10 +85,20 @@ namespace Features.ShipModule.Scripts {
                 return false;
 
             Vector3 deckLocal = deckTransform.InverseTransformPoint(transform.TransformPoint(localOffset));
+            if (FindClosestWalkBox(boxes, deckLocal, out float bestX, out float bestZ) == null)
+                return false;
+
+            closestLocal = transform.InverseTransformPoint(deckTransform.TransformPoint(new Vector3(bestX, deckLocal.y, bestZ)));
+            dx = closestLocal.x - localOffset.x;
+            dz = closestLocal.z - localOffset.z;
+            return true;
+        }
+
+        private static BoxCollider FindClosestWalkBox(BoxCollider[] boxes, Vector3 deckLocal, out float bestX, out float bestZ) {
             float best = float.MaxValue;
-            float bestX = deckLocal.x;
-            float bestZ = deckLocal.z;
-            bool found = false;
+            bestX = deckLocal.x;
+            bestZ = deckLocal.z;
+            BoxCollider closest = null;
             for (int i = 0; i < boxes.Length; i++) {
                 BoxCollider box = boxes[i];
                 if (box == null || box.enabled == false)
@@ -86,16 +117,10 @@ namespace Features.ShipModule.Scripts {
                 best = dist;
                 bestX = x;
                 bestZ = z;
-                found = true;
+                closest = box;
             }
 
-            if (found == false)
-                return false;
-
-            closestLocal = transform.InverseTransformPoint(deckTransform.TransformPoint(new Vector3(bestX, deckLocal.y, bestZ)));
-            dx = closestLocal.x - localOffset.x;
-            dz = closestLocal.z - localOffset.z;
-            return true;
+            return closest;
         }
 
         private Transform DeckTransform(BoxCollider[] boxes) {
@@ -235,10 +260,6 @@ namespace Features.ShipModule.Scripts {
             ApplyDefaultStats();
         }
 
-        internal void BindDestination(Transform destination) {
-            _destination = destination;
-        }
-
         internal void RegisterRider(ShipRider rider) {
             if (rider == null)
                 return;
@@ -267,6 +288,10 @@ namespace Features.ShipModule.Scripts {
             }
 
             _insideVolume.Remove(rider);
+            // Binding turns the rider's collisions off, which raises this exit; a bound rider is released by its own path.
+            if (rider.IsRiding)
+                return;
+
             UnregisterRider(rider);
         }
 
@@ -278,11 +303,6 @@ namespace Features.ShipModule.Scripts {
                 rider.ReleaseFromPlatform();
 
             _riders.Remove(rider);
-        }
-
-        internal void NotifyRiderLeft(ShipRider rider) {
-            _riders.Remove(rider);
-            ClearOccupant(rider);
         }
 
         internal bool ServerRequestLaunch() {
@@ -422,6 +442,8 @@ namespace Features.ShipModule.Scripts {
 
             ClearOccupant(rider);
             rider.ServerUnlockSeat();
+            if (_flying == false)
+                UnregisterRider(rider);
         }
 
         private void LateUpdate() {
@@ -649,9 +671,24 @@ namespace Features.ShipModule.Scripts {
 
         private void BindRiders() {
             for (int i = 0; i < _riders.Count; i++) {
-                if (_riders[i] != null)
+                if (_riders[i] != null && IsAboveDeck(_riders[i].transform.position))
                     _riders[i].BindToPlatform(this);
             }
+        }
+
+        private bool IsAboveDeck(Vector3 worldPosition) {
+            Vector3 local = Quaternion.Inverse(transform.rotation) * (worldPosition - transform.position);
+            if (TryClosestDeckWalk(local, out _, out float dx, out float dz) == false)
+                return false;
+
+            if (dx * dx + dz * dz > BOARDING_EDGE_TOLERANCE * BOARDING_EDGE_TOLERANCE)
+                return false;
+
+            if (TryGetDeckSurfaceY(local, out float surfaceY) == false)
+                return false;
+
+            float height = local.y - surfaceY;
+            return height >= BOARDING_MIN_HEIGHT && height <= BOARDING_MAX_HEIGHT;
         }
 
         private void FollowRiders(float dt) {
