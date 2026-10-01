@@ -474,7 +474,14 @@ namespace Features.ShipModule.Scripts {
             _flight.ShiftWorld(delta);
             Vector3 position = transform.position + delta;
             ApplyDisplayPose(position, transform.rotation);
-            if (_poseSync != null)
+            if (_poseSync == null)
+                return;
+
+            // A snap ends the flight on clients (it doubles as the landing berth snap), so a shift in flight is sent
+            // as a shift of the client's interpolation buffer instead.
+            if (_flying)
+                _poseSync.ServerShift(delta, position, transform.rotation);
+            else
                 _poseSync.ServerSnap(position, transform.rotation);
         }
 

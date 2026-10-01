@@ -42,6 +42,7 @@ namespace Features.ShipModule.Scripts {
         private float _offsetBlend = 1f;
         private bool _jumpHeldPrev;
         private Vector3 _lastPlatformPos;
+        private Quaternion _lastPlatformRot = Quaternion.identity;
         private ShipBase _ship;
         private Transform _platform;
         private bool _wasKinematic;
@@ -90,6 +91,7 @@ namespace Features.ShipModule.Scripts {
             _offsetTo = _localOffset;
             _offsetBlend = 1f;
             _lastPlatformPos = _platform.position;
+            _lastPlatformRot = _platform.rotation;
             _bound = true;
             _wasKinematic = _rb.isKinematic;
             _wasInterpolation = _rb.interpolation;
@@ -196,6 +198,7 @@ namespace Features.ShipModule.Scripts {
             _localOffset = next;
             ApplyWorldPose();
             _lastPlatformPos = _platform.position;
+            _lastPlatformRot = _platform.rotation;
         }
 
         private void ApplyWorldPose() {
@@ -226,8 +229,7 @@ namespace Features.ShipModule.Scripts {
             if (_input == null || dt <= 0f)
                 return;
 
-            Vector3 worldMove = CameraPlanar(_input.MoveStick) * CurrentSpeed() * dt;
-            Vector3 localMove = Quaternion.Inverse(_platform.rotation) * worldMove;
+            Vector3 localMove = DeckPlanar(_input.MoveStick) * CurrentSpeed() * dt;
             _localOffset.x += localMove.x;
             _localOffset.z += localMove.z;
             if (_ship != null)
@@ -345,7 +347,9 @@ namespace Features.ShipModule.Scripts {
             return _walkSpeed;
         }
 
-        private Vector3 CameraPlanar(Vector2 stick) {
+        // Walk direction in ship space, flattened on the deck plane: flattening on the world horizontal bends the
+        // walk while the ship banks. The camera was presented last frame with the ship at _lastPlatformRot.
+        private Vector3 DeckPlanar(Vector2 stick) {
             if (stick.sqrMagnitude < 0.0001f)
                 return Vector3.zero;
 
@@ -355,18 +359,19 @@ namespace Features.ShipModule.Scripts {
             if (cameraTransform == null)
                 return new Vector3(stick.x, 0f, stick.y);
 
-            Vector3 forward = cameraTransform.forward;
-            Vector3 right = cameraTransform.right;
+            Quaternion toDeck = Quaternion.Inverse(_lastPlatformRot);
+            Vector3 forward = toDeck * cameraTransform.forward;
+            Vector3 right = toDeck * cameraTransform.right;
             forward.y = 0f;
             right.y = 0f;
             if (forward.sqrMagnitude < 0.0001f || right.sqrMagnitude < 0.0001f)
                 return new Vector3(stick.x, 0f, stick.y);
 
-            Vector3 world = forward.normalized * stick.y + right.normalized * stick.x;
-            if (world.sqrMagnitude > 1f)
-                world.Normalize();
+            Vector3 local = forward.normalized * stick.y + right.normalized * stick.x;
+            if (local.sqrMagnitude > 1f)
+                local.Normalize();
 
-            return world;
+            return local;
         }
 
         [Command]
