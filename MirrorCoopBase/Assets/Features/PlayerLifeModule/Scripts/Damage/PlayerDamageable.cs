@@ -7,12 +7,12 @@ namespace Features.PlayerLifeModule.Scripts {
     public sealed class PlayerDamageable : NetworkBehaviour, IDamageable {
         private const uint NO_SOURCE_NET_ID = 0;
         private const int UNPUBLISHED_REVISION = -1;
+        private const int UNSYNCED_REVISION = 0;
 
         private PlayerDamageConfiguration _configuration;
         private PlayerDamageableRegistry _registry;
         private PlayerHealth _health;
         private int _publishedRevision = UNPUBLISHED_REVISION;
-        private int _diedNotificationCount;
 
         [SyncVar(hook = nameof(OnDamageSyncChanged))]
         private PlayerDamageSync _sync;
@@ -28,9 +28,6 @@ namespace Features.PlayerLifeModule.Scripts {
 
         public bool IsDead =>
             _sync.IsDead;
-
-        public int DiedNotificationCount =>
-            _diedNotificationCount;
 
         [Inject]
         private void InjectDependencies(PlayerDamageConfiguration configuration, PlayerDamageableRegistry registry) {
@@ -102,8 +99,16 @@ namespace Features.PlayerLifeModule.Scripts {
             };
         }
 
-        private void OnDamageSyncChanged(PlayerDamageSync previous, PlayerDamageSync current) =>
+        private void OnDamageSyncChanged(PlayerDamageSync previous, PlayerDamageSync current) {
+            // The first value a client gets is the spawn snapshot: a late joiner must not replay an old death.
+            bool isSpawnSnapshot = previous.Revision == UNSYNCED_REVISION;
+            if (isSpawnSnapshot) {
+                _publishedRevision = current.Revision;
+                return;
+            }
+
             Publish(current);
+        }
 
         private void Publish(PlayerDamageSync sync) {
             if (sync.Revision == _publishedRevision)
@@ -118,13 +123,6 @@ namespace Features.PlayerLifeModule.Scripts {
             if (sync.Kind != PlayerDamageSyncKind.Died)
                 return;
 
-            _diedNotificationCount++;
-            Debug.Log(
-                "[PlayerDamageable] OnDied type=" + info.Type
-                + " health=" + sync.Health
-                + " isServer=" + isServer
-                + " isClient=" + isClient
-                + " count=" + _diedNotificationCount);
             OnDied?.Invoke(info);
         }
 
