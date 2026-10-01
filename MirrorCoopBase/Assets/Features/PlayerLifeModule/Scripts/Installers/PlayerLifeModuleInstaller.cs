@@ -4,13 +4,13 @@ using Zenject;
 namespace Features.PlayerLifeModule.Scripts.Installers {
     public sealed class PlayerLifeModuleInstaller : Installer<PlayerLifeModuleInstaller> {
         public override void InstallBindings() {
-            // Debug stand-in until the life state machine binds IPlayerLifeQuery.
-            // IfNotBound skips this when that binding is already registered above this line,
-            // or by an installer that ran earlier. A later duplicate bind still throws.
-            Container.Bind<IPlayerLifeQuery>()
-                .To<DebugPlayerLifeQuery>()
-                .AsSingle()
-                .IfNotBound();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // Debug stand-in until the life states bind IPlayerLifeQuery; that binding must be installed before this installer.
+            // HasBinding instead of IfNotBound: IfNotBound is checked per contract and would also skip ITickable / IGameplaySession.
+            if (Container.HasBinding<IPlayerLifeQuery>() == false)
+                Container.BindInterfacesTo<DebugPlayerLifeQuery>().AsSingle();
+#endif
+            Container.Bind<ISpectatorTargetService>().To<SpectatorTargetService>().AsSingle();
             Container.BindInterfacesTo<SpectatorSystem>().AsSingle();
         }
     }

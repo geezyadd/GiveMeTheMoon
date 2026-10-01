@@ -1,4 +1,5 @@
 using Features.CameraModule.Scripts.Services;
+using Features.CharacterMovableModule.Scripts.Models;
 using Features.InputModule.Realization.Scripts.Generated;
 using Mirror;
 using UnityEngine;
@@ -18,6 +19,9 @@ namespace Features.GrabModule.Scripts {
 
         [Inject]
         private HoveredInteractableModel _hoveredInteractableModel;
+
+        [Inject]
+        private PlayerControlBlockModel _controlBlockModel;
 
         [SyncVar(hook = nameof(OnHeldNetIdChanged))]
         private uint _heldNetId;
@@ -79,6 +83,9 @@ namespace Features.GrabModule.Scripts {
         }
 
         private void OnGrab() {
+            if (_controlBlockModel.IsBlocked)
+                return;
+
             Grabbable item = ResolveGrabbable();
             if (item == null || item.CanBeGrabbed == false || IsHolding)
                 return;
@@ -87,6 +94,9 @@ namespace Features.GrabModule.Scripts {
         }
 
         private void OnRelease() {
+            if (_controlBlockModel.IsBlocked)
+                return;
+
             CmdRelease();
         }
 

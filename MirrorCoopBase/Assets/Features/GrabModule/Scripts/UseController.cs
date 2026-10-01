@@ -1,4 +1,5 @@
 using Features.CameraModule.Scripts.Services;
+using Features.CharacterMovableModule.Scripts.Models;
 using Features.InputModule.Realization.Scripts.Generated;
 using Mirror;
 using UnityEngine;
@@ -18,6 +19,9 @@ namespace Features.GrabModule.Scripts {
 
         [Inject]
         private HoveredInteractableModel _hoveredInteractableModel;
+
+        [Inject]
+        private PlayerControlBlockModel _controlBlockModel;
 
         private Collider _hoverCollider;
         private InteractableBase[] _onTarget = System.Array.Empty<InteractableBase>();
@@ -43,6 +47,9 @@ namespace Features.GrabModule.Scripts {
         }
 
         private void OnUse() {
+            if (_controlBlockModel.IsBlocked)
+                return;
+
             InteractableBase target = ResolveUsable(out _);
             if (target == null)
                 return;

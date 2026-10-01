@@ -18,7 +18,7 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
         }
 
         private void Refresh() {
-            if (View == null || View.IsViewDisposed)
+            if (View.IsViewDisposed)
                 return;
 
             if (_spectatorModel.IsSpectating == false) {

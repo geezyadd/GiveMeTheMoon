@@ -10,12 +10,12 @@ namespace Features.CameraModule.Scripts.Services {
     public sealed class GameCameraService : IGameCameraService, IInitializable, IDisposable, IGameplaySession {
         private const int LivePriority = 100;
         private const int StandbyPriority = 10;
+        private const string ORBIT_HOLD_ANCHOR_NAME = "OrbitHoldAnchor";
 
         private readonly GameCameraModel _model;
         private readonly CameraCatalog _catalog;
 
         private Transform _root;
-        private Transform _hold;
         private Camera _output;
         private CinemachineBrain _brain;
 
@@ -99,15 +99,16 @@ namespace Features.CameraModule.Scripts.Services {
         public void HoldOrbit() {
             EnsureRoot();
             EnsureLookPivot();
-            if (_hold == null) {
-                GameObject holdObject = new GameObject("SpectatorHold");
-                holdObject.transform.SetParent(_root, false);
-                _hold = holdObject.transform;
+            if (_model.OrbitHoldAnchor == null) {
+                GameObject anchorObject = new GameObject(ORBIT_HOLD_ANCHOR_NAME);
+                anchorObject.transform.SetParent(_root, false);
+                _model.OrbitHoldAnchor = anchorObject.transform;
             }
 
+            Transform anchor = _model.OrbitHoldAnchor;
             Transform pivot = _model.LookPivot;
-            _hold.SetPositionAndRotation(pivot.position, pivot.rotation);
-            RetargetOrbit(_hold);
+            anchor.SetPositionAndRotation(pivot.position, pivot.rotation);
+            RetargetOrbit(anchor);
         }
 
         public void ClearLocalPlayer() {
@@ -158,7 +159,6 @@ namespace Features.CameraModule.Scripts.Services {
                 UnityEngine.Object.Destroy(_root.gameObject);
 
             _root = null;
-            _hold = null;
             _output = null;
             _brain = null;
             _model.Clear();

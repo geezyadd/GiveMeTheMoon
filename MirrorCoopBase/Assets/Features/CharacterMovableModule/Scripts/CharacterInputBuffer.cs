@@ -9,15 +9,19 @@ namespace Features.CharacterMovableModule.Scripts {
     public sealed class CharacterInputBuffer : IInitializable, IDisposable, IGameplaySession {
         private readonly IInputService _inputService;
         private readonly CharacterMovableModel _model;
-        private bool _suppressed;
+        private readonly PlayerControlBlockModel _controlBlockModel;
 
         public Vector2 MoveStick { get; private set; }
         public bool JumpHeld { get; private set; }
         public bool SprintHeld { get; private set; }
 
-        public CharacterInputBuffer(IInputService inputService, CharacterMovableModel model) {
+        public CharacterInputBuffer(
+            IInputService inputService,
+            CharacterMovableModel model,
+            PlayerControlBlockModel controlBlockModel) {
             _inputService = inputService;
             _model = model;
+            _controlBlockModel = controlBlockModel;
         }
 
         public void Initialize() {
@@ -27,6 +31,7 @@ namespace Features.CharacterMovableModule.Scripts {
             _inputService.Jump.Canceled += OnJumpCanceled;
             _inputService.Sprint.Started += OnSprintStarted;
             _inputService.Sprint.Canceled += OnSprintCanceled;
+            _controlBlockModel.OnChanged += OnControlBlockChanged;
         }
 
         public void Dispose() {
@@ -36,42 +41,37 @@ namespace Features.CharacterMovableModule.Scripts {
             _inputService.Jump.Canceled -= OnJumpCanceled;
             _inputService.Sprint.Started -= OnSprintStarted;
             _inputService.Sprint.Canceled -= OnSprintCanceled;
+            _controlBlockModel.OnChanged -= OnControlBlockChanged;
         }
 
         public void CleanupGameplay() {
-            _suppressed = false;
-            MoveStick = Vector2.zero;
-            JumpHeld = false;
-            SprintHeld = false;
+            ResetInput();
             _model.Clear();
         }
 
-        public void RestartGameplay() {
-            _suppressed = false;
+        public void RestartGameplay() =>
+            ResetInput();
+
+        private void ResetInput() {
             MoveStick = Vector2.zero;
             JumpHeld = false;
             SprintHeld = false;
         }
 
-        public void SetSuppressed(bool suppressed) {
-            _suppressed = suppressed;
-            if (suppressed == false)
-                return;
-
-            MoveStick = Vector2.zero;
-            JumpHeld = false;
-            SprintHeld = false;
+        private void OnControlBlockChanged() {
+            if (_controlBlockModel.IsBlocked)
+                ResetInput();
         }
 
         private void OnMoveChanged(Vector2 value) {
-            if (_suppressed)
+            if (_controlBlockModel.IsBlocked)
                 return;
 
             MoveStick = value;
         }
 
         private void OnJumpStarted() {
-            if (_suppressed)
+            if (_controlBlockModel.IsBlocked)
                 return;
 
             JumpHeld = true;
@@ -82,7 +82,7 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         private void OnSprintStarted() {
-            if (_suppressed)
+            if (_controlBlockModel.IsBlocked)
                 return;
 
             SprintHeld = true;

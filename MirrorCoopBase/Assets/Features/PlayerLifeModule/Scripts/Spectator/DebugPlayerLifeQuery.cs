@@ -1,13 +1,16 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
 using System.Collections.Generic;
 using Features.CameraModule.Scripts;
+using Features.GameCoreModule.Scripts;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Zenject;
 
 namespace Features.PlayerLifeModule.Scripts.Spectator {
-    // Debug-only stand-in for IPlayerLifeQuery. Every spawned player stays Alive.
+    // Debug-only stand-in for IPlayerLifeQuery (editor and development builds). Every spawned player stays Alive.
     // F9 toggles the local player Dead/Alive so the spectator can be tested before the real life states exist.
-    public sealed class DebugPlayerLifeQuery : IPlayerLifeQuery {
+    public sealed class DebugPlayerLifeQuery : IPlayerLifeQuery, ITickable, IGameplaySession {
         private const float SCAN_INTERVAL = 0.25f;
 
         private readonly List<Transform> _targets = new();
@@ -31,18 +34,22 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
             }
         }
 
-        public void DebugTick() {
+        public void Tick() {
             PollDeathToggle();
             if (HasMissingTarget() || Time.time >= _nextScanAt)
                 RefreshTargets(true);
         }
 
-        public void ResetDebugState() {
+        public void CleanupGameplay() =>
+            ResetLocalState();
+
+        public void RestartGameplay() =>
+            ResetLocalState();
+
+        private void ResetLocalState() =>
             _localState = PlayerLifeState.Alive;
-        }
 
         private void PollDeathToggle() {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null || keyboard.f9Key.wasPressedThisFrame == false)
                 return;
@@ -51,7 +58,6 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
                 ? PlayerLifeState.Alive
                 : PlayerLifeState.Dead;
             OnLocalStateChanged?.Invoke(_localState);
-#endif
         }
 
         private bool HasMissingTarget() {
@@ -115,3 +121,4 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
         }
     }
 }
+#endif

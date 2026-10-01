@@ -16,6 +16,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<SteamLobbyModel>().AsSingle();
             Container.Bind<PreloadedWindowsModel>().AsSingle();
             Container.Bind<CharacterMovableModel>().AsSingle();
+            Container.Bind<PlayerControlBlockModel>().AsSingle();
             Container.Bind<GameCameraModel>().AsSingle();
             Container.Bind<ShipRunModel>().AsSingle();
             Container.Bind<HoveredInteractableModel>().AsSingle();
