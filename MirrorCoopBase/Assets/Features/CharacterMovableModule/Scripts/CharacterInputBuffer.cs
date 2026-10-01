@@ -9,6 +9,7 @@ namespace Features.CharacterMovableModule.Scripts {
     public sealed class CharacterInputBuffer : IInitializable, IDisposable, IGameplaySession {
         private readonly IInputService _inputService;
         private readonly CharacterMovableModel _model;
+        private bool _suppressed;
 
         public Vector2 MoveStick { get; private set; }
         public bool JumpHeld { get; private set; }
@@ -38,6 +39,7 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         public void CleanupGameplay() {
+            _suppressed = false;
             MoveStick = Vector2.zero;
             JumpHeld = false;
             SprintHeld = false;
@@ -45,16 +47,33 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         public void RestartGameplay() {
+            _suppressed = false;
+            MoveStick = Vector2.zero;
+            JumpHeld = false;
+            SprintHeld = false;
+        }
+
+        public void SetSuppressed(bool suppressed) {
+            _suppressed = suppressed;
+            if (suppressed == false)
+                return;
+
             MoveStick = Vector2.zero;
             JumpHeld = false;
             SprintHeld = false;
         }
 
         private void OnMoveChanged(Vector2 value) {
+            if (_suppressed)
+                return;
+
             MoveStick = value;
         }
 
         private void OnJumpStarted() {
+            if (_suppressed)
+                return;
+
             JumpHeld = true;
         }
 
@@ -63,6 +82,9 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         private void OnSprintStarted() {
+            if (_suppressed)
+                return;
+
             SprintHeld = true;
         }
 

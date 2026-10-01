@@ -1,4 +1,5 @@
 using Features.CameraModule.Scripts;
+using Features.PlayerLifeModule.Scripts.Installers;
 using Features.CharacterMovableModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.Installers;
 using Features.GrabModule.Scripts;
@@ -14,6 +15,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
         public override void InstallBindings() {
             GameFlowStateMachineModuleInstaller.Install(Container);
             InputModuleInstaller.Install(Container);
+            PlayerLifeModuleInstaller.Install(Container);
             CharacterMovableModuleInstaller.Install(Container);
             CameraModuleInstaller.Install(Container);
             GrabModuleInstaller.Install(Container);

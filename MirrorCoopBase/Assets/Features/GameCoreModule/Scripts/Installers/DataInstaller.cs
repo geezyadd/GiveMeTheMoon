@@ -1,4 +1,5 @@
 using Features.CameraModule.Scripts.Models;
+using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.GameFlowStateMachineModule.Scripts;
 using Features.GrabModule.Scripts;
@@ -18,6 +19,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<GameCameraModel>().AsSingle();
             Container.Bind<ShipRunModel>().AsSingle();
             Container.Bind<HoveredInteractableModel>().AsSingle();
+            Container.Bind<SpectatorModel>().AsSingle();
         }
     }
 }

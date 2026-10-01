@@ -15,6 +15,7 @@ namespace Features.CameraModule.Scripts.Services {
         private readonly CameraCatalog _catalog;
 
         private Transform _root;
+        private Transform _hold;
         private Camera _output;
         private CinemachineBrain _brain;
 
@@ -87,6 +88,28 @@ namespace Features.CameraModule.Scripts.Services {
                 BlendTo(_catalog != null ? _catalog.StartupCameraId : CameraIds.TPCamera, 0f);
         }
 
+        public void RetargetOrbit(Transform follow) {
+            _model.Follow = follow;
+            _model.LookAt = follow;
+            _model.Eye = follow;
+            foreach (GameCamera camera in _model.Cameras.Values)
+                ApplyBinding(camera);
+        }
+
+        public void HoldOrbit() {
+            EnsureRoot();
+            EnsureLookPivot();
+            if (_hold == null) {
+                GameObject holdObject = new GameObject("SpectatorHold");
+                holdObject.transform.SetParent(_root, false);
+                _hold = holdObject.transform;
+            }
+
+            Transform pivot = _model.LookPivot;
+            _hold.SetPositionAndRotation(pivot.position, pivot.rotation);
+            RetargetOrbit(_hold);
+        }
+
         public void ClearLocalPlayer() {
             ReturnLookPivotToRoot();
             _model.Follow = null;
@@ -135,6 +158,7 @@ namespace Features.CameraModule.Scripts.Services {
                 UnityEngine.Object.Destroy(_root.gameObject);
 
             _root = null;
+            _hold = null;
             _output = null;
             _brain = null;
             _model.Clear();

@@ -305,6 +305,54 @@
                     "isPartOfComposite": false
                 }
             ]
+        },
+        {
+            "name": "SpectatorMap",
+            "id": "c8e1a4b2-6d3f-4a70-9e15-2b7c8d9e0f11",
+            "actions": [
+                {
+                    "name": "SpectatePrev",
+                    "type": "Button",
+                    "id": "d9f2b5c3-7e40-4b81-8f26-3c8d9e0f1a22",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "SpectateNext",
+                    "type": "Button",
+                    "id": "e0a3c6d4-8f51-4c92-9037-4d9e0f1a2b33",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "f1b4d7e5-9062-4da3-a148-5e0f1a2b3c44",
+                    "path": "<Keyboard>/a",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard and Mouse",
+                    "action": "SpectatePrev",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a2c5e8f6-a173-4eb4-b259-6f1a2b3c4d55",
+                    "path": "<Keyboard>/d",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard and Mouse",
+                    "action": "SpectateNext",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
         }
     ],
     "controlSchemes": [

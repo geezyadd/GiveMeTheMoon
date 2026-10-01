@@ -8,6 +8,8 @@ namespace Features.CameraModule.Scripts.Services {
         void Register(GameCamera camera);
         void Unregister(GameCamera camera);
         void BindToLocalPlayer(Transform follow, Transform lookAt, Transform eye);
+        void RetargetOrbit(Transform follow);
+        void HoldOrbit();
         void ClearLocalPlayer();
         void BlendTo(string id, float duration = -1f);
         void ToggleFpAndTp();
