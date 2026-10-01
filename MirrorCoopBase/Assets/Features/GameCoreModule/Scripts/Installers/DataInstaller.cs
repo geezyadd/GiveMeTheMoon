@@ -3,7 +3,6 @@ using Features.CharacterMovableModule.Scripts.Models;
 using Features.GameFlowStateMachineModule.Scripts;
 using Features.GrabModule.Scripts;
 using Features.MvpModule;
-using Features.NetworkModelModule.Scripts.Samples;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Generated;
 using Game.Connection;
@@ -21,7 +20,6 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<ShipRunModel>().AsSingle();
             Container.Bind<HoveredInteractableModel>().AsSingle();
             WalletModelInstaller.Install(Container);
-            PlayerStatsModelInstaller.Install(Container);
         }
     }
 }

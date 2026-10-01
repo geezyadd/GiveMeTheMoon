@@ -21,11 +21,24 @@ namespace Features.NetworkModelModule.Samples {
             _registry = registry;
         }
 
-        public override void OnStartServer() =>
-            StartCoroutine(SeedWhenBound());
+        private Coroutine _seedCoroutine;
 
-        private IEnumerator SeedWhenBound() {
+        public override void OnStartServer() =>
+            _seedCoroutine = StartCoroutine(SeedWhenBoundCoroutine());
+
+        public override void OnStopServer() {
+            if (_seedCoroutine != null)
+                StopCoroutine(_seedCoroutine);
+
+            _seedCoroutine = null;
+        }
+
+        private IEnumerator SeedWhenBoundCoroutine() {
             yield return null;
+            _seedCoroutine = null;
+            if (connectionToClient == null)
+                yield break;
+
             PlayerKey key = _identity.GetKey(connectionToClient);
             if (_registry.TryGet(key, out IReadOnlyPlayerStatsModel model) == false)
                 yield break;
