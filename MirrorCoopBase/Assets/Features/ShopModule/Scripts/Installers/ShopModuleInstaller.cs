@@ -12,6 +12,7 @@ namespace Features.ShopModule.Scripts.Installers {
             Container.Bind<IShopPurchaseService>().To<ShopPurchaseService>().AsSingle();
             Container.Bind<IShopItemStatsService>().To<ShopItemStatsService>().AsSingle();
             Container.Bind<IShopItemSpawnService>().To<ShopItemSpawnService>().AsSingle();
+            Container.Bind<IShopPurchaseSystem>().To<ShopPurchaseSystem>().AsSingle();
             Container.BindInterfacesTo<ShopWindowSystem>().AsSingle();
         }
     }

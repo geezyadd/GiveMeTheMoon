@@ -1,4 +1,4 @@
-namespace Features.ShopModule.Scripts.Data {
+namespace Features.ShopModule.Scripts.Core {
     public enum ShopPurchaseStatus {
         None = 0,
         Success = 1,

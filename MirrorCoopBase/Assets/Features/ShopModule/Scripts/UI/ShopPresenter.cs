@@ -16,6 +16,7 @@ namespace Features.ShopModule.Scripts.UI {
         private readonly ShopCatalog _shopCatalog;
         private readonly IWalletModel _walletModel;
         private readonly IShopItemStatsService _shopItemStatsService;
+        private readonly IShopPurchaseService _shopPurchaseService;
         private readonly ShopPurchaseRequestEventClass _shopPurchaseRequestEventClass;
         private readonly ShopModel _shopModel;
 
@@ -23,11 +24,13 @@ namespace Features.ShopModule.Scripts.UI {
             ShopCatalog shopCatalog,
             IWalletModel walletModel,
             IShopItemStatsService shopItemStatsService,
+            IShopPurchaseService shopPurchaseService,
             ShopPurchaseRequestEventClass shopPurchaseRequestEventClass,
             ShopModel shopModel) {
             _shopCatalog = shopCatalog;
             _walletModel = walletModel;
             _shopItemStatsService = shopItemStatsService;
+            _shopPurchaseService = shopPurchaseService;
             _shopPurchaseRequestEventClass = shopPurchaseRequestEventClass;
             _shopModel = shopModel;
         }
@@ -77,7 +80,7 @@ namespace Features.ShopModule.Scripts.UI {
 
         private void OnBalanceChanged() {
             for (int i = 0; i < _shopCatalog.Entries.Count; i++)
-                View.SetItemAffordable(i, _walletModel.Balance >= _shopCatalog.Entries[i].Price);
+                View.SetItemAffordable(i, _shopPurchaseService.CanAfford(_walletModel.Balance, i));
         }
 
         private void OnBuyClicked(int index) =>

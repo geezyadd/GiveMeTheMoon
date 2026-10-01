@@ -1,11 +1,11 @@
 using System;
+using Features.CameraModule.Scripts.Models;
 using Features.GameFlowStateMachineModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.States;
 using Features.InputModule.Realization.Scripts.Generated;
 using Features.MvpModule;
 using Features.ShopModule.Scripts.Data;
 using Features.ShopModule.Scripts.UI;
-using UnityEngine;
 using Zenject;
 
 namespace Features.ShopModule.Scripts.Systems {
@@ -16,9 +16,7 @@ namespace Features.ShopModule.Scripts.Systems {
         private readonly GameFlowStateLifecycleEventClass _gameFlowStateLifecycleEventClass;
         private readonly IWalletModel _walletModel;
         private readonly ShopModel _shopModel;
-
-        private CursorLockMode _cursorLockModeBeforeOpen;
-        private bool _isCursorVisibleBeforeOpen;
+        private readonly CursorModel _cursorModel;
 
         public ShopWindowSystem(
             IInputService inputService,
@@ -26,13 +24,15 @@ namespace Features.ShopModule.Scripts.Systems {
             IGameFlowStateMachineService gameFlowStateMachineService,
             GameFlowStateLifecycleEventClass gameFlowStateLifecycleEventClass,
             IWalletModel walletModel,
-            ShopModel shopModel) {
+            ShopModel shopModel,
+            CursorModel cursorModel) {
             _inputService = inputService;
             _windowsService = windowsService;
             _gameFlowStateMachineService = gameFlowStateMachineService;
             _gameFlowStateLifecycleEventClass = gameFlowStateLifecycleEventClass;
             _walletModel = walletModel;
             _shopModel = shopModel;
+            _cursorModel = cursorModel;
         }
 
         public void Initialize() {
@@ -60,10 +60,7 @@ namespace Features.ShopModule.Scripts.Systems {
         private void OpenWindow() {
             _windowsService.OpenWindow<ShopWindow>();
             _inputService.DisableMovementMap();
-            _cursorLockModeBeforeOpen = Cursor.lockState;
-            _isCursorVisibleBeforeOpen = Cursor.visible;
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            _cursorModel.RequestFreeCursor();
         }
 
         private void CloseWindow() {
@@ -72,8 +69,7 @@ namespace Features.ShopModule.Scripts.Systems {
                 _windowsService.CloseWindow<ShopWindow>();
 
             _inputService.EnableMovementMap();
-            Cursor.lockState = _cursorLockModeBeforeOpen;
-            Cursor.visible = _isCursorVisibleBeforeOpen;
+            _cursorModel.ReleaseFreeCursor();
         }
 
         private void OnShopPressed() {

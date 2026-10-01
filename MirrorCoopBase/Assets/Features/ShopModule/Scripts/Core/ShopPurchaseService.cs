@@ -1,5 +1,4 @@
 using Features.ShopModule.Scripts.Configurations;
-using Features.ShopModule.Scripts.Data;
 
 namespace Features.ShopModule.Scripts.Core {
     public sealed class ShopPurchaseService : IShopPurchaseService {
@@ -18,5 +17,8 @@ namespace Features.ShopModule.Scripts.Core {
 
             return new ShopPurchaseResult(ShopPurchaseStatus.Success, entry);
         }
+
+        public bool CanAfford(long balance, int entryIndex) =>
+            Evaluate(balance, entryIndex).Status == ShopPurchaseStatus.Success;
     }
 }

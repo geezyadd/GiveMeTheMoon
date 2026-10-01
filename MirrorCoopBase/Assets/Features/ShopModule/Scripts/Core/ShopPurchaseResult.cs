@@ -1,6 +1,6 @@
 using Features.ShopModule.Scripts.Configurations;
 
-namespace Features.ShopModule.Scripts.Data {
+namespace Features.ShopModule.Scripts.Core {
     public readonly struct ShopPurchaseResult {
         public ShopPurchaseStatus Status { get; }
         public ShopCatalog.Entry Entry { get; }

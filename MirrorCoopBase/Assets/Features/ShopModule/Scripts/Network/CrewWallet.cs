@@ -1,6 +1,6 @@
 using Features.ShopModule.Scripts.Configurations;
-using Features.ShopModule.Scripts.Core;
 using Features.ShopModule.Scripts.Data;
+using Features.ShopModule.Scripts.Systems;
 using Mirror;
 using Zenject;
 
@@ -9,28 +9,27 @@ namespace Features.ShopModule.Scripts.Network {
         private WalletConfiguration _walletConfiguration;
         private WalletModel _walletModel;
         private ShopPurchaseRequestEventClass _shopPurchaseRequestEventClass;
-        private IShopPurchaseService _shopPurchaseService;
-        private IShopItemSpawnService _shopItemSpawnService;
+        private IShopPurchaseSystem _shopPurchaseSystem;
 
         [SyncVar(hook = nameof(OnBalanceSynced))]
         private long _balance;
+
+        public long Balance => _balance;
 
         [Inject]
         private void InjectDependencies(
             WalletConfiguration walletConfiguration,
             WalletModel walletModel,
             ShopPurchaseRequestEventClass shopPurchaseRequestEventClass,
-            IShopPurchaseService shopPurchaseService,
-            IShopItemSpawnService shopItemSpawnService) {
+            IShopPurchaseSystem shopPurchaseSystem) {
             _walletConfiguration = walletConfiguration;
             _walletModel = walletModel;
             _shopPurchaseRequestEventClass = shopPurchaseRequestEventClass;
-            _shopPurchaseService = shopPurchaseService;
-            _shopItemSpawnService = shopItemSpawnService;
+            _shopPurchaseSystem = shopPurchaseSystem;
         }
 
         public override void OnStartServer() =>
-            _balance = _walletConfiguration.StartingBalance;
+            ServerSetBalance(_walletConfiguration.StartingBalance);
 
         public override void OnStartClient() {
             _walletModel.Connect(_balance);
@@ -42,17 +41,25 @@ namespace Features.ShopModule.Scripts.Network {
             _walletModel.Disconnect();
         }
 
+        [Server]
+        public void ServerSetBalance(long balance) =>
+            _balance = balance;
+
+        [Server]
+        public bool ServerTrySpend(long amount) {
+            if (amount < 0 || _balance < amount)
+                return false;
+
+            _balance -= amount;
+            return true;
+        }
+
         [Command(requiresAuthority = false)]
         private void CmdPurchase(int entryIndex, NetworkConnectionToClient sender = null) {
-            if (sender == null || sender.identity == null)
+            if (sender.identity == null)
                 return;
 
-            ShopPurchaseResult result = _shopPurchaseService.Evaluate(_balance, entryIndex);
-            if (result.Status != ShopPurchaseStatus.Success)
-                return;
-
-            _balance -= result.Entry.Price;
-            _shopItemSpawnService.SpawnNear(result.Entry.Item, sender.identity.transform);
+            _shopPurchaseSystem.ServerPurchase(this, entryIndex, sender.identity.transform);
         }
 
         private void OnPurchaseRequested(int entryIndex) =>
