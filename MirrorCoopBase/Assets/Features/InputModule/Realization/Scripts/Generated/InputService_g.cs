@@ -7,7 +7,7 @@ using Features.InputModule.Core.Scripts;
 using Zenject;
 using System;
 namespace Features.InputModule.Realization.Scripts.Generated {
-    public class InputService: InputActions.IMovementMapActions, IInputService, IInitializable, IDisposable  {
+    public class InputService: InputActions.IMovementMapActions, InputActions.IUiMapActions, IInputService, IInitializable, IDisposable  {
         private InputActions _inputActions;
         public InputVector2Actions Movement { get; set; } = new();
         public InputDefaultActions Jump { get; set; } = new();
@@ -17,6 +17,8 @@ namespace Features.InputModule.Realization.Scripts.Generated {
         public InputDefaultActions Grab { get; set; } = new();
         public InputDefaultActions Release { get; set; } = new();
         public InputDefaultActions ToggleCursor { get; set; } = new();
+        public InputDefaultActions Shop { get; set; } = new();
+        public InputDefaultActions CloseWindow { get; set; } = new();
         public InputService(InputActions inputActions) {
             _inputActions = inputActions;
         }
@@ -37,10 +39,12 @@ namespace Features.InputModule.Realization.Scripts.Generated {
         private void SetControlsCallback()
          {
             _inputActions.MovementMap.SetCallbacks(this);
+            _inputActions.UiMap.SetCallbacks(this);
         }
         private void RemoveControlsCallback()
          {
             _inputActions.MovementMap.RemoveCallbacks(this);
+            _inputActions.UiMap.RemoveCallbacks(this);
         }
         public void EnableMovementMap()
          {
@@ -51,6 +55,16 @@ namespace Features.InputModule.Realization.Scripts.Generated {
          {
             _inputActions.MovementMap.Disable();
             _inputActions.MovementMap.RemoveCallbacks(this);
+        }
+        public void EnableUiMap()
+         {
+            _inputActions.UiMap.Enable();
+            _inputActions.UiMap.SetCallbacks(this);
+        }
+        public void DisableUiMap()
+         {
+            _inputActions.UiMap.Disable();
+            _inputActions.UiMap.RemoveCallbacks(this);
         }
         public void OnMovement(InputAction.CallbackContext context)
          {
@@ -105,6 +119,18 @@ namespace Features.InputModule.Realization.Scripts.Generated {
             if(context.started)ToggleCursor.Started?.Invoke();
             if(context.performed)ToggleCursor.Performed?.Invoke();
             if(context.canceled)ToggleCursor.Canceled?.Invoke();
+        }
+        public void OnShop(InputAction.CallbackContext context)
+         {
+            if(context.started)Shop.Started?.Invoke();
+            if(context.performed)Shop.Performed?.Invoke();
+            if(context.canceled)Shop.Canceled?.Invoke();
+        }
+        public void OnCloseWindow(InputAction.CallbackContext context)
+         {
+            if(context.started)CloseWindow.Started?.Invoke();
+            if(context.performed)CloseWindow.Performed?.Invoke();
+            if(context.canceled)CloseWindow.Canceled?.Invoke();
         }
     }
 }

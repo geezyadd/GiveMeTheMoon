@@ -12,9 +12,13 @@ namespace Features.InputModule.Realization.Scripts.Generated {
         public InputDefaultActions Grab { get; set; }
         public InputDefaultActions Release { get; set; }
         public InputDefaultActions ToggleCursor { get; set; }
+        public InputDefaultActions Shop { get; set; }
+        public InputDefaultActions CloseWindow { get; set; }
         public void Enable();
         public void Disable();
         public void EnableMovementMap();
         public void DisableMovementMap();
+        public void EnableUiMap();
+        public void DisableUiMap();
     }
 }

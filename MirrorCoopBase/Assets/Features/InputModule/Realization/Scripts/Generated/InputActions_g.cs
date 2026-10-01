@@ -343,6 +343,54 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""UiMap"",
+            ""id"": ""5e1c7a2b-3d4f-4a60-9b8c-7d6e5f4a3b21"",
+            ""actions"": [
+                {
+                    ""name"": ""Shop"",
+                    ""type"": ""Button"",
+                    ""id"": ""6f2d8b3c-4e5a-4b71-8c9d-8e7f6a5b4c32"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""CloseWindow"",
+                    ""type"": ""Button"",
+                    ""id"": ""7a3e9c4d-5f6b-4c82-9dae-9f8a7b6c5d43"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""8b4fad5e-6a7c-4d93-aebf-a09b8c7d6e54"",
+                    ""path"": ""<Keyboard>/l"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and Mouse"",
+                    ""action"": ""Shop"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""9c5abe6f-7b8d-4ea4-bfc0-b1ac9d8e7f65"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and Mouse"",
+                    ""action"": ""CloseWindow"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": [
@@ -368,11 +416,16 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         m_MovementMap_Grab = m_MovementMap.FindAction("Grab", throwIfNotFound: true);
         m_MovementMap_Release = m_MovementMap.FindAction("Release", throwIfNotFound: true);
         m_MovementMap_ToggleCursor = m_MovementMap.FindAction("ToggleCursor", throwIfNotFound: true);
+        // UiMap
+        m_UiMap = asset.FindActionMap("UiMap", throwIfNotFound: true);
+        m_UiMap_Shop = m_UiMap.FindAction("Shop", throwIfNotFound: true);
+        m_UiMap_CloseWindow = m_UiMap.FindAction("CloseWindow", throwIfNotFound: true);
     }
 
     ~@InputActions()
     {
         UnityEngine.Debug.Assert(!m_MovementMap.enabled, "This will cause a leak and performance issues, InputActions.MovementMap.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_UiMap.enabled, "This will cause a leak and performance issues, InputActions.UiMap.Disable() has not been called.");
     }
 
     /// <summary>
@@ -617,6 +670,113 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     /// Provides a new <see cref="MovementMapActions" /> instance referencing this action map.
     /// </summary>
     public MovementMapActions @MovementMap => new MovementMapActions(this);
+
+    // UiMap
+    private readonly InputActionMap m_UiMap;
+    private List<IUiMapActions> m_UiMapActionsCallbackInterfaces = new List<IUiMapActions>();
+    private readonly InputAction m_UiMap_Shop;
+    private readonly InputAction m_UiMap_CloseWindow;
+    /// <summary>
+    /// Provides access to input actions defined in input action map "UiMap".
+    /// </summary>
+    public struct UiMapActions
+    {
+        private @InputActions m_Wrapper;
+
+        /// <summary>
+        /// Construct a new instance of the input action map wrapper class.
+        /// </summary>
+        public UiMapActions(@InputActions wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "UiMap/Shop".
+        /// </summary>
+        public InputAction @Shop => m_Wrapper.m_UiMap_Shop;
+        /// <summary>
+        /// Provides access to the underlying input action "UiMap/CloseWindow".
+        /// </summary>
+        public InputAction @CloseWindow => m_Wrapper.m_UiMap_CloseWindow;
+        /// <summary>
+        /// Provides access to the underlying input action map instance.
+        /// </summary>
+        public InputActionMap Get() { return m_Wrapper.m_UiMap; }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+        public void Enable() { Get().Enable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+        public void Disable() { Get().Disable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+        public bool enabled => Get().enabled;
+        /// <summary>
+        /// Implicitly converts an <see ref="UiMapActions" /> to an <see ref="InputActionMap" /> instance.
+        /// </summary>
+        public static implicit operator InputActionMap(UiMapActions set) { return set.Get(); }
+        /// <summary>
+        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <param name="instance">Callback instance.</param>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+        /// </remarks>
+        /// <seealso cref="UiMapActions" />
+        public void AddCallbacks(IUiMapActions instance)
+        {
+            if (instance == null || m_Wrapper.m_UiMapActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_UiMapActionsCallbackInterfaces.Add(instance);
+            @Shop.started += instance.OnShop;
+            @Shop.performed += instance.OnShop;
+            @Shop.canceled += instance.OnShop;
+            @CloseWindow.started += instance.OnCloseWindow;
+            @CloseWindow.performed += instance.OnCloseWindow;
+            @CloseWindow.canceled += instance.OnCloseWindow;
+        }
+
+        /// <summary>
+        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <remarks>
+        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+        /// </remarks>
+        /// <seealso cref="UiMapActions" />
+        private void UnregisterCallbacks(IUiMapActions instance)
+        {
+            @Shop.started -= instance.OnShop;
+            @Shop.performed -= instance.OnShop;
+            @Shop.canceled -= instance.OnShop;
+            @CloseWindow.started -= instance.OnCloseWindow;
+            @CloseWindow.performed -= instance.OnCloseWindow;
+            @CloseWindow.canceled -= instance.OnCloseWindow;
+        }
+
+        /// <summary>
+        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="UiMapActions.UnregisterCallbacks(IUiMapActions)" />.
+        /// </summary>
+        /// <seealso cref="UiMapActions.UnregisterCallbacks(IUiMapActions)" />
+        public void RemoveCallbacks(IUiMapActions instance)
+        {
+            if (m_Wrapper.m_UiMapActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        /// <summary>
+        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+        /// </remarks>
+        /// <seealso cref="UiMapActions.AddCallbacks(IUiMapActions)" />
+        /// <seealso cref="UiMapActions.RemoveCallbacks(IUiMapActions)" />
+        /// <seealso cref="UiMapActions.UnregisterCallbacks(IUiMapActions)" />
+        public void SetCallbacks(IUiMapActions instance)
+        {
+            foreach (var item in m_Wrapper.m_UiMapActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_UiMapActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    /// <summary>
+    /// Provides a new <see cref="UiMapActions" /> instance referencing this action map.
+    /// </summary>
+    public UiMapActions @UiMap => new UiMapActions(this);
     private int m_KeyboardandMouseSchemeIndex = -1;
     /// <summary>
     /// Provides access to the input control scheme.
@@ -706,5 +866,27 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnToggleCursor(InputAction.CallbackContext context);
+    }
+    /// <summary>
+    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UiMap" which allows adding and removing callbacks.
+    /// </summary>
+    /// <seealso cref="UiMapActions.AddCallbacks(IUiMapActions)" />
+    /// <seealso cref="UiMapActions.RemoveCallbacks(IUiMapActions)" />
+    public interface IUiMapActions
+    {
+        /// <summary>
+        /// Method invoked when associated input action "Shop" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnShop(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "CloseWindow" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnCloseWindow(InputAction.CallbackContext context);
     }
 }

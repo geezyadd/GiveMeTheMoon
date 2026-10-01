@@ -10,6 +10,7 @@ namespace Features.CameraModule.Scripts {
         private readonly IInputService _input;
         private readonly GameCameraModel _model;
         private readonly CameraCatalog _catalog;
+        private readonly CursorModel _cursorModel;
 
         private CameraLookRig _rig;
         private Vector2 _pendingLook;
@@ -19,10 +20,11 @@ namespace Features.CameraModule.Scripts {
         private bool _cursorLocked;
         private bool _cursorWantedLocked = true;
 
-        public CameraLookDriver(IInputService input, GameCameraModel model, CameraCatalog catalog) {
+        public CameraLookDriver(IInputService input, GameCameraModel model, CameraCatalog catalog, CursorModel cursorModel) {
             _input = input;
             _model = model;
             _catalog = catalog;
+            _cursorModel = cursorModel;
         }
 
         public void Initialize() {
@@ -67,7 +69,7 @@ namespace Features.CameraModule.Scripts {
                 _pendingLook = Vector2.zero;
             }
 
-            if (_cursorWantedLocked == false) {
+            if (_cursorWantedLocked == false || _cursorModel.IsFreeCursorRequested) {
                 UnlockCursor();
                 _pendingLook = Vector2.zero;
                 ApplyRig(rig, follow);
