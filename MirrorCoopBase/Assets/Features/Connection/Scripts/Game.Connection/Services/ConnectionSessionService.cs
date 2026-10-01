@@ -8,6 +8,8 @@ namespace Game.Connection
         private readonly ConnectionSessionModel _model;
         private readonly ISteamLobbyService _steamLobby;
 
+        public bool CanStartGame => RequireNetworkManager().CanStartGame();
+
         public ConnectionSessionService(ConnectionSessionModel model, ISteamLobbyService steamLobby)
         {
             _model = model ?? throw new ArgumentNullException(nameof(model));
