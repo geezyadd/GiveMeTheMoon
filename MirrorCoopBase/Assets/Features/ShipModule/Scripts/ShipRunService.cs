@@ -6,6 +6,13 @@ using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
     public sealed class ShipRunService : IGameplaySession {
+        private const float WRECK_PITCH_DEGREES = 12f;
+        private const float WRECK_ROLL_DEGREES = 18f;
+        private const float DROP_LATERAL = 7.5f;
+        private const float DROP_ALONG_ORIGIN = 2f;
+        private const float DROP_ALONG_STEP = 1.8f;
+        private const float DROP_HEIGHT = 1f;
+
         private readonly ShipRunModel _model;
         private readonly ShipRunConfig _config;
         private readonly ShipStationCatalog _stations;
@@ -50,6 +57,9 @@ namespace Features.ShipModule.Scripts {
             _currentPad = startPad;
             _previousPad = null;
             _model.ResetMatch();
+            if (ship != null && startPad != null)
+                ship.ServerResetForBuild(startPad.BuildBerth.position, startPad.BuildBerth.rotation);
+
             if (_radar != null)
                 _radar.BindShip(ship);
             RefreshTransitPreview();
@@ -64,6 +74,9 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void ResetRun() {
+            if (NetworkServer.active && _ship != null && _currentPad != null)
+                _ship.ServerResetForBuild(_currentPad.BuildBerth.position, _currentPad.BuildBerth.rotation);
+
             ClearRocks();
             _director = null;
             _ship = null;
@@ -174,7 +187,7 @@ namespace Features.ShipModule.Scripts {
 
             if (_model.Phase == ShipRunPhase.Landing) {
                 if (_ship.HasLanded)
-                    FinishAtCurrentPose();
+                    FinishLanded();
             }
         }
 
@@ -191,10 +204,16 @@ namespace Features.ShipModule.Scripts {
             Publish();
         }
 
+        private void FinishLanded() {
+            ClearRocks();
+            _ship.ServerSettleAfterLanding();
+            EnterStation(_currentPad, ShipRunPhase.Build);
+        }
+
         private void FinishAtCurrentPose() {
             ClearRocks();
             Vector3 wreckPos = _ship.transform.position;
-            Quaternion wreckRot = _ship.transform.rotation * Quaternion.Euler(12f, 0f, 18f);
+            Quaternion wreckRot = _ship.transform.rotation * Quaternion.Euler(WRECK_PITCH_DEGREES, 0f, WRECK_ROLL_DEGREES);
             _ship.ServerFinishFlight();
             _director.ServerPlaceWreck(wreckPos, wreckRot);
 
@@ -204,22 +223,27 @@ namespace Features.ShipModule.Scripts {
             }
 
             ShipLandingPad pad = _currentPad;
-
             Vector3 berth = pad != null ? pad.BuildBerth.position : wreckPos;
-            Quaternion berthRot = pad != null ? pad.BuildBerth.rotation : Quaternion.LookRotation(_launchForward, Vector3.up);
+            Quaternion berthRot = pad != null
+                ? pad.BuildBerth.rotation
+                : Quaternion.LookRotation(_launchForward, Vector3.up);
             _ship.ServerResetForBuild(berth, berthRot);
+            _wreckUntil = Time.time + _config.WreckSettleSeconds;
+            EnterStation(pad, ShipRunPhase.Wreck);
+        }
+
+        private void EnterStation(ShipLandingPad pad, ShipRunPhase phase) {
             SpawnDrops(pad);
             if (pad != null)
                 ConnectionNetworkManager.SetSpawn(pad.PlayerSpawn.position, pad.PlayerSpawn.rotation);
 
             _model.LoopIndex += 1;
             _model.LaunchLocked = _config.MaxLoops > 0 && _model.LoopIndex >= _config.MaxLoops;
-            _model.Phase = ShipRunPhase.Wreck;
+            _model.Phase = phase;
             _transit.Reset();
             _destinationPoint = Vector3.zero;
             _destinationForward = Vector3.forward;
             CopyTransitToModel();
-            _wreckUntil = Time.time + _config.WreckSettleSeconds;
             Publish();
         }
 
@@ -340,8 +364,8 @@ namespace Features.ShipModule.Scripts {
 
         private void SpawnDrop(GameObject prefab, Transform origin, int placed) {
             float side = placed % 2 == 0 ? -1f : 1f;
-            float along = placed / 2 * 1.8f;
-            Vector3 local = new Vector3(side * 5.5f, 1f, 8f - along);
+            float along = placed / 2 * DROP_ALONG_STEP;
+            Vector3 local = new Vector3(side * DROP_LATERAL, DROP_HEIGHT, DROP_ALONG_ORIGIN - along);
             GameObject item = Object.Instantiate(prefab, origin.TransformPoint(local), origin.rotation);
             NetworkServer.Spawn(item);
         }
