@@ -4,6 +4,8 @@ using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
     public sealed class ShipPoseSync : NetworkBehaviour {
+        private const double MIN_SAMPLE_SPAN = 0.005d;
+
         [SerializeField] private Transform _ship;
         [SerializeField] private float _interpolationDelay = 0.06f;
 
@@ -68,7 +70,7 @@ namespace Features.ShipModule.Scripts {
             PoseSample last = _samples[_samples.Count - 1];
             if (renderTime >= last.Time) {
                 float extra = Mathf.Min((float)(renderTime - last.Time), 0.08f);
-                _shipBase.ApplyDisplayPose(last.Position + last.Velocity * extra, last.Rotation);
+                _shipBase.ApplyDisplayPose(last.Position + last.Velocity * extra, ExtrapolateRotation(last, extra));
                 return;
             }
 
@@ -90,9 +92,27 @@ namespace Features.ShipModule.Scripts {
                 Quaternion.Slerp(from.Rotation, to.Rotation, blend));
         }
 
+        public override void OnStartServer() {
+            _latePos = _ship.position;
+            _lateRot = _ship.rotation;
+        }
+
         public override void OnStartClient() {
-            if (_flying && _shipBase != null)
+            if (isServer == false && _shipBase != null)
                 _shipBase.ApplyDisplayPose(_latePos, _lateRot);
+        }
+
+        private Quaternion ExtrapolateRotation(PoseSample last, float extra) {
+            if (_samples.Count < 2)
+                return last.Rotation;
+
+            PoseSample previous = _samples[_samples.Count - 2];
+            double span = last.Time - previous.Time;
+            if (span <= MIN_SAMPLE_SPAN)
+                return last.Rotation;
+
+            float factor = 1f + Mathf.Min((float)(extra / span), 1f);
+            return Quaternion.SlerpUnclamped(previous.Rotation, last.Rotation, factor);
         }
 
         private void OnFlyingChanged(bool previous, bool current) {
@@ -106,8 +126,12 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             _samples.Clear();
-            if (_shipBase != null)
-                _shipBase.ApplyDisplayPose(position, rotation);
+            if (_shipBase == null)
+                return;
+
+            // The snap RPC can arrive before the _flying=false SyncVar; riders still bound here would be carried to the berth.
+            _shipBase.OnClientFlightChanged(false);
+            _shipBase.ApplyDisplayPose(position, rotation);
         }
 
         [ClientRpc(channel = Channels.Unreliable)]

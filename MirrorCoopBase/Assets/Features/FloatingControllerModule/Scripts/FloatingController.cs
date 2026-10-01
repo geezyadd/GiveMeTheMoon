@@ -34,6 +34,8 @@ namespace Features.FloatingControllerModule {
         public Vector3 SupportNormal => _supportNormal;
         public LayerMask ProbeMask => _supportMask;
         public bool HoverEnabled { get; set; } = true;
+        public float StandHeight =>
+            _hoverClearance - (ProbeStart().y - transform.position.y);
 
         private void FixedUpdate() {
             if (isOwned == false)

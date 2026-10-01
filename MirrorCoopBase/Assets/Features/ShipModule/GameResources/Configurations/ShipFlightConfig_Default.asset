@@ -19,3 +19,7 @@ MonoBehaviour:
   _bankDegrees: 22
   _swayStiffness: 10
   _swayDamping: 0.32
+  _boardingEdgeTolerance: 0.5
+  _boardingMinHeight: -0.5
+  _boardingMaxHeight: 6
+  _standUpSpeed: 6
