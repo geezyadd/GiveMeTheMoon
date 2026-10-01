@@ -9,14 +9,20 @@ namespace Features.CharacterMovableModule.Scripts {
     public sealed class CharacterInputBuffer : IInitializable, IDisposable, IGameplaySession {
         private readonly IInputService _inputService;
         private readonly CharacterMovableModel _model;
+        private readonly PlayerControlBlockModel _controlBlock;
 
         public Vector2 MoveStick { get; private set; }
         public bool JumpHeld { get; private set; }
         public bool SprintHeld { get; private set; }
+        public bool IsBlocked => _controlBlock.IsBlocked;
 
-        public CharacterInputBuffer(IInputService inputService, CharacterMovableModel model) {
+        public CharacterInputBuffer(
+            IInputService inputService,
+            CharacterMovableModel model,
+            PlayerControlBlockModel controlBlock) {
             _inputService = inputService;
             _model = model;
+            _controlBlock = controlBlock;
         }
 
         public void Initialize() {
@@ -26,6 +32,7 @@ namespace Features.CharacterMovableModule.Scripts {
             _inputService.Jump.Canceled += OnJumpCanceled;
             _inputService.Sprint.Started += OnSprintStarted;
             _inputService.Sprint.Canceled += OnSprintCanceled;
+            _controlBlock.OnChanged += OnControlBlockChanged;
         }
 
         public void Dispose() {
@@ -35,6 +42,7 @@ namespace Features.CharacterMovableModule.Scripts {
             _inputService.Jump.Canceled -= OnJumpCanceled;
             _inputService.Sprint.Started -= OnSprintStarted;
             _inputService.Sprint.Canceled -= OnSprintCanceled;
+            _controlBlock.OnChanged -= OnControlBlockChanged;
         }
 
         public void CleanupGameplay() {
@@ -50,11 +58,26 @@ namespace Features.CharacterMovableModule.Scripts {
             SprintHeld = false;
         }
 
+        private void OnControlBlockChanged() {
+            if (_controlBlock.IsBlocked == false)
+                return;
+
+            MoveStick = Vector2.zero;
+            JumpHeld = false;
+            SprintHeld = false;
+        }
+
         private void OnMoveChanged(Vector2 value) {
+            if (_controlBlock.IsBlocked)
+                return;
+
             MoveStick = value;
         }
 
         private void OnJumpStarted() {
+            if (_controlBlock.IsBlocked)
+                return;
+
             JumpHeld = true;
         }
 
@@ -63,6 +86,9 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         private void OnSprintStarted() {
+            if (_controlBlock.IsBlocked)
+                return;
+
             SprintHeld = true;
         }
 

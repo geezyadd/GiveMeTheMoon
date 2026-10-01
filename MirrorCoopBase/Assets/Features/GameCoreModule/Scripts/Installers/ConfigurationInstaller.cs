@@ -20,9 +20,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
                 .AsSingle();
             Container.BindConfigurationFromAddressables<ShopCatalog>(ShopConfigurationAddresses.SHOP_CATALOG_DEFAULT).AsSingle();
             Container.BindConfigurationFromAddressables<WalletConfiguration>(ShopConfigurationAddresses.WALLET_CONFIGURATION_DEFAULT).AsSingle();
-            Container.BindConfigurationFromAddressables<PlayerDamageConfiguration>(
-                    PlayerDamageConfigurationAddresses.PLAYER_DAMAGE_CONFIGURATION_DEFAULT)
-                .AsSingle();
+            Container.BindConfigurationFromAddressables<PlayerDamageConfiguration>(PlayerDamageConfigurationAddresses.PLAYER_DAMAGE_CONFIGURATION_DEFAULT).AsSingle();
+            Container.BindConfigurationFromAddressables<PlayerLifeConfiguration>(PlayerLifeConfigurationAddresses.PLAYER_LIFE_CONFIGURATION_DEFAULT).AsSingle();
         }
     }
 }

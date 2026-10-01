@@ -99,7 +99,7 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         private void LateUpdate() {
-            if (ControlsSelf)
+            if (ControlsSelf && _input.IsBlocked == false)
                 CaptureFacingYaw();
 
             ApplyRotatableLook();

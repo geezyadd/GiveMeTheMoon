@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using UnityEngine.SceneManagement;
 
 namespace Game.Connection
 {
@@ -13,6 +14,9 @@ namespace Game.Connection
             _model = model ?? throw new ArgumentNullException(nameof(model));
             _steamLobby = steamLobby ?? throw new ArgumentNullException(nameof(steamLobby));
         }
+
+        public bool IsInLobby =>
+            SceneManager.GetActiveScene().name == RequireNetworkManager().LobbySceneName;
 
         public async Task HostAsync()
         {
@@ -81,6 +85,11 @@ namespace Game.Connection
         public void StartGame()
         {
             RequireNetworkManager().StartGame();
+        }
+
+        public bool ReturnToLobby()
+        {
+            return RequireNetworkManager().ReturnToLobby();
         }
 
         void PrepareDirect(ConnectionNetworkManager networkManager)

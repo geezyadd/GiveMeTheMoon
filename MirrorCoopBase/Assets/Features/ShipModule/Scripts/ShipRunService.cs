@@ -5,7 +5,7 @@ using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    public sealed class ShipRunService : IGameplaySession {
+    public sealed class ShipRunService : IGameplaySession, IShipFloorReferenceProvider, IShipRiderRelease {
         private const float WRECK_PITCH_DEGREES = 12f;
         private const float WRECK_ROLL_DEGREES = 18f;
         private const float DROP_LATERAL = 7.5f;
@@ -51,27 +51,41 @@ namespace Features.ShipModule.Scripts {
             ResetRun();
         }
 
-        public bool TryGetFallReference(out bool inFlight, out float referenceY) {
-            inFlight = false;
-            referenceY = 0f;
+        public bool TryGetWalkableFloorY(out bool isFlying, out float floorY) {
+            isFlying = false;
+            floorY = 0f;
             ShipRunPhase phase = _model.Phase;
             bool flying = phase == ShipRunPhase.Takeoff
                 || phase == ShipRunPhase.Cruise
                 || phase == ShipRunPhase.Landing;
             if (flying) {
-                if (_ship == null)
+                if (_ship == null || TryGetDeckSurfaceWorldY(_ship, out floorY) == false)
                     return false;
 
-                inFlight = true;
-                referenceY = DeckReferenceY(_ship);
+                isFlying = true;
                 return true;
             }
 
             if (_currentPad == null)
                 return false;
 
-            referenceY = _currentPad.BuildBerth.position.y;
+            floorY = _currentPad.BuildBerth.position.y;
             return true;
+        }
+
+        public void ServerReleaseRider(NetworkIdentity player) {
+            if (NetworkServer.active == false)
+                throw new System.InvalidOperationException("ServerReleaseRider can only be called on the server.");
+
+            // No ship outside a run (lobby): there is nothing to release.
+            if (_ship == null)
+                return;
+
+            if (player.TryGetComponent(out ShipRider rider) == false)
+                throw new System.InvalidOperationException(player.name + " has no " + nameof(ShipRider) + ".");
+
+            _ship.ServerStand(rider);
+            _ship.UnregisterRider(rider);
         }
 
         internal void Bind(ShipRunDirector director, ShipBase ship, ShipLandingPad startPad) {
@@ -514,11 +528,13 @@ namespace Features.ShipModule.Scripts {
                 _director.ServerPublish();
         }
 
-        private static float DeckReferenceY(ShipBase ship) {
+        private static bool TryGetDeckSurfaceWorldY(ShipBase ship, out float worldY) {
+            worldY = 0f;
             if (ship.TryGetDeckSurfaceY(Vector3.zero, out float surfaceLocalY) == false)
-                return ship.transform.position.y;
+                return false;
 
-            return ship.transform.TransformPoint(new Vector3(0f, surfaceLocalY, 0f)).y;
+            worldY = ship.transform.TransformPoint(new Vector3(0f, surfaceLocalY, 0f)).y;
+            return true;
         }
 
         private static Vector3 FlattenForward(Vector3 forward) {

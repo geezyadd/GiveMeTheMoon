@@ -1,53 +1,41 @@
 using System.Collections.Generic;
-using Features.GameCoreModule.Scripts;
 using Features.ShipModule.Scripts;
 using Mirror;
-using UnityEngine;
 using Zenject;
 
 namespace Features.PlayerLifeModule.Scripts {
-    public sealed class FallKillSystem : ITickable, IGameplaySession {
-        private readonly PlayerDamageableRegistry _playerDamageableRegistry;
-        private readonly ShipRunService _shipRunService;
-        private readonly PlayerDamageConfiguration _playerDamageConfiguration;
+    public sealed class FallKillSystem : ITickable {
+        private readonly IPlayerBodyRegistry _playerBodyRegistry;
+        private readonly IShipFloorReferenceProvider _shipFloorReferenceProvider;
+        private readonly IFallKillRule _fallKillRule;
 
         public FallKillSystem(
-            PlayerDamageableRegistry playerDamageableRegistry,
-            ShipRunService shipRunService,
-            PlayerDamageConfiguration playerDamageConfiguration) {
-            _playerDamageableRegistry = playerDamageableRegistry;
-            _shipRunService = shipRunService;
-            _playerDamageConfiguration = playerDamageConfiguration;
+            IPlayerBodyRegistry playerBodyRegistry,
+            IShipFloorReferenceProvider shipFloorReferenceProvider,
+            IFallKillRule fallKillRule) {
+            _playerBodyRegistry = playerBodyRegistry;
+            _shipFloorReferenceProvider = shipFloorReferenceProvider;
+            _fallKillRule = fallKillRule;
         }
 
         public void Tick() {
             if (NetworkServer.active == false)
                 return;
 
-            if (_shipRunService.TryGetFallReference(out bool inFlight, out float referenceY) == false)
+            if (_shipFloorReferenceProvider.TryGetWalkableFloorY(out bool isFlying, out float floorY) == false)
                 return;
 
-            float depth = inFlight
-                ? _playerDamageConfiguration.KillDepthBelowDeckInFlight
-                : _playerDamageConfiguration.KillDepthBelowStation;
-            float killY = referenceY - depth;
-            IReadOnlyList<PlayerDamageable> players = _playerDamageableRegistry.Players;
-            for (int i = 0; i < players.Count; i++) {
-                PlayerDamageable player = players[i];
-                if (player == null || player.IsDead)
+            IReadOnlyList<PlayerLifeBody> bodies = _playerBodyRegistry.ServerBodies;
+            for (int i = 0; i < bodies.Count; i++) {
+                PlayerLifeBody body = bodies[i];
+                if (body.Damageable.IsDead)
                     continue;
 
-                if (player.transform.position.y >= killY)
+                if (_fallKillRule.IsBelowKillHeight(body.transform.position.y, floorY, isFlying) == false)
                     continue;
 
-                player.ServerKill(DamageType.Fall);
+                body.Damageable.ServerKill(DamageType.Fall);
             }
         }
-
-        public void CleanupGameplay() =>
-            _playerDamageableRegistry.ServerRestoreAll();
-
-        public void RestartGameplay() =>
-            _playerDamageableRegistry.ServerRestoreAll();
     }
 }
