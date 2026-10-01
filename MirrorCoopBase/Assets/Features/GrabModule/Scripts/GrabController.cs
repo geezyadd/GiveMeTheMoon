@@ -16,6 +16,9 @@ namespace Features.GrabModule.Scripts {
         [Inject]
         private IGameCameraService _cameras;
 
+        [Inject]
+        private HoveredInteractableModel _hoveredInteractableModel;
+
         [SyncVar(hook = nameof(OnHeldNetIdChanged))]
         private uint _heldNetId;
 
@@ -23,6 +26,7 @@ namespace Features.GrabModule.Scripts {
         private Collider _hoverCollider;
         private Grabbable _cachedOnCollider;
         private Grabbable _hovered;
+        private Grabbable _published;
 
         public Transform ArmPoint => _armPoint != null ? _armPoint : transform;
         public bool IsHolding => _heldNetId != 0;
@@ -40,6 +44,7 @@ namespace Features.GrabModule.Scripts {
             }
 
             SetHovered(null);
+            PublishHover(null);
             if (isOwned)
                 CmdRelease();
         }
@@ -114,10 +119,21 @@ namespace Features.GrabModule.Scripts {
                 SetHovered(null);
                 _hoverCollider = null;
                 _cachedOnCollider = null;
+                PublishHover(null);
                 return;
             }
 
-            SetHovered(ResolveGrabbable());
+            Grabbable next = ResolveGrabbable();
+            SetHovered(next);
+            PublishHover(next);
+        }
+
+        private void PublishHover(Grabbable source) {
+            if (_published == source)
+                return;
+
+            _published = source;
+            _hoveredInteractableModel.SetGrabbable(source);
         }
 
         private Grabbable ResolveGrabbable() {

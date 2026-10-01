@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 8480000000000000001}
   - component: {fileID: 8490000000000000001}
   - component: {fileID: 8500000000000000001}
+  - component: {fileID: 8511000000000000001}
   m_Layer: 7
   m_Name: PropellerItem
   m_TagString: Untagged
@@ -262,3 +263,19 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6310579984047903521, guid: 6c9e13a4d5f26812c3e4f50617283a4b, type: 3}
   m_PrefabInstance: {fileID: 2628009859177934600}
   m_PrefabAsset: {fileID: 0}
+
+--- !u!114 &8511000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8401338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea2e96eb0fc33df49bdad2a6927f17c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _data: {fileID: 11400000, guid: c4d8e1a0000000019a0b1c2d3e4f500c, type: 2}
+  _readyData: {fileID: 0}
+  _source: {fileID: 0}

@@ -1,6 +1,7 @@
 using Features.CameraModule.Scripts.Models;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.GameFlowStateMachineModule.Scripts;
+using Features.GrabModule.Scripts;
 using Features.MvpModule;
 using Features.ShipModule.Scripts;
 using Game.Connection;
@@ -16,6 +17,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<CharacterMovableModel>().AsSingle();
             Container.Bind<GameCameraModel>().AsSingle();
             Container.Bind<ShipRunModel>().AsSingle();
+            Container.Bind<HoveredInteractableModel>().AsSingle();
         }
     }
 }
