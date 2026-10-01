@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 8645471338007004886}
   - component: {fileID: 8655575431504875393}
   - component: {fileID: 8664903783980145932}
+  - component: {fileID: 8671000000000000001}
   m_Layer: 7
   m_Name: RadarItem
   m_TagString: Untagged
@@ -250,3 +251,19 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8510579984047903521, guid: e8f1a2b3c4d5061728394a5b6c7d8e90, type: 3}
   m_PrefabInstance: {fileID: 319168041852201282}
   m_PrefabAsset: {fileID: 0}
+
+--- !u!114 &8671000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8601338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea2e96eb0fc33df49bdad2a6927f17c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _data: {fileID: 11400000, guid: c4d8e1a0000000019a0b1c2d3e4f500e, type: 2}
+  _readyData: {fileID: 0}
+  _source: {fileID: 0}

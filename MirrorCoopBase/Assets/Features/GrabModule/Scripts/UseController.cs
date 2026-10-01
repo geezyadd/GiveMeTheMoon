@@ -16,6 +16,9 @@ namespace Features.GrabModule.Scripts {
         [Inject]
         private IGameCameraService _cameras;
 
+        [Inject]
+        private HoveredInteractableModel _hoveredInteractableModel;
+
         private Collider _hoverCollider;
         private InteractableBase[] _onTarget = System.Array.Empty<InteractableBase>();
         private InteractableBase _hovered;
@@ -29,6 +32,7 @@ namespace Features.GrabModule.Scripts {
                 _input.Grab.Performed -= OnUse;
 
             SetHovered(null);
+            _hoveredInteractableModel.SetInteractable(null, false);
         }
 
         private void Update() {
@@ -39,7 +43,7 @@ namespace Features.GrabModule.Scripts {
         }
 
         private void OnUse() {
-            InteractableBase target = ResolveUsable();
+            InteractableBase target = ResolveUsable(out _);
             if (target == null)
                 return;
 
@@ -66,10 +70,13 @@ namespace Features.GrabModule.Scripts {
         }
 
         private void RefreshHover() {
-            SetHovered(ResolveUsable());
+            InteractableBase usable = ResolveUsable(out InteractableBase lookedAt);
+            SetHovered(usable);
+            _hoveredInteractableModel.SetInteractable(usable != null ? usable : lookedAt, usable != null);
         }
 
-        private InteractableBase ResolveUsable() {
+        private InteractableBase ResolveUsable(out InteractableBase lookedAt) {
+            lookedAt = null;
             if (TryRaycastHit(out RaycastHit hit) == false) {
                 _hoverCollider = null;
                 _onTarget = System.Array.Empty<InteractableBase>();
@@ -81,13 +88,20 @@ namespace Features.GrabModule.Scripts {
                 _onTarget = hit.collider.GetComponentsInParent<InteractableBase>(true);
             }
 
+            InteractableBase usable = null;
             for (int i = 0; i < _onTarget.Length; i++) {
                 InteractableBase target = _onTarget[i];
-                if (target != null && target.CanUse(netIdentity, _grab))
-                    return target;
+                if (target == null)
+                    continue;
+
+                if (lookedAt == null)
+                    lookedAt = target;
+
+                if (usable == null && target.CanUse(netIdentity, _grab))
+                    usable = target;
             }
 
-            return null;
+            return usable;
         }
 
         private void SetHovered(InteractableBase next) {
