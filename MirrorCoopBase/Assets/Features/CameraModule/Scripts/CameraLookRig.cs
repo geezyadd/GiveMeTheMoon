@@ -6,7 +6,7 @@ namespace Features.CameraModule.Scripts {
         public float Yaw { get; set; }
         public float Pitch { get; set; }
 
-        private void LateUpdate() {
+        public void Apply() {
             Transform anchor = Anchor;
             if (anchor == null)
                 return;
@@ -17,7 +17,8 @@ namespace Features.CameraModule.Scripts {
             }
 
             transform.localPosition = Vector3.zero;
-            transform.rotation = Quaternion.Euler(Pitch, Yaw, 0f);
+            // Local to the rider, who is parented to the ship, so look does not counter-rotate when the ship turns.
+            transform.localRotation = Quaternion.Euler(Pitch, Yaw, 0f);
         }
     }
 }

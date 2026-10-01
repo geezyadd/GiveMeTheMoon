@@ -87,6 +87,27 @@ namespace Features.ShipModule.Scripts {
             RpcPlaceWreck(position, rotation);
         }
 
+        internal void ServerShiftWreck(Vector3 delta) {
+            ShiftWreck(delta);
+            RpcShiftWreck(delta);
+        }
+
+        [ClientRpc]
+        private void RpcShiftWreck(Vector3 delta) {
+            if (isServer)
+                return;
+
+            ShiftWreck(delta);
+        }
+
+        private void ShiftWreck(Vector3 delta) {
+            if (_localWreck != null)
+                _localWreck.transform.position += delta;
+
+            if (_previousLocalWreck != null)
+                _previousLocalWreck.transform.position += delta;
+        }
+
         [ClientRpc]
         private void RpcPlaceWreck(Vector3 position, Quaternion rotation) {
             if (isServer)

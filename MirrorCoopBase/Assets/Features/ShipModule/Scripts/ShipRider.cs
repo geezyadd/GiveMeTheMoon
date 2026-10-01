@@ -97,6 +97,9 @@ namespace Features.ShipModule.Scripts {
             _rb.interpolation = RigidbodyInterpolation.None;
             _rb.linearVelocity = Vector3.zero;
             _rb.angularVelocity = Vector3.zero;
+            transform.SetParent(_platform, true);
+            transform.localPosition = _localOffset;
+            transform.localRotation = Quaternion.identity;
 
             if (_floating != null)
                 _floating.HoverEnabled = false;
@@ -110,11 +113,29 @@ namespace Features.ShipModule.Scripts {
             SilenceNetworkBody();
         }
 
+        internal void DebugSetLocalOffset(Vector3 localOffset) {
+            _localOffset = localOffset;
+            _rideJumpVel = 0f;
+            _offsetFrom = localOffset;
+            _offsetTo = localOffset;
+            _offsetBlend = 1f;
+            if (_platform == null)
+                return;
+
+            transform.localPosition = localOffset;
+            transform.localRotation = Quaternion.identity;
+        }
+
         internal void ReleaseFromPlatform() {
             if (_bound == false)
                 return;
 
             _bound = false;
+            Transform released = transform;
+            Vector3 worldPosition = released.position;
+            Quaternion worldRotation = released.rotation;
+            released.SetParent(null, true);
+            released.SetPositionAndRotation(worldPosition, worldRotation);
             _platform = null;
             if (isServer) {
                 _seated = false;
@@ -170,10 +191,13 @@ namespace Features.ShipModule.Scripts {
                 }
             }
 
-            Vector3 next = _platform.position + _platform.rotation * RideOffset();
-            transform.position = next;
-            if (_rb != null)
-                _rb.position = next;
+            Vector3 next = RideOffset();
+            transform.localPosition = next;
+            transform.localRotation = Quaternion.identity;
+            if (_rb != null) {
+                _rb.position = transform.position;
+                _rb.rotation = transform.rotation;
+            }
 
             _lastPlatformPos = _platform.position;
         }

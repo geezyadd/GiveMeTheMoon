@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.GrabModule.Scripts;
 using Mirror;
 using Features.StatsModule.EntityStatsModule.Scripts.Modifier;
 using Features.StatsModule.EntityStatsModule.Scripts.StatsEntity;
@@ -23,8 +24,11 @@ namespace Features.ShipModule.Scripts {
         private readonly List<ShipRider> _riders = new List<ShipRider>();
         private readonly List<ShipRider> _insideVolume = new List<ShipRider>();
         private readonly ShipFlight _flight = new ShipFlight();
+        private readonly ShipDeckCargo _cargo = new ShipDeckCargo();
         private BoxCollider[] _walkBoxes;
         private float _helmSteer;
+        private bool _debugSteerActive;
+        private float _debugSteer;
         private bool _flying;
         private bool _controlsLocked;
 
@@ -35,6 +39,8 @@ namespace Features.ShipModule.Scripts {
         public ShipLaunchLever Lever => _lever;
         public Transform Destination => _destination;
         public bool IsFlying => _flying;
+        internal BoxCollider RideVolume => _rideVolume;
+        internal ShipFlightMode ActiveFlightMode => _flight.Mode;
         internal float StandUpSpeed => _flightSettings.StandUpSpeed;
         internal ShipSocket[] Sockets => _sockets;
         internal IStatEntity<ShipStatType> Stats => _stats;
@@ -257,6 +263,19 @@ namespace Features.ShipModule.Scripts {
             ApplyDefaultStats();
         }
 
+        internal void DebugBindRider(ShipRider rider) {
+            if (rider == null || rider.IsRiding)
+                return;
+
+            if (_insideVolume.Contains(rider) == false)
+                _insideVolume.Add(rider);
+
+            if (_riders.Contains(rider) == false)
+                _riders.Add(rider);
+
+            rider.BindToPlatform(this);
+        }
+
         internal void RegisterRider(ShipRider rider) {
             if (rider == null)
                 return;
@@ -278,9 +297,7 @@ namespace Features.ShipModule.Scripts {
                 if (_insideVolume.Contains(rider) == false)
                     _insideVolume.Add(rider);
 
-                if (_flying)
-                    TryBindRider(rider);
-
+                TryBindRider(rider);
                 return;
             }
 
@@ -310,8 +327,10 @@ namespace Features.ShipModule.Scripts {
             Vector3 from,
             Vector3 hover,
             Quaternion heading,
+            Quaternion routeHeading,
             float takeoffSeconds,
-            float dodgeRangeScale) {
+            float dodgeRangeScale,
+            ShipFlightMode mode) {
             if (NetworkServer.active == false || _flying)
                 return;
 
@@ -319,9 +338,11 @@ namespace Features.ShipModule.Scripts {
                 from,
                 hover,
                 heading,
+                routeHeading,
                 _flightSettings,
                 takeoffSeconds,
-                dodgeRangeScale);
+                dodgeRangeScale,
+                mode);
             _helmSteer = 0f;
             _controlsLocked = false;
             SleepBody();
@@ -436,7 +457,73 @@ namespace Features.ShipModule.Scripts {
                 return;
             }
 
-            ReleaseRiders();
+            KeepDeckRiders();
+        }
+
+        internal void SetDebugSteer(bool active, float steer) {
+            _debugSteerActive = active;
+            _debugSteer = Mathf.Clamp(steer, -1f, 1f);
+        }
+
+        internal void DebugFace(Vector3 worldForward) {
+            _flight.DebugFace(worldForward);
+        }
+
+        internal void ServerApplyWorldShift(Vector3 delta) {
+            _flight.ShiftWorld(delta);
+            Vector3 position = transform.position + delta;
+            ApplyDisplayPose(position, transform.rotation);
+            if (_poseSync != null)
+                _poseSync.ServerSnap(position, transform.rotation);
+        }
+
+        internal int DeckCargoCount => _cargo.AttachedCount;
+
+        internal void DebugAttachDeckItem(Grabbable grabbable) {
+            _cargo.DebugAttach(grabbable, transform, _poseSync);
+        }
+
+        internal bool TryGetDeckStandPoint(out Vector3 shipLocal) {
+            shipLocal = Vector3.up;
+            BoxCollider[] boxes = WalkBoxes();
+            BoxCollider best = null;
+            float bestArea = -1f;
+            if (boxes != null) {
+                for (int i = 0; i < boxes.Length; i++) {
+                    BoxCollider box = boxes[i];
+                    if (box == null)
+                        continue;
+
+                    Vector3 size = Vector3.Scale(box.size, box.transform.lossyScale);
+                    float area = Mathf.Abs(size.x * size.z);
+                    if (area <= bestArea)
+                        continue;
+
+                    bestArea = area;
+                    best = box;
+                }
+            }
+
+            if (best == null)
+                return false;
+
+            shipLocal = transform.InverseTransformPoint(best.transform.TransformPoint(best.center));
+            if (TryGetDeckSurfaceY(shipLocal, out float surfaceY))
+                shipLocal.y = surfaceY + 1.1f;
+
+            return true;
+        }
+
+        internal bool TryMeasureDeckCargo(out Vector3 localPosition, out float drift) {
+            return _cargo.TryMeasure(transform, out localPosition, out drift);
+        }
+
+        internal void ClientAttachDeckItem(uint netId, Vector3 localPosition, Quaternion localRotation) {
+            _cargo.ClientAttach(netId, localPosition, localRotation, transform);
+        }
+
+        internal void ClientDetachDeckItem(uint netId) {
+            _cargo.ClientDetach(netId, transform);
         }
 
         internal void ServerSetSteer(uint riderNetId, float lateral) {
@@ -473,15 +560,20 @@ namespace Features.ShipModule.Scripts {
 
             ClearOccupant(rider);
             rider.ServerUnlockSeat();
-            if (_flying == false)
+            if (_flying == false && IsAboveDeck(rider.transform.position) == false)
                 rider.ReleaseFromPlatform();
         }
 
         private void LateUpdate() {
             if (_flying && NetworkServer.active) {
                 bool canSteer = _controlsLocked == false && _flight.AllowsSteer;
-                _flight.SetManualHeading(canSteer && HasControlModule());
-                _flight.SetSteer(canSteer && HasHelmPilot() ? ReadHelmSteer() : 0f);
+                bool manual = canSteer && (HasControlModule() || _debugSteerActive);
+                _flight.SetManualHeading(manual);
+                float steer = _debugSteerActive
+                    ? _debugSteer
+                    : canSteer && HasHelmPilot() ? ReadHelmSteer() : 0f;
+                _flight.SetSteer(steer);
+                PushTravelSpeed();
                 SimulateFlight(Time.deltaTime);
                 if (_flight.IsActive)
                     ApplyDisplayPose(_flight.Position, _flight.Rotation);
@@ -496,9 +588,20 @@ namespace Features.ShipModule.Scripts {
                 _poseSync.ApplyInterpolated(HasOwnedHelmPilot());
             }
 
+            if (NetworkServer.active)
+                _cargo.ServerReleaseGrabbed(transform, _poseSync);
+
+            _cargo.Follow(transform, this, NetworkServer.active, _poseSync);
             FollowRiders(Time.deltaTime);
-            if (_flying)
-                CatchLandingRiders();
+            CatchDeckRiders();
+        }
+
+        private void PushTravelSpeed() {
+            if (_flight.Mode != ShipFlightMode.TravelInSpace || _flightSettings == null)
+                return;
+
+            float stat = Mathf.Max(ShipTransit.MinSpeed, GetStatFull(ShipStatType.FlightSpeed));
+            _flight.SetTravelSpeed(_flightSettings.CruiseSpeed * stat);
         }
 
         internal void ApplyDisplayPose(Vector3 position, Quaternion rotation) {
@@ -682,13 +785,29 @@ namespace Features.ShipModule.Scripts {
             }
         }
 
-        private void CatchLandingRiders() {
+        private void CatchDeckRiders() {
             for (int i = 0; i < _insideVolume.Count; i++)
                 TryBindRider(_insideVolume[i]);
         }
 
+        private void KeepDeckRiders() {
+            for (int i = _riders.Count - 1; i >= 0; i--) {
+                ShipRider rider = _riders[i];
+                if (rider == null) {
+                    _riders.RemoveAt(i);
+                    continue;
+                }
+
+                if (rider.IsRiding && IsAboveDeck(rider.transform.position))
+                    continue;
+
+                rider.ReleaseFromPlatform();
+                _riders.RemoveAt(i);
+            }
+        }
+
         private void TryBindRider(ShipRider rider) {
-            if (_flying == false || rider == null || rider.IsRiding)
+            if (rider == null || rider.IsRiding)
                 return;
 
             if (rider.WantsLand(this) == false)

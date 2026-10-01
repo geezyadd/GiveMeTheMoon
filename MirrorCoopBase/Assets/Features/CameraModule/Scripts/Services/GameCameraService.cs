@@ -1,8 +1,11 @@
 using System;
 using Features.CameraModule.Scripts.Models;
 using Features.GameCoreModule.Scripts;
+using Features.GrabModule.Scripts;
 using Unity.Cinemachine;
 using UnityEngine;
+using UnityEngine.LowLevel;
+using UnityEngine.PlayerLoop;
 using UnityEngine.SceneManagement;
 using Zenject;
 
@@ -17,6 +20,8 @@ namespace Features.CameraModule.Scripts.Services {
         private Transform _root;
         private Camera _output;
         private CinemachineBrain _brain;
+        private CameraLookRig _lookRig;
+        private static GameCameraService _presenting;
 
         public GameCameraService(GameCameraModel model, CameraCatalog catalog) {
             _model = model;
@@ -34,11 +39,16 @@ namespace Features.CameraModule.Scripts.Services {
 
         public void Initialize() {
             SceneManager.sceneLoaded += OnSceneLoaded;
+            _presenting = this;
+            InstallPresentHook();
             SpawnIdleCameras();
         }
 
         public void Dispose() {
             SceneManager.sceneLoaded -= OnSceneLoaded;
+            if (_presenting == this)
+                _presenting = null;
+
             TearDownCameras();
         }
 
@@ -165,6 +175,7 @@ namespace Features.CameraModule.Scripts.Services {
 
             Transform target = _model.LookPivot != null ? _model.LookPivot : _model.Follow;
             camera.Bind(target, null);
+            camera.LockFollowToTarget();
         }
 
         private void EnsureRoot() {
@@ -222,7 +233,7 @@ namespace Features.CameraModule.Scripts.Services {
             if (_brain == null)
                 _brain = _output.gameObject.AddComponent<CinemachineBrain>();
 
-            _brain.UpdateMethod = CinemachineBrain.UpdateMethods.LateUpdate;
+            _brain.UpdateMethod = CinemachineBrain.UpdateMethods.ManualUpdate;
             _brain.BlendUpdateMethod = CinemachineBrain.BrainUpdateMethods.LateUpdate;
         }
 
@@ -262,6 +273,85 @@ namespace Features.CameraModule.Scripts.Services {
             AudioListener listener = camera.GetComponent<AudioListener>();
             if (listener != null)
                 listener.enabled = false;
+        }
+
+        private static void InstallPresentHook() {
+            PlayerLoopSystem loop = PlayerLoop.GetCurrentPlayerLoop();
+            if (Contains(loop, typeof(GameCameraService)))
+                return;
+
+            if (TryInsertPresent(ref loop) == false)
+                return;
+
+            PlayerLoop.SetPlayerLoop(loop);
+        }
+
+        private static bool TryInsertPresent(ref PlayerLoopSystem loop) {
+            PlayerLoopSystem[] systems = loop.subSystemList;
+            if (systems == null)
+                return false;
+
+            for (int i = 0; i < systems.Length; i++) {
+                if (systems[i].type != typeof(PostLateUpdate))
+                    continue;
+
+                PlayerLoopSystem[] sub = systems[i].subSystemList;
+                int count = sub != null ? sub.Length : 0;
+                PlayerLoopSystem[] next = new PlayerLoopSystem[count + 1];
+                next[0] = new PlayerLoopSystem {
+                    type = typeof(GameCameraService),
+                    updateDelegate = PresentAfterSimulation
+                };
+                for (int n = 0; n < count; n++)
+                    next[n + 1] = sub[n];
+
+                systems[i].subSystemList = next;
+                loop.subSystemList = systems;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool Contains(PlayerLoopSystem system, Type type) {
+            if (system.type == type)
+                return true;
+
+            PlayerLoopSystem[] sub = system.subSystemList;
+            if (sub == null)
+                return false;
+
+            for (int i = 0; i < sub.Length; i++) {
+                if (Contains(sub[i], type))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static void PresentAfterSimulation() {
+            if (_presenting != null)
+                _presenting.PresentNow();
+        }
+
+        private void PresentNow() {
+            ApplyLookRig();
+            Grabbable.FollowHeldAll();
+            EnsureBrain();
+            if (_brain != null)
+                _brain.ManualUpdate();
+        }
+
+        private void ApplyLookRig() {
+            Transform pivot = _model.LookPivot;
+            if (pivot == null)
+                return;
+
+            if (_lookRig == null || _lookRig.transform != pivot)
+                _lookRig = pivot.GetComponent<CameraLookRig>();
+
+            if (_lookRig != null)
+                _lookRig.Apply();
         }
     }
 }

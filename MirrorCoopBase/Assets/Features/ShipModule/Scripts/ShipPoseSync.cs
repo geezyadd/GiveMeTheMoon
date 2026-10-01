@@ -120,6 +120,32 @@ namespace Features.ShipModule.Scripts {
                 _shipBase.OnClientFlightChanged(current);
         }
 
+        [Server]
+        internal void ServerAttachDeckItem(uint netId, Vector3 localPosition, Quaternion localRotation) {
+            RpcAttachDeckItem(netId, localPosition, localRotation);
+        }
+
+        [Server]
+        internal void ServerDetachDeckItem(uint netId) {
+            RpcDetachDeckItem(netId);
+        }
+
+        [ClientRpc]
+        private void RpcAttachDeckItem(uint netId, Vector3 localPosition, Quaternion localRotation) {
+            if (isServer || _shipBase == null)
+                return;
+
+            _shipBase.ClientAttachDeckItem(netId, localPosition, localRotation);
+        }
+
+        [ClientRpc]
+        private void RpcDetachDeckItem(uint netId) {
+            if (isServer || _shipBase == null)
+                return;
+
+            _shipBase.ClientDetachDeckItem(netId);
+        }
+
         [ClientRpc]
         private void RpcSnap(Vector3 position, Quaternion rotation) {
             if (isServer)
