@@ -1,11 +1,12 @@
+using System;
 using Features.ShopModule.Scripts.Configurations;
+using Features.ShopModule.Scripts.Core;
 using Features.ShopModule.Scripts.Data;
-using Features.ShopModule.Scripts.Systems;
 using Mirror;
 using Zenject;
 
 namespace Features.ShopModule.Scripts.Network {
-    public sealed class CrewWallet : NetworkBehaviour {
+    public sealed class CrewWallet : NetworkBehaviour, ICrewWallet {
         private WalletConfiguration _walletConfiguration;
         private WalletModel _walletModel;
         private ShopPurchaseRequestEventClass _shopPurchaseRequestEventClass;
@@ -42,17 +43,20 @@ namespace Features.ShopModule.Scripts.Network {
         }
 
         [Server]
-        public void ServerSetBalance(long balance) =>
-            _balance = balance;
-
-        [Server]
         public bool ServerTrySpend(long amount) {
-            if (amount < 0 || _balance < amount)
+            if (amount < 0)
+                throw new ArgumentOutOfRangeException(nameof(amount), amount, null);
+
+            if (_balance < amount)
                 return false;
 
             _balance -= amount;
             return true;
         }
+
+        [Server]
+        private void ServerSetBalance(long balance) =>
+            _balance = balance;
 
         [Command(requiresAuthority = false)]
         private void CmdPurchase(int entryIndex, NetworkConnectionToClient sender = null) {

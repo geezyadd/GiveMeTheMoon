@@ -1,5 +1,4 @@
 using Features.ShopModule.Scripts.Core;
-using Features.ShopModule.Scripts.Network;
 using UnityEngine;
 
 namespace Features.ShopModule.Scripts.Systems {
@@ -12,7 +11,7 @@ namespace Features.ShopModule.Scripts.Systems {
             _shopItemSpawnService = shopItemSpawnService;
         }
 
-        public void ServerPurchase(CrewWallet wallet, int entryIndex, Transform buyer) {
+        public void ServerPurchase(ICrewWallet wallet, int entryIndex, Transform buyer) {
             ShopPurchaseResult result = _shopPurchaseService.Evaluate(wallet.Balance, entryIndex);
             if (result.Status != ShopPurchaseStatus.Success)
                 return;
