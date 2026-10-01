@@ -462,10 +462,36 @@ namespace Features.ShipModule.Scripts {
             if (_riders.Contains(rider) == false)
                 _riders.Add(rider);
 
-            rider.BindToPlatform(this);
+            Vector3 seatOffset = socket.ResolveSitLocalOffset(transform);
+            rider.BindToSeat(this, seatOffset);
             bool helm = socket.Seat != null && socket.Seat.Role == ShipSeatRole.Helm;
-            rider.ServerLockSeat(socket.ResolveSitLocalOffset(transform), helm);
+            rider.ServerLockSeat(seatOffset, helm);
             return true;
+        }
+
+        internal void ClientSyncSeat(ShipSocket socket, uint previousOccupant, uint occupant) {
+            if (NetworkServer.active)
+                return;
+
+            if (TryGetOwnedRider(occupant, out ShipRider seated)) {
+                if (_riders.Contains(seated) == false)
+                    _riders.Add(seated);
+
+                seated.BindToSeat(this, socket.ResolveSitLocalOffset(transform));
+                return;
+            }
+
+            if (_flying == false && TryGetOwnedRider(previousOccupant, out ShipRider stood))
+                stood.ReleaseFromPlatform();
+        }
+
+        internal void ServerRemoveRider(ShipRider rider) {
+            if (NetworkServer.active == false)
+                return;
+
+            ClearOccupant(rider);
+            _riders.Remove(rider);
+            _insideVolume.Remove(rider);
         }
 
         internal void ServerStand(ShipRider rider) {
@@ -609,6 +635,14 @@ namespace Features.ShipModule.Scripts {
                 if (_sockets[i] != null)
                     _sockets[i].ServerStand(rider.netId);
             }
+        }
+
+        private static bool TryGetOwnedRider(uint netId, out ShipRider rider) {
+            rider = null;
+            if (netId == 0 || NetworkClient.spawned.TryGetValue(netId, out NetworkIdentity identity) == false)
+                return false;
+
+            return identity.isOwned && identity.TryGetComponent(out rider);
         }
 
         private void ClearAllOccupants() {

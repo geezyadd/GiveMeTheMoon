@@ -57,6 +57,11 @@ namespace Features.ShipModule.Scripts {
         internal bool IsHelmSeat => _helmSeat;
         internal float CurrentSteer => _input != null ? _input.MoveStick.x : 0f;
 
+        public override void OnStopServer() {
+            if (_ship != null)
+                _ship.ServerRemoveRider(this);
+        }
+
         internal bool WantsLand(ShipBase ship) {
             if (isOwned == false || _bound || _rb == null || ship == null)
                 return false;
@@ -76,12 +81,28 @@ namespace Features.ShipModule.Scripts {
             if (_rb == null || ship == null || _bound)
                 return;
 
+            Vector3 standingOffset = Quaternion.Inverse(ship.transform.rotation) * (transform.position - ship.transform.position);
+            ship.ClampDeckWalk(ref standingOffset, _deckInset);
+            // A seated rider keeps the server's seat offset; its own standing spot would overwrite it on the server.
+            Bind(ship, _seated ? _syncedLocalOffset : standingOffset);
+        }
+
+        internal void BindToSeat(ShipBase ship, Vector3 seatOffset) {
+            if (_bound) {
+                _localOffset = seatOffset;
+                return;
+            }
+
+            if (_rb != null && ship != null)
+                Bind(ship, seatOffset);
+        }
+
+        private void Bind(ShipBase ship, Vector3 localOffset) {
             _ship = ship;
             _platform = ship.transform;
             Quaternion toLocal = Quaternion.Inverse(_platform.rotation);
             float localVerticalSpeed = (toLocal * _rb.linearVelocity).y;
-            _localOffset = toLocal * (transform.position - _platform.position);
-            _ship.ClampDeckWalk(ref _localOffset, _deckInset);
+            _localOffset = localOffset;
             _rideRestY = ResolveRideRestY();
             _rideJumpVel = isOwned && _localOffset.y > _rideRestY ? localVerticalSpeed : 0f;
             _jumpHeldPrev = _input != null && _input.JumpHeld;

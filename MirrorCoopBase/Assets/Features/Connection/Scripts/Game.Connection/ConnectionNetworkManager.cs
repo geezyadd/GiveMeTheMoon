@@ -320,12 +320,18 @@ namespace Game.Connection
             return true;
         }
 
+        // The scene change also goes to the host's own client; before it is authenticated it drops the message and disconnects.
+        public bool CanStartGame()
+        {
+            return NetworkServer.active && !IsChangingMap && NetworkClient.ready && NetworkClient.connection.isAuthenticated;
+        }
+
         public void StartGame()
         {
             if (!NetworkServer.active)
                 return;
 
-            if (IsChangingMap)
+            if (!CanStartGame())
                 return;
 
             if (string.IsNullOrWhiteSpace(gameSceneName))

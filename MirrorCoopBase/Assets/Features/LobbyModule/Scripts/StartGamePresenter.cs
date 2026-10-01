@@ -22,7 +22,7 @@ namespace Features.LobbyModule.Scripts {
         }
 
         void OnStartClicked() {
-            if (NetworkServer.active == false)
+            if (NetworkServer.active == false || _connectionSession.CanStartGame == false)
                 return;
 
             View.SetInteractable(false);
