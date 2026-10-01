@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f8a2c1e9b7d4a6e8c0f1a2b3c4d5e6f, type: 3}
+  m_Name: PlayerStats
+  m_EditorClassIdentifier: 
+  _modelName: PlayerStats
+  _namespace: Features.NetworkModelModule.Scripts.Samples
+  _folder: Assets/Features/NetworkModelModule/Samples/Generated
+  _atomic: 0
+  _scope: 1
+  _fields:
+  - _name: Score
+    _typeName: int
+    _defaultValue: 
+  - _name: Title
+    _typeName: string
+    _defaultValue: 

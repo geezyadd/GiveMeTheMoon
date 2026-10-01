@@ -6,7 +6,6 @@ using Zenject;
 namespace Features.ShopModule.Scripts.Installers {
     public sealed class ShopModuleInstaller : Installer<ShopModuleInstaller> {
         public override void InstallBindings() {
-            Container.BindInterfacesAndSelfTo<WalletModel>().AsSingle();
             Container.Bind<ShopModel>().AsSingle();
             Container.Bind<ShopPurchaseRequestEventClass>().AsSingle();
             Container.Bind<IShopPurchaseService>().To<ShopPurchaseService>().AsSingle();

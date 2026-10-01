@@ -1,11 +1,11 @@
 using Features.MvpModule;
-using Features.ShopModule.Scripts.Data;
+using Features.ShopModule.Scripts.Generated;
 
 namespace Features.ShopModule.Scripts.UI {
     public sealed class BalancePresenter : PresenterBehaviour<BalanceViewBase> {
-        private readonly IWalletModel _walletModel;
+        private readonly IReadOnlyWalletModel _walletModel;
 
-        public BalancePresenter(IWalletModel walletModel) =>
+        public BalancePresenter(IReadOnlyWalletModel walletModel) =>
             _walletModel = walletModel;
 
         protected override void OnViewSet() {

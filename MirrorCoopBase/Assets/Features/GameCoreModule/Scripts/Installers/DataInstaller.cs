@@ -4,6 +4,7 @@ using Features.GameFlowStateMachineModule.Scripts;
 using Features.GrabModule.Scripts;
 using Features.MvpModule;
 using Features.ShipModule.Scripts;
+using Features.ShopModule.Scripts.Generated;
 using Game.Connection;
 using Zenject;
 
@@ -18,6 +19,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<GameCameraModel>().AsSingle();
             Container.Bind<ShipRunModel>().AsSingle();
             Container.Bind<HoveredInteractableModel>().AsSingle();
+            WalletModelInstaller.Install(Container);
         }
     }
 }
