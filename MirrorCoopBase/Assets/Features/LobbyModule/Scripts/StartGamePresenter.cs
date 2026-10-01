@@ -15,12 +15,12 @@ namespace Features.LobbyModule.Scripts {
             View.SetVisible(isHost);
             View.SetInteractable(isHost);
             View.OnStartClicked += OnStartClicked;
-            ConnectionNetworkManager.MapReady += OnMapReady;
+            _connectionSession.OnMapReady += OnMapReady;
         }
 
         protected override void OnDisposed() {
             View.OnStartClicked -= OnStartClicked;
-            ConnectionNetworkManager.MapReady -= OnMapReady;
+            _connectionSession.OnMapReady -= OnMapReady;
         }
 
         // Back in the lobby after a run (ReturnToLobby): the host can start the next one.

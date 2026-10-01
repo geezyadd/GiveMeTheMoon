@@ -391,7 +391,6 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   _damageable: {fileID: 6409845104136634497}
-  _grab: {fileID: 7209845104136634493}
   _body: {fileID: 7148192738405830123}
   _followTarget: {fileID: 7110000000000000012}
   _renderers:

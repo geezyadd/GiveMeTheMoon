@@ -1,21 +1,27 @@
 using System;
 using System.Collections.Generic;
+using Features.NetworkModelModule.Scripts;
 using Features.PlayerLifeModule.Scripts.Generated;
 using UnityEngine;
 using Zenject;
 
 namespace Features.PlayerLifeModule.Scripts {
-    // Read side on every peer, from the synced PlayerLife models of the player bodies spawned here.
+    // Read side on every peer: the local state comes from the PlayerLife registry, the alive targets from the bodies spawned here.
     public sealed class PlayerLifeQuery : IPlayerLifeQuery, IInitializable, IDisposable {
         private readonly IPlayerBodyRegistry _playerBodyRegistry;
+        private readonly IReadOnlyPlayerLifeRegistry _playerLifeRegistry;
         private readonly List<IReadOnlyPlayerLifeModel> _subscribed = new();
+        private IReadOnlyPlayerLifeModel _localLife;
         private List<Transform> _aliveTargets = new();
         private List<Transform> _scratchTargets = new();
 
-        public PlayerLifeQuery(IPlayerBodyRegistry playerBodyRegistry) =>
+        public PlayerLifeQuery(IPlayerBodyRegistry playerBodyRegistry, IReadOnlyPlayerLifeRegistry playerLifeRegistry) {
             _playerBodyRegistry = playerBodyRegistry;
+            _playerLifeRegistry = playerLifeRegistry;
+        }
 
-        public PlayerLifeState LocalState { get; private set; } = PlayerLifeState.Alive;
+        public PlayerLifeState LocalState =>
+            ReadState(_playerLifeRegistry.Local);
 
         public IReadOnlyList<Transform> AlivePlayerTargets =>
             _aliveTargets;
@@ -25,13 +31,19 @@ namespace Features.PlayerLifeModule.Scripts {
 
         public void Initialize() {
             _playerBodyRegistry.OnClientBodiesChanged += OnClientBodiesChanged;
+            _playerLifeRegistry.OnPlayerRemoved += OnLifeRecordRemoved;
             OnClientBodiesChanged();
         }
 
         public void Dispose() {
             _playerBodyRegistry.OnClientBodiesChanged -= OnClientBodiesChanged;
+            _playerLifeRegistry.OnPlayerRemoved -= OnLifeRecordRemoved;
             Unsubscribe();
+            SwitchLocalLife(null);
         }
+
+        private static PlayerLifeState ReadState(IReadOnlyPlayerLifeModel life) =>
+            life != null ? life.LifeState : PlayerLifeState.Alive;
 
         private void OnClientBodiesChanged() {
             Unsubscribe();
@@ -42,32 +54,42 @@ namespace Features.PlayerLifeModule.Scripts {
                 _subscribed.Add(life);
             }
 
-            Refresh();
+            SwitchLocalLife(_playerLifeRegistry.Local);
+            RefreshAliveTargets();
         }
 
+        private void OnLifeRecordRemoved(PlayerKey key) =>
+            SwitchLocalLife(_playerLifeRegistry.Local);
+
         private void OnLifeStateChanged() =>
-            Refresh();
+            RefreshAliveTargets();
+
+        private void OnLocalLifeStateChanged() =>
+            OnLocalStateChanged?.Invoke(ReadState(_localLife));
+
+        // The registry has no "local changed" event: the local record is re-read whenever the spawned bodies or records change.
+        private void SwitchLocalLife(IReadOnlyPlayerLifeModel next) {
+            if (next == _localLife)
+                return;
+
+            PlayerLifeState previousState = ReadState(_localLife);
+            if (_localLife != null)
+                _localLife.OnLifeStateChanged -= OnLocalLifeStateChanged;
+
+            _localLife = next;
+            if (_localLife != null)
+                _localLife.OnLifeStateChanged += OnLocalLifeStateChanged;
+
+            PlayerLifeState nextState = ReadState(_localLife);
+            if (nextState != previousState)
+                OnLocalStateChanged?.Invoke(nextState);
+        }
 
         private void Unsubscribe() {
             for (int i = 0; i < _subscribed.Count; i++)
                 _subscribed[i].OnLifeStateChanged -= OnLifeStateChanged;
 
             _subscribed.Clear();
-        }
-
-        private void Refresh() {
-            RefreshLocalState();
-            RefreshAliveTargets();
-        }
-
-        private void RefreshLocalState() {
-            PlayerLifeBody local = _playerBodyRegistry.LocalBody;
-            PlayerLifeState state = local != null ? local.Life.LifeState : PlayerLifeState.Alive;
-            if (state == LocalState)
-                return;
-
-            LocalState = state;
-            OnLocalStateChanged?.Invoke(state);
         }
 
         private void RefreshAliveTargets() {

@@ -13,6 +13,8 @@ namespace Features.CameraModule.Scripts {
         [Inject]
         private IGameCameraService _cameras;
 
+        public Transform Follow => _follow != null ? _follow : transform;
+
         public override void OnStartLocalPlayer() {
             Transform follow = _follow != null ? _follow : transform;
             Transform lookAt = _lookAt != null ? _lookAt : follow;

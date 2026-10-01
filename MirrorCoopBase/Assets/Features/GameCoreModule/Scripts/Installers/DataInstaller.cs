@@ -1,4 +1,5 @@
 using Features.CameraModule.Scripts.Models;
+using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.GameFlowStateMachineModule.Scripts;
 using Features.GrabModule.Scripts;
@@ -17,10 +18,11 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<SteamLobbyModel>().AsSingle();
             Container.Bind<PreloadedWindowsModel>().AsSingle();
             Container.Bind<CharacterMovableModel>().AsSingle();
+            Container.Bind<PlayerControlBlockModel>().AsSingle();
             Container.Bind<GameCameraModel>().AsSingle();
             Container.Bind<ShipRunModel>().AsSingle();
             Container.Bind<HoveredInteractableModel>().AsSingle();
-            Container.Bind<PlayerControlBlockModel>().AsSingle();
+            Container.Bind<SpectatorModel>().AsSingle();
             WalletModelInstaller.Install(Container);
             PlayerLifeModelInstaller.Install(Container);
         }

@@ -14,10 +14,11 @@ namespace Features.PlayerLifeModule.Scripts {
         private readonly IPlayerBodyRegistry _playerBodyRegistry;
         private readonly PlayerLifeRegistry _playerLifeRegistry;
         private readonly IAllDeadRule _allDeadRule;
+        private readonly IPlayerLifeStateMachineFactory _playerLifeStateMachineFactory;
         private readonly IConnectionSessionService _connectionSessionService;
         private readonly PlayerLifeConfiguration _playerLifeConfiguration;
-        private readonly Dictionary<PlayerLifeBody, PlayerLifeStateMachine> _machinesByBody = new();
-        private readonly List<PlayerLifeStateMachine> _machines = new();
+        private readonly Dictionary<PlayerLifeBody, IPlayerLifeStateMachine> _machinesByBody = new();
+        private readonly List<IPlayerLifeStateMachine> _machines = new();
         private readonly List<PlayerKey> _knownKeys = new();
         private bool _returnPending;
         private float _returnAt;
@@ -26,11 +27,13 @@ namespace Features.PlayerLifeModule.Scripts {
             IPlayerBodyRegistry playerBodyRegistry,
             PlayerLifeRegistry playerLifeRegistry,
             IAllDeadRule allDeadRule,
+            IPlayerLifeStateMachineFactory playerLifeStateMachineFactory,
             IConnectionSessionService connectionSessionService,
             PlayerLifeConfiguration playerLifeConfiguration) {
             _playerBodyRegistry = playerBodyRegistry;
             _playerLifeRegistry = playerLifeRegistry;
             _allDeadRule = allDeadRule;
+            _playerLifeStateMachineFactory = playerLifeStateMachineFactory;
             _connectionSessionService = connectionSessionService;
             _playerLifeConfiguration = playerLifeConfiguration;
         }
@@ -39,14 +42,14 @@ namespace Features.PlayerLifeModule.Scripts {
             _playerBodyRegistry.OnServerBodyAdded += OnServerBodyAdded;
             _playerBodyRegistry.OnServerBodyRemoved += OnServerBodyRemoved;
             _playerLifeRegistry.OnPlayerAdded += OnLifeRecordAdded;
-            ConnectionNetworkManager.MapReady += OnMapReady;
+            _connectionSessionService.OnMapReady += OnMapReady;
         }
 
         public void Dispose() {
             _playerBodyRegistry.OnServerBodyAdded -= OnServerBodyAdded;
             _playerBodyRegistry.OnServerBodyRemoved -= OnServerBodyRemoved;
             _playerLifeRegistry.OnPlayerAdded -= OnLifeRecordAdded;
-            ConnectionNetworkManager.MapReady -= OnMapReady;
+            _connectionSessionService.OnMapReady -= OnMapReady;
         }
 
         public void Tick() {
@@ -86,7 +89,7 @@ namespace Features.PlayerLifeModule.Scripts {
         }
 
         private void OnServerBodyAdded(PlayerLifeBody body) {
-            PlayerLifeStateMachine machine = new PlayerLifeStateMachine(body, body.Damageable);
+            IPlayerLifeStateMachine machine = _playerLifeStateMachineFactory.Create(body, body.Damageable);
             _machinesByBody.Add(body, machine);
             _machines.Add(machine);
             machine.OnStateChanged += OnLifeStateChanged;
@@ -95,7 +98,7 @@ namespace Features.PlayerLifeModule.Scripts {
         }
 
         private void OnServerBodyRemoved(PlayerLifeBody body) {
-            if (_machinesByBody.Remove(body, out PlayerLifeStateMachine machine) == false)
+            if (_machinesByBody.Remove(body, out IPlayerLifeStateMachine machine) == false)
                 return;
 
             machine.OnStateChanged -= OnLifeStateChanged;

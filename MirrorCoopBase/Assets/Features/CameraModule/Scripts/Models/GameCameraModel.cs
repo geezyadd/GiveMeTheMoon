@@ -10,6 +10,7 @@ namespace Features.CameraModule.Scripts.Models {
         public Transform LookAt { get; internal set; }
         public Transform Eye { get; internal set; }
         public Transform LookPivot { get; internal set; }
+        public Transform OrbitHoldAnchor { get; internal set; }
 
         public IReadOnlyDictionary<string, GameCamera> Cameras => _cameras;
 
@@ -48,6 +49,7 @@ namespace Features.CameraModule.Scripts.Models {
             LookAt = null;
             Eye = null;
             LookPivot = null;
+            OrbitHoldAnchor = null;
         }
     }
 }

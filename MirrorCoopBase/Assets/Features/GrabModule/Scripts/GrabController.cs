@@ -6,7 +6,7 @@ using UnityEngine;
 using Zenject;
 
 namespace Features.GrabModule.Scripts {
-    public sealed class GrabController : NetworkBehaviour {
+    public sealed class GrabController : NetworkBehaviour, IHeldItemRelease {
         [SerializeField] private Transform _armPoint;
         [SerializeField] private LayerMask _interactableMask;
         [SerializeField] private float _range = 4f;

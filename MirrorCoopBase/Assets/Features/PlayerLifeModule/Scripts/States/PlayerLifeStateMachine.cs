@@ -2,7 +2,7 @@ using System;
 
 namespace Features.PlayerLifeModule.Scripts {
     // Server-side life of one player: Alive -> Dead on IDamageable.OnDied, Dead -> Alive only on Revive.
-    public sealed class PlayerLifeStateMachine {
+    public sealed class PlayerLifeStateMachine : IPlayerLifeStateMachine {
         private readonly IPlayerLifeActor _actor;
         private readonly IDamageable _damageable;
         private readonly AliveState _alive;

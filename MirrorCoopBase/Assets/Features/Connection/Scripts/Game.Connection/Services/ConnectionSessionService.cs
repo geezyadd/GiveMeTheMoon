@@ -18,6 +18,12 @@ namespace Game.Connection
         public bool IsInLobby =>
             SceneManager.GetActiveScene().name == RequireNetworkManager().LobbySceneName;
 
+        public event Action OnMapReady
+        {
+            add => ConnectionNetworkManager.MapReady += value;
+            remove => ConnectionNetworkManager.MapReady -= value;
+        }
+
         public async Task HostAsync()
         {
             ConnectionNetworkManager networkManager = RequireNetworkManager();

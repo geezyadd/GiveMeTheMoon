@@ -46,25 +46,22 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         public void CleanupGameplay() {
-            MoveStick = Vector2.zero;
-            JumpHeld = false;
-            SprintHeld = false;
+            ResetInput();
             _model.Clear();
         }
 
-        public void RestartGameplay() {
+        public void RestartGameplay() =>
+            ResetInput();
+
+        private void ResetInput() {
             MoveStick = Vector2.zero;
             JumpHeld = false;
             SprintHeld = false;
         }
 
         private void OnControlBlockChanged() {
-            if (_controlBlock.IsBlocked == false)
-                return;
-
-            MoveStick = Vector2.zero;
-            JumpHeld = false;
-            SprintHeld = false;
+            if (_controlBlock.IsBlocked)
+                ResetInput();
         }
 
         private void OnMoveChanged(Vector2 value) {

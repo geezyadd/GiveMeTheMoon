@@ -11,7 +11,6 @@ namespace Features.PlayerLifeModule.Scripts {
     // Must sit after PlayerDamageable on the prefab: it reads the model that bridge binds in OnStartServer / OnStartClient.
     public sealed class PlayerLifeBody : NetworkBehaviour, IPlayerLifeActor {
         [SerializeField] private PlayerDamageable _damageable;
-        [SerializeField] private GrabController _grab;
         [SerializeField] private Rigidbody _body;
         [SerializeField] private Transform _followTarget;
         [SerializeField] private Renderer[] _renderers;
@@ -20,6 +19,7 @@ namespace Features.PlayerLifeModule.Scripts {
         private IPlayerBodyRegistry _registry;
         private PlayerControlBlockModel _controlBlock;
         private IShipRiderRelease _shipRiderRelease;
+        private IHeldItemRelease _heldItemRelease;
         private IReadOnlyPlayerLifeModel _clientLife;
         private RigidbodyConstraints _aliveConstraints;
         private bool _deadShown;
@@ -47,8 +47,10 @@ namespace Features.PlayerLifeModule.Scripts {
             _shipRiderRelease = shipRiderRelease;
         }
 
-        private void Awake() =>
+        private void Awake() {
             _aliveConstraints = _body.constraints;
+            _heldItemRelease = GetComponent<IHeldItemRelease>();
+        }
 
         public override void OnStartServer() =>
             _registry.AddServer(this);
@@ -81,7 +83,7 @@ namespace Features.PlayerLifeModule.Scripts {
 
         [Server]
         public void ServerApplyDeath() {
-            _grab.ServerReleaseHeld();
+            _heldItemRelease.ServerReleaseHeld();
             _shipRiderRelease.ServerReleaseRider(netIdentity);
         }
 
@@ -125,5 +127,11 @@ namespace Features.PlayerLifeModule.Scripts {
             else
                 _controlBlock.Release(this);
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        [Command]
+        public void CmdDebugKill() =>
+            _damageable.ServerKill(DamageType.Generic);
+#endif
     }
 }

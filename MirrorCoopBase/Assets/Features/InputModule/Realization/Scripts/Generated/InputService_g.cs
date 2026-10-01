@@ -7,7 +7,7 @@ using Features.InputModule.Core.Scripts;
 using Zenject;
 using System;
 namespace Features.InputModule.Realization.Scripts.Generated {
-    public class InputService: InputActions.IMovementMapActions, InputActions.IUiMapActions, IInputService, IInitializable, IDisposable  {
+    public class InputService: InputActions.IMovementMapActions, InputActions.IUiMapActions, InputActions.ISpectatorMapActions, IInputService, IInitializable, IDisposable  {
         private InputActions _inputActions;
         public InputVector2Actions Movement { get; set; } = new();
         public InputDefaultActions Jump { get; set; } = new();
@@ -19,6 +19,8 @@ namespace Features.InputModule.Realization.Scripts.Generated {
         public InputDefaultActions ToggleCursor { get; set; } = new();
         public InputDefaultActions Shop { get; set; } = new();
         public InputDefaultActions CloseWindow { get; set; } = new();
+        public InputDefaultActions SpectatePrev { get; set; } = new();
+        public InputDefaultActions SpectateNext { get; set; } = new();
         public InputService(InputActions inputActions) {
             _inputActions = inputActions;
         }
@@ -40,11 +42,13 @@ namespace Features.InputModule.Realization.Scripts.Generated {
          {
             _inputActions.MovementMap.SetCallbacks(this);
             _inputActions.UiMap.SetCallbacks(this);
+            _inputActions.SpectatorMap.SetCallbacks(this);
         }
         private void RemoveControlsCallback()
          {
             _inputActions.MovementMap.RemoveCallbacks(this);
             _inputActions.UiMap.RemoveCallbacks(this);
+            _inputActions.SpectatorMap.RemoveCallbacks(this);
         }
         public void EnableMovementMap()
          {
@@ -65,6 +69,16 @@ namespace Features.InputModule.Realization.Scripts.Generated {
          {
             _inputActions.UiMap.Disable();
             _inputActions.UiMap.RemoveCallbacks(this);
+        }
+        public void EnableSpectatorMap()
+         {
+            _inputActions.SpectatorMap.Enable();
+            _inputActions.SpectatorMap.SetCallbacks(this);
+        }
+        public void DisableSpectatorMap()
+         {
+            _inputActions.SpectatorMap.Disable();
+            _inputActions.SpectatorMap.RemoveCallbacks(this);
         }
         public void OnMovement(InputAction.CallbackContext context)
          {
@@ -131,6 +145,18 @@ namespace Features.InputModule.Realization.Scripts.Generated {
             if(context.started)CloseWindow.Started?.Invoke();
             if(context.performed)CloseWindow.Performed?.Invoke();
             if(context.canceled)CloseWindow.Canceled?.Invoke();
+        }
+        public void OnSpectatePrev(InputAction.CallbackContext context)
+         {
+            if(context.started)SpectatePrev.Started?.Invoke();
+            if(context.performed)SpectatePrev.Performed?.Invoke();
+            if(context.canceled)SpectatePrev.Canceled?.Invoke();
+        }
+        public void OnSpectateNext(InputAction.CallbackContext context)
+         {
+            if(context.started)SpectateNext.Started?.Invoke();
+            if(context.performed)SpectateNext.Performed?.Invoke();
+            if(context.canceled)SpectateNext.Canceled?.Invoke();
         }
     }
 }

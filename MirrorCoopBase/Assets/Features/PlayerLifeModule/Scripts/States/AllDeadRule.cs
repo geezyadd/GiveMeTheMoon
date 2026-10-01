@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Features.PlayerLifeModule.Scripts {
     public sealed class AllDeadRule : IAllDeadRule {
-        public bool AreAllDead(IReadOnlyList<PlayerLifeStateMachine> players) {
+        public bool AreAllDead(IReadOnlyList<IPlayerLifeStateMachine> players) {
             if (players.Count == 0)
                 return false;
 
