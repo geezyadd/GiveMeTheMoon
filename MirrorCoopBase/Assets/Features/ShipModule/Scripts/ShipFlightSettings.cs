@@ -10,6 +10,10 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private float _bankDegrees = 22f;
         [SerializeField] private float _swayStiffness = 10f;
         [SerializeField] private float _swayDamping = 0.32f;
+        [SerializeField] private float _boardingEdgeTolerance = 0.5f;
+        [SerializeField] private float _boardingMinHeight = -0.5f;
+        [SerializeField] private float _boardingMaxHeight = 6f;
+        [SerializeField] private float _standUpSpeed = 6f;
 
         public float DodgeRange => Mathf.Max(0f, _dodgeRange);
         public float TurnDegrees => _turnDegrees;
@@ -18,5 +22,9 @@ namespace Features.ShipModule.Scripts {
         public float BankDegrees => _bankDegrees;
         public float SwayStiffness => Mathf.Max(0.5f, _swayStiffness);
         public float SwayDamping => Mathf.Clamp(_swayDamping, 0.05f, 0.95f);
+        public float BoardingEdgeTolerance => _boardingEdgeTolerance;
+        public float BoardingMinHeight => _boardingMinHeight;
+        public float BoardingMaxHeight => _boardingMaxHeight;
+        public float StandUpSpeed => _standUpSpeed;
     }
 }

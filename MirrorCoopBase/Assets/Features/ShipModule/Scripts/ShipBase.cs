@@ -7,10 +7,6 @@ using Zenject;
 
 namespace Features.ShipModule.Scripts {
     public sealed class ShipBase : MonoBehaviour {
-        private const float BOARDING_EDGE_TOLERANCE = 0.5f;
-        private const float BOARDING_MIN_HEIGHT = -0.5f;
-        private const float BOARDING_MAX_HEIGHT = 6f;
-
         [SerializeField] private ShipSocket[] _sockets;
         [SerializeField] private ShipLaunchLever _lever;
         [SerializeField] private Transform _destination;
@@ -39,6 +35,7 @@ namespace Features.ShipModule.Scripts {
         public ShipLaunchLever Lever => _lever;
         public Transform Destination => _destination;
         public bool IsFlying => _flying;
+        internal float StandUpSpeed => _flightSettings.StandUpSpeed;
         internal ShipSocket[] Sockets => _sockets;
         internal IStatEntity<ShipStatType> Stats => _stats;
 
@@ -66,11 +63,11 @@ namespace Features.ShipModule.Scripts {
                 return false;
 
             Vector3 deckLocal = deckTransform.InverseTransformPoint(transform.TransformPoint(localOffset));
-            BoxCollider box = FindClosestWalkBox(boxes, deckLocal, out float x, out float z);
+            BoxCollider box = FindClosestWalkBox(boxes, deckLocal, out float deckLocalX, out float deckLocalZ);
             if (box == null)
                 return false;
 
-            Vector3 deckTop = new Vector3(x, box.center.y + box.size.y * 0.5f, z);
+            Vector3 deckTop = new Vector3(deckLocalX, box.center.y + box.size.y * 0.5f, deckLocalZ);
             surfaceY = transform.InverseTransformPoint(deckTransform.TransformPoint(deckTop)).y;
             return true;
         }
@@ -382,6 +379,15 @@ namespace Features.ShipModule.Scripts {
             if (NetworkServer.active == false)
                 return;
 
+            if (_flying) {
+                _flight.Stop();
+                _flying = false;
+                if (_poseSync != null)
+                    _poseSync.ServerSetFlying(false);
+
+                ReleaseRiders();
+            }
+
             ClearAllOccupants();
             ClearInstalledModules();
             _controlsLocked = false;
@@ -443,7 +449,7 @@ namespace Features.ShipModule.Scripts {
             ClearOccupant(rider);
             rider.ServerUnlockSeat();
             if (_flying == false)
-                UnregisterRider(rider);
+                rider.ReleaseFromPlatform();
         }
 
         private void LateUpdate() {
@@ -670,9 +676,17 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void BindRiders() {
-            for (int i = 0; i < _riders.Count; i++) {
-                if (_riders[i] != null && IsAboveDeck(_riders[i].transform.position))
-                    _riders[i].BindToPlatform(this);
+            for (int i = _riders.Count - 1; i >= 0; i--) {
+                ShipRider rider = _riders[i];
+                if (rider == null)
+                    continue;
+
+                if (NetworkServer.active && IsAboveDeck(rider.transform.position) == false) {
+                    _riders.RemoveAt(i);
+                    continue;
+                }
+
+                rider.BindToPlatform(this);
             }
         }
 
@@ -681,14 +695,15 @@ namespace Features.ShipModule.Scripts {
             if (TryClosestDeckWalk(local, out _, out float dx, out float dz) == false)
                 return false;
 
-            if (dx * dx + dz * dz > BOARDING_EDGE_TOLERANCE * BOARDING_EDGE_TOLERANCE)
+            float edge = _flightSettings.BoardingEdgeTolerance;
+            if (dx * dx + dz * dz > edge * edge)
                 return false;
 
             if (TryGetDeckSurfaceY(local, out float surfaceY) == false)
                 return false;
 
             float height = local.y - surfaceY;
-            return height >= BOARDING_MIN_HEIGHT && height <= BOARDING_MAX_HEIGHT;
+            return height >= _flightSettings.BoardingMinHeight && height <= _flightSettings.BoardingMaxHeight;
         }
 
         private void FollowRiders(float dt) {

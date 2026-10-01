@@ -114,29 +114,23 @@ namespace Features.ShipModule.Scripts {
             return _injectedStations != null ? _injectedStations.WreckPrefab : null;
         }
 
-        private void OnRunStateChanged(ShipRunPhase previous, ShipRunPhase current) {
+        private void OnRunStateChanged(ShipRunPhase previous, ShipRunPhase current) =>
             ApplyToClientModel();
-        }
 
-        private void OnRunStateChangedInt(int previous, int current) {
+        private void OnRunStateChangedInt(int previous, int current) =>
             ApplyToClientModel();
-        }
 
-        private void OnRunStateChangedDouble(double previous, double current) {
+        private void OnRunStateChangedDouble(double previous, double current) =>
             ApplyToClientModel();
-        }
 
-        private void OnRunStateChangedBool(bool previous, bool current) {
+        private void OnRunStateChangedBool(bool previous, bool current) =>
             ApplyToClientModel();
-        }
 
-        private void OnRunStateChangedFloat(float previous, float current) {
+        private void OnRunStateChangedFloat(float previous, float current) =>
             ApplyToClientModel();
-        }
 
-        private void OnRunStateChangedVector3(Vector3 previous, Vector3 current) {
+        private void OnRunStateChangedVector3(Vector3 previous, Vector3 current) =>
             ApplyToClientModel();
-        }
 
         // Mirror runs these hooks on the host while ServerPublish is still assigning the SyncVars one by one;
         // copying the half-updated set back would overwrite the server model (e.g. LoopIndex reset to 0).

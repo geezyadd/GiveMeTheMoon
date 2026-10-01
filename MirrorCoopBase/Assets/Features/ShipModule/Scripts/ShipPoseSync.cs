@@ -4,6 +4,8 @@ using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
     public sealed class ShipPoseSync : NetworkBehaviour {
+        private const double MIN_SAMPLE_SPAN = 0.005d;
+
         [SerializeField] private Transform _ship;
         [SerializeField] private float _interpolationDelay = 0.06f;
 
@@ -106,10 +108,11 @@ namespace Features.ShipModule.Scripts {
 
             PoseSample previous = _samples[_samples.Count - 2];
             double span = last.Time - previous.Time;
-            if (span <= 0.0001d)
+            if (span <= MIN_SAMPLE_SPAN)
                 return last.Rotation;
 
-            return Quaternion.SlerpUnclamped(previous.Rotation, last.Rotation, 1f + (float)(extra / span));
+            float factor = 1f + Mathf.Min((float)(extra / span), 1f);
+            return Quaternion.SlerpUnclamped(previous.Rotation, last.Rotation, factor);
         }
 
         private void OnFlyingChanged(bool previous, bool current) {

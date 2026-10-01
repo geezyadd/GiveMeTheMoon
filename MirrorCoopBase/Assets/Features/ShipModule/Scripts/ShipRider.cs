@@ -34,7 +34,6 @@ namespace Features.ShipModule.Scripts {
         private IGameCameraService _cameras;
 
         private const float OffsetSendSeconds = 0.05f;
-        private const float STAND_UP_SPEED = 6f;
 
         private bool _bound;
         private Vector3 _localOffset;
@@ -214,7 +213,7 @@ namespace Features.ShipModule.Scripts {
 
             bool grounded = _localOffset.y <= _rideRestY + 0.001f && _rideJumpVel <= 0f;
             if (grounded) {
-                _localOffset.y = Mathf.MoveTowards(_localOffset.y, _rideRestY, STAND_UP_SPEED * dt);
+                _localOffset.y = Mathf.MoveTowards(_localOffset.y, _rideRestY, _ship.StandUpSpeed * dt);
                 _rideJumpVel = 0f;
                 return;
             }
