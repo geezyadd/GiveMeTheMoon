@@ -12,6 +12,8 @@ namespace Features.ShipModule.Scripts {
         private const float DROP_ALONG_ORIGIN = 2f;
         private const float DROP_ALONG_STEP = 1.8f;
         private const float DROP_HEIGHT = 1f;
+        private const int ROCK_POOL_SIZE = 8;
+        private static readonly Vector3 _rockPoolPosition = new Vector3(0f, -400f, 0f);
 
         private readonly ShipRunModel _model;
         private readonly ShipRunConfig _config;
@@ -36,7 +38,7 @@ namespace Features.ShipModule.Scripts {
         private ShipFlightMode _modeOverride;
         private bool _hasModeOverride;
 
-        internal int WorldShiftCount { get; private set; }
+        internal int WorldShiftCount => _ship != null ? _ship.PoseSync.WorldShift.Count : 0;
         internal int RockSpawns { get; private set; }
         internal int RockDespawns { get; private set; }
 
@@ -362,19 +364,14 @@ namespace Features.ShipModule.Scripts {
 
         private void EnsureRockPool() {
             GameObject prefab = _stations != null ? _stations.RockPrefab : null;
-            if (prefab == null || NetworkServer.active == false)
+            if (prefab == null || NetworkServer.active == false || _ship == null)
                 return;
 
-            while (_rockPool.Count + _rocks.Count < 8) {
-                GameObject instance = Object.Instantiate(prefab, new Vector3(0f, -400f, 0f), Quaternion.identity);
-                NetworkServer.Spawn(instance);
+            while (_rockPool.Count + _rocks.Count < ROCK_POOL_SIZE) {
+                GameObject instance = Object.Instantiate(prefab, _rockPoolPosition, Quaternion.identity);
                 CruiseRock rock = instance.GetComponent<CruiseRock>();
-                if (rock == null) {
-                    NetworkServer.Destroy(instance);
-                    return;
-                }
-
-                rock.ServerPark();
+                rock.ServerBind(_ship.PoseSync);
+                NetworkServer.Spawn(instance);
                 _rockPool.Add(rock);
             }
         }
@@ -418,16 +415,14 @@ namespace Features.ShipModule.Scripts {
             if (rock == null)
                 return;
 
-            rock.transform.SetPositionAndRotation(
-                origin,
-                Quaternion.LookRotation(travel ? forward : -incoming, Vector3.up));
+            Quaternion rotation = Quaternion.LookRotation(travel ? forward : -incoming, Vector3.up);
             if (travel) {
                 float speed = Mathf.Max(1f, ReadTravelMetersPerSecond());
-                rock.ServerLaunch(Vector3.zero, spawnAhead / speed + 6f);
+                rock.ServerLaunch(origin, rotation, Vector3.zero, spawnAhead / speed + 6f);
             }
             else {
                 float lifetime = _config.RockSpawnAhead / _config.RockSpeed + 3f;
-                rock.ServerLaunch(-incoming * _config.RockSpeed, lifetime);
+                rock.ServerLaunch(origin, rotation, -incoming * _config.RockSpeed, lifetime);
             }
 
             _rocks.Add(rock);
@@ -461,17 +456,14 @@ namespace Features.ShipModule.Scripts {
             Vector3 forward = FlattenForward(face.sqrMagnitude > 0.0001f ? face : _launchForward);
             Quaternion padRot = Quaternion.LookRotation(forward, Vector3.up);
             GameObject instance = Object.Instantiate(prefab, padPos, padRot);
-            NetworkServer.Spawn(instance);
             ShipLandingPad pad = instance.GetComponentInChildren<ShipLandingPad>();
-            if (pad == null) {
-                NetworkServer.Destroy(instance);
-                return _currentPad;
-            }
-
+            // Pads have no transform sync: clients only get the spawn pose, so the pad is placed before the spawn.
             if (matchLandingPoint) {
                 instance.transform.position += padPos - pad.LandingPoint.position;
                 _destinationPoint = pad.LandingPoint.position;
             }
+
+            NetworkServer.Spawn(instance);
 
             if (_previousPad != null)
                 NetworkServer.Destroy(_previousPad.gameObject);
@@ -690,13 +682,12 @@ namespace Features.ShipModule.Scripts {
             ShiftPad(_currentPad, delta);
             ShiftPad(_previousPad, delta);
             _destinationPoint += delta;
-            if (_director != null) {
-                _director.ServerShiftWreck(delta);
-                _director.ServerShiftPads(_currentPad, _previousPad, delta);
-            }
-
-            WorldShiftCount += 1;
+            if (_director != null)
+                _director.ServerShiftWorld(delta, PadIdentity(_currentPad), PadIdentity(_previousPad));
         }
+
+        private static NetworkIdentity PadIdentity(ShipLandingPad pad) =>
+            pad != null ? pad.GetComponent<NetworkIdentity>() : null;
 
         private bool CruiseArrived() {
             if (CruiseIsTravel() == false)

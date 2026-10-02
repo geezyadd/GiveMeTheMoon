@@ -158,6 +158,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         internal bool IsTakeoffComplete => _flight.IsTakeoffComplete;
+        internal ShipPoseSync PoseSync => _poseSync;
         internal bool HasLanded => _flight.HasLanded;
 
         public bool CanLaunch {
@@ -485,6 +486,8 @@ namespace Features.ShipModule.Scripts {
             ApplyDisplayPose(position, transform.rotation);
             if (_poseSync == null)
                 return;
+
+            _poseSync.ServerRecordWorldShift(delta);
 
             // A snap ends the flight on clients (it doubles as the landing berth snap), so a shift in flight is sent
             // as a shift of the client's interpolation buffer instead.
