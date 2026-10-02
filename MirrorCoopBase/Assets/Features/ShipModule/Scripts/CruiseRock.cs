@@ -4,7 +4,10 @@ using UnityEngine;
 namespace Features.ShipModule.Scripts {
     // The GameObject stays active while pooled: hiding is done with the renderers, so Mirror keeps spawning and
     // syncing the rock normally and every peer can show or hide it on its own render clock.
+    // Runs after ShipBase (order 0), so on a client ShipPoseSync.DisplayTime is this frame's ship time.
+    [DefaultExecutionOrder(AFTER_SHIP_ORDER)]
     public sealed class CruiseRock : NetworkBehaviour {
+        private const int AFTER_SHIP_ORDER = 100;
         private const float MIN_LIFETIME = 0.2f;
 
         [SerializeField] private Renderer[] _renderers;
@@ -33,7 +36,7 @@ namespace Features.ShipModule.Scripts {
                 Velocity = velocity,
                 LaunchTime = now,
                 EndTime = now + Mathf.Max(MIN_LIFETIME, lifetime),
-                ShiftEpoch = _clock.ShiftEpoch
+                PlacedUnder = _clock.WorldShift
             };
             ApplyFlight();
         }
@@ -68,7 +71,7 @@ namespace Features.ShipModule.Scripts {
             if (visible == false)
                 return;
 
-            Vector3 position = _flight.PositionAt(time) + clock.ShiftSince(_flight.ShiftEpoch);
+            Vector3 position = _flight.PositionAt(time) + clock.ShiftSince(_flight.PlacedUnder);
             transform.SetPositionAndRotation(position, _flight.Rotation);
         }
 

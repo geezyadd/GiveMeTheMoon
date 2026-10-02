@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Mirror;
 using UnityEngine;
@@ -7,7 +6,6 @@ namespace Features.ShipModule.Scripts {
     public sealed class ShipPoseSync : NetworkBehaviour {
         private const double MIN_SAMPLE_SPAN = 0.005d;
         private const float MAX_EXTRAPOLATION = 0.08f;
-        private const int SHIFT_HISTORY = 8;
 
         [SerializeField] private Transform _ship;
         [SerializeField] private float _interpolationDelay = 0.06f;
@@ -21,34 +19,20 @@ namespace Features.ShipModule.Scripts {
         [SyncVar]
         private Quaternion _lateRot = Quaternion.identity;
 
-        [SyncVar]
-        private int _shiftEpoch;
+        [SyncVar(hook = nameof(OnWorldShiftChanged))]
+        private WorldShift _worldShift;
 
         private readonly List<PoseSample> _samples = new List<PoseSample>(16);
-        private readonly Vector3[] _shiftDeltas = new Vector3[SHIFT_HISTORY];
         private float _nextPublish;
         private ShipBase _shipBase;
-        private int _appliedShiftEpoch;
-        private bool _lowLatency;
+        private double _clientDisplayTime;
 
         internal bool IsFlying => _flying;
-        internal int ShiftEpoch => _appliedShiftEpoch;
+        internal WorldShift WorldShift => _worldShift;
 
-        // The time the ship is shown at on this peer. World objects posed by time use it, so they share the ship's
-        // time base: server time on the server, the interpolated (or capped extrapolated) sample time on a client.
-        internal double DisplayTime {
-            get {
-                if (isServer)
-                    return NetworkTime.time;
-
-                double renderTime = NetworkTime.time - (_lowLatency ? 0d : _interpolationDelay);
-                if (_samples.Count == 0)
-                    return renderTime;
-
-                double newest = _samples[_samples.Count - 1].Time;
-                return renderTime > newest ? newest + Math.Min(renderTime - newest, MAX_EXTRAPOLATION) : renderTime;
-            }
-        }
+        // The time the ship is shown at on this peer this frame: server time on the server, on a client the sample
+        // time ApplyInterpolated posed the ship at. World objects posed by time read it after the ship's LateUpdate.
+        internal double DisplayTime => isServer ? NetworkTime.time : _clientDisplayTime;
 
         internal void BindShip(ShipBase ship, Transform root) {
             _shipBase = ship;
@@ -79,23 +63,14 @@ namespace Features.ShipModule.Scripts {
             RpcShift(delta);
         }
 
-        // Every origin shift gets a number, and each peer keeps the recent deltas. An object posed in the frame of
-        // shift N adds the deltas after N, so it moves in the same frame the ship does on that peer.
+        // The SyncVar goes out in the shift frame's broadcast (syncInterval 0), on the reliable channel after that
+        // frame's RPCs, so clients apply it in the same frame as the ship's shift and snap RPCs.
         [Server]
-        internal void ServerRecordWorldShift(Vector3 delta) {
-            RecordWorldShift(_appliedShiftEpoch + 1, delta);
-            _shiftEpoch = _appliedShiftEpoch;
-            RpcWorldShift(_appliedShiftEpoch, delta);
-        }
+        internal void ServerRecordWorldShift(Vector3 delta) =>
+            _worldShift = _worldShift.Add(delta);
 
-        internal Vector3 ShiftSince(int epoch) {
-            Vector3 shift = Vector3.zero;
-            int first = Mathf.Max(epoch, _appliedShiftEpoch - SHIFT_HISTORY) + 1;
-            for (int i = first; i <= _appliedShiftEpoch; i++)
-                shift += _shiftDeltas[i % SHIFT_HISTORY];
-
-            return shift;
-        }
+        internal Vector3 ShiftSince(WorldShift placedUnder) =>
+            _worldShift.Since(placedUnder);
 
         [Server]
         internal void ServerPublish(Vector3 position, Quaternion rotation, Vector3 velocity) {
@@ -105,25 +80,26 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             _nextPublish = Time.unscaledTime + 0.033f;
-            RpcPose(NetworkTime.time, _appliedShiftEpoch, position, rotation, velocity);
+            RpcPose(NetworkTime.time, _worldShift, position, rotation, velocity);
         }
 
         internal void ApplyInterpolated(bool lowLatency) {
             if (_shipBase == null)
                 return;
 
-            _lowLatency = lowLatency;
+            double delay = lowLatency ? 0d : _interpolationDelay;
+            double renderTime = NetworkTime.time - delay;
+            _clientDisplayTime = renderTime;
             if (_samples.Count == 0) {
                 if (_lateRot.x != 0f || _lateRot.y != 0f || _lateRot.z != 0f || _lateRot.w != 0f)
                     _shipBase.ApplyDisplayPose(_latePos, _lateRot);
                 return;
             }
 
-            double delay = lowLatency ? 0d : _interpolationDelay;
-            double renderTime = NetworkTime.time - delay;
             PoseSample last = _samples[_samples.Count - 1];
             if (renderTime >= last.Time) {
                 float extra = Mathf.Min((float)(renderTime - last.Time), MAX_EXTRAPOLATION);
+                _clientDisplayTime = last.Time + extra;
                 _shipBase.ApplyDisplayPose(last.Position + last.Velocity * extra, ExtrapolateRotation(last, extra));
                 return;
             }
@@ -152,9 +128,6 @@ namespace Features.ShipModule.Scripts {
         }
 
         public override void OnStartClient() {
-            if (isServer == false)
-                _appliedShiftEpoch = _shiftEpoch;
-
             if (isServer == false && _shipBase != null)
                 _shipBase.ApplyDisplayPose(_latePos, _lateRot);
         }
@@ -172,21 +145,21 @@ namespace Features.ShipModule.Scripts {
             return Quaternion.SlerpUnclamped(previous.Rotation, last.Rotation, factor);
         }
 
-        private void RecordWorldShift(int epoch, Vector3 delta) {
-            _shiftDeltas[epoch % SHIFT_HISTORY] = delta;
-            _appliedShiftEpoch = epoch;
-        }
-
         // Buffered poses move into the new frame, so the interpolated pose (and everything riding it) stays continuous.
         private void RebaseSamples() {
             for (int i = 0; i < _samples.Count; i++) {
                 PoseSample sample = _samples[i];
-                if (sample.ShiftEpoch >= _appliedShiftEpoch)
+                if (sample.WorldShift.Count == _worldShift.Count)
                     continue;
 
-                Vector3 position = sample.Position + ShiftSince(sample.ShiftEpoch);
-                _samples[i] = new PoseSample(sample.Time, position, sample.Rotation, sample.Velocity, _appliedShiftEpoch);
+                Vector3 position = sample.Position + ShiftSince(sample.WorldShift);
+                _samples[i] = new PoseSample(sample.Time, position, sample.Rotation, sample.Velocity, _worldShift);
             }
+        }
+
+        private void OnWorldShiftChanged(WorldShift previous, WorldShift current) {
+            if (isServer == false)
+                RebaseSamples();
         }
 
         private void OnFlyingChanged(bool previous, bool current) {
@@ -243,49 +216,37 @@ namespace Features.ShipModule.Scripts {
                 _shipBase.ApplyDisplayPose(_ship.position + delta, _ship.rotation);
         }
 
-        [ClientRpc]
-        private void RpcWorldShift(int epoch, Vector3 delta) {
-            if (isServer)
-                return;
-
-            RecordWorldShift(epoch, delta);
-            RebaseSamples();
-        }
-
         [ClientRpc(channel = Channels.Unreliable)]
-        private void RpcPose(double time, int shiftEpoch, Vector3 position, Quaternion rotation, Vector3 velocity) {
+        private void RpcPose(double time, WorldShift placedUnder, Vector3 position, Quaternion rotation, Vector3 velocity) {
             if (isServer)
                 return;
 
-            // An unreliable pose sent before the shift can arrive after the reliable shift RPC. The shift frame's own
-            // pose has the shift's time, so the epoch (not the time) tells which frame it is in.
-            if (shiftEpoch < _appliedShiftEpoch) {
-                position += ShiftSince(shiftEpoch);
-                shiftEpoch = _appliedShiftEpoch;
-            }
+            // Unreliable poses and the reliable shift can arrive in either order, and the shift frame's own pose has
+            // the shift's time: each pose is moved from the shift it was published under into this peer's current one.
+            position += ShiftSince(placedUnder);
 
             if (_samples.Count > 0 && time <= _samples[_samples.Count - 1].Time)
                 return;
 
-            _samples.Add(new PoseSample(time, position, rotation, velocity, shiftEpoch));
+            _samples.Add(new PoseSample(time, position, rotation, velocity, _worldShift));
             while (_samples.Count > 12)
                 _samples.RemoveAt(0);
         }
 
         private readonly struct PoseSample {
-            public PoseSample(double time, Vector3 position, Quaternion rotation, Vector3 velocity, int shiftEpoch) {
+            public PoseSample(double time, Vector3 position, Quaternion rotation, Vector3 velocity, WorldShift worldShift) {
                 Time = time;
                 Position = position;
                 Rotation = rotation;
                 Velocity = velocity;
-                ShiftEpoch = shiftEpoch;
+                WorldShift = worldShift;
             }
 
             public double Time { get; }
             public Vector3 Position { get; }
             public Quaternion Rotation { get; }
             public Vector3 Velocity { get; }
-            public int ShiftEpoch { get; }
+            public WorldShift WorldShift { get; }
         }
     }
 }

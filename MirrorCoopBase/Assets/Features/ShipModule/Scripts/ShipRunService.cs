@@ -38,7 +38,7 @@ namespace Features.ShipModule.Scripts {
         private ShipFlightMode _modeOverride;
         private bool _hasModeOverride;
 
-        internal int WorldShiftCount { get; private set; }
+        internal int WorldShiftCount => _ship != null ? _ship.PoseSync.WorldShift.Count : 0;
         internal int RockSpawns { get; private set; }
         internal int RockDespawns { get; private set; }
 
@@ -682,8 +682,6 @@ namespace Features.ShipModule.Scripts {
             _destinationPoint += delta;
             if (_director != null)
                 _director.ServerShiftWorld(delta, PadIdentity(_currentPad), PadIdentity(_previousPad));
-
-            WorldShiftCount += 1;
         }
 
         private static NetworkIdentity PadIdentity(ShipLandingPad pad) =>
