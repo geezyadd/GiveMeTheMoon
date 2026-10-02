@@ -15,9 +15,11 @@ namespace Features.ShipModule.Scripts {
 
         private readonly ShipRunModel _model;
         private readonly ShipRunConfig _config;
+        private readonly ShipFlightSettings _flightSettings;
         private readonly ShipStationCatalog _stations;
         private readonly IFlightStatContributor[] _contributors = System.Array.Empty<IFlightStatContributor>();
         private readonly List<CruiseRock> _rocks = new List<CruiseRock>();
+        private readonly List<CruiseRock> _rockPool = new List<CruiseRock>();
 
         private ShipRunDirector _director;
         private ShipBase _ship;
@@ -31,16 +33,33 @@ namespace Features.ShipModule.Scripts {
         private float _nextRockSpawn;
         private readonly ShipTransit _transit = new ShipTransit();
         private ShipRadarService _radar;
+        private ShipFlightMode _modeOverride;
+        private bool _hasModeOverride;
+
+        internal int WorldShiftCount { get; private set; }
+        internal int RockSpawns { get; private set; }
+        internal int RockDespawns { get; private set; }
 
         public ShipRunService(
             ShipRunModel model,
             ShipRunConfig config,
+            ShipFlightSettings flightSettings,
             ShipStationCatalog stations,
             ShipRadarService radar) {
             _model = model;
             _config = config;
+            _flightSettings = flightSettings;
             _stations = stations;
             _radar = radar;
+        }
+
+        internal void DebugUseFlightMode(ShipFlightMode mode) {
+            _modeOverride = mode;
+            _hasModeOverride = true;
+        }
+
+        internal void DebugClearFlightMode() {
+            _hasModeOverride = false;
         }
 
         public void CleanupGameplay() {
@@ -111,13 +130,26 @@ namespace Features.ShipModule.Scripts {
             Vector3 hover = from
                 + _launchForward * _config.TakeoffForward
                 + Vector3.up * _config.TakeoffHeight;
-            Quaternion heading = Quaternion.LookRotation(_launchForward, Vector3.up);
-            ship.BeginTakeoff(from, hover, heading, _config.TakeoffSeconds, stats.DodgeRangeScale);
             ChooseDestination(hover);
+            ShipFlightMode mode = SelectedFlightMode();
+            Quaternion heading = Quaternion.LookRotation(_launchForward, Vector3.up);
+            Quaternion routeHeading = Quaternion.LookRotation(_destinationForward, Vector3.up);
+            ship.BeginTakeoff(
+                from,
+                hover,
+                heading,
+                routeHeading,
+                _config.TakeoffSeconds,
+                stats.DodgeRangeScale,
+                mode);
+            if (mode == ShipFlightMode.TravelInSpace)
+                SpawnNextPad(_destinationPoint, _destinationForward, true);
+
             _transit.BeginRoute(stats.CruiseSeconds, _destinationForward);
             ApplyTransitFrame(false);
             _model.LastAbortReason = ShipRunAbortReason.None;
             _model.Phase = ShipRunPhase.Takeoff;
+            EnsureRockPool();
             Publish();
             return true;
         }
@@ -175,9 +207,9 @@ namespace Features.ShipModule.Scripts {
 
             if (_model.Phase == ShipRunPhase.Cruise) {
                 TickRocks();
-                ApplyTransitFrame(true);
+                ApplyTransitFrame(CruiseIsTravel() == false);
                 Publish();
-                if (_transit.HasArrived) {
+                if (CruiseArrived()) {
                     _ship.ServerLockFlight();
                     BeginLanding();
                 }
@@ -193,7 +225,20 @@ namespace Features.ShipModule.Scripts {
 
         private void BeginLanding() {
             ClearRocks();
-            ShipLandingPad next = SpawnNextPad(_destinationPoint, _destinationForward);
+            if (CruiseIsTravel()) {
+                if (_currentPad == null) {
+                    FinishAtCurrentPose();
+                    return;
+                }
+
+                _destinationPoint = _currentPad.LandingPoint.position;
+                _ship.BeginLanding(_destinationPoint, _config.LandingSeconds, _destinationForward);
+                _model.Phase = ShipRunPhase.Landing;
+                Publish();
+                return;
+            }
+
+            ShipLandingPad next = SpawnNextPad(_destinationPoint, _destinationForward, false);
             if (next == null) {
                 FinishAtCurrentPose();
                 return;
@@ -219,7 +264,7 @@ namespace Features.ShipModule.Scripts {
 
             if (_model.Phase != ShipRunPhase.Landing) {
                 Vector3 origin = _ship != null ? _ship.transform.position : Vector3.zero;
-                SpawnNextPad(origin + _destinationForward * _config.StationSpacing, _destinationForward);
+                SpawnNextPad(origin + _destinationForward * _config.StationSpacing, _destinationForward, false);
             }
 
             ShipLandingPad pad = _currentPad;
@@ -233,6 +278,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void EnterStation(ShipLandingPad pad, ShipRunPhase phase) {
+            RecenterIfFar();
             SpawnDrops(pad);
             if (pad != null)
                 ConnectionNetworkManager.SetSpawn(pad.PlayerSpawn.position, pad.PlayerSpawn.rotation);
@@ -241,6 +287,7 @@ namespace Features.ShipModule.Scripts {
             _model.LaunchLocked = _config.MaxLoops > 0 && _model.LoopIndex >= _config.MaxLoops;
             _model.Phase = phase;
             _transit.Reset();
+            _hasModeOverride = false;
             _destinationPoint = Vector3.zero;
             _destinationForward = Vector3.forward;
             CopyTransitToModel();
@@ -248,11 +295,61 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void TickRocks() {
+            ReclaimRocks();
             if (_ship == null || Time.time < _nextRockSpawn)
                 return;
 
             _nextRockSpawn = Time.time + _config.RockSpawnInterval;
             SpawnRock();
+        }
+
+        private void ReclaimRocks() {
+            for (int i = _rocks.Count - 1; i >= 0; i--) {
+                CruiseRock rock = _rocks[i];
+                if (rock == null) {
+                    _rocks.RemoveAt(i);
+                    continue;
+                }
+
+                if (rock.ServerExpired() == false)
+                    continue;
+
+                rock.ServerPark();
+                _rocks.RemoveAt(i);
+                _rockPool.Add(rock);
+                RockDespawns += 1;
+            }
+        }
+
+        private void EnsureRockPool() {
+            GameObject prefab = _stations != null ? _stations.RockPrefab : null;
+            if (prefab == null || NetworkServer.active == false)
+                return;
+
+            while (_rockPool.Count + _rocks.Count < 8) {
+                GameObject instance = Object.Instantiate(prefab, new Vector3(0f, -400f, 0f), Quaternion.identity);
+                NetworkServer.Spawn(instance);
+                CruiseRock rock = instance.GetComponent<CruiseRock>();
+                if (rock == null) {
+                    NetworkServer.Destroy(instance);
+                    return;
+                }
+
+                rock.ServerPark();
+                _rockPool.Add(rock);
+            }
+        }
+
+        private CruiseRock TakeRock() {
+            EnsureRockPool();
+            for (int i = _rockPool.Count - 1; i >= 0; i--) {
+                CruiseRock pooled = _rockPool[i];
+                _rockPool.RemoveAt(i);
+                if (pooled != null)
+                    return pooled;
+            }
+
+            return null;
         }
 
         private void SpawnRock() {
@@ -267,28 +364,35 @@ namespace Features.ShipModule.Scripts {
             else
                 right.Normalize();
 
+            bool travel = CruiseIsTravel();
             Vector3 incoming = (Vector3.up * 2f + forward).normalized;
+            Vector3 ahead = travel ? forward : incoming;
             float corridor = _config.RockLateral * _dodgeRangeScale;
             float lateral = Random.value < 0.55f
                 ? Random.Range(-corridor * 0.35f, corridor * 0.35f)
                 : Random.Range(-corridor, corridor);
-            Vector3 origin = _ship.transform.position
-                + incoming * _config.RockSpawnAhead
-                + right * lateral;
-            GameObject instance = Object.Instantiate(
-                prefab,
-                origin,
-                Quaternion.LookRotation(-incoming, Vector3.up));
-            NetworkServer.Spawn(instance);
-            CruiseRock rock = instance.GetComponent<CruiseRock>();
-            if (rock == null) {
-                NetworkServer.Destroy(instance);
+            float spawnAhead = travel
+                ? Mathf.Max(_config.RockSpawnAhead, ReadTravelMetersPerSecond() * 3.5f)
+                : _config.RockSpawnAhead;
+            Vector3 origin = _ship.transform.position + ahead * spawnAhead + right * lateral;
+            CruiseRock rock = TakeRock();
+            if (rock == null)
                 return;
+
+            rock.transform.SetPositionAndRotation(
+                origin,
+                Quaternion.LookRotation(travel ? forward : -incoming, Vector3.up));
+            if (travel) {
+                float speed = Mathf.Max(1f, ReadTravelMetersPerSecond());
+                rock.ServerLaunch(Vector3.zero, spawnAhead / speed + 6f);
+            }
+            else {
+                float lifetime = _config.RockSpawnAhead / _config.RockSpeed + 3f;
+                rock.ServerLaunch(-incoming * _config.RockSpeed, lifetime);
             }
 
-            float lifetime = _config.RockSpawnAhead / _config.RockSpeed + 3f;
-            rock.ServerLaunch(-incoming * _config.RockSpeed, lifetime);
             _rocks.Add(rock);
+            RockSpawns += 1;
         }
 
         private void ClearRocks() {
@@ -297,23 +401,24 @@ namespace Features.ShipModule.Scripts {
                 if (rock == null)
                     continue;
 
-                if (NetworkServer.active)
-                    NetworkServer.Destroy(rock.gameObject);
-                else
-                    Object.Destroy(rock.gameObject);
+                rock.ServerPark();
+                _rockPool.Add(rock);
             }
 
             _rocks.Clear();
         }
 
-        private ShipLandingPad SpawnNextPad(Vector3 padPos, Vector3 face) {
+        private ShipLandingPad SpawnNextPad(Vector3 padPos, Vector3 face, bool matchLandingPoint) {
             GameObject prefab = _stations != null ? _stations.PadPrefab : null;
             if (prefab == null)
                 return _currentPad;
 
             Vector3 origin = _ship != null ? _ship.transform.position : padPos;
-            float padY = _currentPad != null ? _currentPad.transform.position.y : origin.y;
-            padPos.y = padY + _config.TakeoffHeight;
+            if (matchLandingPoint == false) {
+                float padY = _currentPad != null ? _currentPad.transform.position.y : origin.y;
+                padPos.y = padY + _config.TakeoffHeight;
+            }
+
             Vector3 forward = FlattenForward(face.sqrMagnitude > 0.0001f ? face : _launchForward);
             Quaternion padRot = Quaternion.LookRotation(forward, Vector3.up);
             GameObject instance = Object.Instantiate(prefab, padPos, padRot);
@@ -322,6 +427,11 @@ namespace Features.ShipModule.Scripts {
             if (pad == null) {
                 NetworkServer.Destroy(instance);
                 return _currentPad;
+            }
+
+            if (matchLandingPoint) {
+                instance.transform.position += padPos - pad.LandingPoint.position;
+                _destinationPoint = pad.LandingPoint.position;
             }
 
             if (_previousPad != null)
@@ -432,6 +542,15 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void ApplyTransitFrame(bool tickWork) {
+            if (CruiseIsTravel() && _ship != null && _model.Phase != ShipRunPhase.Build) {
+                float distance = HorizontalDistance(_ship.transform.position, _destinationPoint);
+                float speed = ReadTravelMetersPerSecond();
+                _transit.PreviewRoute(distance, speed, _destinationForward);
+                _transit.SetAlignment(EvaluateTransitAlignment());
+                CopyTransitToModel();
+                return;
+            }
+
             _transit.SetSpeed(ReadFlightSpeed());
             _transit.SetAlignment(EvaluateTransitAlignment());
             if (tickWork)
@@ -469,11 +588,23 @@ namespace Features.ShipModule.Scripts {
                 : 0d;
         }
 
-        private void ChooseDestination(Vector3 origin) {
+        private void ChooseDestination(Vector3 cruiseStart) {
             float halfCone = _config.DestinationConeDegrees * 0.5f;
             float yaw = Random.Range(-halfCone, halfCone);
             _destinationForward = FlattenForward(Quaternion.AngleAxis(yaw, Vector3.up) * _launchForward);
-            _destinationPoint = RadarPoint(origin, _destinationForward);
+            if (SelectedFlightMode() == ShipFlightMode.TravelInSpace) {
+                float distance = Mathf.Max(
+                    _config.ApproachDistance * 3f,
+                    EvaluateRouteWork() * Mathf.Max(1f, _flightSettings.CruiseSpeed));
+                float padY = _currentPad != null
+                    ? _currentPad.transform.position.y + _config.TakeoffHeight
+                    : cruiseStart.y;
+                _destinationPoint = cruiseStart + _destinationForward * distance;
+                _destinationPoint.y = padY;
+                return;
+            }
+
+            _destinationPoint = RadarPoint(cruiseStart, _destinationForward);
         }
 
         private Vector3 RadarPoint(Vector3 origin, Vector3 direction) {
@@ -489,6 +620,77 @@ namespace Features.ShipModule.Scripts {
         private void Publish() {
             if (_director != null)
                 _director.ServerPublish();
+        }
+
+        internal void DebugForceRecenter() {
+            if (_ship == null)
+                return;
+
+            Vector3 position = _ship.transform.position;
+            Vector3 delta = new Vector3(-position.x, 0f, -position.z);
+            if (delta.sqrMagnitude < 1f)
+                delta = new Vector3(40f, 0f, -25f);
+
+            ApplyWorldShift(delta);
+        }
+
+        private void RecenterIfFar() {
+            if (_ship == null)
+                return;
+
+            Vector3 position = _ship.transform.position;
+            float limit = _config.OriginRecenterDistance;
+            if (position.x * position.x + position.z * position.z < limit * limit)
+                return;
+
+            ApplyWorldShift(new Vector3(-position.x, 0f, -position.z));
+        }
+
+        private void ApplyWorldShift(Vector3 delta) {
+            _ship.ServerApplyWorldShift(delta);
+            ShiftPad(_currentPad, delta);
+            ShiftPad(_previousPad, delta);
+            _destinationPoint += delta;
+            if (_director != null)
+                _director.ServerShiftWreck(delta);
+
+            WorldShiftCount += 1;
+        }
+
+        private bool CruiseArrived() {
+            if (CruiseIsTravel() == false)
+                return _transit.HasArrived;
+
+            return HorizontalDistance(_ship.transform.position, _destinationPoint) <= _config.ApproachDistance;
+        }
+
+        private bool CruiseIsTravel() {
+            if (_ship != null && _ship.IsFlying)
+                return _ship.ActiveFlightMode == ShipFlightMode.TravelInSpace;
+
+            return SelectedFlightMode() == ShipFlightMode.TravelInSpace;
+        }
+
+        private ShipFlightMode SelectedFlightMode() {
+            if (_hasModeOverride)
+                return _modeOverride;
+
+            return _flightSettings.FlightMode;
+        }
+
+        private float ReadTravelMetersPerSecond() {
+            return _flightSettings.CruiseSpeed * ReadFlightSpeed();
+        }
+
+        private static void ShiftPad(ShipLandingPad pad, Vector3 delta) {
+            if (pad != null)
+                pad.transform.position += delta;
+        }
+
+        private static float HorizontalDistance(Vector3 from, Vector3 to) {
+            float x = from.x - to.x;
+            float z = from.z - to.z;
+            return Mathf.Sqrt(x * x + z * z);
         }
 
         private static Vector3 FlattenForward(Vector3 forward) {

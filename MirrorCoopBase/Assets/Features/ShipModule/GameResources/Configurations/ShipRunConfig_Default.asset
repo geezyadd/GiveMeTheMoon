@@ -27,3 +27,5 @@ MonoBehaviour:
   _rockSpeed: 36
   _rockSpawnAhead: 48
   _rockLateral: 4
+  _approachDistance: 70
+  _originRecenterDistance: 800

@@ -12,6 +12,9 @@ namespace Features.CameraModule.Scripts {
         private readonly CameraCatalog _catalog;
         private readonly CursorModel _cursorModel;
 
+        internal static bool DebugPitchOverride;
+        internal static float DebugPitch;
+
         private CameraLookRig _rig;
         private Vector2 _pendingLook;
         private float _yaw;
@@ -63,7 +66,7 @@ namespace Features.CameraModule.Scripts {
             }
 
             if (_synced == false) {
-                _yaw = follow.eulerAngles.y;
+                _yaw = 0f;
                 _pitch = 0f;
                 _synced = true;
                 _pendingLook = Vector2.zero;
@@ -98,6 +101,9 @@ namespace Features.CameraModule.Scripts {
         private void ApplyRig(CameraLookRig rig, Transform follow) {
             if (rig == null)
                 return;
+
+            if (DebugPitchOverride)
+                _pitch = DebugPitch;
 
             rig.Anchor = _model.Eye != null ? _model.Eye : follow;
             rig.Yaw = _yaw;

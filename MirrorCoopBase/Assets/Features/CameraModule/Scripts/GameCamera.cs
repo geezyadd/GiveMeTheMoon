@@ -51,6 +51,7 @@ namespace Features.CameraModule.Scripts {
             }
 
             camera.Target = target;
+            LockFollowToTarget();
         }
 
         public void SetPriority(int value) {
@@ -59,6 +60,23 @@ namespace Features.CameraModule.Scripts {
                 return;
 
             camera.Priority = value;
+        }
+
+        public void LockFollowToTarget() {
+            CinemachineFollow follow = GetComponent<CinemachineFollow>();
+            if (follow == null)
+                return;
+
+            TrackerSettings tracker = follow.TrackerSettings;
+            tracker.BindingMode = BindingMode.LockToTarget;
+            tracker.PositionDamping = Vector3.zero;
+            tracker.RotationDamping = Vector3.zero;
+            tracker.QuaternionDamping = 0f;
+            follow.TrackerSettings = tracker;
+
+            CinemachineRotateWithFollowTarget rotate = GetComponent<CinemachineRotateWithFollowTarget>();
+            if (rotate != null)
+                rotate.Damping = 0f;
         }
 
         private static void ApplyPipeline(GameObject gameObject, GameCameraKind kind) {

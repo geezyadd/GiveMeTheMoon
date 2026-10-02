@@ -21,6 +21,8 @@ namespace Features.ShipModule.Scripts {
         private readonly List<PoseSample> _samples = new List<PoseSample>(16);
         private float _nextPublish;
         private ShipBase _shipBase;
+        private double _lastShiftTime = double.MinValue;
+        private Vector3 _lastShiftDelta;
 
         internal bool IsFlying => _flying;
 
@@ -42,6 +44,15 @@ namespace Features.ShipModule.Scripts {
             _lateRot = rotation;
             _samples.Clear();
             RpcSnap(position, rotation);
+        }
+
+        // Floating-origin shift while flying: clients move their buffered samples instead of snapping, so the
+        // interpolated pose (and everything riding it) stays continuous.
+        [Server]
+        internal void ServerShift(Vector3 delta, Vector3 position, Quaternion rotation) {
+            _latePos = position;
+            _lateRot = rotation;
+            RpcShift(NetworkTime.time, delta);
         }
 
         [Server]
@@ -120,6 +131,32 @@ namespace Features.ShipModule.Scripts {
                 _shipBase.OnClientFlightChanged(current);
         }
 
+        [Server]
+        internal void ServerAttachDeckItem(uint netId, Vector3 localPosition, Quaternion localRotation) {
+            RpcAttachDeckItem(netId, localPosition, localRotation);
+        }
+
+        [Server]
+        internal void ServerDetachDeckItem(uint netId) {
+            RpcDetachDeckItem(netId);
+        }
+
+        [ClientRpc]
+        private void RpcAttachDeckItem(uint netId, Vector3 localPosition, Quaternion localRotation) {
+            if (isServer || _shipBase == null)
+                return;
+
+            _shipBase.ClientAttachDeckItem(netId, localPosition, localRotation);
+        }
+
+        [ClientRpc]
+        private void RpcDetachDeckItem(uint netId) {
+            if (isServer || _shipBase == null)
+                return;
+
+            _shipBase.ClientDetachDeckItem(netId);
+        }
+
         [ClientRpc]
         private void RpcSnap(Vector3 position, Quaternion rotation) {
             if (isServer)
@@ -134,10 +171,31 @@ namespace Features.ShipModule.Scripts {
             _shipBase.ApplyDisplayPose(position, rotation);
         }
 
+        [ClientRpc]
+        private void RpcShift(double time, Vector3 delta) {
+            if (isServer)
+                return;
+
+            _lastShiftTime = time;
+            _lastShiftDelta = delta;
+            for (int i = 0; i < _samples.Count; i++) {
+                PoseSample sample = _samples[i];
+                if (sample.Time < time)
+                    _samples[i] = new PoseSample(sample.Time, sample.Position + delta, sample.Rotation, sample.Velocity);
+            }
+
+            if (_shipBase != null && _samples.Count == 0)
+                _shipBase.ApplyDisplayPose(_ship.position + delta, _ship.rotation);
+        }
+
         [ClientRpc(channel = Channels.Unreliable)]
         private void RpcPose(double time, Vector3 position, Quaternion rotation, Vector3 velocity) {
             if (isServer)
                 return;
+
+            // An unreliable pose sent before the shift can arrive after the reliable shift RPC.
+            if (time < _lastShiftTime)
+                position += _lastShiftDelta;
 
             if (_samples.Count > 0 && time <= _samples[_samples.Count - 1].Time)
                 return;

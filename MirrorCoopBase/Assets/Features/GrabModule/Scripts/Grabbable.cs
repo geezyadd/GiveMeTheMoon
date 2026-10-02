@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Mirror;
 using UnityEngine;
 
@@ -11,6 +12,7 @@ namespace Features.GrabModule.Scripts {
         private uint _holderNetId;
 
         private Transform _cachedArmPoint;
+        private static readonly List<Grabbable> HeldFollow = new List<Grabbable>(8);
 
         public bool CanBeGrabbed => _holderNetId == 0;
 
@@ -50,7 +52,23 @@ namespace Features.GrabModule.Scripts {
             CacheArmPoint(current);
         }
 
-        private void LateUpdate() {
+        private void OnEnable() {
+            HeldFollow.Add(this);
+        }
+
+        private void OnDisable() {
+            HeldFollow.Remove(this);
+        }
+
+        internal static void FollowHeldAll() {
+            for (int i = 0; i < HeldFollow.Count; i++) {
+                Grabbable item = HeldFollow[i];
+                if (item != null)
+                    item.FollowHolder();
+            }
+        }
+
+        private void FollowHolder() {
             if (_cachedArmPoint == null)
                 return;
 

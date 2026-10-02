@@ -42,6 +42,7 @@ namespace Features.ShipModule.Scripts {
         private float _offsetBlend = 1f;
         private bool _jumpHeldPrev;
         private Vector3 _lastPlatformPos;
+        private Quaternion _lastPlatformRot = Quaternion.identity;
         private ShipBase _ship;
         private Transform _platform;
         private bool _wasKinematic;
@@ -52,6 +53,7 @@ namespace Features.ShipModule.Scripts {
         private float _rideRestY;
         private float _rideJumpVel;
 
+        internal Vector3 DebugLocalOffset => _localOffset;
         public bool IsRiding => _bound;
         public bool IsSeated => _seated;
         internal bool IsHelmSeat => _helmSeat;
@@ -110,6 +112,7 @@ namespace Features.ShipModule.Scripts {
             _offsetTo = _localOffset;
             _offsetBlend = 1f;
             _lastPlatformPos = _platform.position;
+            _lastPlatformRot = _platform.rotation;
             _bound = true;
             _wasKinematic = _rb.isKinematic;
             _wasInterpolation = _rb.interpolation;
@@ -118,6 +121,10 @@ namespace Features.ShipModule.Scripts {
             _rb.interpolation = RigidbodyInterpolation.None;
             _rb.linearVelocity = Vector3.zero;
             _rb.angularVelocity = Vector3.zero;
+            if (transform.parent != null)
+                transform.SetParent(null, true);
+
+            ApplyWorldPose();
 
             if (_floating != null)
                 _floating.HoverEnabled = false;
@@ -131,11 +138,28 @@ namespace Features.ShipModule.Scripts {
             SilenceNetworkBody();
         }
 
+        internal void DebugSetLocalOffset(Vector3 localOffset) {
+            _localOffset = localOffset;
+            _rideJumpVel = 0f;
+            _offsetFrom = localOffset;
+            _offsetTo = localOffset;
+            _offsetBlend = 1f;
+            if (_platform == null)
+                return;
+
+            ApplyWorldPose();
+        }
+
         internal void ReleaseFromPlatform() {
             if (_bound == false)
                 return;
 
             _bound = false;
+            Transform released = transform;
+            Vector3 worldPosition = released.position;
+            Quaternion worldRotation = released.rotation;
+            released.SetParent(null, true);
+            released.SetPositionAndRotation(worldPosition, worldRotation);
             _platform = null;
             if (isServer) {
                 _seated = false;
@@ -191,12 +215,29 @@ namespace Features.ShipModule.Scripts {
                 }
             }
 
-            Vector3 next = _platform.position + _platform.rotation * RideOffset();
-            transform.position = next;
-            if (_rb != null)
-                _rb.position = next;
-
+            Vector3 next = RideOffset();
+            _localOffset = next;
+            ApplyWorldPose();
             _lastPlatformPos = _platform.position;
+            _lastPlatformRot = _platform.rotation;
+        }
+
+        private void ApplyWorldPose() {
+            if (_platform == null)
+                return;
+
+            Vector3 world = _platform.TransformPoint(_localOffset);
+            Quaternion rotation = _platform.rotation;
+            transform.SetPositionAndRotation(world, rotation);
+            if (_rb == null)
+                return;
+
+            _rb.isKinematic = true;
+            _rb.interpolation = RigidbodyInterpolation.None;
+            _rb.position = world;
+            _rb.rotation = rotation;
+            _rb.linearVelocity = Vector3.zero;
+            _rb.angularVelocity = Vector3.zero;
         }
 
         private bool ConsumeJumpPress() {
@@ -209,8 +250,7 @@ namespace Features.ShipModule.Scripts {
             if (_input == null || dt <= 0f)
                 return;
 
-            Vector3 worldMove = CameraPlanar(_input.MoveStick) * CurrentSpeed() * dt;
-            Vector3 localMove = Quaternion.Inverse(_platform.rotation) * worldMove;
+            Vector3 localMove = DeckPlanar(_input.MoveStick) * CurrentSpeed() * dt;
             _localOffset.x += localMove.x;
             _localOffset.z += localMove.z;
             if (_ship != null)
@@ -328,7 +368,9 @@ namespace Features.ShipModule.Scripts {
             return _walkSpeed;
         }
 
-        private Vector3 CameraPlanar(Vector2 stick) {
+        // Walk direction in ship space, flattened on the deck plane: flattening on the world horizontal bends the
+        // walk while the ship banks. The camera was presented last frame with the ship at _lastPlatformRot.
+        private Vector3 DeckPlanar(Vector2 stick) {
             if (stick.sqrMagnitude < 0.0001f)
                 return Vector3.zero;
 
@@ -338,18 +380,19 @@ namespace Features.ShipModule.Scripts {
             if (cameraTransform == null)
                 return new Vector3(stick.x, 0f, stick.y);
 
-            Vector3 forward = cameraTransform.forward;
-            Vector3 right = cameraTransform.right;
+            Quaternion toDeck = Quaternion.Inverse(_lastPlatformRot);
+            Vector3 forward = toDeck * cameraTransform.forward;
+            Vector3 right = toDeck * cameraTransform.right;
             forward.y = 0f;
             right.y = 0f;
             if (forward.sqrMagnitude < 0.0001f || right.sqrMagnitude < 0.0001f)
                 return new Vector3(stick.x, 0f, stick.y);
 
-            Vector3 world = forward.normalized * stick.y + right.normalized * stick.x;
-            if (world.sqrMagnitude > 1f)
-                world.Normalize();
+            Vector3 local = forward.normalized * stick.y + right.normalized * stick.x;
+            if (local.sqrMagnitude > 1f)
+                local.Normalize();
 
-            return world;
+            return local;
         }
 
         [Command]
