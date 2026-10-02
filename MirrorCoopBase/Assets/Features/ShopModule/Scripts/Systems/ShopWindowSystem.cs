@@ -4,6 +4,7 @@ using Features.GameFlowStateMachineModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.States;
 using Features.InputModule.Realization.Scripts.Generated;
 using Features.MvpModule;
+using Features.PlayerLifeModule.Scripts;
 using Features.ShopModule.Scripts.Data;
 using Features.ShopModule.Scripts.Generated;
 using Features.ShopModule.Scripts.UI;
@@ -18,6 +19,7 @@ namespace Features.ShopModule.Scripts.Systems {
         private readonly IReadOnlyWalletModel _walletModel;
         private readonly ShopModel _shopModel;
         private readonly CursorModel _cursorModel;
+        private readonly IPlayerLifeQuery _playerLifeQuery;
 
         public ShopWindowSystem(
             IInputService inputService,
@@ -26,7 +28,8 @@ namespace Features.ShopModule.Scripts.Systems {
             GameFlowStateLifecycleEventClass gameFlowStateLifecycleEventClass,
             IReadOnlyWalletModel walletModel,
             ShopModel shopModel,
-            CursorModel cursorModel) {
+            CursorModel cursorModel,
+            IPlayerLifeQuery playerLifeQuery) {
             _inputService = inputService;
             _windowsService = windowsService;
             _gameFlowStateMachineService = gameFlowStateMachineService;
@@ -34,6 +37,7 @@ namespace Features.ShopModule.Scripts.Systems {
             _walletModel = walletModel;
             _shopModel = shopModel;
             _cursorModel = cursorModel;
+            _playerLifeQuery = playerLifeQuery;
         }
 
         public void Initialize() {
@@ -43,6 +47,7 @@ namespace Features.ShopModule.Scripts.Systems {
             _walletModel.OnBalanceChanged += OnWalletChanged;
             _walletModel.OnAvailableChanged += OnWalletChanged;
             _shopModel.OnOpenChanged += OnShopOpenChanged;
+            _playerLifeQuery.OnLocalStateChanged += OnLocalLifeStateChanged;
         }
 
         public void Dispose() {
@@ -52,13 +57,15 @@ namespace Features.ShopModule.Scripts.Systems {
             _walletModel.OnBalanceChanged -= OnWalletChanged;
             _walletModel.OnAvailableChanged -= OnWalletChanged;
             _shopModel.OnOpenChanged -= OnShopOpenChanged;
+            _playerLifeQuery.OnLocalStateChanged -= OnLocalLifeStateChanged;
             _shopModel.Close();
         }
 
         private bool CanOpenShop() =>
             _gameFlowStateMachineService.CurrentStateType == typeof(SessionGameFlowState)
             && _gameFlowStateMachineService.IsTransitioning == false
-            && _walletModel.IsAvailable;
+            && _walletModel.IsAvailable
+            && _playerLifeQuery.LocalState == PlayerLifeState.Alive;
 
         private void OpenWindow() {
             _windowsService.OpenWindow<ShopWindow>();
@@ -95,6 +102,11 @@ namespace Features.ShopModule.Scripts.Systems {
 
         private void OnWalletChanged() {
             if (_walletModel.IsAvailable == false)
+                _shopModel.Close();
+        }
+
+        private void OnLocalLifeStateChanged(PlayerLifeState state) {
+            if (state == PlayerLifeState.Dead)
                 _shopModel.Close();
         }
 

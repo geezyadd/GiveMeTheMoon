@@ -16,6 +16,7 @@ namespace Features.CameraModule.Scripts {
         internal static float DebugPitch;
 
         private CameraLookRig _rig;
+        private Transform _orbitFollow;
         private Vector2 _pendingLook;
         private float _yaw;
         private float _pitch;
@@ -56,6 +57,7 @@ namespace Features.CameraModule.Scripts {
             Transform follow = _model.Follow;
             if (follow == null) {
                 _synced = false;
+                _orbitFollow = null;
                 _cursorWantedLocked = true;
                 if (rig != null)
                     rig.Anchor = null;
@@ -65,11 +67,13 @@ namespace Features.CameraModule.Scripts {
                 return;
             }
 
-            if (_synced == false) {
+            if (_synced == false || follow != _orbitFollow) {
+                // Rig yaw is local to the anchor (see CameraLookRig), so a new target starts looking along it.
                 _yaw = 0f;
                 _pitch = 0f;
                 _synced = true;
                 _pendingLook = Vector2.zero;
+                _orbitFollow = follow;
             }
 
             if (_cursorWantedLocked == false || _cursorModel.IsFreeCursorRequested) {
@@ -127,6 +131,7 @@ namespace Features.CameraModule.Scripts {
 
         private void ResetLook() {
             _rig = null;
+            _orbitFollow = null;
             _pendingLook = Vector2.zero;
             _yaw = 0f;
             _pitch = 0f;

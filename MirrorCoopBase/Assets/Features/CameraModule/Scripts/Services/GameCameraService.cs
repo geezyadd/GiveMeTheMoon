@@ -13,6 +13,7 @@ namespace Features.CameraModule.Scripts.Services {
     public sealed class GameCameraService : IGameCameraService, IInitializable, IDisposable, IGameplaySession {
         private const int LivePriority = 100;
         private const int StandbyPriority = 10;
+        private const string ORBIT_HOLD_ANCHOR_NAME = "OrbitHoldAnchor";
 
         private readonly GameCameraModel _model;
         private readonly CameraCatalog _catalog;
@@ -97,6 +98,29 @@ namespace Features.CameraModule.Scripts.Services {
 
             if (string.IsNullOrEmpty(_model.ActiveId))
                 BlendTo(_catalog != null ? _catalog.StartupCameraId : CameraIds.TPCamera, 0f);
+        }
+
+        public void RetargetOrbit(Transform follow) {
+            _model.Follow = follow;
+            _model.LookAt = follow;
+            _model.Eye = follow;
+            foreach (GameCamera camera in _model.Cameras.Values)
+                ApplyBinding(camera);
+        }
+
+        public void HoldOrbit() {
+            EnsureRoot();
+            EnsureLookPivot();
+            if (_model.OrbitHoldAnchor == null) {
+                GameObject anchorObject = new GameObject(ORBIT_HOLD_ANCHOR_NAME);
+                anchorObject.transform.SetParent(_root, false);
+                _model.OrbitHoldAnchor = anchorObject.transform;
+            }
+
+            Transform anchor = _model.OrbitHoldAnchor;
+            Transform pivot = _model.LookPivot;
+            anchor.SetPositionAndRotation(pivot.position, pivot.rotation);
+            RetargetOrbit(anchor);
         }
 
         public void ClearLocalPlayer() {

@@ -14,11 +14,15 @@ namespace Features.InputModule.Realization.Scripts.Generated {
         public InputDefaultActions ToggleCursor { get; set; }
         public InputDefaultActions Shop { get; set; }
         public InputDefaultActions CloseWindow { get; set; }
+        public InputDefaultActions SpectatePrev { get; set; }
+        public InputDefaultActions SpectateNext { get; set; }
         public void Enable();
         public void Disable();
         public void EnableMovementMap();
         public void DisableMovementMap();
         public void EnableUiMap();
         public void DisableUiMap();
+        public void EnableSpectatorMap();
+        public void DisableSpectatorMap();
     }
 }

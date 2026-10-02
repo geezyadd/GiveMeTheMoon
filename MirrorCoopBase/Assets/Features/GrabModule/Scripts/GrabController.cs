@@ -1,11 +1,12 @@
 using Features.CameraModule.Scripts.Services;
+using Features.CharacterMovableModule.Scripts.Models;
 using Features.InputModule.Realization.Scripts.Generated;
 using Mirror;
 using UnityEngine;
 using Zenject;
 
 namespace Features.GrabModule.Scripts {
-    public sealed class GrabController : NetworkBehaviour {
+    public sealed class GrabController : NetworkBehaviour, IHeldItemRelease {
         [SerializeField] private Transform _armPoint;
         [SerializeField] private LayerMask _interactableMask;
         [SerializeField] private float _range = 4f;
@@ -18,6 +19,9 @@ namespace Features.GrabModule.Scripts {
 
         [Inject]
         private HoveredInteractableModel _hoveredInteractableModel;
+
+        [Inject]
+        private PlayerControlBlockModel _controlBlock;
 
         [SyncVar(hook = nameof(OnHeldNetIdChanged))]
         private uint _heldNetId;
@@ -53,6 +57,10 @@ namespace Features.GrabModule.Scripts {
             ReleaseHeld();
         }
 
+        [Server]
+        public void ServerReleaseHeld() =>
+            ReleaseHeld();
+
         internal void ServerConsumeHeld() {
             if (isServer == false || _held == null)
                 return;
@@ -79,6 +87,9 @@ namespace Features.GrabModule.Scripts {
         }
 
         private void OnGrab() {
+            if (_controlBlock.IsBlocked)
+                return;
+
             Grabbable item = ResolveGrabbable();
             if (item == null || item.CanBeGrabbed == false || IsHolding)
                 return;
@@ -87,6 +98,9 @@ namespace Features.GrabModule.Scripts {
         }
 
         private void OnRelease() {
+            if (_controlBlock.IsBlocked)
+                return;
+
             CmdRelease();
         }
 
@@ -115,7 +129,7 @@ namespace Features.GrabModule.Scripts {
         }
 
         private void RefreshHover() {
-            if (IsHolding) {
+            if (IsHolding || _controlBlock.IsBlocked) {
                 SetHovered(null);
                 _hoverCollider = null;
                 _cachedOnCollider = null;

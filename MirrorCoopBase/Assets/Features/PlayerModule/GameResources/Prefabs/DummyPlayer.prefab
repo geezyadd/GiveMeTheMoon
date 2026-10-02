@@ -53,6 +53,8 @@ GameObject:
   - component: {fileID: 9209845104136634495}
   - component: {fileID: 8209845104136634494}
   - component: {fileID: 8309845104136634496}
+  - component: {fileID: 6409845104136634497}
+  - component: {fileID: 1398678206992027593}
   m_Layer: 0
   m_Name: DummyPlayer
   m_TagString: Untagged
@@ -340,6 +342,10 @@ MonoBehaviour:
   _rb: {fileID: 7148192738405830123}
   _floating: {fileID: 5109845104136634491}
   _netBody: {fileID: 919415383680135416}
+  _walkSpeed: 5
+  _sprintSpeed: 8
+  _jumpHeight: 4
+  _deckInset: 0.08
 --- !u!114 &8309845104136634496
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -352,6 +358,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8c2a5e41b7d4e6c3a0f9b2d5e4c70b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &6409845104136634497
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7c41a9b2d8f4c6e9a0b1c2d3e4f5a6b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+--- !u!114 &1398678206992027593
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84f538a4eed260a4b93371e06103aad6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  _damageable: {fileID: 6409845104136634497}
+  _body: {fileID: 7148192738405830123}
+  _followTarget: {fileID: 7110000000000000012}
+  _renderers:
+  - {fileID: 5055733605705099643}
+  _colliders:
+  - {fileID: 6120488192738405830}
+  - {fileID: 8047090183454105548}
 --- !u!1 &2613348676932129866
 GameObject:
   m_ObjectHideFlags: 0
