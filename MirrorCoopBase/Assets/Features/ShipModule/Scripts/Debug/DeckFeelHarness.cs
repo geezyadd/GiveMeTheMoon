@@ -1,3 +1,5 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+// Measurement tool for deck feel (agent QA). Not compiled into release builds.
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -1382,3 +1384,4 @@ namespace Features.ShipModule.Scripts.Debug {
         }
     }
 }
+#endif
