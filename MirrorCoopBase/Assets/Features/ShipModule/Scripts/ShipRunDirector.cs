@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using Features.GrabModule.Scripts;
 using Mirror;
 using UnityEngine;
 using Zenject;
@@ -87,17 +89,74 @@ namespace Features.ShipModule.Scripts {
             RpcPlaceWreck(position, rotation);
         }
 
-        internal void ServerShiftWreck(Vector3 delta) {
+        // The server has already moved the pads; pads have no transform sync, so clients move their copies here, in
+        // the same frame the ship's shift arrives. Loose items are moved on every peer instead of teleported: Mirror's
+        // teleport RPC lands before the client's rigidbody interpolation and the item slides in from the old frame.
+        internal void ServerShiftWorld(Vector3 delta, NetworkIdentity currentPad, NetworkIdentity previousPad) {
             ShiftWreck(delta);
-            RpcShiftWreck(delta);
+            foreach (NetworkIdentity identity in NetworkServer.spawned.Values) {
+                if (TryGetLooseItem(identity, out Rigidbody body))
+                    ShiftBody(body, delta);
+            }
+
+            RpcShiftWorld(delta, currentPad, previousPad);
         }
 
         [ClientRpc]
-        private void RpcShiftWreck(Vector3 delta) {
+        private void RpcShiftWorld(Vector3 delta, NetworkIdentity currentPad, NetworkIdentity previousPad) {
             if (isServer)
                 return;
 
             ShiftWreck(delta);
+            ShiftClientPad(currentPad, delta);
+            ShiftClientPad(previousPad, delta);
+            foreach (NetworkIdentity identity in NetworkClient.spawned.Values)
+                ShiftClientItem(identity, delta);
+        }
+
+        private static void ShiftClientPad(NetworkIdentity pad, Vector3 delta) {
+            if (pad != null)
+                pad.transform.position += delta;
+        }
+
+        // A client's snapshot buffer can already hold the item's post-shift pose (the shift frame's unreliable batch may
+        // be read before this RPC), so the buffer is not shifted: it restarts from the newest snapshot, placed at the
+        // shifted pose, and the item's interpolation goes on from there in the new frame.
+        private static void ShiftClientItem(NetworkIdentity identity, Vector3 delta) {
+            if (TryGetLooseItem(identity, out Rigidbody body) == false)
+                return;
+
+            ShiftBody(body, delta);
+            if (identity.TryGetComponent(out NetworkTransformBase sync))
+                RestartSnapshots(sync.clientSnapshots, body.position);
+        }
+
+        // Held items are skipped: their holder moves them. Deck cargo is shifted with the rest; the deck re-poses it
+        // from the (shifted) ship every frame anyway.
+        private static bool TryGetLooseItem(NetworkIdentity identity, out Rigidbody body) {
+            body = null;
+            if (identity == null || identity.TryGetComponent(out Grabbable grabbable) == false)
+                return false;
+
+            return grabbable.CanBeGrabbed && identity.TryGetComponent(out body);
+        }
+
+        private static void ShiftBody(Rigidbody body, Vector3 delta) {
+            Transform item = body.transform;
+            item.position += delta;
+            body.position = item.position;
+        }
+
+        private static void RestartSnapshots(SortedList<double, TransformSnapshot> snapshots, Vector3 position) {
+            if (snapshots.Count == 0)
+                return;
+
+            int newest = snapshots.Count - 1;
+            double key = snapshots.Keys[newest];
+            TransformSnapshot snapshot = snapshots.Values[newest];
+            snapshot.position = position;
+            snapshots.Clear();
+            snapshots.Add(key, snapshot);
         }
 
         private void ShiftWreck(Vector3 delta) {
