@@ -92,6 +92,28 @@ namespace Features.ShipModule.Scripts {
             RpcShiftWreck(delta);
         }
 
+        // Pads have no transform sync: an origin shift moved them on the server only, so a client walking off the deck
+        // after a recentred landing had no pad under it.
+        internal void ServerShiftPads(ShipLandingPad current, ShipLandingPad previous, Vector3 delta) =>
+            RpcShiftPads(PadIdentity(current), PadIdentity(previous), delta);
+
+        private static NetworkIdentity PadIdentity(ShipLandingPad pad) =>
+            pad != null && pad.TryGetComponent(out NetworkIdentity identity) ? identity : null;
+
+        private static void ShiftClientPad(NetworkIdentity pad, Vector3 delta) {
+            if (pad != null)
+                pad.transform.position += delta;
+        }
+
+        [ClientRpc]
+        private void RpcShiftPads(NetworkIdentity current, NetworkIdentity previous, Vector3 delta) {
+            if (isServer)
+                return;
+
+            ShiftClientPad(current, delta);
+            ShiftClientPad(previous, delta);
+        }
+
         [ClientRpc]
         private void RpcShiftWreck(Vector3 delta) {
             if (isServer)

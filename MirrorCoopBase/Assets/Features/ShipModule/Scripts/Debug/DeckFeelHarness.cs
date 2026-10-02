@@ -17,7 +17,8 @@ using Zenject;
 
 namespace Features.ShipModule.Scripts.Debug {
     public sealed class DeckFeelHarness : ITickable {
-        private const string RunDir = @"C:\Users\User\.agent-orchestrator\runs\20261001-2325-flight-h";
+        private const string RunDirPrefix = "dir=";
+        private const string DefaultRunDir = @"C:\Users\User\.agent-orchestrator\runs\20261001-2325-flight-h";
         private const float SpikeMeters = 0.1f;
         private const int FixedDtFps = 60;
         private const float StandSeconds = 3f;
@@ -99,6 +100,7 @@ namespace Features.ShipModule.Scripts.Debug {
         private Task _join;
         private int _clientLegs;
         private float _clientReadySince;
+        private string _runDir = DefaultRunDir;
 
         public DeckFeelHarness(
             CharacterInputBuffer input,
@@ -139,11 +141,12 @@ namespace Features.ShipModule.Scripts.Debug {
                 _client = request.Contains("client") && _awaitClient == false;
                 _fixedDt = request.Contains("fixeddt");
                 _mode = _fixedDt ? "fixeddt" + FixedDtFps : "realtime";
+                _runDir = ReadRunDir(request);
                 if (_fixedDt)
                     Time.captureFramerate = FixedDtFps;
 
-                Directory.CreateDirectory(Path.Combine(RunDir, "screenshots"));
-                Directory.CreateDirectory(Path.Combine(RunDir, "frames"));
+                Directory.CreateDirectory(Path.Combine(_runDir, "screenshots"));
+                Directory.CreateDirectory(Path.Combine(_runDir, "frames"));
                 Status = "armed";
                 Note("Deck feel harness armed. role=" + Role() + " mode=" + _mode + " request='" + request.Trim() + "'");
                 Note("Metrics over ALL frames. raw = |x[i]-2x[i-1]+x[i-2]| (m); tc = time-correct second difference "
@@ -880,7 +883,7 @@ namespace Features.ShipModule.Scripts.Debug {
             }
 
             string name = "frames-" + Role() + "-" + _mode + "-" + label + ".csv";
-            File.WriteAllText(Path.Combine(RunDir, "frames", name), csv.ToString());
+            File.WriteAllText(Path.Combine(_runDir, "frames", name), csv.ToString());
         }
 
         private static string F(float value) {
@@ -1209,7 +1212,7 @@ namespace Features.ShipModule.Scripts.Debug {
             image.Apply();
             RenderTexture.active = active;
             RenderTexture.ReleaseTemporary(texture);
-            File.WriteAllBytes(Path.Combine(RunDir, "screenshots", name + ".png"), image.EncodeToPNG());
+            File.WriteAllBytes(Path.Combine(_runDir, "screenshots", name + ".png"), image.EncodeToPNG());
             UnityEngine.Object.Destroy(image);
         }
 
@@ -1299,7 +1302,18 @@ namespace Features.ShipModule.Scripts.Debug {
 
         private void WriteReport() {
             string name = "deck-feel-" + Role() + "-" + _mode + ".txt";
-            File.WriteAllText(Path.Combine(RunDir, name), _report.ToString());
+            File.WriteAllText(Path.Combine(_runDir, name), _report.ToString());
+        }
+
+        // A "dir=<folder>" line in the request writes the output to that run folder instead of the default one.
+        private static string ReadRunDir(string request) {
+            foreach (string line in request.Split('\n')) {
+                string trimmed = line.Trim();
+                if (trimmed.StartsWith(RunDirPrefix, StringComparison.Ordinal))
+                    return trimmed.Substring(RunDirPrefix.Length);
+            }
+
+            return DefaultRunDir;
         }
 
         private static string RequestPath() {

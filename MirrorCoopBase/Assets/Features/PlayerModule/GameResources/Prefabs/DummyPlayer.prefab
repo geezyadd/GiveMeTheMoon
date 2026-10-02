@@ -179,7 +179,7 @@ MonoBehaviour:
   overlayColor: {r: 0, g: 0, b: 0, a: 0.5}
   bufferResetMultiplier: 3
   useFixedUpdate: 0
-  positionSensitivity: 0.01
+  positionSensitivity: 0.001
   rotationSensitivity: 0.01
   scaleSensitivity: 0.01
 --- !u!114 &2109845104136634489

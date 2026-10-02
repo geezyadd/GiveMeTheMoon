@@ -25,3 +25,5 @@ MonoBehaviour:
   _boardingMinHeight: -0.5
   _boardingMaxHeight: 6
   _standUpSpeed: 6
+  _confineRidersToDeck: 0
+  _reboardDelaySeconds: 0.5

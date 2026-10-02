@@ -16,6 +16,10 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private float _boardingMinHeight = -0.5f;
         [SerializeField] private float _boardingMaxHeight = 6f;
         [SerializeField] private float _standUpSpeed = 6f;
+        [Tooltip("On: the deck edge stops riders. Off: walking or jumping past the deck edge drops the rider off the ship.")]
+        [SerializeField] private bool _confineRidersToDeck;
+        [Tooltip("After dropping off the deck in flight, the rider cannot land back on it for this long (s).")]
+        [SerializeField] private float _reboardDelaySeconds = 0.5f;
 
         public ShipFlightMode FlightMode =>
             _flightMode == ShipFlightMode.None ? ShipFlightMode.TravelInSpace : _flightMode;
@@ -32,5 +36,7 @@ namespace Features.ShipModule.Scripts {
         public float BoardingMinHeight => _boardingMinHeight;
         public float BoardingMaxHeight => _boardingMaxHeight;
         public float StandUpSpeed => _standUpSpeed;
+        public bool ConfineRidersToDeck => _confineRidersToDeck;
+        public float ReboardDelaySeconds => Mathf.Max(0f, _reboardDelaySeconds);
     }
 }

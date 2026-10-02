@@ -25,6 +25,7 @@ namespace Features.ShipModule.Scripts {
         private Vector3 _lastShiftDelta;
 
         internal bool IsFlying => _flying;
+        internal ShipBase Ship => _shipBase;
 
         internal void BindShip(ShipBase ship, Transform root) {
             _shipBase = ship;

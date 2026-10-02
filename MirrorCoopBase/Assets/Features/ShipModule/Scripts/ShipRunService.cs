@@ -290,6 +290,8 @@ namespace Features.ShipModule.Scripts {
             ClearRocks();
             _ship.ServerSettleAfterLanding();
             EnterStation(_currentPad, ShipRunPhase.Build);
+            // After EnterStation's origin shift: riders still bound are carried by it, released ones would stay behind.
+            _ship.ServerReleaseRiders();
         }
 
         private void FinishAtCurrentPose() {
@@ -688,8 +690,10 @@ namespace Features.ShipModule.Scripts {
             ShiftPad(_currentPad, delta);
             ShiftPad(_previousPad, delta);
             _destinationPoint += delta;
-            if (_director != null)
+            if (_director != null) {
                 _director.ServerShiftWreck(delta);
+                _director.ServerShiftPads(_currentPad, _previousPad, delta);
+            }
 
             WorldShiftCount += 1;
         }

@@ -15,11 +15,17 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private float _jumpHeight = 4f;
         [SerializeField] private float _deckInset = 0.08f;
 
+        // Mirror runs hooks in declaration order: the offset hook sees its fresh stamp, a bind sees the fresh offset.
+        [SyncVar]
+        private double _syncedOffsetTime;
+
         [SyncVar(hook = nameof(OnSyncedOffsetChanged))]
         private Vector3 _syncedLocalOffset;
 
-        [SyncVar(hook = nameof(OnRidingChanged))]
-        private bool _syncedRiding;
+        // The ship this rider is bound to (its pose-sync identity), null when not riding. Every peer that does not own
+        // the rider binds it from this, at the owner's ship-local offset.
+        [SyncVar(hook = nameof(OnRideShipChanged))]
+        private NetworkIdentity _syncedRideShip;
 
         [SyncVar(hook = nameof(OnSeatedChanged))]
         private bool _seated;
@@ -34,12 +40,13 @@ namespace Features.ShipModule.Scripts {
         private IGameCameraService _cameras;
 
         private const float OffsetSendSeconds = 0.05f;
+        private const float OFFSET_RESEND_SQR_METERS = 0.000001f;
+        private const float MAX_RIDE_SPEED = 120f;
+        private const double REMOTE_OFFSET_DELAY = 2d * OffsetSendSeconds;
 
         private bool _bound;
         private Vector3 _localOffset;
-        private Vector3 _offsetFrom;
-        private Vector3 _offsetTo;
-        private float _offsetBlend = 1f;
+        private readonly RideOffsetBuffer _remoteOffsets = new RideOffsetBuffer(OffsetSendSeconds);
         private bool _jumpHeldPrev;
         private Vector3 _lastPlatformPos;
         private Quaternion _lastPlatformRot = Quaternion.identity;
@@ -52,6 +59,8 @@ namespace Features.ShipModule.Scripts {
         private float _nextSteerSend;
         private float _rideRestY;
         private float _rideJumpVel;
+        private Vector3 _rideVelocity;
+        private float _reboardAt;
 
         internal Vector3 DebugLocalOffset => _localOffset;
         public bool IsRiding => _bound;
@@ -66,6 +75,11 @@ namespace Features.ShipModule.Scripts {
 
         internal bool WantsLand(ShipBase ship) {
             if (isOwned == false || _bound || _rb == null || ship == null)
+                return false;
+
+            // Right after a drop the interpolated body still trails the moving deck by a frame; without this it lands
+            // back on the deck it just left.
+            if (Time.time < _reboardAt)
                 return false;
 
             Transform platform = ship.transform;
@@ -108,9 +122,7 @@ namespace Features.ShipModule.Scripts {
             _rideRestY = ResolveRideRestY();
             _rideJumpVel = isOwned && _localOffset.y > _rideRestY ? localVerticalSpeed : 0f;
             _jumpHeldPrev = _input != null && _input.JumpHeld;
-            _offsetFrom = _localOffset;
-            _offsetTo = _localOffset;
-            _offsetBlend = 1f;
+            _remoteOffsets.Reset(_syncedOffsetTime, _localOffset);
             _lastPlatformPos = _platform.position;
             _lastPlatformRot = _platform.rotation;
             _bound = true;
@@ -131,29 +143,57 @@ namespace Features.ShipModule.Scripts {
 
             if (isOwned) {
                 _syncedLocalOffset = _localOffset;
-                CmdSetRideOffset(_localOffset);
-                CmdSetRiding(true);
+                CmdBeginRide(_localOffset, NetworkTime.time, ship.NetIdentity);
             }
 
             SilenceNetworkBody();
         }
 
+        private void BindRemote(ShipBase ship) {
+            ship.TrackRider(this);
+            if (_bound == false) {
+                Bind(ship, _syncedLocalOffset);
+                return;
+            }
+
+            SnapToSyncedOffset();
+        }
+
         internal void DebugSetLocalOffset(Vector3 localOffset) {
             _localOffset = localOffset;
             _rideJumpVel = 0f;
-            _offsetFrom = localOffset;
-            _offsetTo = localOffset;
-            _offsetBlend = 1f;
+            _remoteOffsets.Reset(NetworkTime.time, localOffset);
             if (_platform == null)
                 return;
 
             ApplyWorldPose();
         }
 
+        // Server-authoritative release (landing, wreck, stand up at a station, walking off the deck): every peer releases
+        // this rider, the owner with its ride velocity.
+        [Server]
+        internal void ServerRelease() {
+            if (_bound == false && _syncedRideShip == null)
+                return;
+
+            _seated = false;
+            _helmSeat = false;
+            _syncedRideShip = null;
+            if (_bound)
+                ReleaseFromPlatform();
+
+            RpcRelease();
+        }
+
         internal void ReleaseFromPlatform() {
             if (_bound == false)
                 return;
 
+            // The ship may have been snapped (origin shift at the station) since the last Follow.
+            ApplyWorldPose();
+            bool carryVelocity = isOwned && _ship.IsFlying;
+            if (carryVelocity)
+                _reboardAt = Time.time + _ship.ReboardDelaySeconds;
             _bound = false;
             Transform released = transform;
             Vector3 worldPosition = released.position;
@@ -170,6 +210,8 @@ namespace Features.ShipModule.Scripts {
                 _rb.isKinematic = _wasKinematic;
                 _rb.detectCollisions = true;
                 _rb.interpolation = _wasInterpolation;
+                if (carryVelocity && _rb.isKinematic == false)
+                    _rb.linearVelocity = _rideVelocity;
             }
 
             if (_floating != null)
@@ -177,14 +219,16 @@ namespace Features.ShipModule.Scripts {
 
             RestoreNetworkBody();
             if (isOwned && NetworkClient.ready)
-                CmdSetRiding(false);
+                CmdEndRide();
         }
 
-        internal void ServerLockSeat(Vector3 localOffset, bool helm) {
+        internal void ServerLockSeat(Vector3 localOffset, bool helm, NetworkIdentity ship) {
             _seated = true;
             _helmSeat = helm;
             _localOffset = localOffset;
+            _syncedOffsetTime = NetworkTime.time;
             _syncedLocalOffset = localOffset;
+            _syncedRideShip = ship;
         }
 
         internal void ServerUnlockSeat() {
@@ -217,9 +261,47 @@ namespace Features.ShipModule.Scripts {
 
             Vector3 next = RideOffset();
             _localOffset = next;
+            Vector3 previousWorld = transform.position;
             ApplyWorldPose();
+            TrackRideVelocity(previousWorld, dt);
             _lastPlatformPos = _platform.position;
             _lastPlatformRot = _platform.rotation;
+            if (IsOffDeckEdge())
+                DropOffDeck();
+        }
+
+        private void TrackRideVelocity(Vector3 previousWorld, float dt) {
+            if (dt <= 0f)
+                return;
+
+            Vector3 velocity = (transform.position - previousWorld) / dt;
+            // An origin shift moves the ship hundreds of metres in one frame; that is not a ride velocity.
+            if (velocity.sqrMagnitude <= MAX_RIDE_SPEED * MAX_RIDE_SPEED)
+                _rideVelocity = velocity;
+        }
+
+        private bool IsOffDeckEdge() {
+            if (_seated || _ship.IsFlying == false || _ship.ConfinesRidersToDeck)
+                return false;
+
+            if (isOwned)
+                return _ship.ContainsDeckWalk(_localOffset, _deckInset) == false;
+
+            return isServer && _ship.ContainsDeckWalk(_syncedLocalOffset, _deckInset) == false;
+        }
+
+        // The server decides; an owning client releases at once so it does not walk on air for a round trip, and the
+        // server's own check covers a lost or late end-ride command.
+        private void DropOffDeck() {
+            if (isServer)
+                ServerRelease();
+            else
+                ReleaseFromPlatform();
+        }
+
+        private void SnapToSyncedOffset() {
+            _localOffset = _syncedLocalOffset;
+            _remoteOffsets.Reset(_syncedOffsetTime, _syncedLocalOffset);
         }
 
         private void ApplyWorldPose() {
@@ -253,7 +335,7 @@ namespace Features.ShipModule.Scripts {
             Vector3 localMove = DeckPlanar(_input.MoveStick) * CurrentSpeed() * dt;
             _localOffset.x += localMove.x;
             _localOffset.z += localMove.z;
-            if (_ship != null)
+            if (_ship.ConfinesRidersToDeck || _ship.IsFlying == false)
                 _ship.ClampDeckWalk(ref _localOffset, _deckInset);
 
             SendOffsetIfNeeded();
@@ -300,8 +382,8 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             _nextOffsetSend = Time.unscaledTime + OffsetSendSeconds;
-            if ((_syncedLocalOffset - _localOffset).sqrMagnitude > 0.0004f)
-                CmdSetRideOffset(_localOffset);
+            if ((_syncedLocalOffset - _localOffset).sqrMagnitude > OFFSET_RESEND_SQR_METERS)
+                CmdSetRideOffset(_localOffset, NetworkTime.time);
         }
 
         private void SendSteerIfNeeded() {
@@ -324,34 +406,35 @@ namespace Features.ShipModule.Scripts {
             if (isOwned || _seated)
                 return _localOffset;
 
-            _offsetBlend = Mathf.Min(_offsetBlend + Time.deltaTime / OffsetSendSeconds, 1f);
-            return Vector3.Lerp(_offsetFrom, _offsetTo, _offsetBlend);
+            return _remoteOffsets.Sample(NetworkTime.time - REMOTE_OFFSET_DELAY);
         }
 
         private void OnSyncedOffsetChanged(Vector3 previous, Vector3 current) {
             if (isOwned)
                 return;
 
-            _offsetFrom = Vector3.Lerp(_offsetFrom, _offsetTo, _offsetBlend);
-            _offsetTo = current;
-            _localOffset = current;
-            _offsetBlend = 0f;
+            _remoteOffsets.Add(_syncedOffsetTime, current);
         }
 
+        // Standing up must not blend back to the offset from before the seat.
         private void OnSeatedChanged(bool previous, bool current) {
-            if (current)
-                _localOffset = _syncedLocalOffset;
+            if (isOwned && current == false)
+                return;
+
+            SnapToSyncedOffset();
         }
 
-        private void OnRidingChanged(bool previous, bool current) {
+        private void OnRideShipChanged(NetworkIdentity previous, NetworkIdentity current) {
             if (isOwned)
                 return;
 
-            if (current == false && _bound)
+            if (current == null) {
                 ReleaseFromPlatform();
+                return;
+            }
 
-            if (current && _bound == false && _ship != null)
-                BindToPlatform(_ship);
+            if (current.TryGetComponent(out ShipPoseSync poseSync) && poseSync.Ship != null)
+                BindRemote(poseSync.Ship);
         }
 
         private float ResolveRideRestY() {
@@ -396,13 +479,29 @@ namespace Features.ShipModule.Scripts {
         }
 
         [Command]
-        private void CmdSetRideOffset(Vector3 local) {
+        private void CmdSetRideOffset(Vector3 local, double time) {
+            _syncedOffsetTime = time;
             _syncedLocalOffset = local;
         }
 
         [Command]
-        private void CmdSetRiding(bool riding) {
-            _syncedRiding = riding;
+        private void CmdBeginRide(Vector3 local, double time, NetworkIdentity ship) {
+            _syncedOffsetTime = time;
+            _syncedLocalOffset = local;
+            _syncedRideShip = ship;
+        }
+
+        [Command]
+        private void CmdEndRide() {
+            _syncedRideShip = null;
+        }
+
+        [ClientRpc]
+        private void RpcRelease() {
+            if (isServer)
+                return;
+
+            ReleaseFromPlatform();
         }
 
         [Command]

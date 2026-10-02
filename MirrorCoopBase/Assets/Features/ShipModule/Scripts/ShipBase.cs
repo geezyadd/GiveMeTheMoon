@@ -43,6 +43,9 @@ namespace Features.ShipModule.Scripts {
         internal BoxCollider RideVolume => _rideVolume;
         internal ShipFlightMode ActiveFlightMode => _flight.Mode;
         internal float StandUpSpeed => _flightSettings.StandUpSpeed;
+        internal bool ConfinesRidersToDeck => _flightSettings.ConfineRidersToDeck;
+        internal float ReboardDelaySeconds => _flightSettings.ReboardDelaySeconds;
+        internal NetworkIdentity NetIdentity => _poseSync.netIdentity;
         internal ShipSocket[] Sockets => _sockets;
         internal Bounds DeckBounds => _deck.bounds;
         internal IStatEntity<ShipStatType> Stats => _stats;
@@ -299,7 +302,9 @@ namespace Features.ShipModule.Scripts {
                 if (_insideVolume.Contains(rider) == false)
                     _insideVolume.Add(rider);
 
-                TryBindRider(rider);
+                if (_flying)
+                    TryBindRider(rider);
+
                 return;
             }
 
@@ -315,10 +320,15 @@ namespace Features.ShipModule.Scripts {
             if (_flying)
                 return;
 
-            if (rider != null)
-                rider.ReleaseFromPlatform();
+            if (rider != null && NetworkServer.active)
+                rider.ServerRelease();
 
             _riders.Remove(rider);
+        }
+
+        internal void TrackRider(ShipRider rider) {
+            if (_riders.Contains(rider) == false)
+                _riders.Add(rider);
         }
 
         internal bool ServerRequestLaunch() {
@@ -395,7 +405,7 @@ namespace Features.ShipModule.Scripts {
                 _poseSync.ServerSetFlying(false);
 
             WakeBody();
-            ReleaseRiders();
+            ServerReleaseRiders();
         }
 
         internal void ServerResetForBuild(Vector3 berth, Quaternion rotation) {
@@ -408,7 +418,7 @@ namespace Features.ShipModule.Scripts {
                 if (_poseSync != null)
                     _poseSync.ServerSetFlying(false);
 
-                ReleaseRiders();
+                ServerReleaseRiders();
             }
 
             ClearAllOccupants();
@@ -437,7 +447,7 @@ namespace Features.ShipModule.Scripts {
             for (int i = 0; i < _riders.Count; i++) {
                 ShipRider rider = _riders[i];
                 if (rider != null)
-                    ServerStand(rider);
+                    ServerUnseat(rider);
             }
 
             if (_lever != null)
@@ -452,14 +462,12 @@ namespace Features.ShipModule.Scripts {
             if (NetworkServer.active)
                 return;
 
+            // Riders are released by the server (ShipRider.ServerRelease) after the landing snap and origin shift.
             _flying = flying;
             if (flying) {
                 CollectRidersInVolume();
                 BindRiders();
-                return;
             }
-
-            KeepDeckRiders();
         }
 
         internal void SetDebugSteer(bool active, float steer) {
@@ -560,7 +568,7 @@ namespace Features.ShipModule.Scripts {
             Vector3 seatOffset = socket.ResolveSitLocalOffset(transform);
             rider.BindToSeat(this, seatOffset);
             bool helm = socket.Seat != null && socket.Seat.Role == ShipSeatRole.Helm;
-            rider.ServerLockSeat(seatOffset, helm);
+            rider.ServerLockSeat(seatOffset, helm, NetIdentity);
             return true;
         }
 
@@ -593,10 +601,15 @@ namespace Features.ShipModule.Scripts {
             if (NetworkServer.active == false || rider == null)
                 return;
 
+            ServerUnseat(rider);
+            // At a station the deck is a static platform: the rider walks on it under physics.
+            if (_flying == false)
+                rider.ServerRelease();
+        }
+
+        private void ServerUnseat(ShipRider rider) {
             ClearOccupant(rider);
             rider.ServerUnlockSeat();
-            if (_flying == false && IsAboveDeck(rider.transform.position) == false)
-                rider.ReleaseFromPlatform();
         }
 
         private void FixedUpdate() {
@@ -638,7 +651,8 @@ namespace Features.ShipModule.Scripts {
 
             _cargo.Follow(transform, this, NetworkServer.active, _poseSync);
             FollowRiders(Time.deltaTime);
-            CatchDeckRiders();
+            if (_flying)
+                CatchDeckRiders();
         }
 
         private void PushTravelSpeed() {
@@ -843,22 +857,6 @@ namespace Features.ShipModule.Scripts {
                 TryBindRider(_insideVolume[i]);
         }
 
-        private void KeepDeckRiders() {
-            for (int i = _riders.Count - 1; i >= 0; i--) {
-                ShipRider rider = _riders[i];
-                if (rider == null) {
-                    _riders.RemoveAt(i);
-                    continue;
-                }
-
-                if (rider.IsRiding && IsAboveDeck(rider.transform.position))
-                    continue;
-
-                rider.ReleaseFromPlatform();
-                _riders.RemoveAt(i);
-            }
-        }
-
         private void TryBindRider(ShipRider rider) {
             if (rider == null || rider.IsRiding)
                 return;
@@ -872,13 +870,14 @@ namespace Features.ShipModule.Scripts {
             rider.BindToPlatform(this);
         }
 
+        // Each peer boards only its own player; the others follow their owner's synced ride (ShipRider hooks).
         private void BindRiders() {
             for (int i = _riders.Count - 1; i >= 0; i--) {
                 ShipRider rider = _riders[i];
-                if (rider == null)
+                if (rider == null || rider.isOwned == false)
                     continue;
 
-                if (NetworkServer.active && IsAboveDeck(rider.transform.position) == false) {
+                if (IsAboveDeck(rider.transform.position) == false) {
                     _riders.RemoveAt(i);
                     continue;
                 }
@@ -910,10 +909,10 @@ namespace Features.ShipModule.Scripts {
             }
         }
 
-        private void ReleaseRiders() {
+        internal void ServerReleaseRiders() {
             for (int i = 0; i < _riders.Count; i++) {
                 if (_riders[i] != null)
-                    _riders[i].ReleaseFromPlatform();
+                    _riders[i].ServerRelease();
             }
         }
 
