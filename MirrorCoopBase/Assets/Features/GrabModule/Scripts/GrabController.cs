@@ -80,6 +80,10 @@ namespace Features.GrabModule.Scripts {
         }
 
         private void Update() {
+            // The held item can be destroyed under the hand (e.g. the lobby unloads on Start): drop the stale hold.
+            if (isServer && _heldNetId != 0 && _held == null)
+                SetHeld(null);
+
             if (isLocalPlayer == false)
                 return;
 
@@ -170,10 +174,9 @@ namespace Features.GrabModule.Scripts {
         }
 
         private void ReleaseHeld() {
-            if (_held == null)
-                return;
+            if (_held != null)
+                _held.ServerUnbind();
 
-            _held.ServerUnbind();
             SetHeld(null);
         }
 
