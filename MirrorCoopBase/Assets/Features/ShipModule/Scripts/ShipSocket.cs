@@ -92,8 +92,11 @@ namespace Features.ShipModule.Scripts {
             return true;
         }
 
+        internal bool CanSeat(uint riderNetId) =>
+            IsSittable && riderNetId != 0 && _occupantNetId == 0;
+
         internal bool ServerTrySit(uint riderNetId) {
-            if (isServer == false || IsSittable == false || riderNetId == 0 || _occupantNetId != 0)
+            if (isServer == false || CanSeat(riderNetId) == false)
                 return false;
 
             _occupantNetId = riderNetId;

@@ -7,24 +7,44 @@ namespace Features.ShipModule.Scripts {
     internal sealed class ShipDeckCargo {
         private const float SCAN_INTERVAL = 0.2f;
         private const float REST_HEIGHT = 2.2f;
+        private const float DECK_EDGE_INSET = 0.35f;
+        private const float BELOW_DECK_TOLERANCE = 0.2f;
 
         private readonly List<Attached> _attached = new List<Attached>(8);
         private readonly List<Pending> _pending = new List<Pending>(4);
+        private readonly List<Grabbable> _inHand = new List<Grabbable>(4);
         private readonly Dictionary<int, Grabbable> _known = new Dictionary<int, Grabbable>(16);
         private float _nextScan;
 
         internal int AttachedCount => _attached.Count;
 
-        internal void ServerReleaseGrabbed(Transform ship, ShipPoseSync poseSync) {
+        internal void ServerReleaseGrabbed(Transform ship, ShipBase deck, ShipPoseSync poseSync) {
             for (int i = _attached.Count - 1; i >= 0; i--) {
                 Attached item = _attached[i];
-                if (item.Body == null) {
-                    _attached.RemoveAt(i);
-                    continue;
-                }
+                if (item.Body != null && IsHeld(item))
+                    _inHand.Add(item.Grabbable);
 
-                if (item.Grabbable != null && item.Grabbable.CanBeGrabbed == false)
+                if (item.Body == null || IsHeld(item))
                     DetachAt(i, ship, poseSync, true);
+            }
+
+            ServerCatchReleased(ship, deck, poseSync);
+        }
+
+        // An item taken from the deck goes back on it in the frame it leaves the hand: until the next scan it would
+        // hang in the world while the flying ship moves on. At a station the scan picks it up as before.
+        private void ServerCatchReleased(Transform ship, ShipBase deck, ShipPoseSync poseSync) {
+            for (int i = _inHand.Count - 1; i >= 0; i--) {
+                Grabbable grabbable = _inHand[i];
+                if (grabbable != null && grabbable.CanBeGrabbed == false)
+                    continue;
+
+                _inHand.RemoveAt(i);
+                if (grabbable == null || deck.IsFlying == false || Contains(grabbable))
+                    continue;
+
+                if (IsOnDeck(grabbable, ship, deck))
+                    Attach(grabbable, ship, poseSync, true);
             }
         }
 
@@ -40,12 +60,7 @@ namespace Features.ShipModule.Scripts {
 
             for (int i = _attached.Count - 1; i >= 0; i--) {
                 Attached item = _attached[i];
-                if (item.Body == null) {
-                    _attached.RemoveAt(i);
-                    continue;
-                }
-
-                if (item.Grabbable != null && item.Grabbable.CanBeGrabbed == false) {
+                if (item.Body == null || IsHeld(item)) {
                     DetachAt(i, ship, poseSync, server);
                     continue;
                 }
@@ -59,6 +74,7 @@ namespace Features.ShipModule.Scripts {
                 DetachAt(i, ship, poseSync, tellClients);
 
             _pending.Clear();
+            _inHand.Clear();
         }
 
         internal void ShiftDetached(Vector3 delta) {
@@ -131,21 +147,22 @@ namespace Features.ShipModule.Scripts {
                 if (grabbable == null || grabbable.CanBeGrabbed == false)
                     continue;
 
-                if (Contains(grabbable))
-                    continue;
-
-                Vector3 local = ship.InverseTransformPoint(grabbable.transform.position);
-                if (deck.ContainsDeckWalk(local, 0.35f) == false)
-                    continue;
-
-                if (deck.TryGetDeckSurfaceY(local, out float surfaceY) == false)
-                    continue;
-
-                if (local.y < surfaceY - 0.2f || local.y > surfaceY + REST_HEIGHT)
+                if (Contains(grabbable) || IsOnDeck(grabbable, ship, deck) == false)
                     continue;
 
                 Attach(grabbable, ship, poseSync, true);
             }
+        }
+
+        private static bool IsOnDeck(Grabbable grabbable, Transform ship, ShipBase deck) {
+            Vector3 local = ship.InverseTransformPoint(grabbable.transform.position);
+            if (deck.ContainsDeckWalk(local, DECK_EDGE_INSET) == false)
+                return false;
+
+            if (deck.TryGetDeckSurfaceY(local, out float surfaceY) == false)
+                return false;
+
+            return local.y >= surfaceY - BELOW_DECK_TOLERANCE && local.y <= surfaceY + REST_HEIGHT;
         }
 
         private static int OverlapDeck(ShipBase deck) {
@@ -170,9 +187,7 @@ namespace Features.ShipModule.Scripts {
             Quaternion localRotation = Quaternion.Inverse(ship.rotation) * root.rotation;
             NetworkIdentity identity = grabbable.GetComponent<NetworkIdentity>();
             uint netId = identity != null ? identity.netId : 0u;
-            NetworkRigidbodyUnreliable networkBody = grabbable.GetComponent<NetworkRigidbodyUnreliable>();
-            Rigidbody body = grabbable.GetComponent<Rigidbody>();
-            var item = new Attached(grabbable, body, networkBody, netId, localPosition, localRotation);
+            Attached item = CreateAttached(grabbable, netId, localPosition, localRotation);
             _attached.Add(item);
             Pin(item, ship);
             if (tellClients && poseSync != null && netId != 0u)
@@ -182,25 +197,52 @@ namespace Features.ShipModule.Scripts {
         private void DetachAt(int index, Transform ship, ShipPoseSync poseSync, bool tellClients) {
             Attached item = _attached[index];
             _attached.RemoveAt(index);
+            if (tellClients && poseSync != null && item.NetId != 0u)
+                poseSync.ServerDetachDeckItem(item.NetId);
+
             if (item.Body == null)
                 return;
 
-            uint netId = item.NetId;
             Vector3 worldPosition = item.Body.position;
             Quaternion worldRotation = item.Body.rotation;
             item.Body.SetParent(null, true);
             item.Body.SetPositionAndRotation(worldPosition, worldRotation);
+            // A grabbed item is already in the hand: Grabbable owns its kinematic hold and silenced network body.
+            if (IsHeld(item) == false)
+                RestorePhysics(item);
+        }
+
+        private static bool IsHeld(Attached item) =>
+            item.Grabbable != null && item.Grabbable.CanBeGrabbed == false;
+
+        private static void RestorePhysics(Attached item) {
             if (item.Rigidbody != null) {
-                item.Rigidbody.isKinematic = false;
-                item.Rigidbody.linearVelocity = Vector3.zero;
-                item.Rigidbody.angularVelocity = Vector3.zero;
+                item.Rigidbody.isKinematic = item.WasKinematic;
+                item.Rigidbody.interpolation = item.Interpolation;
+                if (item.WasKinematic == false) {
+                    item.Rigidbody.linearVelocity = Vector3.zero;
+                    item.Rigidbody.angularVelocity = Vector3.zero;
+                }
             }
 
             if (item.NetworkBody != null)
-                item.NetworkBody.enabled = true;
+                item.NetworkBody.enabled = item.NetworkBodyWasEnabled;
+        }
 
-            if (tellClients && poseSync != null && netId != 0u)
-                poseSync.ServerDetachDeckItem(netId);
+        // Captured before the first Pin, so a detach gives the item back the physics it had before the deck took it.
+        private static Attached CreateAttached(Grabbable grabbable, uint netId, Vector3 localPosition, Quaternion localRotation) {
+            Rigidbody body = grabbable.GetComponent<Rigidbody>();
+            NetworkRigidbodyUnreliable networkBody = grabbable.GetComponent<NetworkRigidbodyUnreliable>();
+            return new Attached(
+                grabbable,
+                body,
+                networkBody,
+                netId,
+                localPosition,
+                localRotation,
+                body != null && body.isKinematic,
+                body != null ? body.interpolation : RigidbodyInterpolation.None,
+                networkBody != null && networkBody.enabled);
         }
 
         private void Pin(Attached item, Transform ship) {
@@ -237,15 +279,7 @@ namespace Features.ShipModule.Scripts {
                 if (grabbable == null || Contains(grabbable))
                     continue;
 
-                NetworkRigidbodyUnreliable networkBody = identity.GetComponent<NetworkRigidbodyUnreliable>();
-                Rigidbody body = identity.GetComponent<Rigidbody>();
-                var item = new Attached(
-                    grabbable,
-                    body,
-                    networkBody,
-                    pending.NetId,
-                    pending.LocalPosition,
-                    pending.LocalRotation);
+                Attached item = CreateAttached(grabbable, pending.NetId, pending.LocalPosition, pending.LocalRotation);
                 _attached.Add(item);
                 Pin(item, ship);
             }
@@ -281,7 +315,10 @@ namespace Features.ShipModule.Scripts {
                 NetworkRigidbodyUnreliable networkBody,
                 uint netId,
                 Vector3 localPosition,
-                Quaternion localRotation) {
+                Quaternion localRotation,
+                bool wasKinematic,
+                RigidbodyInterpolation interpolation,
+                bool networkBodyWasEnabled) {
                 Grabbable = grabbable;
                 Rigidbody = rigidbody;
                 NetworkBody = networkBody;
@@ -289,6 +326,9 @@ namespace Features.ShipModule.Scripts {
                 NetId = netId;
                 LocalPosition = localPosition;
                 LocalRotation = localRotation;
+                WasKinematic = wasKinematic;
+                Interpolation = interpolation;
+                NetworkBodyWasEnabled = networkBodyWasEnabled;
             }
 
             public Grabbable Grabbable { get; }
@@ -298,6 +338,9 @@ namespace Features.ShipModule.Scripts {
             public uint NetId { get; }
             public Vector3 LocalPosition { get; }
             public Quaternion LocalRotation { get; }
+            public bool WasKinematic { get; }
+            public RigidbodyInterpolation Interpolation { get; }
+            public bool NetworkBodyWasEnabled { get; }
         }
     }
 }

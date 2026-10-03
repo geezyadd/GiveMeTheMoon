@@ -46,6 +46,9 @@ namespace Features.ShipModule.Scripts {
         [Inject]
         private ShipStationCatalog _injectedStations;
 
+        [Inject]
+        private ShipRadarService _radar;
+
         private GameObject _localWreck;
         private GameObject _previousLocalWreck;
 
@@ -64,9 +67,14 @@ namespace Features.ShipModule.Scripts {
                 _run.Unbind(this);
         }
 
+        // The server binds the ship in ShipRunService.Bind; a client's HUD radar needs the same ship.
         public override void OnStartClient() {
             ApplyToModel();
+            _radar.BindShip(_ship);
         }
+
+        public override void OnStopClient() =>
+            _radar.UnbindShip();
 
         internal void ServerPublish() {
             if (_model == null)

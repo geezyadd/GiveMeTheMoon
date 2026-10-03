@@ -25,8 +25,8 @@ namespace Features.ShipModule.Scripts {
         private readonly List<ShipRider> _insideVolume = new List<ShipRider>();
         private readonly ShipFlight _flight = new ShipFlight();
         private readonly ShipDeckCargo _cargo = new ShipDeckCargo();
+        private readonly HelmSteer _helmSteer = new HelmSteer();
         private BoxCollider[] _walkBoxes;
-        private float _helmSteer;
         private bool _debugSteerActive;
         private float _debugSteer;
         private int _fixedSteps;
@@ -356,7 +356,7 @@ namespace Features.ShipModule.Scripts {
                 takeoffSeconds,
                 dodgeRangeScale,
                 mode);
-            _helmSteer = 0f;
+            _helmSteer.Clear();
             _controlsLocked = false;
             SleepBody();
             _flying = true;
@@ -546,22 +546,29 @@ namespace Features.ShipModule.Scripts {
             _cargo.ClientDetach(netId, transform);
         }
 
+        internal void ClientClearDeckCargo() {
+            _cargo.DetachAll(transform, null, false);
+        }
+
         internal void ServerSetSteer(uint riderNetId, float lateral) {
             if (NetworkServer.active == false)
                 return;
 
-            if (IsHelmOccupant(riderNetId) == false) {
-                _helmSteer = 0f;
+            if (IsHelmOccupant(riderNetId) == false)
                 return;
-            }
 
-            _helmSteer = lateral;
+            _helmSteer.Set(riderNetId, lateral);
         }
 
         internal bool ServerTrySit(ShipRider rider, ShipSocket socket) {
             if (NetworkServer.active == false || rider == null || socket == null)
                 return false;
 
+            if (socket.CanSeat(rider.netId) == false)
+                return false;
+
+            // A rider holds one seat: sitting down elsewhere frees the previous seat (and the helm with its steer).
+            ClearOccupant(rider);
             if (socket.ServerTrySit(rider.netId) == false)
                 return false;
 
@@ -587,7 +594,8 @@ namespace Features.ShipModule.Scripts {
                 return;
             }
 
-            if (_flying == false && TryGetOwnedRider(previousOccupant, out ShipRider stood))
+            // A rider who switched seats is still seated on the other socket; only standing up releases it.
+            if (_flying == false && IsSeatedOnShip(previousOccupant) == false && TryGetOwnedRider(previousOccupant, out ShipRider stood))
                 stood.ReleaseFromPlatform();
         }
 
@@ -626,6 +634,11 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void LateUpdate() {
+            // Before this frame's flight step: an item released this frame is still at the hand's pose for the ship's
+            // pose of the last frame, so it goes back onto the deck exactly where it left the hand.
+            if (NetworkServer.active)
+                _cargo.ServerReleaseGrabbed(transform, this, _poseSync);
+
             if (_flying && NetworkServer.active) {
                 bool canSteer = _controlsLocked == false && _flight.AllowsSteer;
                 bool manual = canSteer && (HasControlModule() || _debugSteerActive);
@@ -648,9 +661,6 @@ namespace Features.ShipModule.Scripts {
             else if (_flying && _poseSync != null) {
                 _poseSync.ApplyInterpolated(HasOwnedHelmPilot());
             }
-
-            if (NetworkServer.active)
-                _cargo.ServerReleaseGrabbed(transform, _poseSync);
 
             _cargo.Follow(transform, this, NetworkServer.active, _poseSync);
             FollowRiders(Time.deltaTime);
@@ -711,7 +721,7 @@ namespace Features.ShipModule.Scripts {
                     return rider.CurrentSteer;
             }
 
-            return _helmSteer;
+            return _helmSteer.Read(occupant);
         }
 
         private uint HelmOccupantNetId() {
@@ -765,9 +775,24 @@ namespace Features.ShipModule.Scripts {
             return false;
         }
 
+        private bool IsSeatedOnShip(uint riderNetId) {
+            if (_sockets == null || riderNetId == 0)
+                return false;
+
+            for (int i = 0; i < _sockets.Length; i++) {
+                if (_sockets[i] != null && _sockets[i].OccupantNetId == riderNetId)
+                    return true;
+            }
+
+            return false;
+        }
+
         private void ClearOccupant(ShipRider rider) {
             if (_sockets == null || rider == null)
                 return;
+
+            if (IsHelmOccupant(rider.netId))
+                _helmSteer.Clear();
 
             for (int i = 0; i < _sockets.Length; i++) {
                 if (_sockets[i] != null)
@@ -784,6 +809,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void ClearAllOccupants() {
+            _helmSteer.Clear();
             if (_sockets == null)
                 return;
 
