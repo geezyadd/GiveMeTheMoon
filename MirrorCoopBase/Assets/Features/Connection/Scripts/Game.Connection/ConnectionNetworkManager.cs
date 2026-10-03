@@ -540,6 +540,8 @@ namespace Game.Connection
                     break;
 
                 case SceneOperation.UnloadAdditive:
+                    if (NetworkServer.active)
+                        DestroyMapObjects(msg.sceneName);
                     MovePlayersToPersistentScene();
                     yield return UnloadSceneIfLoaded(msg.sceneName);
                     Scene leftover = SceneManager.GetSceneByName(msg.sceneName);
@@ -729,14 +731,38 @@ namespace Game.Connection
             if (NetworkClient.active == false)
                 return;
 
+            // connectionToClient exists only on the server: a client recognises remote players by the player prefab.
+            uint playerAssetId = playerPrefab.GetComponent<NetworkIdentity>().assetId;
             foreach (NetworkIdentity identity in NetworkClient.spawned.Values)
             {
-                if (identity == null || identity.sceneId != 0)
+                if (identity == null || identity.assetId != playerAssetId)
                     continue;
 
                 MoveToPersistentScene(identity.gameObject);
             }
         }
+
+        // Pads, drops, items and wrecks are spawned into the map scene; destroy them through Mirror so clients drop them too
+        // and nothing from this map survives into the next one. Scene objects still go with the scene unload.
+        static void DestroyMapObjects(string sceneName)
+        {
+            foreach (NetworkIdentity identity in NetworkServer.spawned.Values.ToArray())
+            {
+                if (IsMapRuntimeObject(identity, sceneName) == false)
+                    continue;
+
+                NetworkServer.Destroy(identity.gameObject);
+            }
+        }
+
+        static bool IsMapRuntimeObject(NetworkIdentity identity, string sceneName) =>
+            identity != null
+            && identity.sceneId == 0
+            && IsPlayerObject(identity) == false
+            && identity.gameObject.scene.name == sceneName;
+
+        static bool IsPlayerObject(NetworkIdentity identity) =>
+            identity.connectionToClient != null && identity.connectionToClient.identity == identity;
 
         void MoveToPersistentScene(GameObject target)
         {

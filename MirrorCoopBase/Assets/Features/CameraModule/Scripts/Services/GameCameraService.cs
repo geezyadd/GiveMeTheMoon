@@ -169,7 +169,10 @@ namespace Features.CameraModule.Scripts.Services {
             SpawnCameras();
         }
 
+        // The look pivot rides on the player (CameraLookRig): bring it back under the root so it goes down with it instead
+        // of staying on the player next to the pivot the rebuilt cameras create.
         private void TearDownCameras() {
+            ReturnLookPivotToRoot();
             if (_root != null)
                 UnityEngine.Object.Destroy(_root.gameObject);
 

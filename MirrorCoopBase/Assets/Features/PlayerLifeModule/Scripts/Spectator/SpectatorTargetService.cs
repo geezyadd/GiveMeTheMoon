@@ -46,21 +46,17 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
         }
 
         private static string ResolveDisplayName(Transform target, int index) =>
-            TryGetAuthenticatedName(target, out string playerName)
+            TryGetSyncedName(target, out string playerName)
                 ? playerName
                 : PLAYER_PREFIX + (index + 1).ToString();
 
-        private static bool TryGetAuthenticatedName(Transform target, out string playerName) {
+        private static bool TryGetSyncedName(Transform target, out string playerName) {
             playerName = null;
-            NetworkIdentity identity = target.GetComponentInParent<NetworkIdentity>();
-            if (identity == null || identity.connectionToClient == null)
+            ConnectionPlayerName playerNameSource = target.GetComponentInParent<ConnectionPlayerName>();
+            if (playerNameSource == null || string.IsNullOrWhiteSpace(playerNameSource.DisplayName))
                 return false;
 
-            if (identity.connectionToClient.authenticationData is not ConnectionAuthenticator.AuthRequestMessage auth
-                || string.IsNullOrWhiteSpace(auth.playerName))
-                return false;
-
-            playerName = auth.playerName;
+            playerName = playerNameSource.DisplayName;
             return true;
         }
 

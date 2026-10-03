@@ -9,6 +9,7 @@ using Features.GameFlowStateMachineModule.Scripts.States;
 using Features.GrabModule.Scripts;
 using Features.LobbyModule.Scripts;
 using Features.MenuModule.Scripts;
+using Features.PlayerLifeModule.Scripts;
 using Features.ShipModule.Scripts;
 using Game.Connection;
 using Mirror;
@@ -27,6 +28,8 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float GAME_TIMEOUT_SECONDS = 60f;
         private const float FLIGHT_TIMEOUT_SECONDS = 30f;
         private const float LEAVE_TIMEOUT_SECONDS = 30f;
+        // Covers PlayerLifeConfiguration.AllDeadReturnDelay plus the lobby load and the GameScene unload.
+        private const float RETURN_TO_LOBBY_TIMEOUT_SECONDS = 30f;
         private const float BOARD_DROP_HEIGHT = 1f;
         private const float BOARD_SETTLE_SECONDS = 1.5f;
         private const float FALL_SAMPLE_SECONDS = 1f;
@@ -49,8 +52,10 @@ namespace Tests.PlayMode.LoopSmoke {
         };
 
         private readonly List<ShipRunPhase> _phases = new List<ShipRunPhase>();
+        private readonly HashSet<uint> _firstRunObjects = new HashSet<uint>();
 
         private LoopSmokeErrorLog _errorLog;
+        private int _lobbyRuntimeObjects;
         private ShipRunConfig _fastConfig;
         private ShipRunModel _model;
         private ShipBase _ship;
@@ -71,20 +76,41 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         [UnityTest, Timeout(TEST_TIMEOUT_MS)]
-        public IEnumerator WhenHostFliesTwoLoops_AndLeaves_ThenShipKeepsEnginesOnEachPadAndMenuReturns() {
+        public IEnumerator WhenHostFliesTwoLoops_AndAllDieAndStartAgain_ThenSecondRunStartsCleanAndMenuReturns() {
             // LoopSmokeErrorLog fails the test with the full list and its allow-list instead.
             LogAssert.ignoreFailingMessages = true;
             yield return EnterGameAsHostCoroutine();
             InstallRequiredEngines();
             yield return BoardPlayerCoroutine();
+            int startStationItems = CountSceneObjects<ShipItem>();
+            Assert.Greater(startStationItems, 0, "Run 1 has no items at the start station.");
 
             ShipLandingPad startPad = FindPadUnderShip();
             yield return FlyLoopCoroutine(1);
             ShipLandingPad firstPad = FindPadUnderShip();
             yield return AssertLandedSafelyCoroutine(startPad, firstPad);
+            int firstLandingSpawns = CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values);
+            LogSpawnedCounts("run 1 after the first landing");
+            Assert.Greater(firstLandingSpawns, 0, "Run 1 spawned no pad or drops on landing.");
 
             yield return FlyLoopCoroutine(2);
             yield return AssertLandedSafelyCoroutine(firstPad, FindPadUnderShip());
+
+            RememberFirstRunObjects();
+            LogSpawnedCounts("run 1 before returning to the lobby");
+            yield return ReturnToLobbyByAllDeadCoroutine();
+            LogSpawnedCounts("lobby after run 1");
+            AssertFirstRunObjectsAreGone();
+
+            yield return StartGameCoroutine();
+            InstallRequiredEngines();
+            yield return BoardPlayerCoroutine();
+            Assert.AreEqual(startStationItems, CountSceneObjects<ShipItem>(), "Run 2 does not start with the same station items as run 1.");
+            ShipLandingPad secondRunStartPad = FindPadUnderShip();
+            yield return FlyLoopCoroutine(1);
+            yield return AssertLandedSafelyCoroutine(secondRunStartPad, FindPadUnderShip());
+            LogSpawnedCounts("run 2 after the first landing");
+            Assert.AreEqual(firstLandingSpawns, CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values), "Run 2 does not spawn the same pad and drops on landing as run 1.");
 
             yield return LeaveToMenuCoroutine();
             Assert.AreEqual(0, _errorLog.Count, $"Errors were logged during the loop:\n{_errorLog.Describe()}");
@@ -97,11 +123,74 @@ namespace Tests.PlayMode.LoopSmoke {
             Object.FindAnyObjectByType<MenuSessionViewBase>().OnHostClicked.Invoke();
 
             yield return WaitForCoroutine(IsLobbyReady, LOBBY_TIMEOUT_SECONDS, "the lobby with an authenticated host client and a bound Start button");
-            Object.FindAnyObjectByType<StartGameViewBase>().OnStartClicked.Invoke();
-
-            yield return WaitForCoroutine(IsGameReady, GAME_TIMEOUT_SECONDS, "GameScene with the ship, the local player and the Build phase");
+            _lobbyRuntimeObjects = CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values);
+            LogSpawnedCounts("lobby before run 1");
+            yield return StartGameCoroutine();
             Assert.AreSame(_fastConfig, ProjectContext.Instance.Container.Resolve<ShipRunConfig>(), "The test ShipRunConfig override is not bound.");
         }
+
+        private IEnumerator StartGameCoroutine() {
+            Object.FindAnyObjectByType<StartGameViewBase>().OnStartClicked.Invoke();
+            yield return WaitForCoroutine(IsGameReady, GAME_TIMEOUT_SECONDS, "GameScene with the ship, the local player and the Build phase");
+        }
+
+        // The real way back: PlayerLifeSystem's all-dead rule sends everyone to the lobby.
+        private IEnumerator ReturnToLobbyByAllDeadCoroutine() {
+            LocalPlayer().GetComponent<IDamageable>().ServerKill(DamageType.Generic);
+            yield return WaitForCoroutine(IsBackInLobby, RETURN_TO_LOBBY_TIMEOUT_SECONDS, "the lobby after everyone died, with GameScene unloaded");
+            _ship = null;
+            _model = null;
+        }
+
+        private void RememberFirstRunObjects() {
+            _firstRunObjects.Clear();
+            foreach (NetworkIdentity identity in NetworkServer.spawned.Values) {
+                if (IsRuntimeNonPlayer(identity))
+                    _firstRunObjects.Add(identity.netId);
+            }
+
+            Assert.Greater(_firstRunObjects.Count, _lobbyRuntimeObjects, "Run 1 spawned no runtime objects: the leak check would prove nothing.");
+        }
+
+        private void AssertFirstRunObjectsAreGone() {
+            List<string> leftovers = new List<string>();
+            CollectFirstRunLeftovers(NetworkServer.spawned.Values, "server", leftovers);
+            CollectFirstRunLeftovers(NetworkClient.spawned.Values, "client", leftovers);
+            Assert.IsEmpty(leftovers, $"Run 1 objects survived the return to the lobby: {string.Join(", ", leftovers)}");
+            Assert.AreEqual(_lobbyRuntimeObjects, CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values), "Server runtime objects in the lobby differ from before run 1.");
+            Assert.AreEqual(_lobbyRuntimeObjects, CountRuntimeNonPlayerObjects(NetworkClient.spawned.Values), "Client runtime objects in the lobby differ from before run 1.");
+            Assert.AreEqual(0, CountSceneObjects<ShipLandingPad>(), "Landing pads survived the return to the lobby.");
+            Assert.AreEqual(0, CountSceneObjects<ShipItem>(), "Ship items survived the return to the lobby.");
+        }
+
+        private void CollectFirstRunLeftovers(IEnumerable<NetworkIdentity> spawned, string side, List<string> leftovers) {
+            foreach (NetworkIdentity identity in spawned) {
+                if (identity != null && _firstRunObjects.Contains(identity.netId))
+                    leftovers.Add($"{side}:{identity.name}#{identity.netId}");
+            }
+        }
+
+        private static int CountSceneObjects<T>() where T : Component =>
+            Object.FindObjectsByType<T>(FindObjectsSortMode.None).Length;
+
+        private static int CountRuntimeNonPlayerObjects(IEnumerable<NetworkIdentity> spawned) {
+            int count = 0;
+            foreach (NetworkIdentity identity in spawned) {
+                if (IsRuntimeNonPlayer(identity))
+                    count++;
+            }
+
+            return count;
+        }
+
+        private static bool IsRuntimeNonPlayer(NetworkIdentity identity) =>
+            identity != null && identity.sceneId == 0 && identity.GetComponent<ConnectionPlayerName>() == null;
+
+        private static void LogSpawnedCounts(string moment) =>
+            Debug.Log($"[LoopSmoke] {moment}: server spawned {NetworkServer.spawned.Count} "
+                      + $"(runtime non-player {CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values)}), "
+                      + $"client spawned {NetworkClient.spawned.Count} "
+                      + $"(runtime non-player {CountRuntimeNonPlayerObjects(NetworkClient.spawned.Values)})");
 
         private void InstallRequiredEngines() {
             int installed = 0;
@@ -222,6 +311,15 @@ namespace Tests.PlayMode.LoopSmoke {
             _ship = Object.FindAnyObjectByType<ShipBase>();
             _model = ProjectContext.Instance.Container.Resolve<ShipRunModel>();
             return _ship != null && _model.Phase == ShipRunPhase.Build;
+        }
+
+        private static bool IsBackInLobby() {
+            if (NetworkManager.singleton is not ConnectionNetworkManager manager || manager.IsMapLoaded == false || manager.IsChangingMap)
+                return false;
+
+            Scene game = SceneManager.GetSceneByName(manager.GameSceneName);
+            bool isGameUnloaded = game.IsValid() == false || game.isLoaded == false;
+            return isGameUnloaded && SceneManager.GetActiveScene().name == manager.LobbySceneName && NetworkClient.localPlayer != null;
         }
 
         private bool IsCruising() =>

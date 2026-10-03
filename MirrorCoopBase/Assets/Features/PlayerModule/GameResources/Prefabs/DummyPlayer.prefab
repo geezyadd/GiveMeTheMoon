@@ -55,6 +55,7 @@ GameObject:
   - component: {fileID: 8309845104136634496}
   - component: {fileID: 6409845104136634497}
   - component: {fileID: 1398678206992027593}
+  - component: {fileID: 6527957220569057197}
   m_Layer: 0
   m_Name: DummyPlayer
   m_TagString: Untagged
@@ -396,6 +397,21 @@ MonoBehaviour:
   _colliders:
   - {fileID: 6120488192738405830}
   - {fileID: 8047090183454105548}
+--- !u!114 &6527957220569057197
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df2926b99a266744ca4efef30cd69592, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
 --- !u!1 &2613348676932129866
 GameObject:
   m_ObjectHideFlags: 0
