@@ -34,8 +34,8 @@ namespace Features.ShipModule.Scripts {
 
         // The time the ship is shown at on this peer this frame: server time on the server, on a client the sample
         // time ApplyInterpolated posed the ship at. World objects posed by time read it after the ship's LateUpdate.
-        // A client only interpolates in flight; after any end of a flight its clock must keep running, or rocks parked
-        // at the end would stay shown at the frozen time.
+        // A client only interpolates in flight; after any end of a flight its clock must keep running, or objects posed
+        // after the end would stay shown at the frozen time.
         internal double DisplayTime => isServer || _flying == false ? NetworkTime.time : _clientDisplayTime;
 
         internal void BindShip(ShipBase ship, Transform root) {

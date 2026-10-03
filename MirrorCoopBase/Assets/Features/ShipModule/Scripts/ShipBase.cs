@@ -51,19 +51,56 @@ namespace Features.ShipModule.Scripts {
         internal IStatEntity<ShipStatType> Stats => _stats;
 
         internal bool ContainsDeckWalk(Vector3 localOffset, float inset) {
-            return TryClosestDeckWalk(localOffset, out _, out float dx, out float dz)
-                && dx * dx + dz * dz <= 0.0001f;
+            if (TryClosestDeckWalk(localOffset, out _, out float dx, out float dz) == false
+                || dx * dx + dz * dz > 0.0001f)
+                return false;
+
+            Vector3 push = InsetPush(localOffset, inset);
+            return push.x * push.x + push.z * push.z <= 0.0001f;
         }
 
         internal void ClampDeckWalk(ref Vector3 localOffset, float inset) {
             if (TryClosestDeckWalk(localOffset, out Vector3 closestLocal, out float dx, out float dz) == false)
                 return;
 
-            if (dx * dx + dz * dz <= 0.0001f)
+            if (dx * dx + dz * dz > 0.0001f) {
+                localOffset.x = closestLocal.x;
+                localOffset.z = closestLocal.z;
+            }
+
+            Vector3 push = InsetPush(localOffset, inset);
+            if (push.x * push.x + push.z * push.z <= 0.0001f)
                 return;
 
-            localOffset.x = closestLocal.x;
-            localOffset.z = closestLocal.z;
+            Vector3 pushed = localOffset + push;
+            // On a deck narrower than twice the inset the push can leave the walk boxes: stay on the deck edge instead.
+            if (TryClosestDeckWalk(pushed, out closestLocal, out dx, out dz) && dx * dx + dz * dz > 0.0001f)
+                pushed = closestLocal;
+
+            localOffset.x = pushed.x;
+            localOffset.z = pushed.z;
+        }
+
+        // The walk boxes overlap at their seams, so shrinking each box would cut gaps into the deck. Instead the point
+        // probes the union one inset away along each ship axis and is pushed back by whatever sticks out.
+        private Vector3 InsetPush(Vector3 localOffset, float inset) {
+            Vector3 push = Vector3.zero;
+            if (inset <= 0f)
+                return push;
+
+            AddInsetPush(localOffset + Vector3.right * inset, ref push);
+            AddInsetPush(localOffset - Vector3.right * inset, ref push);
+            AddInsetPush(localOffset + Vector3.forward * inset, ref push);
+            AddInsetPush(localOffset - Vector3.forward * inset, ref push);
+            return push;
+        }
+
+        private void AddInsetPush(Vector3 probe, ref Vector3 push) {
+            if (TryClosestDeckWalk(probe, out _, out float dx, out float dz) == false)
+                return;
+
+            push.x += dx;
+            push.z += dz;
         }
 
         internal bool TryGetDeckSurfaceY(Vector3 localOffset, out float surfaceY) {
@@ -418,10 +455,11 @@ namespace Features.ShipModule.Scripts {
                 _flying = false;
                 if (_poseSync != null)
                     _poseSync.ServerSetFlying(false);
-
-                ServerReleaseRiders();
             }
 
+            // Seated riders stay bound at a station too: release them on every reset, or one seated at the helm keeps
+            // hanging at the seat after the ship and its seats are reset.
+            ServerReleaseRiders();
             ClearAllOccupants();
             ClearInstalledModules();
             _controlsLocked = false;

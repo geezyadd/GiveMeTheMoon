@@ -106,11 +106,15 @@ namespace Features.ShipModule.Scripts {
         internal void BindToSeat(ShipBase ship, Vector3 seatOffset) {
             if (_bound) {
                 _localOffset = seatOffset;
+                // A rider who sat down mid-jump would get the rest of the jump back when standing up.
+                _rideJumpVel = 0f;
                 return;
             }
 
-            if (_rb != null && ship != null)
+            if (_rb != null && ship != null) {
                 Bind(ship, seatOffset);
+                _rideJumpVel = 0f;
+            }
         }
 
         private void Bind(ShipBase ship, Vector3 localOffset) {
@@ -424,8 +428,11 @@ namespace Features.ShipModule.Scripts {
 
         // Standing up must not blend back to the offset from before the seat.
         private void OnSeatedChanged(bool previous, bool current) {
-            if (isOwned && current == false)
+            if (isOwned && current == false) {
+                // Standing up starts from rest on the seat, never with a velocity left over from before sitting.
+                _rideJumpVel = 0f;
                 return;
+            }
 
             SnapToSyncedOffset();
         }

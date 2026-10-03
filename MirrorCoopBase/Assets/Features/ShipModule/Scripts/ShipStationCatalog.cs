@@ -19,12 +19,10 @@ namespace Features.ShipModule.Scripts {
 
         [SerializeField] private GameObject _padPrefab;
         [SerializeField] private GameObject _wreckPrefab;
-        [SerializeField] private GameObject _rockPrefab;
         [SerializeField] private DropEntry[] _drops;
 
         public GameObject PadPrefab => _padPrefab;
         public GameObject WreckPrefab => _wreckPrefab;
-        public GameObject RockPrefab => _rockPrefab;
         public DropEntry[] Drops => _drops;
 
         public bool TryGetItemPrefab(ItemViewId view, out GameObject prefab) {

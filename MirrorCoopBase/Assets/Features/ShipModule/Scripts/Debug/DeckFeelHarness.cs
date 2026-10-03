@@ -73,8 +73,6 @@ namespace Features.ShipModule.Scripts.Debug {
         private bool _shiftCruise;
         private int _shiftMarks;
         private int _lastShifts;
-        private int _lastSpawns;
-        private int _lastDespawns;
         private int _lastGc;
         private int _spikeLines;
         private string _pendingShot;
@@ -90,7 +88,6 @@ namespace Features.ShipModule.Scripts.Debug {
         private int _flightPass;
         private int _loopsSeen;
         private bool _shotStation;
-        private bool _shotRock;
         private bool _shotApproach;
         private Vector3 _hoverStart;
         private bool _hoverSampled;
@@ -353,9 +350,6 @@ namespace Features.ShipModule.Scripts.Debug {
                 return;
             }
 
-            if (_shotRock == false)
-                TryCaptureRock();
-
             if (Age() > 1.5f)
                 Enter(7);
         }
@@ -592,8 +586,6 @@ namespace Features.ShipModule.Scripts.Debug {
 
         private void RecordEvents() {
             int shifts = _run.WorldShiftCount;
-            int spawns = _run.RockSpawns;
-            int despawns = _run.RockDespawns;
             int gc = GC.CollectionCount(0);
             int index = _player.Count - 1;
             float poseDrift = (_player[index] - _rider.DebugLocalOffset).magnitude;
@@ -601,8 +593,6 @@ namespace Features.ShipModule.Scripts.Debug {
                 Time.frameCount,
                 _ship.ConsumeFixedSteps(),
                 shifts - _lastShifts,
-                spawns - _lastSpawns,
-                despawns - _lastDespawns,
                 gc - _lastGc,
                 _model.Phase,
                 _input.MoveStick,
@@ -611,8 +601,6 @@ namespace Features.ShipModule.Scripts.Debug {
                 poseDrift,
                 _ship.transform.eulerAngles.y));
             _lastShifts = shifts;
-            _lastSpawns = spawns;
-            _lastDespawns = despawns;
             _lastGc = gc;
         }
 
@@ -827,8 +815,6 @@ namespace Features.ShipModule.Scripts.Debug {
                     .Append(" prevDt=").Append(_dts[i - 1].ToString("0.0000"))
                     .Append(" fixed=").Append(e.Fixed)
                     .Append(" shift=").Append(e.Shifts)
-                    .Append(" rock+=").Append(e.RockIn)
-                    .Append(" rock-=").Append(e.RockOut)
                     .Append(" gc=").Append(e.Gc)
                     .Append(" phase=").Append(e.Phase)
                     .Append(" step=").Append(_steps[i])
@@ -863,14 +849,14 @@ namespace Features.ShipModule.Scripts.Debug {
 
         private void WriteFrames(string label, float[] raw, float[] tc, float[] dt2, float[] camRaw, float[] shipTc, bool[] steady) {
             StringBuilder csv = new StringBuilder(_player.Count * 160);
-            csv.AppendLine("i,frame,dt,fixedSteps,shift,rockSpawn,rockDespawn,gc,phase,step,moveX,moveY,sprint,jump,steady,"
+            csv.AppendLine("i,frame,dt,fixedSteps,shift,gc,phase,step,moveX,moveY,sprint,jump,steady,"
                 + "px,py,pz,raw,tc,dt2,camRaw,shipTc,poseDrift,camYaw,camPitch,shipYaw");
             for (int i = 0; i < _player.Count; i++) {
                 FrameEvents e = _events[i];
                 Vector3 p = _player[i];
                 csv.Append(i).Append(',').Append(e.Frame).Append(',').Append(F(_dts[i]))
                     .Append(',').Append(e.Fixed).Append(',').Append(e.Shifts)
-                    .Append(',').Append(e.RockIn).Append(',').Append(e.RockOut).Append(',').Append(e.Gc)
+                    .Append(',').Append(e.Gc)
                     .Append(',').Append(e.Phase).Append(',').Append(_steps[i])
                     .Append(',').Append(F(e.Move.x)).Append(',').Append(F(e.Move.y))
                     .Append(',').Append(e.Sprint ? 1 : 0).Append(',').Append(e.Jump ? 1 : 0)
@@ -1179,24 +1165,6 @@ namespace Features.ShipModule.Scripts.Debug {
             CameraLookDriver.DebugPitchOverride = false;
         }
 
-        private void TryCaptureRock() {
-            if (_shotRock || _ship == null)
-                return;
-
-            CruiseRock[] rocks = UnityEngine.Object.FindObjectsByType<CruiseRock>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-            for (int i = 0; i < rocks.Length; i++) {
-                if (rocks[i] == null)
-                    continue;
-
-                if ((rocks[i].transform.position - _ship.transform.position).sqrMagnitude > 40f * 40f)
-                    continue;
-
-                Capture("passing-rocks");
-                _shotRock = true;
-                return;
-            }
-        }
-
         private void Capture(string name) {
             Camera camera = _cameras.OutputCamera;
             if (camera == null)
@@ -1323,13 +1291,11 @@ namespace Features.ShipModule.Scripts.Debug {
         }
 
         private readonly struct FrameEvents {
-            public FrameEvents(int frame, int fixedSteps, int shifts, int rockIn, int rockOut, int gc, ShipRunPhase phase,
+            public FrameEvents(int frame, int fixedSteps, int shifts, int gc, ShipRunPhase phase,
                 Vector2 move, bool sprint, bool jump, float poseDrift, float shipYaw) {
                 Frame = frame;
                 Fixed = fixedSteps;
                 Shifts = shifts;
-                RockIn = rockIn;
-                RockOut = rockOut;
                 Gc = gc;
                 Phase = phase;
                 Move = move;
@@ -1342,8 +1308,6 @@ namespace Features.ShipModule.Scripts.Debug {
             public int Frame { get; }
             public int Fixed { get; }
             public int Shifts { get; }
-            public int RockIn { get; }
-            public int RockOut { get; }
             public int Gc { get; }
             public ShipRunPhase Phase { get; }
             public Vector2 Move { get; }
