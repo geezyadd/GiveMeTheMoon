@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _padPrefab: {fileID: 956412859401598705, guid: 181b5ec58bae5d643840d0ebe2b1f093, type: 3}
   _wreckPrefab: {fileID: 5660766188749124005, guid: 10d08395dec54e64f97814057311f1f1, type: 3}
-  _rockPrefab: {fileID: 1000000001, guid: b4d5e6f708192031c2d3e4f506172839, type: 3}
   _drops:
   - _prefab: {fileID: 8101338388048282597, guid: c4e8a91b2d3f40a5b6c7d8e9f0a1b2c3, type: 3}
     _minLoop: 0

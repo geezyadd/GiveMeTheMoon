@@ -7,7 +7,6 @@ namespace Features.ShipModule.Scripts {
     internal sealed class ShipDeckCargo {
         private const float SCAN_INTERVAL = 0.2f;
         private const float REST_HEIGHT = 2.2f;
-        private const float DECK_EDGE_INSET = 0.35f;
         private const float BELOW_DECK_TOLERANCE = 0.2f;
 
         private readonly List<Attached> _attached = new List<Attached>(8);
@@ -156,7 +155,8 @@ namespace Features.ShipModule.Scripts {
 
         private static bool IsOnDeck(Grabbable grabbable, Transform ship, ShipBase deck) {
             Vector3 local = ship.InverseTransformPoint(grabbable.transform.position);
-            if (deck.ContainsDeckWalk(local, DECK_EDGE_INSET) == false)
+            // The whole deck, no edge inset: anything lying on it flies with the ship.
+            if (deck.ContainsDeckWalk(local, 0f) == false)
                 return false;
 
             if (deck.TryGetDeckSurfaceY(local, out float surfaceY) == false)

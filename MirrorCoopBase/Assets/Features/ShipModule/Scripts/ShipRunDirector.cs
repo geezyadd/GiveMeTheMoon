@@ -51,6 +51,7 @@ namespace Features.ShipModule.Scripts {
 
         private GameObject _localWreck;
         private GameObject _previousLocalWreck;
+        private bool _clientOwnsModel;
 
         private void LateUpdate() {
             if (isServer && _run != null && (_ship == null || _ship.IsFlying == false))
@@ -69,12 +70,29 @@ namespace Features.ShipModule.Scripts {
 
         // The server binds the ship in ShipRunService.Bind; a client's HUD radar needs the same ship.
         public override void OnStartClient() {
+            _clientOwnsModel = isServer == false;
             ApplyToModel();
             _radar.BindShip(_ship);
         }
 
-        public override void OnStopClient() =>
+        public override void OnStopClient() {
             _radar.UnbindShip();
+            ClientResetModel();
+        }
+
+        // A scene unload can destroy the director without OnStopClient.
+        private void OnDestroy() =>
+            ClientResetModel();
+
+        // The server resets the model in ShipRunService.Unbind; a remote client wrote it from the SyncVars, so it resets
+        // its own copy, or the lobby keeps the last run's frozen flight timer.
+        private void ClientResetModel() {
+            if (_clientOwnsModel == false)
+                return;
+
+            _clientOwnsModel = false;
+            _model.ResetMatch();
+        }
 
         internal void ServerPublish() {
             if (_model == null)

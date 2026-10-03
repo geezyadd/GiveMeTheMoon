@@ -80,6 +80,15 @@ namespace Features.ShipModule.Scripts {
             }
 
             if (_cameraObject == null && _catalog.CamMapPrefab != null && _catalog.MapStatusPrefab != null) {
+                // The camera and beacon die with their scene, the map lives on in the HUD slot: drop the stale map
+                // and beacon before building a new set, or every scene change leaves one more map on the HUD.
+                if (_map != null)
+                    Object.Destroy(_map);
+                if (_beacon != null)
+                    Object.Destroy(_beacon);
+                _map = null;
+                _beacon = null;
+
                 var holder = new GameObject("RadarCamHolder");
                 holder.SetActive(false);
                 _cameraObject = Object.Instantiate(_catalog.CamMapPrefab, holder.transform);

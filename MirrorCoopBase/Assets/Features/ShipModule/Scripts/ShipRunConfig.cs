@@ -16,10 +16,6 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private float _destinationConeDegrees = 170f;
         [SerializeField] private float _wreckSettleSeconds = 0.6f;
         [SerializeField] private int _maxLoops;
-        [SerializeField] private float _rockSpawnInterval = 1.4f;
-        [SerializeField] private float _rockSpeed = 36f;
-        [SerializeField] private float _rockSpawnAhead = 48f;
-        [SerializeField] private float _rockLateral = 4f;
         [SerializeField] private float _approachDistance = 70f;
         [Tooltip("When a landed ship is farther than this from the origin, the station shifts back toward zero.")]
         [SerializeField] private float _originRecenterDistance = 800f;
@@ -36,10 +32,6 @@ namespace Features.ShipModule.Scripts {
         public float DestinationConeDegrees => Mathf.Clamp(_destinationConeDegrees, 10f, 170f);
         public float WreckSettleSeconds => Mathf.Max(0.1f, _wreckSettleSeconds);
         public int MaxLoops => Mathf.Max(0, _maxLoops);
-        public float RockSpawnInterval => Mathf.Max(0.2f, _rockSpawnInterval);
-        public float RockSpeed => Mathf.Max(1f, _rockSpeed);
-        public float RockSpawnAhead => Mathf.Max(4f, _rockSpawnAhead);
-        public float RockLateral => Mathf.Max(0.5f, _rockLateral);
         public float ApproachDistance => Mathf.Max(8f, _approachDistance);
         public float OriginRecenterDistance => Mathf.Max(50f, _originRecenterDistance);
     }
