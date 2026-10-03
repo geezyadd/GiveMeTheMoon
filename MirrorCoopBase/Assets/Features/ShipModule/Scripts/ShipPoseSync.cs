@@ -22,6 +22,7 @@ namespace Features.ShipModule.Scripts {
         [SyncVar(hook = nameof(OnWorldShiftChanged))]
         private WorldShift _worldShift;
 
+        private readonly SyncList<DeckCargoEntry> _deckCargo = new SyncList<DeckCargoEntry>();
         private readonly List<PoseSample> _samples = new List<PoseSample>(16);
         private float _nextPublish;
         private ShipBase _shipBase;
@@ -33,7 +34,9 @@ namespace Features.ShipModule.Scripts {
 
         // The time the ship is shown at on this peer this frame: server time on the server, on a client the sample
         // time ApplyInterpolated posed the ship at. World objects posed by time read it after the ship's LateUpdate.
-        internal double DisplayTime => isServer ? NetworkTime.time : _clientDisplayTime;
+        // A client only interpolates in flight; after any end of a flight its clock must keep running, or rocks parked
+        // at the end would stay shown at the frozen time.
+        internal double DisplayTime => isServer || _flying == false ? NetworkTime.time : _clientDisplayTime;
 
         internal void BindShip(ShipBase ship, Transform root) {
             _shipBase = ship;
@@ -129,8 +132,24 @@ namespace Features.ShipModule.Scripts {
         }
 
         public override void OnStartClient() {
-            if (isServer == false && _shipBase != null)
-                _shipBase.ApplyDisplayPose(_latePos, _lateRot);
+            if (isServer || _shipBase == null)
+                return;
+
+            _shipBase.ApplyDisplayPose(_latePos, _lateRot);
+            // A full spawn does not call the list callbacks: the cargo already on the deck is attached here.
+            _deckCargo.OnAdd += OnDeckCargoAdded;
+            _deckCargo.OnRemove += OnDeckCargoRemoved;
+            for (int i = 0; i < _deckCargo.Count; i++)
+                AttachDeckItem(_deckCargo[i]);
+        }
+
+        public override void OnStopClient() {
+            if (isServer || _shipBase == null)
+                return;
+
+            _deckCargo.OnAdd -= OnDeckCargoAdded;
+            _deckCargo.OnRemove -= OnDeckCargoRemoved;
+            _shipBase.ClientClearDeckCargo();
         }
 
         private Quaternion ExtrapolateRotation(PoseSample last, float extra) {
@@ -169,30 +188,29 @@ namespace Features.ShipModule.Scripts {
         }
 
         [Server]
-        internal void ServerAttachDeckItem(uint netId, Vector3 localPosition, Quaternion localRotation) {
-            RpcAttachDeckItem(netId, localPosition, localRotation);
-        }
+        internal void ServerAttachDeckItem(uint netId, Vector3 localPosition, Quaternion localRotation) =>
+            _deckCargo.Add(new DeckCargoEntry {
+                NetId = netId,
+                LocalPosition = localPosition,
+                LocalRotation = localRotation
+            });
 
         [Server]
         internal void ServerDetachDeckItem(uint netId) {
-            RpcDetachDeckItem(netId);
+            for (int i = _deckCargo.Count - 1; i >= 0; i--) {
+                if (_deckCargo[i].NetId == netId)
+                    _deckCargo.RemoveAt(i);
+            }
         }
 
-        [ClientRpc]
-        private void RpcAttachDeckItem(uint netId, Vector3 localPosition, Quaternion localRotation) {
-            if (isServer || _shipBase == null)
-                return;
+        private void OnDeckCargoAdded(int index) =>
+            AttachDeckItem(_deckCargo[index]);
 
-            _shipBase.ClientAttachDeckItem(netId, localPosition, localRotation);
-        }
+        private void OnDeckCargoRemoved(int index, DeckCargoEntry removed) =>
+            _shipBase.ClientDetachDeckItem(removed.NetId);
 
-        [ClientRpc]
-        private void RpcDetachDeckItem(uint netId) {
-            if (isServer || _shipBase == null)
-                return;
-
-            _shipBase.ClientDetachDeckItem(netId);
-        }
+        private void AttachDeckItem(DeckCargoEntry entry) =>
+            _shipBase.ClientAttachDeckItem(entry.NetId, entry.LocalPosition, entry.LocalRotation);
 
         [ClientRpc]
         private void RpcSnap(Vector3 position, Quaternion rotation) {

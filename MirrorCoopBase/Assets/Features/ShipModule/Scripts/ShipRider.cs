@@ -413,6 +413,12 @@ namespace Features.ShipModule.Scripts {
             if (isOwned)
                 return;
 
+            // A seated rider's offset only changes when it switches seats (_seated stays true): it moves there at once.
+            if (_seated) {
+                SnapToSyncedOffset();
+                return;
+            }
+
             _remoteOffsets.Add(_syncedOffsetTime, current);
         }
 
