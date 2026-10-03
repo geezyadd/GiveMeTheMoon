@@ -11,6 +11,10 @@ namespace Features.CharacterMovableModule.Scripts {
         private readonly CharacterMovableModel _model;
         private readonly PlayerControlBlockModel _controlBlock;
         private bool _scripted;
+        // What the keyboard holds right now, also while blocked: a key held through a respawn or an unblock moves the
+        // player again without a new press, because the input system sends no event for a key that stays down.
+        private Vector2 _heldMove;
+        private bool _heldSprint;
 
         public Vector2 MoveStick { get; private set; }
         public bool JumpHeld { get; private set; }
@@ -79,12 +83,23 @@ namespace Features.CharacterMovableModule.Scripts {
             SprintHeld = false;
         }
 
+        private void RestoreHeldInput() {
+            if (_scripted)
+                return;
+
+            MoveStick = _heldMove;
+            SprintHeld = _heldSprint;
+        }
+
         private void OnControlBlockChanged() {
             if (_controlBlock.IsBlocked)
                 ResetInput();
+            else
+                RestoreHeldInput();
         }
 
         private void OnMoveChanged(Vector2 value) {
+            _heldMove = value;
             if (_scripted || _controlBlock.IsBlocked)
                 return;
 
@@ -106,6 +121,7 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         private void OnSprintStarted() {
+            _heldSprint = true;
             if (_scripted || _controlBlock.IsBlocked)
                 return;
 
@@ -113,6 +129,7 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         private void OnSprintCanceled() {
+            _heldSprint = false;
             if (_scripted)
                 return;
 

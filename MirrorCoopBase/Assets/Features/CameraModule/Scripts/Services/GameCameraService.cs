@@ -100,7 +100,10 @@ namespace Features.CameraModule.Scripts.Services {
                 BlendTo(_catalog != null ? _catalog.StartupCameraId : CameraIds.TPCamera, 0f);
         }
 
+        // The look pivot is parented to the current target (CameraLookRig): detach it first, or a target that leaves takes
+        // the pivot down with it and the cameras fall back to a new pivot at the world origin.
         public void RetargetOrbit(Transform follow) {
+            ReturnLookPivotToRoot();
             _model.Follow = follow;
             _model.LookAt = follow;
             _model.Eye = follow;

@@ -27,6 +27,7 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
         private Transform _savedLookAt;
         private Transform _savedEye;
         private string _savedCameraId;
+        private bool _isSpectateRequested;
 
         private bool IsTargetLost =>
             _spectatorModel.IsSpectating
@@ -56,8 +57,7 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
             _input.SpectatePrev.Performed += OnSpectatePrev;
             _input.SpectateNext.Performed += OnSpectateNext;
             _input.DisableSpectatorMap();
-            if (_life.LocalState == PlayerLifeState.Dead)
-                EnterSpectate();
+            RequestSpectateIfDead();
         }
 
         public void Dispose() {
@@ -69,15 +69,34 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
         }
 
         public void Tick() {
+            if (_isSpectateRequested)
+                EnterRequestedSpectate();
+
             if (IsTargetLost)
                 ApplyTargets();
         }
 
-        public void CleanupGameplay() =>
+        public void CleanupGameplay() {
+            _isSpectateRequested = false;
             StopSpectate(false);
+        }
 
-        public void RestartGameplay() =>
+        // A player who is still dead when the session restarts goes straight back to spectating.
+        public void RestartGameplay() {
             StopSpectate(true);
+            RequestSpectateIfDead();
+        }
+
+        // Spectating starts on the next tick, not inside the state callback: a player who spawns dead reports Dead before
+        // its own camera anchor binds the cameras to it in the same spawn, which would take the camera off the target.
+        private void RequestSpectateIfDead() =>
+            _isSpectateRequested = _life.LocalState == PlayerLifeState.Dead;
+
+        private void EnterRequestedSpectate() {
+            _isSpectateRequested = false;
+            if (_life.LocalState == PlayerLifeState.Dead)
+                EnterSpectate();
+        }
 
         private void EnterSpectate() {
             if (_spectatorModel.IsSpectating)
@@ -161,10 +180,13 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
         }
 
         private void OnLocalStateChanged(PlayerLifeState state) {
-            if (state == PlayerLifeState.Dead)
-                EnterSpectate();
-            else
-                StopSpectate(true);
+            if (state == PlayerLifeState.Dead) {
+                _isSpectateRequested = true;
+                return;
+            }
+
+            _isSpectateRequested = false;
+            StopSpectate(true);
         }
 
         private void OnAlivePlayersChanged() {

@@ -94,6 +94,10 @@ namespace Features.PlayerLifeModule.Scripts {
             _machines.Add(machine);
             machine.OnStateChanged += OnLifeStateChanged;
             machine.Start();
+            // The lobby is between runs: a player whose record stayed dead while offline (died, left, came back) joins alive.
+            if (_connectionSessionService.IsInLobby)
+                machine.Revive();
+
             EvaluateAllDead();
         }
 
