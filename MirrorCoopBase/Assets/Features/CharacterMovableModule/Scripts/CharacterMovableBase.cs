@@ -6,6 +6,8 @@ using Zenject;
 
 namespace Features.CharacterMovableModule.Scripts {
     public abstract class CharacterMovableBase : NetworkBehaviour {
+        private const int LAYER_COUNT = 32;
+
         [Header("Body")]
         [SerializeField] private Rigidbody _rb;
         [SerializeField] private CapsuleCollider _capsuleCollider;
@@ -19,6 +21,7 @@ namespace Features.CharacterMovableModule.Scripts {
 
         [SyncVar] private float _pushStrength;
         [SyncVar] private Vector3 _pushHeading;
+        [SyncVar] private float _pushSpeed;
         [SyncVar] private bool _locomoting;
         [SyncVar] private float _facingYaw;
 
@@ -35,6 +38,7 @@ namespace Features.CharacterMovableModule.Scripts {
         private bool _jumpedThisAir;
         private int _airJumpsLeft;
         private Vector3 _weight;
+        private int _shoveMask;
 
         public Rigidbody Body => _rb;
         public float PushStrength => _pushStrength;
@@ -45,6 +49,7 @@ namespace Features.CharacterMovableModule.Scripts {
 
         protected virtual void Awake() {
             CacheWeight();
+            CacheShoveMask();
         }
 
         public override void OnStartLocalPlayer() {
@@ -78,13 +83,31 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         private void FixedUpdate() {
-            if (_rb == null || _rb.isKinematic)
+            if (_rb == null)
                 return;
 
-            if (ControlsSelf)
-                SimulateOwner();
-            else if (isServer)
-                ShoveNearbyBodies();
+            // The server copy of a client-owned player is kinematic (its NetworkRigidbody follows the owner), so it
+            // never pushes by contact: the proxy shove has to run for it, while only the owner simulates a dynamic body.
+            if (ControlsSelf == false) {
+                if (isServer)
+                    ShoveNearbyBodies();
+                return;
+            }
+
+            if (_rb.isKinematic) {
+                StopPushing();
+                return;
+            }
+
+            SimulateOwner();
+        }
+
+        // A kinematic owner (bound to the ship) does not simulate: the last walk would stay in the synced push and the
+        // server would keep shoving bodies next to a player who stands still.
+        private void StopPushing() {
+            _locomoting = false;
+            _pushStrength = 0f;
+            _pushSpeed = 0f;
         }
 
         private void SimulateOwner() {
@@ -147,6 +170,7 @@ namespace Features.CharacterMovableModule.Scripts {
 
             _pushStrength = force.magnitude;
             _pushHeading = wish;
+            _pushSpeed = steering ? _moveSpeed : 0f;
         }
 
         private void ApplyJumpAndAirGravity() {
@@ -199,10 +223,13 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         private void ShoveNearbyBodies() {
-            if (_locomoting == false || _pushStrength < 0.01f || _capsuleCollider == null)
+            // Gated on the push intent, not on speed: a client walking into an item is stopped by its own copy of it,
+            // so its speed drops to zero exactly while it pushes.
+            if (_pushHeading.sqrMagnitude < 0.0001f || _pushStrength < 0.01f || _capsuleCollider == null)
                 return;
 
             Vector3 shove = _pushHeading * Mathf.Max(_pushStrength, 0.1f);
+            Vector3 shoveDirection = shove.normalized;
             Vector3 center = _capsuleCollider.transform.TransformPoint(_capsuleCollider.center);
             float radius = _capsuleCollider.radius;
             float height = _capsuleCollider.height;
@@ -214,27 +241,28 @@ namespace Features.CharacterMovableModule.Scripts {
             Vector3 origin = center + lead;
             Vector3 top = origin + up * (height * 0.5f - radius);
             Vector3 bottom = origin - up * (height * 0.5f - radius);
-            LayerMask mask = _floatingController != null ? _floatingController.ProbeMask : Physics.DefaultRaycastLayers;
             int count = Physics.OverlapCapsuleNonAlloc(
                 top,
                 bottom,
                 radius + _proxyPadding,
                 OverlapScratch,
-                mask,
+                _shoveMask,
                 QueryTriggerInteraction.Ignore);
 
             for (int i = 0; i < count; i++) {
                 Rigidbody other = OverlapScratch[i].attachedRigidbody;
-                if (other == null || other.isKinematic || other == _rb)
+                if (other == null || other.isKinematic || other == _rb || other.TryGetComponent(out CharacterMovableBase _))
                     continue;
 
                 Vector3 contact = OverlapScratch[i].ClosestPoint(center);
                 Vector3 away = (contact - center).normalized;
-                if (Vector3.Dot(away, shove.normalized) <= 0.1f)
+                if (Vector3.Dot(away, shoveDirection) <= 0.1f)
                     continue;
 
-                Vector3 impulse = Vector3.Project(shove, away);
-                if (other.linearVelocity.magnitude < impulse.magnitude)
+                // Bounded like a body contact: the drive force is shared by player and item by mass, and the item is never
+                // pushed faster than the player moves.
+                Vector3 impulse = Vector3.Project(shove, away) * (other.mass / (other.mass + _rb.mass));
+                if (Vector3.Dot(other.linearVelocity, shoveDirection) < _pushSpeed)
                     other.AddForceAtPosition(impulse, contact);
             }
         }
@@ -297,6 +325,17 @@ namespace Features.CharacterMovableModule.Scripts {
 
         private int ExtraAirJumps =>
             Mathf.RoundToInt(ReadStat(PlayerStatType.ExtraAirJumps));
+
+        // The shove stands in for the body contact of a client-owned player, so it reaches every layer that body collides
+        // with (items lie on Interactable), not only the ground the float probe stands on. Players never shove players.
+        private void CacheShoveMask() {
+            int layer = _capsuleCollider != null ? _capsuleCollider.gameObject.layer : gameObject.layer;
+            _shoveMask = 0;
+            for (int other = 0; other < LAYER_COUNT; other++) {
+                if (Physics.GetIgnoreLayerCollision(layer, other) == false)
+                    _shoveMask |= 1 << other;
+            }
+        }
 
         private void CacheWeight() {
             if (_rb != null)
