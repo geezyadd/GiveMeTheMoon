@@ -28,6 +28,7 @@ namespace Features.ShipModule.Scripts {
         private Vector3 _destinationForward = Vector3.forward;
         private readonly ShipTransit _transit = new ShipTransit();
         private ShipRadarService _radar;
+        private readonly ConnectionSpawnModel _spawn;
         private ShipFlightMode _modeOverride;
         private bool _hasModeOverride;
 
@@ -38,12 +39,14 @@ namespace Features.ShipModule.Scripts {
             ShipRunConfig config,
             ShipFlightSettings flightSettings,
             ShipStationCatalog stations,
-            ShipRadarService radar) {
+            ShipRadarService radar,
+            ConnectionSpawnModel spawn) {
             _model = model;
             _config = config;
             _flightSettings = flightSettings;
             _stations = stations;
             _radar = radar;
+            _spawn = spawn;
         }
 
         internal void DebugUseFlightMode(ShipFlightMode mode) {
@@ -300,7 +303,7 @@ namespace Features.ShipModule.Scripts {
             RecenterIfFar();
             SpawnDrops(pad);
             if (pad != null)
-                ConnectionNetworkManager.SetSpawn(pad.PlayerSpawn.position, pad.PlayerSpawn.rotation);
+                _spawn.Set(pad.PlayerSpawn.position, pad.PlayerSpawn.rotation);
 
             _model.LoopIndex += 1;
             _model.LaunchLocked = _config.MaxLoops > 0 && _model.LoopIndex >= _config.MaxLoops;

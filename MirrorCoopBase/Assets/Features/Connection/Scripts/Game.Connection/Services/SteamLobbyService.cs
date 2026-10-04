@@ -9,6 +9,7 @@ namespace Game.Connection
     public sealed class SteamLobbyService : ISteamLobbyService, IInitializable, ITickable, IDisposable
     {
         private readonly SteamLobbyModel _model;
+        private readonly ConnectionNetworkEvents _networkEvents;
         private CallResult<LobbyCreated_t> _lobbyCreated;
         private CallResult<LobbyEnter_t> _lobbyEnter;
         private Callback<GameLobbyJoinRequested_t> _joinRequested;
@@ -17,9 +18,10 @@ namespace Game.Connection
         private bool _callbacksReady;
         private bool _steamApiMissing;
 
-        public SteamLobbyService(SteamLobbyModel model)
+        public SteamLobbyService(SteamLobbyModel model, ConnectionNetworkEvents networkEvents)
         {
             _model = model ?? throw new ArgumentNullException(nameof(model));
+            _networkEvents = networkEvents ?? throw new ArgumentNullException(nameof(networkEvents));
         }
 
         public event Action<ulong> JoinRequested;
@@ -63,9 +65,9 @@ namespace Game.Connection
 
         public void Initialize()
         {
-            ConnectionNetworkManager.MapLoadStarted += OnMapLoadStarted;
-            ConnectionNetworkManager.ServerStopped += OnNetworkStopped;
-            ConnectionNetworkManager.ClientStopped += OnNetworkStopped;
+            _networkEvents.MapLoadStarted += OnMapLoadStarted;
+            _networkEvents.ServerStopped += OnNetworkStopped;
+            _networkEvents.ClientStopped += OnNetworkStopped;
             EnsureCallbacks();
         }
 
@@ -79,9 +81,9 @@ namespace Game.Connection
 
         public void Dispose()
         {
-            ConnectionNetworkManager.MapLoadStarted -= OnMapLoadStarted;
-            ConnectionNetworkManager.ServerStopped -= OnNetworkStopped;
-            ConnectionNetworkManager.ClientStopped -= OnNetworkStopped;
+            _networkEvents.MapLoadStarted -= OnMapLoadStarted;
+            _networkEvents.ServerStopped -= OnNetworkStopped;
+            _networkEvents.ClientStopped -= OnNetworkStopped;
             _lobbyCreated?.Dispose();
             _lobbyEnter?.Dispose();
             _joinRequested?.Dispose();

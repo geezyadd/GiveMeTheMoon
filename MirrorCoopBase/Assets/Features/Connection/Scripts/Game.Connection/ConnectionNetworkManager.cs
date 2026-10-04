@@ -15,18 +15,6 @@ namespace Game.Connection
     [AddComponentMenu("Network/Connection Network Manager")]
     public class ConnectionNetworkManager : NetworkManager
     {
-        public static Vector3 SpawnPosition { get; private set; }
-        public static Quaternion SpawnRotation { get; private set; } = Quaternion.identity;
-        public static bool HasSpawn { get; private set; }
-
-        public static event Action ServerStarted;
-        public static event Action ClientStarted;
-        public static event Action ServerStopped;
-        public static event Action ClientStopped;
-        public static event Action MapLoadStarted;
-        public static event Action MapReady;
-        public static event Action<string> MapUnloading;
-
         [Header("Connection Scenes")]
         [SerializeField] string lobbySceneName = "LobbyScene";
         [SerializeField] string menuSceneName = "MenuScene";
@@ -42,6 +30,8 @@ namespace Game.Connection
 
         ISceneLoaderService sceneLoader;
         ConnectionSessionModel sessionModel;
+        ConnectionSpawnModel spawn;
+        ConnectionNetworkEvents events;
 
         HashSet<int> joiningConnections;
         Dictionary<NetworkConnectionToClient, bool> mapLoadedByConnection;
@@ -59,28 +49,18 @@ namespace Game.Connection
         public bool IsJoinable =>
             string.IsNullOrEmpty(networkSceneName) || networkSceneName == lobbySceneName;
 
-        public static void SetSpawn(Vector3 position, Quaternion rotation)
-        {
-            SpawnPosition = position;
-            SpawnRotation = rotation;
-            HasSpawn = true;
-        }
-
-        public static void ClearSpawn()
-        {
-            SpawnPosition = default;
-            SpawnRotation = Quaternion.identity;
-            HasSpawn = false;
-        }
-
         [Inject]
         void Construct(
             ISceneLoaderService sceneLoaderService,
             ConnectionConfig connectionConfig,
-            ConnectionSessionModel connectionSessionModel)
+            ConnectionSessionModel connectionSessionModel,
+            ConnectionSpawnModel spawnModel,
+            ConnectionNetworkEvents networkEvents)
         {
             sceneLoader = sceneLoaderService;
             sessionModel = connectionSessionModel;
+            spawn = spawnModel;
+            events = networkEvents;
             RegisterInModel();
 
             if (connectionConfig == null)
@@ -166,7 +146,7 @@ namespace Game.Connection
             if (SceneManager.GetActiveScene().name == lobbySceneName)
                 IsMapLoaded = true;
 
-            ServerStarted?.Invoke();
+            events.RaiseServerStarted();
         }
 
         public override void OnStopServer()
@@ -177,8 +157,8 @@ namespace Game.Connection
             lookForReadyPlayers = false;
             joiningConnections = null;
             mapLoadedByConnection = null;
-            ClearSpawn();
-            ServerStopped?.Invoke();
+            spawn.Clear();
+            events.RaiseServerStopped();
             base.OnStopServer();
             ResetTransportIfIdle();
         }
@@ -199,7 +179,7 @@ namespace Game.Connection
             if (SceneManager.GetActiveScene().name == lobbySceneName)
                 IsMapLoaded = true;
 
-            ClientStarted?.Invoke();
+            events.RaiseClientStarted();
         }
 
         public override void OnStopClient()
@@ -216,8 +196,8 @@ namespace Game.Connection
             sceneToUnload = string.Empty;
             IsMapLoaded = false;
             IsChangingMap = false;
-            ClearSpawn();
-            ClientStopped?.Invoke();
+            spawn.Clear();
+            events.RaiseClientStopped();
             base.OnStopClient();
             ResetTransportIfIdle();
         }
@@ -245,9 +225,9 @@ namespace Game.Connection
 
         public override void OnServerAddPlayer(NetworkConnectionToClient conn)
         {
-            Transform start = HasSpawn ? null : GetStartPosition();
-            Vector3 position = HasSpawn ? SpawnPosition : (start != null ? start.position : Vector3.zero);
-            Quaternion rotation = HasSpawn ? SpawnRotation : (start != null ? start.rotation : Quaternion.identity);
+            Transform start = spawn.HasSpawn ? null : GetStartPosition();
+            Vector3 position = spawn.HasSpawn ? spawn.Position : (start != null ? start.position : Vector3.zero);
+            Quaternion rotation = spawn.HasSpawn ? spawn.Rotation : (start != null ? start.rotation : Quaternion.identity);
 
             GameObject player = Instantiate(playerPrefab, position, rotation);
             player.name = $"{playerPrefab.name} [connId={conn.connectionId}]";
@@ -366,7 +346,7 @@ namespace Game.Connection
             networkSceneName = newSceneName;
             lookForReadyPlayers = true;
             IsChangingMap = true;
-            MapLoadStarted?.Invoke();
+            events.RaiseMapLoadStarted();
             NetworkServer.SendToAll(new SceneChangeMessage
             {
                 sceneName = newSceneName,
@@ -499,13 +479,13 @@ namespace Game.Connection
             if (msg.operation == SceneOperation.LoadAdditive)
             {
                 IsMapLoaded = false;
-                HasSpawn = false;
+                spawn.Clear();
                 // Spawn messages that arrive before this scene's NetworkIdentities are
                 // registered are dropped. Pause the inbox for the whole load, including
                 // the wait, and resume only after they are registered.
                 BeginSceneLoadPause();
                 yield return new WaitForSeconds(0.1f);
-                MapUnloading?.Invoke(SceneManager.GetActiveScene().name);
+                events.RaiseMapUnloading(SceneManager.GetActiveScene().name);
             }
 
             switch (msg.operation)
@@ -603,14 +583,14 @@ namespace Game.Connection
             lookForReadyPlayers = false;
             if (NetworkServer.active)
                 NetworkServer.isLoadingScene = false;
-            MapReady?.Invoke();
+            events.RaiseMapReady();
         }
 
         void TeleportEverybodyToSpawn()
         {
-            Transform start = HasSpawn ? null : GetStartPosition();
-            Vector3 position = HasSpawn ? SpawnPosition : (start != null ? start.position : Vector3.zero);
-            Quaternion rotation = HasSpawn ? SpawnRotation : (start != null ? start.rotation : Quaternion.identity);
+            Transform start = spawn.HasSpawn ? null : GetStartPosition();
+            Vector3 position = spawn.HasSpawn ? spawn.Position : (start != null ? start.position : Vector3.zero);
+            Quaternion rotation = spawn.HasSpawn ? spawn.Rotation : (start != null ? start.rotation : Quaternion.identity);
 
             foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
             {

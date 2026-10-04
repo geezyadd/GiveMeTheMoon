@@ -3,8 +3,14 @@ using Game.Connection;
 
 namespace Features.GameCoreModule.Scripts {
     public sealed class ConnectionGameplaySession : IGameplaySession {
+        private readonly ConnectionSpawnModel _spawn;
+
+        public ConnectionGameplaySession(ConnectionSpawnModel spawn) {
+            _spawn = spawn;
+        }
+
         public void CleanupGameplay() {
-            ConnectionNetworkManager.ClearSpawn();
+            _spawn.Clear();
         }
 
         // Host / Join load the lobby, whose spawn point sets the spawn, before the session state is entered: clearing it

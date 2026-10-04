@@ -1,17 +1,22 @@
 using UnityEngine;
+using Zenject;
 
 namespace Game.Connection
 {
     public class ConnectionSpawnPoint : MonoBehaviour
     {
-        void Awake()
+        ConnectionSpawnModel spawn;
+
+        [Inject]
+        void Construct(ConnectionSpawnModel spawnModel)
         {
+            spawn = spawnModel;
             Apply();
         }
 
         public void Apply()
         {
-            ConnectionNetworkManager.SetSpawn(transform.position, transform.rotation);
+            spawn.Set(transform.position, transform.rotation);
         }
     }
 }

@@ -8,13 +8,18 @@ namespace Game.Connection
     {
         private readonly ConnectionSessionModel _model;
         private readonly ISteamLobbyService _steamLobby;
+        private readonly ConnectionNetworkEvents _networkEvents;
 
         public bool CanStartGame => RequireNetworkManager().CanStartGame();
 
-        public ConnectionSessionService(ConnectionSessionModel model, ISteamLobbyService steamLobby)
+        public ConnectionSessionService(
+            ConnectionSessionModel model,
+            ISteamLobbyService steamLobby,
+            ConnectionNetworkEvents networkEvents)
         {
             _model = model ?? throw new ArgumentNullException(nameof(model));
             _steamLobby = steamLobby ?? throw new ArgumentNullException(nameof(steamLobby));
+            _networkEvents = networkEvents ?? throw new ArgumentNullException(nameof(networkEvents));
         }
 
         public bool IsInLobby =>
@@ -22,8 +27,8 @@ namespace Game.Connection
 
         public event Action OnMapReady
         {
-            add => ConnectionNetworkManager.MapReady += value;
-            remove => ConnectionNetworkManager.MapReady -= value;
+            add => _networkEvents.MapReady += value;
+            remove => _networkEvents.MapReady -= value;
         }
 
         public async Task HostAsync()

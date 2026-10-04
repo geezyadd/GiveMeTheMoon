@@ -15,6 +15,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
         public override void InstallBindings() {
             Container.Bind<GameFlowStateLifecycleEventClass>().AsSingle();
             Container.Bind<ConnectionSessionModel>().AsSingle();
+            Container.Bind<ConnectionSpawnModel>().AsSingle();
+            Container.Bind<ConnectionNetworkEvents>().AsSingle();
             Container.Bind<SteamLobbyModel>().AsSingle();
             Container.Bind<PreloadedWindowsModel>().AsSingle();
             Container.Bind<CharacterMovableModel>().AsSingle();
