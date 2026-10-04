@@ -12,8 +12,6 @@ namespace Features.CharacterMovableModule.Scripts.PlayerStats {
         private const float STAT_MIN = 0f;
         private const float STAT_MAX = 100000f;
 
-        private static readonly PlayerStatType[] _statTypes = (PlayerStatType[])Enum.GetValues(typeof(PlayerStatType));
-
         private PlayerStatsConfiguration _configuration;
         private IStat[] _cachedStats;
 
@@ -31,13 +29,14 @@ namespace Features.CharacterMovableModule.Scripts.PlayerStats {
 
         private IStat[] CreateStatsWithDefaults() {
             // Enum.GetValues is sorted, so the last value is the highest index.
-            IStat[] stats = new IStat[(int)_statTypes[_statTypes.Length - 1] + 1];
+            PlayerStatType[] statTypes = (PlayerStatType[])Enum.GetValues(typeof(PlayerStatType));
+            IStat[] stats = new IStat[(int)statTypes[statTypes.Length - 1] + 1];
             IReadOnlyList<PlayerStatsConfiguration.PlayerStatDefault> defaults = _configuration.Defaults;
             for (int i = 0; i < defaults.Count; i++)
                 ApplyDefault(stats, defaults[i]);
 
-            for (int i = 0; i < _statTypes.Length; i++) {
-                PlayerStatType type = _statTypes[i];
+            for (int i = 0; i < statTypes.Length; i++) {
+                PlayerStatType type = statTypes[i];
                 if (type != PlayerStatType.None && stats[(int)type] == null)
                     throw new KeyNotFoundException($"Player stats configuration has no default for {type}.");
             }

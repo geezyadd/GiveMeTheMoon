@@ -8,8 +8,6 @@ namespace Features.CharacterMovableModule.Scripts.PlayerStats {
         fileName = nameof(PlayerStatsConfiguration) + "_Default",
         menuName = "Configurations/CharacterMovableModule/" + nameof(PlayerStatsConfiguration))]
     public sealed class PlayerStatsConfiguration : AccumulativeStatsConfigurationBase<PlayerStatType> {
-        private static readonly PlayerStatType[] _statTypes = (PlayerStatType[])Enum.GetValues(typeof(PlayerStatType));
-
         [SerializeField] private PlayerStatDefault[] _defaults = Array.Empty<PlayerStatDefault>();
         [SerializeField] private bool _cameraRelative = true;
 
@@ -17,8 +15,9 @@ namespace Features.CharacterMovableModule.Scripts.PlayerStats {
         public bool CameraRelative => _cameraRelative;
 
         private void OnValidate() {
-            for (int i = 0; i < _statTypes.Length; i++) {
-                PlayerStatType type = _statTypes[i];
+            PlayerStatType[] statTypes = (PlayerStatType[])Enum.GetValues(typeof(PlayerStatType));
+            for (int i = 0; i < statTypes.Length; i++) {
+                PlayerStatType type = statTypes[i];
                 int count = CountDefaults(type);
                 bool isValid = type == PlayerStatType.None ? count == 0 : count == 1;
                 if (isValid == false)
