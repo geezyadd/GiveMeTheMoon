@@ -1,4 +1,4 @@
-namespace Features.GameCoreModule.Scripts.Constants {
+namespace Features.GameCoreModule.Contracts {
     public static class SceneNames {
         public const string Bootstrap = "BootstrapScene";
         public const string Global = "GlobalScene";

@@ -61,7 +61,7 @@ namespace Features.GrabModule.Scripts {
         public void ServerReleaseHeld() =>
             ReleaseHeld();
 
-        internal void ServerConsumeHeld() {
+        public void ServerConsumeHeld() {
             if (isServer == false || _held == null)
                 return;
 
@@ -70,7 +70,7 @@ namespace Features.GrabModule.Scripts {
             NetworkServer.Destroy(held.gameObject);
         }
 
-        internal bool ServerGive(Grabbable item) {
+        public bool ServerGive(Grabbable item) {
             if (isServer == false || item == null || _held != null)
                 return false;
 

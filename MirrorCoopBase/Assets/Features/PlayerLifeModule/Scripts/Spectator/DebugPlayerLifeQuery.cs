@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Features.CameraModule.Scripts;
-using Features.GameCoreModule.Scripts;
+using Features.GameCoreModule.Contracts;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Zenject;

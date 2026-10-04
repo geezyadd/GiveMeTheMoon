@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Features.GameCoreModule.Scripts;
+using Features.GameCoreModule.Contracts;
 using Features.NetworkModelModule.Scripts;
 using Features.PlayerLifeModule.Scripts.Generated;
 using Game.Connection;

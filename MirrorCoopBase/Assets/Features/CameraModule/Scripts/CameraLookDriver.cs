@@ -1,6 +1,6 @@
 using System;
 using Features.CameraModule.Scripts.Models;
-using Features.GameCoreModule.Scripts;
+using Features.GameCoreModule.Contracts;
 using Features.InputModule.Realization.Scripts.Generated;
 using UnityEngine;
 using Zenject;
@@ -12,8 +12,8 @@ namespace Features.CameraModule.Scripts {
         private readonly CameraCatalog _catalog;
         private readonly CursorModel _cursorModel;
 
-        internal static bool DebugPitchOverride;
-        internal static float DebugPitch;
+        public static bool DebugPitchOverride;
+        public static float DebugPitch;
 
         private CameraLookRig _rig;
         private Transform _orbitFollow;

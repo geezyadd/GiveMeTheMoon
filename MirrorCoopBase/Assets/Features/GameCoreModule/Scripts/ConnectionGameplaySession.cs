@@ -1,3 +1,4 @@
+using Features.GameCoreModule.Contracts;
 using Game.Connection;
 
 namespace Features.GameCoreModule.Scripts {

@@ -81,7 +81,7 @@ namespace Features.ShipModule.Scripts {
                 _outline.enabled = hovered && IsUnlocked;
         }
 
-        internal bool ServerTryInstall(ShipModuleType type, ItemViewId view) {
+        public bool ServerTryInstall(ShipModuleType type, ItemViewId view) {
             if (isServer == false || CanAccept(type) == false || view == ItemViewId.None)
                 return false;
 

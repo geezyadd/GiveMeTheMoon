@@ -1,4 +1,4 @@
-using Features.GameCoreModule.Scripts;
+using Features.GameCoreModule.Contracts;
 using Game.Connection;
 using Mirror;
 using UnityEngine;

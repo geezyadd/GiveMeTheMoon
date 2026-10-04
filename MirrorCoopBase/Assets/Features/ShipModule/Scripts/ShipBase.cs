@@ -46,8 +46,8 @@ namespace Features.ShipModule.Scripts {
         internal bool ConfinesRidersToDeck => _flightSettings.ConfineRidersToDeck;
         internal float ReboardDelaySeconds => _flightSettings.ReboardDelaySeconds;
         internal NetworkIdentity NetIdentity => _poseSync.netIdentity;
-        internal ShipSocket[] Sockets => _sockets;
-        internal Bounds DeckBounds => _deck.bounds;
+        public ShipSocket[] Sockets => _sockets;
+        public Bounds DeckBounds => _deck.bounds;
         internal IStatEntity<ShipStatType> Stats => _stats;
 
         internal bool ContainsDeckWalk(Vector3 localOffset, float inset) {

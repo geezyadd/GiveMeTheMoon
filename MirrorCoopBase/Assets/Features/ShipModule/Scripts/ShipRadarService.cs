@@ -1,4 +1,4 @@
-using Features.GameCoreModule.Scripts;
+using Features.GameCoreModule.Contracts;
 using MiniMapModular;
 using UnityEngine;
 using Zenject;

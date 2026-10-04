@@ -1,0 +1,26 @@
+{
+    "name": "Game.Connection.Editor.Tests",
+    "rootNamespace": "Game.Connection.Editor.Tests",
+    "references": [
+        "GUID:379df4dc8d1082248b970ee14b4725f2",
+        "GUID:7c3e1a9b4d2f4e6a8b0c1d2e3f4a5b6c",
+        "GUID:30817c1a0e6d646d99c048fc403f5979",
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

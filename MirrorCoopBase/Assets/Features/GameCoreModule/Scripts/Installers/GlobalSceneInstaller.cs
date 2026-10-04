@@ -1,5 +1,6 @@
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts;
+using Features.GameCoreModule.Contracts;
 using Features.GameFlowStateMachineModule.Scripts.Installers;
 using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts;

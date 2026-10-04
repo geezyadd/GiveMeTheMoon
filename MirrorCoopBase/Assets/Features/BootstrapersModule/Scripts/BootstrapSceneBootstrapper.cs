@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Features.GameCoreModule.Scripts.Constants;
+using Features.GameCoreModule.Contracts;
 using Features.SceneLoaderModule.Scripts;
 using UnityEngine;
 using UnityEngine.SceneManagement;

@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Features.CharacterMovableModule.Scripts;
-using Features.GameCoreModule.Scripts.Constants;
+using Features.GameCoreModule.Contracts;
 using Features.GameFlowStateMachineModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.States;
 using Features.GrabModule.Scripts;

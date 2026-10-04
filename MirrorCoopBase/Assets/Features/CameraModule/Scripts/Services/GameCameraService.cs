@@ -1,7 +1,6 @@
 using System;
 using Features.CameraModule.Scripts.Models;
-using Features.GameCoreModule.Scripts;
-using Features.GrabModule.Scripts;
+using Features.GameCoreModule.Contracts;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.LowLevel;
@@ -22,9 +21,11 @@ namespace Features.CameraModule.Scripts.Services {
         private Camera _output;
         private CinemachineBrain _brain;
         private CameraLookRig _lookRig;
-        internal static Action AfterPresent;
+        public static Action AfterPresent;
 
         private static GameCameraService _presenting;
+
+        public event Action LookApplied;
 
         public GameCameraService(GameCameraModel model, CameraCatalog catalog) {
             _model = model;
@@ -368,7 +369,7 @@ namespace Features.CameraModule.Scripts.Services {
 
         private void PresentNow() {
             ApplyLookRig();
-            Grabbable.FollowHeldAll();
+            LookApplied?.Invoke();
             EnsureBrain();
             if (_brain != null)
                 _brain.ManualUpdate();

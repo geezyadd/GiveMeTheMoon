@@ -1,0 +1,19 @@
+{
+    "name": "Features.BootstrapersModule",
+    "rootNamespace": "Features.BootstrapersModule",
+    "references": [
+        "GUID:a637b2d2f1cb470a8bea9746a87397c0",
+        "GUID:e48356b2e0ec4f3abf4c45b99a61c2fb",
+        "GUID:c4e8a71b2f9d4e6a8b0c1d2e3f4a5b6c",
+        "GUID:0d8beb7f090555447a6cf5ce9e54dbb4"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

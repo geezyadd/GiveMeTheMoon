@@ -84,11 +84,29 @@ types.
   moves to a lower module instead of a mutual reference.
 - `GameCoreModule` is the composition root (installers); nothing references it. Types shared by everyone
   (`IGameplaySession`, `SceneNames`) must live in a separate lower assembly, not in GameCore.
-- Currently without asmdef: Camera, CharacterMovable, FloatingController, GameCore, GameFlowStateMachine, Grab,
-  Lobby, Menu, Mvp, PlayerLife, Ship, Shop, Tooltip, Bootstrapers. Conversion order (bottom up): Mvp,
-  FloatingController, GameCore contracts → CharacterMovable, GameFlowStateMachine → Camera, Grab → Ship, Menu →
-  PlayerLife, Lobby → Shop → Tooltip → GameCore, Bootstrapers. Before that, break the GameCore ↔ modules and
-  Camera ↔ Grab cycles. `LoopSmokeTest` stays in `Assembly-CSharp`: every assembly is visible from there.
+- Module assemblies by layer (an assembly references only lower layers; module references in brackets):
+  1. `Features.GameCoreModule.Contracts` (`IGameplaySession`, `SceneNames`),
+     `Features.AddressablesConstantGeneratorModule` (`Address_g.cs`), `Features.MvpModule` (AssetLoader),
+     `Features.FloatingControllerModule`; third-party `QuickOutline` and `MiniMapModular` (`Mini Mapa(Radar)`) also
+     have their own asmdef.
+  2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
+     `Features.GameFlowStateMachineModule` (Contracts, SceneLoader).
+  3. `Features.CameraModule` (CharacterMovable, Contracts, Input) → `Features.GrabModule` (Camera, CharacterMovable).
+  4. `Features.ShipModule` (Camera, Grab, CharacterMovable, FloatingController, GameFlow, Stats, Connection, MiniMap),
+     `Features.MenuModule` (GameFlow, Mvp, Connection).
+  5. `Features.PlayerLifeModule` (Ship, Grab, Camera, Mvp, NetworkModel, Connection), `Features.LobbyModule` (Ship,
+     GameFlow, Mvp, Connection).
+  6. `Features.ShopModule` (PlayerLife, Ship, Camera, GameFlow, Mvp, NetworkModel) → `Features.TooltipModule` (Shop,
+     Ship, Grab, Mvp).
+  7. Composition root: `Features.GameCoreModule` (all modules) and `Features.BootstrapersModule` (Contracts,
+     GameFlow, SceneLoader).
+  Tests: `Features.CharacterMovableModule.Editor.Tests`, `Features.PlayerLifeModule.Editor.Tests`,
+  `Features.ShipModule.Editor.Tests`, `Game.Connection.Editor.Tests`.
+- The camera does not know about Grab: `IGameCameraService.LookApplied` fires in `PresentNow()` after
+  `ApplyLookRig()` and before the brain update; `HeldItemFollowSystem` (Grab) listens to it. The frame order is the
+  same as before.
+- `LoopSmokeTest` stays in `Assembly-CSharp`: every assembly is visible from there. Whatever the test touches in a
+  module must be `public` (not `InternalsVisibleTo`).
 
 ### Key places
 | What | Where |

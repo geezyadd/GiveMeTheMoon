@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Features.GameCoreModule.Scripts.Constants;
+using Features.GameCoreModule.Contracts;
 using Features.GameFlowStateMachineModule.Scripts.States;
 
 namespace Features.GameFlowStateMachineModule.Scripts {

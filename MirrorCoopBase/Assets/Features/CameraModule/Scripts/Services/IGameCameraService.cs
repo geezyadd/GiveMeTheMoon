@@ -1,7 +1,10 @@
+using System;
 using UnityEngine;
 
 namespace Features.CameraModule.Scripts.Services {
     public interface IGameCameraService {
+        event Action LookApplied;
+
         string ActiveId { get; }
         Camera OutputCamera { get; }
 

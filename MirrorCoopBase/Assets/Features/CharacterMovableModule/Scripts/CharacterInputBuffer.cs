@@ -1,6 +1,6 @@
 using System;
 using Features.CharacterMovableModule.Scripts.Models;
-using Features.GameCoreModule.Scripts;
+using Features.GameCoreModule.Contracts;
 using Features.InputModule.Realization.Scripts.Generated;
 using UnityEngine;
 using Zenject;
