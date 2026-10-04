@@ -1,1 +1,1 @@
-Перед любой задачей прочитай @AGENTS.md: там контекст игры, текущий этап и правила проекта.
+Before any task, read @AGENTS.md: it has the game context, the current milestone and the project rules.

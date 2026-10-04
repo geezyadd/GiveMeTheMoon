@@ -1,36 +1,36 @@
-# Roadmap: M1, «скучный, но идеальный цикл»
+# Roadmap: M1, "boring but perfect loop"
 
-Составлено 2026-10-01 по исследованию кода. Цель M1: станция → покупка → установка → полёт → следующая станция.
-Цикл работает в коопе без багов и **приятно ощущается**. Контекст игры описан в `AGENTS.md`.
+Written 2026-10-01 from a code investigation. M1 goal: station → buy → install → flight → next station.
+The loop works in co-op without bugs and **feels good**. Game context is in `AGENTS.md`.
 
-## P0. Цикл должен быть тем, что задумано (без этого M1 не работает)
-| # | Задача | Почему (что сейчас) |
+## P0. The loop must be what was designed (M1 does not work without this)
+| # | Task | Why (current state) |
 |---|---|---|
-| 1 | **Модули остаются на корабле между станциями.** Обычная посадка сразу переходит в Build, без сброса | `FinishAtCurrentPose` → `ServerResetForBuild` вызывает `ClearInstalledModules()`, ставит обломок и телепортирует корабль на 18 м: все апгрейды теряются на каждой станции |
-| 2 | **Экономика M1.** Нормальный стартовый баланс, доход за прилёт на станцию (конфиг). Бесплатных дропов нет или почти нет | доходов нет; на каждой станции бесплатно выпадает около 8 модулей (`ShipStationCatalog.Drops`), и шоп не нужен |
-| 3 | **Шоп и установка только на станции, в фазе Build.** Проверка и на клиенте, и на сервере | шоп открывается в полёте; `CmdPurchase` ничего не проверяет; `ShipSocket.CanAccept` разрешает ставить модули в полёте |
-| 4 | **Снятие модуля возвращает предмет по общему каталогу** | `ShipUninstallInteractable` ищет префаб только в списке дропов, поэтому модуль только из шопа молча не снимается |
-| 5 | **Полёт без штурвала не длится вечно.** Нужен автопилот к цели или обязательный штурвал, плюс таймаут | без штурвала нос не повёрнут к цели, alignment ~0,09, полёт идёт примерно в 11 раз дольше; если отвернуть от цели, время только растёт |
-| 6 | **Предметы на палубе летят вместе с кораблём** | корабль перемещается через transform; лежащие на палубе модули и грузы, скорее всего, остаются на старой станции (не проверено) |
-| 7 | **Кооп: весь цикл проверен на двух игроках** (ParrelSync). Штурвал освобождается при дисконнекте пилота. Посадка в кресло синхронизируется на клиенте | дисконнект пилота блокирует управление до посадки; на удалённом клиенте игрок не перемещается в кресло (найдено аудитом) |
-| 8 | Уборка: старые дропы и обломки не копятся; текст шопа про Helm исправлен | дропы остаются висеть, когда удаляется старая площадка; в шопе Helm подписан «Required to launch», хотя слот не обязательный |
+| 1 | **Modules stay on the ship between stations.** A normal landing goes straight to Build, without a reset | `FinishAtCurrentPose` → `ServerResetForBuild` calls `ClearInstalledModules()`, places wreckage and teleports the ship 18 m: all upgrades are lost at every station |
+| 2 | **M1 economy.** A proper starting balance, income for arriving at a station (config). No or almost no free drops | there is no income; about 8 modules drop for free at every station (`ShipStationCatalog.Drops`), so the shop is not needed |
+| 3 | **Shop and installation only at a station, in the Build phase.** Checked on both client and server | the shop opens in flight; `CmdPurchase` checks nothing; `ShipSocket.CanAccept` allows installing modules in flight |
+| 4 | **Removing a module returns the item via the shared catalog** | `ShipUninstallInteractable` looks for the prefab only in the drop list, so a shop-only module silently cannot be removed |
+| 5 | **A flight without a helm does not last forever.** Needs autopilot to the target or a mandatory helm, plus a timeout | without a helm the nose is not turned to the target, alignment ~0.09, the flight takes about 11 times longer; turning away from the target only increases the time |
+| 6 | **Items on the deck travel with the ship** | the ship moves via transform; modules and cargo lying on the deck most likely stay at the old station (not verified) |
+| 7 | **Co-op: the whole loop verified with two players** (ParrelSync). The helm is released when the pilot disconnects. Seating is synced on the client | a pilot disconnect blocks control until landing; on a remote client the player does not move into the seat (found by audit) |
+| 8 | Cleanup: old drops and wreckage do not pile up; shop text about the Helm fixed | drops keep hanging when the old pad is removed; in the shop the Helm says "Required to launch" although the slot is not mandatory |
 
-## P1. Ощущения («satisfying»)
-| # | Задача | Почему |
+## P1. Feel ("satisfying")
+| # | Task | Why |
 |---|---|---|
-| 9 | **Ощущение скорости в полёте и решение по модели полёта.** Параллакс или скроллинг окружения (звёзды, облака, пыль, далёкие объекты) | в круизе корабль висит на месте, движутся только камни, скорости не видно |
-| 10 | **Базовый звук:** шаги, двигатели (тон зависит от тяги), рычаг, установка и снятие модуля, покупка, взлёт и посадка, UI | в игре нет ни одного `AudioSource` |
-| 11 | **Фидбек взаимодействия:** тултипы (в работе), подсказка «нужно 2 двигателя для взлёта», эффект и звук при установке, анимация рычага, бросок предмета | сейчас есть только обводка; Release роняет предмет с нулевой скоростью |
-| 12 | **Плавная посадка и переход в Build:** без телепорта и без внезапного обломка; игроки остаются на палубе | сейчас посадка выглядит рывком |
-| 13 | **HUD:** номер станции, фаза, ETA, что мешает взлёту | есть только таймер «to platform» и баланс |
-| 14 | **Камера:** один источник (`Camera.main` и `OutputCamera` сейчас вперемешку), лёгкая тряска и FOV на взлёте и посадке, VFX двигателей | всё это отсутствует |
+| 9 | **Sense of speed in flight and a decision on the flight model.** Parallax or scrolling environment (stars, clouds, dust, distant objects) | in cruise the ship hangs in place, only rocks move, speed is not visible |
+| 10 | **Basic sound:** footsteps, engines (pitch depends on thrust), lever, module install and removal, purchase, takeoff and landing, UI | there is not a single `AudioSource` in the game |
+| 11 | **Interaction feedback:** tooltips (in progress), a "2 engines needed to take off" hint, effect and sound on install, lever animation, item throw | there is only an outline now; Release drops the item with zero velocity |
+| 12 | **Smooth landing and transition to Build:** no teleport and no sudden wreckage; players stay on the deck | landing currently looks like a jerk |
+| 13 | **HUD:** station number, phase, ETA, what blocks takeoff | there is only a "to platform" timer and the balance |
+| 14 | **Camera:** a single source (`Camera.main` and `OutputCamera` are mixed now), light shake and FOV on takeoff and landing, engine VFX | all of this is missing |
 
-## P2. Фундамент под M2–M4 (контент)
-| # | Задача | Почему |
+## P2. Foundation for M2–M4 (content)
+| # | Task | Why |
 |---|---|---|
-| 15 | **Модули через данные:** один каталог модулей (шоп, дропы, снятие, виды), у модуля список `StatModifier` в данных | новый модуль сейчас требует правок в ~8 местах и `switch` по Engine (`ServerOnModuleInstalled`, `ShopItemStatsService`, `CanRemoveModule`) |
-| 16 | **Статы реально влияют на игру:** Thrust, Handling, Armor, `IFlightStatContributor`; на клиенте видны реальные значения | работает только `FlightSpeed`; модификаторы есть только на сервере |
-| 17 | **Препятствия и ивенты через интерфейс и spawn-таблицы.** Коллайдеры камней, урон, `ServerAbort` | камни безвредны и зашиты в `ShipRunService`; `ServerAbort` нигде не вызывается |
-| 18 | **Станции как данные:** типы станций, ассортимент шопа у каждой станции | сейчас один префаб площадки и один глобальный список дропов |
-| 19 | **Цель забега:** конец, победа и поражение (`MaxLoops`), возврат в лобби | сейчас забег бесконечный, `ReturnToLobby()` никто не вызывает |
-| 20 | Поздний вход в игру, топливо и грузоподъёмность как механики M2 | сейчас войти после старта нельзя (`MapAlreadyStarted`) |
+| 15 | **Modules through data:** one module catalog (shop, drops, removal, views), each module has a list of `StatModifier` in data | a new module now needs edits in ~8 places and a `switch` on Engine (`ServerOnModuleInstalled`, `ShopItemStatsService`, `CanRemoveModule`) |
+| 16 | **Stats really affect the game:** Thrust, Handling, Armor, `IFlightStatContributor`; real values visible on the client | only `FlightSpeed` works; modifiers exist only on the server |
+| 17 | **Obstacles and events through an interface and spawn tables.** Rock colliders, damage, `ServerAbort` | rocks are harmless and hardcoded in `ShipRunService`; `ServerAbort` is never called |
+| 18 | **Stations as data:** station types, a shop assortment per station | there is one pad prefab and one global drop list now |
+| 19 | **Run goal:** end, win and loss (`MaxLoops`), return to lobby | the run is endless now, nobody calls `ReturnToLobby()` |
+| 20 | Late join, fuel and cargo capacity as M2 mechanics | joining after start is impossible now (`MapAlreadyStarted`) |

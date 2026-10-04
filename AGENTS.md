@@ -1,158 +1,198 @@
-# GiveMeTheMoon — контекст проекта
+# GiveMeTheMoon — project context
 
-Читать перед любой задачей в этом репозитории: людям, Claude и агентам-воркерам.
+Read before any task in this repository: humans, Claude and worker agents.
 
-## Что за игра
-Кооперативный **friendslop**, жанр Peak, YAPYAP, Lethal Company. Команда игроков летит на платформе-корабле
-от станции к станции и по пути прокачивает корабль модулями.
+## The game
+A co-op **friendslop** in the vein of Peak, YAPYAP and Lethal Company. A crew of players flies a platform-ship from
+station to station and upgrades the ship with modules along the way.
 
-### Основной цикл (текущий фокус)
-1. Старт на первой станции с базовыми деньгами, их хватает на самые простые апгрейды.
-2. **Фаза менеджмента.** Игроки покупают модули в шопе (клавиша **L**) и ставят их в слоты корабля: двигатели,
-   пропеллер, штурвал, радар, позже больше. Баланс общий на команду.
-3. **Фаза полёта.** Корабль летит к следующей станции, игроки стоят и ходят по палубе.
-4. Прилёт на следующую станцию: новые покупки и апгрейды, затем цикл повторяется.
+### Core loop (current focus)
+1. Start at the first station with base money, enough for the simplest upgrades.
+2. **Management phase.** Players buy modules in the shop (**L** key) and install them in ship slots: engines,
+   propeller, helm, radar, more later. The balance is shared by the crew.
+3. **Flight phase.** The ship flies to the next station while players stand and walk on the deck.
+4. Arrival at the next station: new purchases and upgrades, then the loop repeats.
 
-Задумка: в полёте корабль почти стоит на месте, а мир движется мимо него, чтобы у игроков на палубе было меньше
-джиттера. Решение ещё не окончательное, его надо оценить. **Как сейчас в коде** (`ShipFlight`, `ShipRunService`):
-- на взлёте корабль за 9 с переносится на точку зависания (+350 м вперёд, +100 м вверх);
-- в круизе он висит на этой точке: меняются только курс и боковое покачивание при уклонении;
-- прогресс полёта — это таймер (`ShipTransit`), а не расстояние;
-- мимо корабля летят только камни;
-- на посадке спавнится следующая площадка, и корабль за 9 с переносится на неё.
+Intent: in flight the ship stays almost still and the world moves past it, so players on deck get less jitter. This
+is not final yet and needs evaluation. **How the code works now** (`ShipFlight`, `ShipRunService`):
+- on takeoff the ship moves over 9 s to a hover point (+350 m forward, +100 m up);
+- in cruise it hangs at that point: only heading and side sway during dodging change;
+- flight progress is a timer (`ShipTransit`), not distance;
+- only rocks fly past the ship;
+- on landing the next pad spawns and the ship moves onto it over 9 s.
 
-## Состояние цикла (2026-10-01)
-Цикл проходит от начала до конца, но пока он не совпадает с задуманным:
-- на каждой посадке `ServerResetForBuild` снимает **все** установленные модули;
-- на станции бесплатно выпадают модули (`ShipStationCatalog.Drops`);
-- шоп открывается где угодно;
-- доходов нет, баланс только стартовый;
-- влияет на игру только стат `FlightSpeed`;
-- камни безвредны;
-- звука и VFX нет.
+## Loop status (2026-10-01)
+The loop runs from start to end, but it does not match the design yet:
+- on every landing `ServerResetForBuild` removes **all** installed modules;
+- modules drop for free at a station (`ShipStationCatalog.Drops`);
+- the shop opens anywhere;
+- there is no income, only the starting balance;
+- only the `FlightSpeed` stat affects the game;
+- rocks are harmless;
+- there is no sound or VFX.
 
-Приоритеты этапа M1 описаны в `Docs/ROADMAP.md`.
+M1 priorities are in `Docs/ROADMAP.md`.
 
-### Главный принцип
-**Игра должна быть плавной и приятной.** Каждое действие должно ощущаться хорошо и «satisfying»: ходить по палубе,
-брать и ставить модуль, взлёт, посадка, покупка. Ни джиттера, ни рывков, ни провалов. Платформа под ногами —
-основная механика, она обязана работать идеально.
+### Main principle
+**The game must be smooth and pleasant.** Every action should feel good and satisfying: walking on the deck, picking
+up and installing a module, takeoff, landing, buying. No jitter, no jerks, no falling through. The platform underfoot
+is the core mechanic and has to work perfectly.
 
-### Логика апгрейдов (геймдизайн)
-Апгрейд должен очевидно отвечать на проблему, которую игрок видит в полёте:
-- мешают жуки и враги → пушки;
-- непонятно, куда лететь → радар получше;
-- долго летим → двигатели и ракетницы;
-- не хватает топлива или грузоподъёмности → баки или грузовые модули.
+### Upgrade logic (game design)
+An upgrade should obviously answer a problem the player sees in flight:
+- bugs and enemies get in the way → guns;
+- unclear where to fly → a better radar;
+- flights take too long → engines and rocket launchers;
+- not enough fuel or cargo capacity → tanks or cargo modules.
 
-Игрок видит проблему, заходит в шоп и понимает, что купить. В шопе показываются характеристики модуля, чтобы
-решение было осмысленным.
+The player sees the problem, opens the shop and knows what to buy. The shop shows module stats so the choice is
+informed.
 
-## Этапы
-| Этап | Цель |
+## Milestones
+| Milestone | Goal |
 |---|---|
-| **M1. Скучный, но идеальный цикл** (сейчас) | станция → покупка → установка → полёт → следующая станция; всё работает без багов и приятно ощущается, в коопе тоже |
-| M2. Экономика и смысл апгрейдов | доход, стоимость, статы модулей реально влияют на полёт (скорость, топливо, груз, броня) |
-| M3. Насыщенный полёт | камни, от которых надо уворачиваться, враги, ивенты; полёт редко повторяется |
-| M4. Контент | больше модулей, станций, ивентов, вариативность |
+| **M1. Boring but perfect loop** (now) | station → buy → install → flight → next station; everything works bug-free and feels good, in co-op too |
+| M2. Economy and meaningful upgrades | income, prices, module stats really affect flight (speed, fuel, cargo, armor) |
+| M3. Eventful flight | rocks to dodge, enemies, events; flights rarely repeat |
+| M4. Content | more modules, stations, events, variety |
 
-Пока делаем **M1**. Фичи M3 и M4 не добавляем, но архитектуру держим расширяемой: новый модуль, стат, препятствие или
-ивент должен добавляться через данные (ScriptableObject-каталоги), а не через новые `switch` по типам.
+We are doing **M1** now. Do not add M3 or M4 features, but keep the architecture extensible: a new module, stat,
+obstacle or event should be added through data (ScriptableObject catalogs), not through new `switch` statements on
+types.
 
-## Техника
-- Unity 6 (6000.0.67f1), проект в `MirrorCoopBase/`.
-- Сеть: **Mirror**, хост и клиенты. Сервер авторитетен: деньги, установка модулей, полёт.
-- DI: **Zenject**. Инсталлеры лежат в `Assets/Features/GameCoreModule/Scripts/Installers/`, конфиги приходят из
+## Tech
+- Unity 6 (6000.0.67f1), project in `MirrorCoopBase/`.
+- Networking: **Mirror**, host and clients. The server is authoritative: money, module installation, flight.
+- DI: **Zenject**. Installers are in `Assets/Features/GameCoreModule/Scripts/Installers/`, configs come from
   Addressables (`ConfigurationInstaller`).
-- UI: собственный MVP (`Assets/Features/MvpModule/`): `WindowBehaviour`, `ViewBehaviour`,
-  `PresenterBehaviour<TView>`, окна регистрируются в `WindowsModuleInstaller`.
-- Ввод: New Input System и сгенерированная обёртка `IInputService`
-  (`Assets/Features/InputModule/Realization/`). Код генерируется генератором, руками его не правят.
-- Модули фич лежат в `Assets/Features/<Module>/{Scripts,GameResources}`.
+- UI: in-house MVP (`Assets/Features/MvpModule/`): `WindowBehaviour`, `ViewBehaviour`,
+  `PresenterBehaviour<TView>`, windows are registered in `WindowsModuleInstaller`.
+- Input: New Input System and the generated `IInputService` wrapper
+  (`Assets/Features/InputModule/Realization/`). The code is generated; do not edit it by hand.
+- Feature modules live in `Assets/Features/<Module>/{Scripts,GameResources}`.
 
-### Ключевые места
-| Что | Где |
+### Assemblies (asmdef)
+- **A new module gets its own asmdef right away** in `Features/<Module>/Scripts/`, with name and root namespace
+  `Features.<Module>`. References to other assemblies (Mirror, Zenject, Unity.InputSystem, modules) are explicit.
+- An assembly with an asmdef cannot see `Assembly-CSharp`. If a module needs a module that still has no asmdef,
+  convert that dependency first; if that is a lot of work, the new module stays without an asmdef for now and this
+  goes into NOTES.
+- Editor code and tests inside a module with an asmdef get **separate** asmdefs (`Features.<Module>.Editor`,
+  Editor platform only; `Features.<Module>.Tests` as a test assembly). An `Editor/` folder inside an asmdef is not
+  special: without its own asmdef its code ends up in the runtime assembly and breaks the build.
+- **No cycles between modules.** If two modules need each other, the shared contract (interface, event, constants)
+  moves to a lower module instead of a mutual reference.
+- `GameCoreModule` is the composition root (installers); nothing references it. Types shared by everyone
+  (`IGameplaySession`, `SceneNames`) must live in a separate lower assembly, not in GameCore.
+- Currently without asmdef: Camera, CharacterMovable, FloatingController, GameCore, GameFlowStateMachine, Grab,
+  Lobby, Menu, Mvp, PlayerLife, Ship, Shop, Tooltip, Bootstrapers. Conversion order (bottom up): Mvp,
+  FloatingController, GameCore contracts → CharacterMovable, GameFlowStateMachine → Camera, Grab → Ship, Menu →
+  PlayerLife, Lobby → Shop → Tooltip → GameCore, Bootstrapers. Before that, break the GameCore ↔ modules and
+  Camera ↔ Grab cycles. `LoopSmokeTest` stays in `Assembly-CSharp`: every assembly is visible from there.
+
+### Key places
+| What | Where |
 |---|---|
-| Корабль, полёт, наездники | `Assets/Features/ShipModule/Scripts/`: `ShipBase`, `ShipFlight`, `ShipPoseSync`, `ShipRider`, `ShipRunService`, `ShipRunDirector` |
-| Настройки полёта и посадки | `ShipFlightSettings` (+ `ShipFlightConfig_Default.asset`), `ShipRunConfig` |
-| Модули и слоты | `ShipItem`, `ShipSocket`, `Ship*Interactable`, каталоги в `ShipModule/GameResources/Resources/` |
-| Статы | `Assets/Features/StatsModule/`, `ShipStatType`, `ShipStatEntity` |
-| Взаимодействие | `Assets/Features/GrabModule/` (`UseController`, `InteractableBase`, `Grabbable`) |
-| Шоп и деньги | `Assets/Features/ShopModule/` (`CrewWallet`, `ShopCatalog`, `WalletConfiguration`) |
-| Сцены | `GameCoreModule/GameResources/Scenes/`: Bootstrap → Menu → Lobby → Game; в Build Settings только Bootstrap |
+| Ship, flight, riders | `Assets/Features/ShipModule/Scripts/`: `ShipBase`, `ShipFlight`, `ShipPoseSync`, `ShipRider`, `ShipRunService`, `ShipRunDirector` |
+| Flight and landing settings | `ShipFlightSettings` (+ `ShipFlightConfig_Default.asset`), `ShipRunConfig` |
+| Modules and slots | `ShipItem`, `ShipSocket`, `Ship*Interactable`, catalogs in `ShipModule/GameResources/Resources/` |
+| Stats | `Assets/Features/StatsModule/`, `ShipStatType`, `ShipStatEntity` |
+| Interaction | `Assets/Features/GrabModule/` (`UseController`, `InteractableBase`, `Grabbable`) |
+| Shop and money | `Assets/Features/ShopModule/` (`CrewWallet`, `ShopCatalog`, `WalletConfiguration`) |
+| Scenes | `GameCoreModule/GameResources/Scenes/`: Bootstrap → Menu → Lobby → Game; only Bootstrap is in Build Settings |
 
-### Как проверять
-Play mode запускается из `BootstrapScene`, дальше меню → Host → игра. Мультиплеер на двух игроков проверяется через
-ParrelSync-клон (`MirrorCoopBase_clone_0`).
+### How to verify
+Play mode starts from `BootstrapScene`, then menu → Host → game. Two-player multiplayer is checked with the
+ParrelSync clone (`MirrorCoopBase_clone_0`).
 
-### Автотест цикла
-PlayMode-тест `LoopSmokeTest` (`Assets/Tests/PlayMode/LoopSmoke/`) сам проходит цикл M1 на хосте: меню → Host → лобби →
-Start → `GameScene`, ставит 2 двигателя, дважды взлетает и садится, проверяет фазы, `LoopIndex`, двигатели после посадки,
-корабль на новой площадке, игрока на палубе, отсутствие обломков, выход в меню и отсутствие ошибок в логе. Тайминги
-полёта в тесте укорочены своей копией `ShipRunConfig`, ассеты не меняются. Тест идёт около 30 с.
+### Loop autotest
+The PlayMode test `LoopSmokeTest` (`Assets/Tests/PlayMode/LoopSmoke/`) plays the M1 loop on a host by itself:
+menu → Host → lobby → Start → `GameScene`, installs 2 engines, takes off and lands twice, and checks the phases,
+`LoopIndex`, engines after landing, the ship on the new pad, the player on deck, no wreckage, return to menu and no
+errors in the log. The test shortens flight timings with its own copy of `ShipRunConfig`; assets are not changed. The
+test takes about 30 s.
 
-Запуск из корня воркспейса:
+Run from the workspace root:
 `Invoke-AgentEditor.ps1 -AgentDir . -Command run-tests -Mode PlayMode -Filter LoopSmoke`
-(или Test Runner → PlayMode → `LoopSmokeTest`).
+(or Test Runner → PlayMode → `LoopSmokeTest`).
 
-**Запускать перед каждым мержем, который трогает корабль, посадку, шоп или сессию.** Тест лежит в Assembly-CSharp под
-`#if UNITY_INCLUDE_TESTS`, поэтому в `ProjectSettings` включено `playModeTestRunnerEnabled`. Новые разрешённые ошибки
-лога добавляются только в allow-list `LoopSmokeErrorLog`, с причиной.
+**Run it before every merge that touches the ship, landing, shop or session.** The test lives in Assembly-CSharp
+under `#if UNITY_INCLUDE_TESTS`, so `playModeTestRunnerEnabled` is on in `ProjectSettings`. New allowed log errors go
+only into the `LoopSmokeErrorLog` allow-list, with a reason.
 
-## Синхронизированные модели
+## Synced models
 
-Данные, которые должны совпадать у всех игроков, лежат в обычной C# модели. По сети их возит **bridge** (`NetworkBehaviour`). Модель только для чтения: UI и логика подписаны на события, писать в неё может только bridge.
+Data that must match for all players lives in a plain C# model. A **bridge** (`NetworkBehaviour`) carries it over the network. The model is read-only: UI and logic subscribe to its events, and only the bridge may write to it.
 
-Поток один: серверная логика → `ServerSet<Поле>` (или серверный метод коллекции) → SyncVar / SyncList / SyncDictionary / SyncHashSet → хук или callback → модель → `On<Поле>Changed` и `OnChanged` → UI. Хук на хосте вызывается сразу из сеттера SyncVar (`NetworkServer.activeHost`), на клиенте — при десериализации. Callback коллекций стреляет на том, кто меняет коллекцию, и на клиенте при дельте. `OnStartClient` ещё раз кладёт в модель полный снимок: полный спавн SyncList / SyncDictionary / SyncHashSet не вызывает callback, а хук SyncVar пропускается, если значение равно дефолту поля. Так хост, клиент и поздний вход идут одним путём. На выделенном сервере хук SyncVar из сеттера не зовётся, поэтому `ServerSet` сам обновляет модель, когда `activeHost == false`.
+There is one flow: server logic → `ServerSet<Field>` (or a server collection method) → SyncVar / SyncList / SyncDictionary / SyncHashSet → hook or callback → model → `On<Field>Changed` and `OnChanged` → UI. On the host the hook is called right from the SyncVar setter (`NetworkServer.activeHost`); on a client, during deserialization. Collection callbacks fire on whoever changes the collection, and on a client on a delta. `OnStartClient` puts a full snapshot into the model once more: a full spawn of SyncList / SyncDictionary / SyncHashSet does not fire callbacks, and a SyncVar hook is skipped when the value equals the field default. This way host, client and late join go through one path. On a dedicated server the SyncVar hook is not called from the setter, so `ServerSet` updates the model itself when `activeHost == false`.
 
-Клиент в bridge не пишет. Запрос с клиента — свой `[Command]`: он зовёт серверный сервис, сервис зовёт `ServerSet`. Так устроены покупка (`CrewWallet.CmdPurchase` → `ServerTrySpend` → `ServerSetBalance`) и пример `DebugCounterSample.CmdBump`.
+A client does not write to the bridge. A client request is its own `[Command]`: it calls a server service, and the service calls `ServerSet`. This is how purchase works (`CrewWallet.CmdPurchase` → `ServerTrySpend` → `ServerSetBalance`), and the `DebugCounterSample.CmdBump` example.
 
-Модель можно пометить atomic: все скалярные поля уезжают одним struct в одном SyncVar, и клиент не видит смесь старых и новых значений. Коллекции при этом остаются отдельными sync-коллекциями.
+A model can be marked atomic: all scalar fields travel as one struct in one SyncVar, so a client never sees a mix of old and new values. Collections stay separate sync collections.
 
-У определения есть `Scope`: `Shared` или `PerPlayer`. `Shared` — одна модель на всех, как кошелёк. `PerPlayer` — отдельная модель на игрока. Генератор пишет реестр `<Имя>Registry` / `IReadOnly<Имя>Registry`, его биндят `AsSingle`. Ключ — `PlayerKey` из `IPlayerIdentityService.GetKey`: Steam даёт `steam:<steamId>`, прямой IP — `client:<guid>` из `PlayerPrefs` (`network-model.client-id`). Не `netId` и не `connectionId`. Реестр умеет `TryGet`, `Local`, `IsOnline` и события added / removed / online. Мост вешается на префаб игрока: сервер на спавне находит или создаёт запись, заливает её в SyncVar и при дисконнекте только помечает offline. Клиенты кладут свою и чужие модели в локальный реестр. Запись переживает объект игрока, поэтому повторный вход с тем же ключом получает те же поля.
+A definition has a `Scope`: `Shared` or `PerPlayer`. `Shared` is one model for everyone, like the wallet. `PerPlayer` is a separate model per player. The generator writes a `<Name>Registry` / `IReadOnly<Name>Registry`, bound `AsSingle`. The key is a `PlayerKey` from `IPlayerIdentityService.GetKey`: Steam gives `steam:<steamId>`, direct IP gives `client:<guid>` from `PlayerPrefs` (`network-model.client-id`). Not `netId` and not `connectionId`. The registry provides `TryGet`, `Local`, `IsOnline` and added / removed / online events. The bridge goes on the player prefab: on spawn the server finds or creates the entry, pushes it into the SyncVar, and on disconnect only marks it offline. Clients put their own and other players' models into the local registry. The entry outlives the player object, so rejoining with the same key gets the same fields.
 
-### Как добавить модель
-1. `Tools/Network Models` → Create. То же определение есть в `Tools/Generations/Code generation` как подгенератор.
-2. Имя, namespace, папка внутри `Assets/`, поля: имя, тип, необязательный default текстом. Тип — из списка или строка. Поддерживаются примитивы, `string`, enum, `Vector2/3/4`, `Vector2Int/3Int`, `Quaternion`, `Color`, `Color32`, `Rect`, свой сериализуемый struct или class, `List<T>`, `Dictionary<K,V>`, `HashSet<T>`, `NetworkIdentity`, `GameObject`, `uint`. Неизвестный тип генератор не пропускает.
-3. Generate или Generate All. Файлы с заголовком `// <auto-generated>` и суффиксом `_g.cs`: `IReadOnly<Имя>Model`, `<Имя>Model`, `<Имя>Bridge`, при atomic ещё `<Имя>State`, плюс `<Имя>ModelInstaller`.
-4. В `DataInstaller` добавить `<Имя>ModelInstaller.Install(Container)`.
-5. Повесить `<Имя>Bridge` на объект с `NetworkIdentity` или унаследовать bridge (как `CrewWallet`). Для `PerPlayer` мост ставится на префаб игрока, а в `DataInstaller` ставится реестр, не одиночная модель.
+### Adding a model
+1. `Tools/Network Models` → Create. The same definition is available in `Tools/Generations/Code generation` as a sub-generator.
+2. Name, namespace, folder inside `Assets/`, fields: name, type, optional default as text. The type comes from the list or is a string. Supported: primitives, `string`, enum, `Vector2/3/4`, `Vector2Int/3Int`, `Quaternion`, `Color`, `Color32`, `Rect`, your own serializable struct or class, `List<T>`, `Dictionary<K,V>`, `HashSet<T>`, `NetworkIdentity`, `GameObject`, `uint`. The generator rejects unknown types.
+3. Generate or Generate All. Files with the `// <auto-generated>` header and `_g.cs` suffix: `IReadOnly<Name>Model`, `<Name>Model`, `<Name>Bridge`, plus `<Name>State` when atomic, plus `<Name>ModelInstaller`.
+4. Add `<Name>ModelInstaller.Install(Container)` to `DataInstaller`.
+5. Put `<Name>Bridge` on an object with a `NetworkIdentity`, or inherit the bridge (like `CrewWallet`). For `PerPlayer` the bridge goes on the player prefab, and `DataInstaller` installs the registry, not a single model.
 
-Ссылка на сетевой объект — поле `NetworkIdentity` или `GameObject`: Mirror хранит netId и поднимает ссылку, когда объект уже заспавнен. `uint` — обычное число; им можно передать сырой netId и найти объект в `NetworkClient.spawned`. `NetworkBehaviour` в SyncVar не кладём.
+A reference to a network object is a `NetworkIdentity` or `GameObject` field: Mirror stores the netId and resolves the reference once the object is spawned. `uint` is a plain number; you can pass a raw netId with it and look the object up in `NetworkClient.spawned`. Do not put a `NetworkBehaviour` into a SyncVar.
 
-### Можно / нельзя
-- Можно читать `IReadOnly<Имя>Model` и слушать `On<Поле>Changed` и `OnChanged`. Пока bridge не вызвал `OnStartClient`, `IsAvailable == false`.
-- Можно менять данные на сервере только через `ServerSet` / `ServerAdd` / `ServerInsert` / `ServerRemove` / `ServerClear`.
-- Нельзя писать модель из геймплея, UI или сервиса.
-- Нельзя давать bridge клиентские сеттеры.
-- Нельзя в одном хуке копировать в модель все поля, если по сети пришло одно: хук пишет только своё поле, либо модель atomic и хук получает весь struct.
+### Do / don't
+- Do read `IReadOnly<Name>Model` and listen to `On<Field>Changed` and `OnChanged`. Until the bridge has called `OnStartClient`, `IsAvailable == false`.
+- Do change data on the server only through `ServerSet` / `ServerAdd` / `ServerInsert` / `ServerRemove` / `ServerClear`.
+- Don't write the model from gameplay, UI or a service.
+- Don't give the bridge client setters.
+- Don't copy all fields into the model in one hook when only one arrived over the network: a hook writes only its own field, or the model is atomic and the hook gets the whole struct.
 
-Кошелёк шопа — модель `Wallet` (`long Balance`). Старт берётся из `WalletConfiguration`, покупка уменьшает баланс, HUD и шоп читают `IReadOnlyWalletModel`.
+The shop wallet is the `Wallet` model (`long Balance`). The start value comes from `WalletConfiguration`, a purchase lowers the balance, HUD and shop read `IReadOnlyWalletModel`.
 
-## Правила работы
-- Ветка разработки: `GameCore`.
-- Фиксы предпочитаем консервативные, без переписывания. Значения ощущений (скорости, пружины) меняем только
-  осознанно и пишем «было → стало».
-- Новые тюнинговые числа выносим в конфиги (ScriptableObject), а не в `const`.
-- Каждый баг и фичу платформы проверяем в Play mode.
+## Working rules
+- Development branch: `GameCore`.
+- Prefer conservative fixes, no rewrites. Change feel values (speeds, springs) only deliberately and write
+  "was → now".
+- **Never use singletons.** Neither your own (`static Instance`, `Singleton`) nor built-in ones
+  (Mirror's `NetworkManager.singleton`). Dependencies come through Zenject: `[Inject]`, constructor, a model from
+  `DataInstaller`. For example, `ConnectionNetworkManager` comes from `ConnectionSessionModel.NetworkManager`.
+  The only exception is third-party code (Mirror, Zenject, Steamworks.NET); we do not edit it.
+- **Code is granular: a human should read it easily.** One class, one responsibility that can be named in one
+  phrase without "and". Guidelines: class up to ~300 lines, method up to ~40 lines, one class per file. If a class
+  grows past the guideline or gets a second concern (e.g. "flight" and "rocks", "riders" and "stats"), extract that
+  concern into a separate service or component with its own interface instead of adding a `#region`.
+  Don't build a new feature into an existing big class; put it next to it and connect it through DI or an interface.
+  Names say what the class or method does; no abbreviations and no generic words like `Manager`, `Helper`, `Utils`.
+- New tuning numbers go into configs (ScriptableObject), not into `const`.
+- **All configurations (ScriptableObject configs and catalogs that code receives through DI) are loaded only through
+  Addressables and bound only in `ConfigurationInstaller`** (`Container.BindConfigurationFromAddressables<T>(...)`).
+  The address is a constant from the generated `Address.Configurations.*` (`Address_g.cs`, generator in
+  `Tools/Generations/Code generation`), not a hand-written string. Not allowed: `Resources.Load`, `Resources/`
+  folders for configs, loading a config in a module installer via `FromMethod`, your own address-constant classes.
+  New config: asset into the `Configurations` Addressables group → regenerate `Address_g.cs` → a line in
+  `ConfigurationInstaller`.
+- Verify every platform bug and feature in Play mode.
+- **All repository text is in English:** `.md` files (AGENTS.md, CLAUDE.md, docs, READMEs), code comments, commit
+  messages. This holds even when the task or chat is in another language.
 
-## Данные игроков и переподключение (правило для всех новых фич)
-Цель на будущее: игроки могут **заходить в идущую сессию, пока команда на станции** (в фазе Build; в полёте вход
-закрыт). Игрок, который отключился и зашёл снова, **получает свои данные обратно**.
+## Player data and rejoin (rule for all new features)
+Future goal: players can **join a running session while the crew is at a station** (Build phase; joining is closed in
+flight). A player who disconnected and joined again **gets their data back**.
 
-Поэтому:
-- **Всё синхронизируемое состояние игрока хранится в модели этого игрока** (одна модель или набор моделей на
-  каждого игрока), а не только в полях его player-префаба. Сюда относятся: что он держит, личные ресурсы,
-  кресло или роль, прогресс, инвентарь, статус.
-- **Ключ модели — стабильный ID игрока:** SteamID или ID из аутентификатора. Не `netId`, не `connectionId` и не
-  объект игрока: всё это меняется при переподключении.
-- **Модели игроков живут на сервере дольше, чем объект игрока.** При дисконнекте данные не удаляются, игрок
-  помечается offline. Объект игрока — только мост. Когда объект спавнится, он берёт состояние из модели; когда
-  игрок что-то меняет, это идёт через серверные команды в модель.
-- **При реконнекте восстанавливаются:** позиция (на текущей станции), ресурсы, роль. Состояние, которое нельзя
-  восстановить, решается явно. Например, предмет в руках при дисконнекте выпадает на станции.
-- **Общее состояние команды** (баланс команды, модули корабля, фаза рейса) хранится в общих моделях. Его получает
-  любой зашедший игрок, и при позднем входе ему сразу приходит полное текущее состояние.
-- Синхронизацию моделей делаем через модуль сетевых моделей (`NetworkModelModule`: модель + мост + генератор,
-  см. «Синхронизированные модели», для данных игрока — `Scope = PerPlayer`). Новую фичу проверяем вопросом:
-  **«что увидит игрок, который зашёл или перезашёл прямо сейчас?»**
+Therefore:
+- **All synced player state is stored in that player's model** (one model or a set of models per player), not only in
+  fields of their player prefab. This covers: what they hold, personal resources, seat or role, progress, inventory,
+  status.
+- **The model key is a stable player ID:** SteamID or the authenticator ID. Not `netId`, not `connectionId` and not
+  the player object: all of these change on reconnect.
+- **Player models live on the server longer than the player object.** On disconnect the data is not deleted; the
+  player is marked offline. The player object is only a bridge. When the object spawns, it takes its state from the
+  model; when the player changes something, it goes through server commands into the model.
+- **Restored on reconnect:** position (at the current station), resources, role. State that cannot be restored is
+  decided explicitly. For example, an item held at disconnect drops at the station.
+- **Shared crew state** (crew balance, ship modules, run phase) is stored in shared models. Any joining player gets
+  it, and on late join the full current state arrives right away.
+- Models are synced through the network model module (`NetworkModelModule`: model + bridge + generator, see
+  "Synced models"; for player data `Scope = PerPlayer`). Check every new feature with the question:
+  **"what will a player who joined or rejoined right now see?"**
