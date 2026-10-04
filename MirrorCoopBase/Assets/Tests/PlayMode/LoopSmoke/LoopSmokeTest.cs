@@ -84,6 +84,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return BoardPlayerCoroutine();
             int startStationItems = CountSceneObjects<ShipItem>();
             Assert.Greater(startStationItems, 0, "Run 1 has no items at the start station.");
+            yield return new LoopSmokeHandCheck(_ship).ReinstallRadarByHandCoroutine();
 
             ShipLandingPad startPad = FindPadUnderShip();
             yield return FlyLoopCoroutine(1);

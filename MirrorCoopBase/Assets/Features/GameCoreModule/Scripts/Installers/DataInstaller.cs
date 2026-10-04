@@ -2,6 +2,7 @@ using Features.CameraModule.Scripts.Models;
 using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.GrabModule.Scripts;
+using Features.GrabModule.Scripts.Generated;
 using Features.MvpModule;
 using Features.PlayerLifeModule.Scripts.Generated;
 using Features.ShipModule.Scripts;
@@ -25,6 +26,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<SpectatorModel>().AsSingle();
             WalletModelInstaller.Install(Container);
             PlayerLifeModelInstaller.Install(Container);
+            PlayerHandModelInstaller.Install(Container);
         }
     }
 }

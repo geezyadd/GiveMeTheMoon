@@ -30,7 +30,8 @@ namespace Features.AddressablesConstantsGenerator.Generated {
             public const string WalletConfiguration_Default = "WalletConfiguration_Default";
             public const string PlayerStatsConfiguration_Default = "PlayerStatsConfiguration_Default";
             public const string ShipAccumulativeStatsConfiguration_Default = "ShipAccumulativeStatsConfiguration_Default";
-            public static List<string> AllAddressablesInGroup = new List<string>() {"ConnectionConfig_Default","PlayerLifeConfiguration_Default","ShipRunConfig_Default","ShipFlightConfig_Default","PlayerDamageConfiguration_Default","ShopCatalog_Default","WalletConfiguration_Default","PlayerStatsConfiguration_Default","ShipAccumulativeStatsConfiguration_Default",};
+            public const string GrabConfiguration_Default = "GrabConfiguration_Default";
+            public static List<string> AllAddressablesInGroup = new List<string>() {"ConnectionConfig_Default","PlayerLifeConfiguration_Default","ShipRunConfig_Default","ShipFlightConfig_Default","PlayerDamageConfiguration_Default","ShopCatalog_Default","WalletConfiguration_Default","PlayerStatsConfiguration_Default","ShipAccumulativeStatsConfiguration_Default","GrabConfiguration_Default",};
         }
         public static partial class Groups {
             public static List<List<string>> AllAddressablesGroups = new List<List<string>>() {Windows.AllAddressablesInGroup,Scenes.AllAddressablesInGroup,Configurations.AllAddressablesInGroup,};

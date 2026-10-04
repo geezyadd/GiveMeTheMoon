@@ -3,11 +3,14 @@ using Features.CameraModule.Scripts.Services;
 using Zenject;
 
 namespace Features.GrabModule.Scripts {
+    // Moves held items to their hands right after the camera look is applied and before the frame is rendered.
     public sealed class HeldItemFollowSystem : IInitializable, IDisposable {
         private readonly IGameCameraService _gameCameraService;
+        private readonly HeldItemRegistry _heldItems;
 
-        public HeldItemFollowSystem(IGameCameraService gameCameraService) {
+        public HeldItemFollowSystem(IGameCameraService gameCameraService, HeldItemRegistry heldItems) {
             _gameCameraService = gameCameraService;
+            _heldItems = heldItems;
         }
 
         public void Initialize() {
@@ -19,7 +22,7 @@ namespace Features.GrabModule.Scripts {
         }
 
         private void OnLookApplied() {
-            Grabbable.FollowHeldAll();
+            _heldItems.FollowHolders();
         }
     }
 }
