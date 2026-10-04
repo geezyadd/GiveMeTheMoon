@@ -190,6 +190,14 @@ The shop wallet is the `Wallet` model (`long Balance`). The start value comes fr
   folders for configs, loading a config in a module installer via `FromMethod`, your own address-constant classes.
   New config: asset into the `Configurations` Addressables group → regenerate `Address_g.cs` → a line in
   `ConfigurationInstaller`.
+- **Zenject bindings:**
+  - Every model is bound in `DataInstaller`, including generated `<Name>ModelInstaller` calls.
+  - A module binds its own `IGameplaySession` implementations in its own installer (as `ConnectionModuleInstaller`
+    and `TooltipModuleInstaller` do), not in GameCore.
+  - When a class is needed both as itself and through its interfaces, use one
+    `Container.BindInterfacesAndSelfTo<T>().AsSingle();`, not `Bind<T>()` plus `Bind(typeof(I...)).To<T>().FromResolve()`.
+  - No `.NonLazy()` on a class that implements `IInitializable` or `ITickable`: Zenject already creates it at
+    startup. `NonLazy` is only for a class with none of these interfaces that still has to exist from the start.
 - Verify every platform bug and feature in Play mode.
 - **All repository text is in English:** `.md` files (AGENTS.md, CLAUDE.md, docs, READMEs), code comments, commit
   messages. This holds even when the task or chat is in another language.
