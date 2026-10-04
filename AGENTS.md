@@ -175,6 +175,9 @@ The shop wallet is the `Wallet` model (`long Balance`). The start value comes fr
 - Verify every platform bug and feature in Play mode.
 - **All repository text is in English:** `.md` files (AGENTS.md, CLAUDE.md, docs, READMEs), code comments, commit
   messages. This holds even when the task or chat is in another language.
+- **All code comments are in English, with no exceptions:** `//` and `/* */` comments, XML doc comments, `TODO`
+  notes, `[Tooltip]` / `[Header]` texts, and comments in shaders, asmdefs, scripts and generated code templates.
+  When you touch a file with a non-English comment, translate that comment.
 
 ## Player data and rejoin (rule for all new features)
 Future goal: players can **join a running session while the crew is at a station** (Build phase; joining is closed in
