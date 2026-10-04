@@ -16,8 +16,7 @@ namespace Features.MvpModule {
                 .AsSingle();
             
             Container.BindInterfacesTo<WindowFocusSystem>()
-                .AsSingle()
-                .NonLazy();
+                .AsSingle();
         }
     }
 }

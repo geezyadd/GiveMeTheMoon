@@ -8,7 +8,7 @@ namespace Features.CameraModule.Scripts {
         public override void InstallBindings() {
             Container.Bind<CameraCatalog>().FromMethod(LoadCatalog).AsSingle();
             Container.Bind<CursorModel>().AsSingle();
-            Container.BindInterfacesTo<GameCameraService>().AsSingle().NonLazy();
+            Container.BindInterfacesTo<GameCameraService>().AsSingle();
             Container.BindInterfacesTo<CameraLookDriver>().AsSingle();
             Container.BindInterfacesTo<CameraSwitchBinder>().AsSingle();
         }

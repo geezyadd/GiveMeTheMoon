@@ -1,5 +1,3 @@
-using System;
-using Features.GameCoreModule.Scripts;
 using Features.LobbyModule.Scripts;
 using Features.MenuModule.Scripts;
 using Features.MvpModule;
@@ -12,13 +10,10 @@ namespace Features.GameCoreModule.Scripts.Installers {
             ViewSystemInstaller.Install(Container);
             UIByContextInstaller.Install(Container);
 
-            Container.Bind<MenuWindow>().AsSingle();
-            Container.Bind(typeof(IInitializable), typeof(IDisposable)).To<MenuWindow>().FromResolve().NonLazy();
-            Container.Bind<GameHudWindow>().AsSingle();
-            Container.Bind(typeof(IInitializable), typeof(IDisposable)).To<GameHudWindow>().FromResolve().NonLazy();
-            Container.Bind<ShopWindow>().AsSingle();
-            Container.Bind(typeof(IInitializable), typeof(IDisposable)).To<ShopWindow>().FromResolve().NonLazy();
-            Container.BindInterfacesTo<GameFlowWindowsSystem>().AsSingle().NonLazy();
+            Container.BindInterfacesAndSelfTo<MenuWindow>().AsSingle();
+            Container.BindInterfacesAndSelfTo<GameHudWindow>().AsSingle();
+            Container.BindInterfacesAndSelfTo<ShopWindow>().AsSingle();
+            Container.BindInterfacesTo<GameFlowWindowsSystem>().AsSingle();
         }
     }
 }

@@ -1,6 +1,5 @@
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts;
-using Features.GameCoreModule.Contracts;
 using Features.GameFlowStateMachineModule.Scripts.Installers;
 using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts;
@@ -25,8 +24,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             TooltipModuleInstaller.Install(Container);
             ConnectionModuleInstaller.Install(Container);
             WindowsModuleInstaller.Install(Container);
-            Container.Bind<IGameplaySession>().To<ConnectionGameplaySession>().AsSingle();
-            Container.BindInterfacesTo<GameplaySessionLifecycle>().AsSingle().NonLazy();
+            Container.BindInterfacesTo<GameplaySessionLifecycle>().AsSingle();
         }
     }
 }
