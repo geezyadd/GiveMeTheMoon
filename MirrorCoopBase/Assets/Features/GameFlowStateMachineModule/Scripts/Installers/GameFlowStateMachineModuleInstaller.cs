@@ -8,8 +8,8 @@ namespace Features.GameFlowStateMachineModule.Scripts.Installers {
             Container.BindInterfacesAndSelfTo<MenuGameFlowState>().AsSingle();
             Container.BindInterfacesAndSelfTo<SessionGameFlowState>().AsSingle();
             Container.Bind<GameFlowStateSceneMapper>().AsSingle();
+            Container.Bind<GameFlowSceneSwitcher>().AsSingle();
             Container.BindInterfacesTo<GameFlowStateMachineService>().AsSingle();
-            Container.BindInterfacesAndSelfTo<GameFlowSceneTransitionSystem>().AsSingle();
         }
     }
 }

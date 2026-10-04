@@ -1,7 +1,6 @@
 using Features.CameraModule.Scripts.Models;
 using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.CharacterMovableModule.Scripts.Models;
-using Features.GameFlowStateMachineModule.Scripts;
 using Features.GrabModule.Scripts;
 using Features.MvpModule;
 using Features.PlayerLifeModule.Scripts.Generated;
@@ -13,7 +12,6 @@ using Zenject;
 namespace Features.GameCoreModule.Scripts.Installers {
     public sealed class DataInstaller : Installer<DataInstaller> {
         public override void InstallBindings() {
-            Container.Bind<GameFlowStateLifecycleEventClass>().AsSingle();
             Container.Bind<ConnectionSessionModel>().AsSingle();
             Container.Bind<ConnectionSpawnModel>().AsSingle();
             Container.Bind<ConnectionNetworkEvents>().AsSingle();

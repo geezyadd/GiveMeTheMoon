@@ -8,22 +8,22 @@ using Zenject;
 
 namespace Features.GameCoreModule.Scripts {
     public sealed class GameFlowWindowsSystem : IInitializable, IDisposable {
-        private readonly GameFlowStateLifecycleEventClass _lifecycleEvents;
+        private readonly IGameFlowStateMachineService _gameFlow;
         private readonly IWindowsService _windowsService;
 
         public GameFlowWindowsSystem(
-            GameFlowStateLifecycleEventClass lifecycleEvents,
+            IGameFlowStateMachineService gameFlow,
             IWindowsService windowsService) {
-            _lifecycleEvents = lifecycleEvents ?? throw new ArgumentNullException(nameof(lifecycleEvents));
+            _gameFlow = gameFlow ?? throw new ArgumentNullException(nameof(gameFlow));
             _windowsService = windowsService ?? throw new ArgumentNullException(nameof(windowsService));
         }
 
         public void Initialize() {
-            _lifecycleEvents.OnStateEntered += OnStateEntered;
+            _gameFlow.StateEntered += OnStateEntered;
         }
 
         public void Dispose() {
-            _lifecycleEvents.OnStateEntered -= OnStateEntered;
+            _gameFlow.StateEntered -= OnStateEntered;
         }
 
         void OnStateEntered(Type stateType) {
