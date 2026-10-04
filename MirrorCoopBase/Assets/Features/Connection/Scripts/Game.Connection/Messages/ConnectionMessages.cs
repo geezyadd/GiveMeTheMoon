@@ -16,10 +16,6 @@ namespace Game.Connection
         public string sceneToUnload;
     }
 
-    public struct ReturnToLobbyMessage : NetworkMessage { }
-
-    public struct KickMessage : NetworkMessage { }
-
     public struct TeleportMessage : NetworkMessage
     {
         public uint netId;

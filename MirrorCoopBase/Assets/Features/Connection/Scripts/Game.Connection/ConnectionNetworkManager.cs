@@ -33,7 +33,6 @@ namespace Game.Connection
         ConnectionSpawnModel spawn;
         ConnectionNetworkEvents events;
 
-        HashSet<int> joiningConnections;
         Dictionary<NetworkConnectionToClient, bool> mapLoadedByConnection;
         string sceneToUnload;
         bool lookForReadyPlayers;
@@ -140,7 +139,6 @@ namespace Game.Connection
         {
             base.OnStartServer();
             sceneToUnload = SceneManager.GetActiveScene().name;
-            joiningConnections = new HashSet<int>();
             mapLoadedByConnection = new Dictionary<NetworkConnectionToClient, bool>();
             NetworkServer.RegisterHandler<MapLoadedMessage>(OnClientMapLoaded);
             if (SceneManager.GetActiveScene().name == lobbySceneName)
@@ -155,7 +153,6 @@ namespace Game.Connection
             IsMapLoaded = false;
             IsChangingMap = false;
             lookForReadyPlayers = false;
-            joiningConnections = null;
             mapLoadedByConnection = null;
             spawn.Clear();
             events.RaiseServerStopped();
@@ -169,12 +166,6 @@ namespace Game.Connection
             NetworkClient.ReplaceHandler<SceneMessage>(OnMirrorSceneMessage);
             NetworkClient.RegisterHandler<EveryoneIsReadyMessage>(OnEveryoneIsReady);
             NetworkClient.RegisterHandler<SceneChangeMessage>(OnSceneChangeMessage);
-            NetworkClient.RegisterHandler<KickMessage>(_ => StopSessionAndReturnToMenu());
-            NetworkClient.RegisterHandler<ReturnToLobbyMessage>(_ =>
-            {
-                if (NetworkServer.active)
-                    ChangeMap(lobbySceneName);
-            });
             NetworkClient.RegisterHandler<TeleportMessage>(OnTeleportMessage);
             if (SceneManager.GetActiveScene().name == lobbySceneName)
                 IsMapLoaded = true;
@@ -187,8 +178,6 @@ namespace Game.Connection
             NetworkClient.UnregisterHandler<SceneMessage>();
             NetworkClient.UnregisterHandler<EveryoneIsReadyMessage>();
             NetworkClient.UnregisterHandler<SceneChangeMessage>();
-            NetworkClient.UnregisterHandler<KickMessage>();
-            NetworkClient.UnregisterHandler<ReturnToLobbyMessage>();
             NetworkClient.UnregisterHandler<TeleportMessage>();
             lookForReadyPlayers = false;
             loadingSceneAsync = null;
@@ -202,21 +191,8 @@ namespace Game.Connection
             ResetTransportIfIdle();
         }
 
-        public override void OnServerConnect(NetworkConnectionToClient conn)
-        {
-            base.OnServerConnect(conn);
-            joiningConnections?.Add(conn.connectionId);
-        }
-
-        public override void OnServerReady(NetworkConnectionToClient conn)
-        {
-            base.OnServerReady(conn);
-            joiningConnections?.Remove(conn.connectionId);
-        }
-
         public override void OnServerDisconnect(NetworkConnectionToClient conn)
         {
-            joiningConnections?.Remove(conn.connectionId);
             mapLoadedByConnection?.Remove(conn);
             base.OnServerDisconnect(conn);
             if (lookForReadyPlayers)
@@ -264,38 +240,9 @@ namespace Game.Connection
             await sceneLoader.UnloadSceneAsync(sceneName);
         }
 
-        public IEnumerator PrepareLobbyScene()
-        {
-            yield return AwaitTask(PrepareLobbySceneAsync());
-        }
-
         public IEnumerator UnloadSceneIfLoaded(string sceneName)
         {
             yield return AwaitTask(UnloadSceneIfLoadedAsync(sceneName));
-        }
-
-        public bool CanStartMap()
-        {
-            if (IsChangingMap)
-                return false;
-
-            ConnectionAuthenticator authenticator = this.authenticator as ConnectionAuthenticator;
-            if (authenticator != null && authenticator.JoiningIds.Count > 0)
-                return false;
-
-            if (joiningConnections != null && joiningConnections.Count > 0)
-                return false;
-
-            if (mapLoadedByConnection == null)
-                return false;
-
-            foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
-            {
-                if (!mapLoadedByConnection.ContainsKey(conn))
-                    return false;
-            }
-
-            return true;
         }
 
         // The scene change also goes to the host's own client; before it is authenticated it drops the message and disconnects.
@@ -362,17 +309,8 @@ namespace Game.Connection
             if (SceneManager.GetActiveScene().name == lobbySceneName)
                 return false;
 
-            NetworkServer.SendToAll(new ReturnToLobbyMessage());
+            ChangeMap(lobbySceneName);
             return true;
-        }
-
-        public void Kick(NetworkConnectionToClient conn)
-        {
-            if (conn == null)
-                return;
-
-            conn.Send(new KickMessage());
-            StartCoroutine(DisconnectAfterDelay(conn, 0.5f));
         }
 
         public void SetUseSteamTransport(bool useSteam)
@@ -395,14 +333,17 @@ namespace Game.Connection
             Transport.active = selected;
         }
 
-        public void StopSession()
+        // Fire-and-forget entry for network callbacks; a failed scene unload would otherwise be lost silently.
+        public async void StopSessionAndReturnToMenu()
         {
-            _ = StopSessionToMenuAsync();
-        }
-
-        public void StopSessionAndReturnToMenu()
-        {
-            _ = StopSessionToMenuAsync();
+            try
+            {
+                await StopSessionToMenuAsync();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+            }
         }
 
         public async Task StopSessionToMenuAsync()
@@ -633,12 +574,6 @@ namespace Game.Connection
 
             if (controller != null)
                 controller.enabled = true;
-        }
-
-        static IEnumerator DisconnectAfterDelay(NetworkConnectionToClient conn, float delay)
-        {
-            yield return new WaitForSeconds(delay);
-            conn?.Disconnect();
         }
 
         async Task ReturnToMenuAsync()
