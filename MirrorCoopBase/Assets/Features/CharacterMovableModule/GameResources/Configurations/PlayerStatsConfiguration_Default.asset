@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5f9d2b18e4a4b3f0d7c6e9a2b1f4d82, type: 3}
   m_Name: PlayerStatsConfiguration_Default
   m_EditorClassIdentifier: 
-  AccumulativeStats: []
-  _cameraRelative: 1
+  AccumulativeStats: 
   _defaults:
   - Type: 1
     Value: 5
@@ -49,3 +48,4 @@ MonoBehaviour:
     Value: 0
   - Type: 17
     Value: 12
+  _cameraRelative: 1

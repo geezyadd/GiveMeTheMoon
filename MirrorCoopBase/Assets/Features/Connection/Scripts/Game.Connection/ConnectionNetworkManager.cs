@@ -15,8 +15,6 @@ namespace Game.Connection
     [AddComponentMenu("Network/Connection Network Manager")]
     public class ConnectionNetworkManager : NetworkManager
     {
-        public static ConnectionNetworkManager Singleton => singleton as ConnectionNetworkManager;
-
         public static Vector3 SpawnPosition { get; private set; }
         public static Quaternion SpawnRotation { get; private set; } = Quaternion.identity;
         public static bool HasSpawn { get; private set; }

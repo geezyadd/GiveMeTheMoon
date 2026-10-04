@@ -305,7 +305,8 @@ namespace Tests.PlayMode.LoopSmoke {
             if (NetworkClient.localPlayer == null || Object.FindAnyObjectByType<ShipRunDirector>() == null)
                 return false;
 
-            if (NetworkManager.singleton is ConnectionNetworkManager manager && manager.IsMapLoaded == false)
+            ConnectionNetworkManager manager = ResolveNetworkManager();
+            if (manager != null && manager.IsMapLoaded == false)
                 return false;
 
             _ship = Object.FindAnyObjectByType<ShipBase>();
@@ -314,7 +315,8 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         private static bool IsBackInLobby() {
-            if (NetworkManager.singleton is not ConnectionNetworkManager manager || manager.IsMapLoaded == false || manager.IsChangingMap)
+            ConnectionNetworkManager manager = ResolveNetworkManager();
+            if (manager == null || manager.IsMapLoaded == false || manager.IsChangingMap)
                 return false;
 
             Scene game = SceneManager.GetSceneByName(manager.GameSceneName);
@@ -378,6 +380,9 @@ namespace Tests.PlayMode.LoopSmoke {
 
         private static NetworkIdentity LocalPlayer() =>
             NetworkClient.localPlayer;
+
+        private static ConnectionNetworkManager ResolveNetworkManager() =>
+            ProjectContext.Instance.Container.Resolve<ConnectionSessionModel>().NetworkManager;
 
         private static IGameFlowStateMachineService FindGameFlow() {
             foreach (SceneContext context in Object.FindObjectsByType<SceneContext>(FindObjectsSortMode.None)) {

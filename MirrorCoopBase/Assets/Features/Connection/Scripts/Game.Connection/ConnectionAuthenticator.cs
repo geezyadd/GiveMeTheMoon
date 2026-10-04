@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Mirror;
 using Steamworks;
 using UnityEngine;
+using Zenject;
 
 namespace Game.Connection
 {
@@ -28,10 +29,18 @@ namespace Game.Connection
         public readonly HashSet<int> JoiningIds = new HashSet<int>();
         readonly HashSet<NetworkConnection> pendingDisconnects = new HashSet<NetworkConnection>();
 
+        ConnectionSessionModel sessionModel;
+
         public string PlayerName
         {
             get => playerName;
             set => playerName = value;
+        }
+
+        [Inject]
+        void Construct(ConnectionSessionModel connectionSessionModel)
+        {
+            sessionModel = connectionSessionModel;
         }
 
         public override void OnStartServer()
@@ -62,7 +71,7 @@ namespace Game.Connection
                 return;
             }
 
-            ConnectionNetworkManager networkManager = NetworkManager.singleton as ConnectionNetworkManager;
+            ConnectionNetworkManager networkManager = sessionModel?.NetworkManager;
             if (networkManager != null && networkManager.UsesSteamTransport && ((CSteamID)msg.steamId).IsValid() == false)
             {
                 Reject(conn, ConnectionRejectReason.InvalidSteamId);
@@ -147,7 +156,7 @@ namespace Game.Connection
             }
 
             Debug.LogWarning($"Connection rejected: {reason}");
-            ConnectionNetworkManager.Singleton?.StopSessionAndReturnToMenu();
+            sessionModel?.NetworkManager?.StopSessionAndReturnToMenu();
             if (NetworkClient.connection != null)
                 ClientReject();
         }
