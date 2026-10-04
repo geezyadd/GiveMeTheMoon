@@ -1,7 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Features.SceneLoaderModule.Scripts;
 using Mirror;
@@ -11,6 +8,8 @@ using Zenject;
 
 namespace Game.Connection
 {
+    // Mirror's entry point for the session: receives the network callbacks and hands the work to the map change,
+    // spawn placement, persistent scene, transport switch and menu return.
     [DisallowMultipleComponent]
     [AddComponentMenu("Network/Connection Network Manager")]
     public class ConnectionNetworkManager : NetworkManager
@@ -28,23 +27,22 @@ namespace Game.Connection
         [SerializeField] Transport telepathyTransport;
         [SerializeField] Transport fizzyTransport;
 
-        ISceneLoaderService sceneLoader;
         ConnectionSessionModel sessionModel;
-        ConnectionSpawnModel spawn;
         ConnectionNetworkEvents events;
-
-        HashSet<int> joiningConnections;
-        Dictionary<NetworkConnectionToClient, bool> mapLoadedByConnection;
-        string sceneToUnload;
-        bool lookForReadyPlayers;
+        ConnectionTransportSwitch transportSwitch;
+        ConnectionSceneLoading sceneLoading;
+        ConnectionSpawnPlacement spawnPlacement;
+        ConnectionPersistentScene persistentScene;
+        ConnectionMapChange mapChange;
+        ConnectionMenuReturn menuReturn;
         bool returningToMenu;
 
         public string LobbySceneName => lobbySceneName;
         public string MenuSceneName => menuSceneName;
         public string GameSceneName => gameSceneName;
-        public bool IsMapLoaded { get; private set; }
-        public bool IsChangingMap { get; private set; }
-        public bool UsesSteamTransport { get; private set; }
+        public bool IsMapLoaded => mapChange.IsMapLoaded;
+        public bool IsChangingMap => mapChange.IsChangingMap;
+        public bool UsesSteamTransport => transportSwitch.UsesSteam;
 
         public bool IsJoinable =>
             string.IsNullOrEmpty(networkSceneName) || networkSceneName == lobbySceneName;
@@ -57,61 +55,43 @@ namespace Game.Connection
             ConnectionSpawnModel spawnModel,
             ConnectionNetworkEvents networkEvents)
         {
-            sceneLoader = sceneLoaderService;
             sessionModel = connectionSessionModel;
-            spawn = spawnModel;
             events = networkEvents;
+
+            if (connectionConfig != null)
+            {
+                maxConnections = connectionConfig.MaxConnections;
+                everyoneReadyDelay = connectionConfig.EveryoneReadyDelay;
+            }
+
+            var sceneNames = new ConnectionSceneNames(lobbySceneName, menuSceneName, gameSceneName, persistentSceneName);
+            sceneLoading = new ConnectionSceneLoading(sceneLoaderService);
+            spawnPlacement = new ConnectionSpawnPlacement(spawnModel, GetStartPosition);
+            persistentScene = new ConnectionPersistentScene(sceneNames, playerPrefab);
+            menuReturn = new ConnectionMenuReturn(sceneLoading, sceneNames);
+            mapChange = new ConnectionMapChange(
+                this,
+                sceneNames,
+                sceneLoading,
+                spawnPlacement,
+                persistentScene,
+                networkEvents,
+                everyoneReadyDelay,
+                OnClientSceneChanged,
+                StopSessionAndReturnToMenu);
+
             RegisterInModel();
-
-            if (connectionConfig == null)
-                return;
-
-            maxConnections = connectionConfig.MaxConnections;
-            everyoneReadyDelay = connectionConfig.EveryoneReadyDelay;
         }
 
         public override void Awake()
         {
-            ResolveTransports();
+            transportSwitch = new ConnectionTransportSwitch(gameObject, telepathyTransport, fizzyTransport);
             if (transport == null)
-                transport = telepathyTransport;
+                transport = transportSwitch.Telepathy;
 
             offlineScene = string.Empty;
             onlineScene = string.Empty;
             base.Awake();
-        }
-
-        void ResolveTransports()
-        {
-            foreach (Transport candidate in GetComponents<Transport>())
-            {
-                if (candidate is TelepathyTransport telepathy)
-                    telepathyTransport = telepathy;
-                else
-                    fizzyTransport = candidate;
-            }
-
-            if (telepathyTransport != null)
-                telepathyTransport.enabled = UsesSteamTransport == false;
-            if (fizzyTransport != null)
-                fizzyTransport.enabled = UsesSteamTransport;
-        }
-
-        void ResetTransportIfIdle()
-        {
-            if (UsesSteamTransport == false)
-                return;
-            if (NetworkServer.active || NetworkClient.active)
-                return;
-
-            try
-            {
-                SetUseSteamTransport(false);
-            }
-            catch (Exception exception)
-            {
-                Debug.LogException(exception);
-            }
         }
 
         void OnEnable()
@@ -139,25 +119,14 @@ namespace Game.Connection
         public override void OnStartServer()
         {
             base.OnStartServer();
-            sceneToUnload = SceneManager.GetActiveScene().name;
-            joiningConnections = new HashSet<int>();
-            mapLoadedByConnection = new Dictionary<NetworkConnectionToClient, bool>();
-            NetworkServer.RegisterHandler<MapLoadedMessage>(OnClientMapLoaded);
-            if (SceneManager.GetActiveScene().name == lobbySceneName)
-                IsMapLoaded = true;
-
+            mapChange.StartServer();
             events.RaiseServerStarted();
         }
 
         public override void OnStopServer()
         {
-            NetworkServer.UnregisterHandler<MapLoadedMessage>();
-            IsMapLoaded = false;
-            IsChangingMap = false;
-            lookForReadyPlayers = false;
-            joiningConnections = null;
-            mapLoadedByConnection = null;
-            spawn.Clear();
+            mapChange.StopServer();
+            spawnPlacement.ClearSpawn();
             events.RaiseServerStopped();
             base.OnStopServer();
             ResetTransportIfIdle();
@@ -166,75 +135,38 @@ namespace Game.Connection
         public override void OnStartClient()
         {
             base.OnStartClient();
-            NetworkClient.ReplaceHandler<SceneMessage>(OnMirrorSceneMessage);
-            NetworkClient.RegisterHandler<EveryoneIsReadyMessage>(OnEveryoneIsReady);
-            NetworkClient.RegisterHandler<SceneChangeMessage>(OnSceneChangeMessage);
-            NetworkClient.RegisterHandler<KickMessage>(_ => StopSessionAndReturnToMenu());
-            NetworkClient.RegisterHandler<ReturnToLobbyMessage>(_ =>
-            {
-                if (NetworkServer.active)
-                    ChangeMap(lobbySceneName);
-            });
-            NetworkClient.RegisterHandler<TeleportMessage>(OnTeleportMessage);
-            if (SceneManager.GetActiveScene().name == lobbySceneName)
-                IsMapLoaded = true;
-
+            mapChange.StartClient();
+            NetworkClient.RegisterHandler<TeleportMessage>(ConnectionSpawnPlacement.OnTeleportMessage);
             events.RaiseClientStarted();
         }
 
         public override void OnStopClient()
         {
-            NetworkClient.UnregisterHandler<SceneMessage>();
-            NetworkClient.UnregisterHandler<EveryoneIsReadyMessage>();
-            NetworkClient.UnregisterHandler<SceneChangeMessage>();
-            NetworkClient.UnregisterHandler<KickMessage>();
-            NetworkClient.UnregisterHandler<ReturnToLobbyMessage>();
+            mapChange.StopClient();
             NetworkClient.UnregisterHandler<TeleportMessage>();
-            lookForReadyPlayers = false;
             loadingSceneAsync = null;
             networkSceneName = string.Empty;
-            sceneToUnload = string.Empty;
-            IsMapLoaded = false;
-            IsChangingMap = false;
-            spawn.Clear();
+            spawnPlacement.ClearSpawn();
             events.RaiseClientStopped();
             base.OnStopClient();
             ResetTransportIfIdle();
         }
 
-        public override void OnServerConnect(NetworkConnectionToClient conn)
-        {
-            base.OnServerConnect(conn);
-            joiningConnections?.Add(conn.connectionId);
-        }
-
-        public override void OnServerReady(NetworkConnectionToClient conn)
-        {
-            base.OnServerReady(conn);
-            joiningConnections?.Remove(conn.connectionId);
-        }
-
         public override void OnServerDisconnect(NetworkConnectionToClient conn)
         {
-            joiningConnections?.Remove(conn.connectionId);
-            mapLoadedByConnection?.Remove(conn);
+            mapChange.ForgetConnection(conn);
             base.OnServerDisconnect(conn);
-            if (lookForReadyPlayers)
-                CheckIfEverybodyIsReady();
+            mapChange.RecheckReadyPlayers();
         }
 
         public override void OnServerAddPlayer(NetworkConnectionToClient conn)
         {
-            Transform start = spawn.HasSpawn ? null : GetStartPosition();
-            Vector3 position = spawn.HasSpawn ? spawn.Position : (start != null ? start.position : Vector3.zero);
-            Quaternion rotation = spawn.HasSpawn ? spawn.Rotation : (start != null ? start.rotation : Quaternion.identity);
-
-            GameObject player = Instantiate(playerPrefab, position, rotation);
+            Pose spawn = spawnPlacement.GetSpawnPose();
+            GameObject player = Instantiate(playerPrefab, spawn.position, spawn.rotation);
             player.name = $"{playerPrefab.name} [connId={conn.connectionId}]";
             NetworkServer.AddPlayerForConnection(conn, player);
-            MoveToPersistentScene(player);
-            if (mapLoadedByConnection != null)
-                mapLoadedByConnection[conn] = false;
+            persistentScene.MoveToPersistentScene(player);
+            mapChange.AddPlayer(conn);
         }
 
         public override void OnClientDisconnect()
@@ -249,54 +181,11 @@ namespace Game.Connection
             if (string.IsNullOrEmpty(lobbySceneName))
                 return;
 
-            await LoadAddressableSceneAsync(lobbySceneName);
-
-            Scene lobby = SceneManager.GetSceneByName(lobbySceneName);
-            if (lobby.IsValid())
-                SceneManager.SetActiveScene(lobby);
+            await sceneLoading.LoadAndActivateAsync(lobbySceneName);
         }
 
-        public async Task UnloadSceneIfLoadedAsync(string sceneName)
-        {
-            if (string.IsNullOrEmpty(sceneName) || sceneLoader == null)
-                return;
-
-            await sceneLoader.UnloadSceneAsync(sceneName);
-        }
-
-        public IEnumerator PrepareLobbyScene()
-        {
-            yield return AwaitTask(PrepareLobbySceneAsync());
-        }
-
-        public IEnumerator UnloadSceneIfLoaded(string sceneName)
-        {
-            yield return AwaitTask(UnloadSceneIfLoadedAsync(sceneName));
-        }
-
-        public bool CanStartMap()
-        {
-            if (IsChangingMap)
-                return false;
-
-            ConnectionAuthenticator authenticator = this.authenticator as ConnectionAuthenticator;
-            if (authenticator != null && authenticator.JoiningIds.Count > 0)
-                return false;
-
-            if (joiningConnections != null && joiningConnections.Count > 0)
-                return false;
-
-            if (mapLoadedByConnection == null)
-                return false;
-
-            foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
-            {
-                if (!mapLoadedByConnection.ContainsKey(conn))
-                    return false;
-            }
-
-            return true;
-        }
+        public Task UnloadSceneIfLoadedAsync(string sceneName) =>
+            sceneLoading.UnloadIfLoadedAsync(sceneName);
 
         // The scene change also goes to the host's own client; before it is authenticated it drops the message and disconnects.
         public bool CanStartGame()
@@ -319,7 +208,7 @@ namespace Game.Connection
             if (gameScene.IsValid() && gameScene.isLoaded)
                 return;
 
-            sceneToUnload = lobbySceneName;
+            mapChange.UnloadAfterChange(lobbySceneName);
             ChangeMap(gameSceneName);
         }
 
@@ -343,15 +232,9 @@ namespace Game.Connection
                 return;
             }
 
+            // Only NetworkManager can set networkSceneName, so it stays here.
             networkSceneName = newSceneName;
-            lookForReadyPlayers = true;
-            IsChangingMap = true;
-            events.RaiseMapLoadStarted();
-            NetworkServer.SendToAll(new SceneChangeMessage
-            {
-                sceneName = newSceneName,
-                operation = SceneOperation.LoadAdditive
-            });
+            mapChange.Begin(newSceneName);
         }
 
         public bool ReturnToLobby()
@@ -362,47 +245,27 @@ namespace Game.Connection
             if (SceneManager.GetActiveScene().name == lobbySceneName)
                 return false;
 
-            NetworkServer.SendToAll(new ReturnToLobbyMessage());
+            ChangeMap(lobbySceneName);
             return true;
-        }
-
-        public void Kick(NetworkConnectionToClient conn)
-        {
-            if (conn == null)
-                return;
-
-            conn.Send(new KickMessage());
-            StartCoroutine(DisconnectAfterDelay(conn, 0.5f));
         }
 
         public void SetUseSteamTransport(bool useSteam)
         {
-            Transport selected = useSteam ? fizzyTransport : telepathyTransport;
-            if (selected == null)
+            transport = transportSwitch.Select(useSteam);
+            Transport.active = transport;
+        }
+
+        // Fire-and-forget entry for network callbacks; a failed scene unload would otherwise be lost silently.
+        public async void StopSessionAndReturnToMenu()
+        {
+            try
             {
-                throw new InvalidOperationException(useSteam
-                    ? "FizzySteamworks transport is missing on ConnectionNetwork."
-                    : "Telepathy transport is missing on ConnectionNetwork.");
+                await StopSessionToMenuAsync();
             }
-
-            UsesSteamTransport = useSteam;
-            if (telepathyTransport != null)
-                telepathyTransport.enabled = useSteam == false;
-            if (fizzyTransport != null)
-                fizzyTransport.enabled = useSteam;
-
-            transport = selected;
-            Transport.active = selected;
-        }
-
-        public void StopSession()
-        {
-            _ = StopSessionToMenuAsync();
-        }
-
-        public void StopSessionAndReturnToMenu()
-        {
-            _ = StopSessionToMenuAsync();
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+            }
         }
 
         public async Task StopSessionToMenuAsync()
@@ -411,264 +274,11 @@ namespace Game.Connection
                 return;
 
             returningToMenu = true;
-            StopHost();
-            IsMapLoaded = false;
-            await ReturnToMenuAsync();
-        }
-
-        void OnMirrorSceneMessage(SceneMessage msg)
-        {
-            StartCoroutine(HandleMirrorSceneMessage(msg));
-        }
-
-        IEnumerator HandleMirrorSceneMessage(SceneMessage msg)
-        {
-            if (NetworkServer.active)
-                yield break;
-
-            if (msg.sceneOperation == SceneOperation.UnloadAdditive)
-            {
-                yield return UnloadSceneIfLoaded(msg.sceneName);
-                NetworkClient.isLoadingScene = false;
-                yield break;
-            }
-
-            Scene existing = SceneManager.GetSceneByName(msg.sceneName);
-            if (existing.IsValid() && existing.isLoaded)
-            {
-                SceneManager.SetActiveScene(existing);
-                NetworkClient.isLoadingScene = false;
-                OnClientSceneChanged();
-                yield break;
-            }
-
-            NetworkClient.isLoadingScene = true;
-            yield return LoadAddressableScene(msg.sceneName);
-
-            Scene loaded = SceneManager.GetSceneByName(msg.sceneName);
-            if (loaded.IsValid())
-                SceneManager.SetActiveScene(loaded);
-
-            NetworkClient.isLoadingScene = false;
-            OnClientSceneChanged();
-        }
-
-        void OnSceneChangeMessage(SceneChangeMessage msg)
-        {
-            StartCoroutine(HandleSceneChange(msg));
-        }
-
-        void BeginSceneLoadPause()
-        {
-            if (NetworkClient.active)
-                NetworkClient.isLoadingScene = true;
-            if (NetworkServer.active)
-                NetworkServer.isLoadingScene = true;
-        }
-
-        void EndSceneLoadPause()
-        {
-            if (NetworkClient.active)
-                NetworkClient.isLoadingScene = false;
-            if (NetworkServer.active)
-                NetworkServer.isLoadingScene = false;
-        }
-
-        IEnumerator HandleSceneChange(SceneChangeMessage msg)
-        {
-            if (msg.operation == SceneOperation.LoadAdditive)
-            {
-                IsMapLoaded = false;
-                spawn.Clear();
-                // Spawn messages that arrive before this scene's NetworkIdentities are
-                // registered are dropped. Pause the inbox for the whole load, including
-                // the wait, and resume only after they are registered.
-                BeginSceneLoadPause();
-                yield return new WaitForSeconds(0.1f);
-                events.RaiseMapUnloading(SceneManager.GetActiveScene().name);
-            }
-
-            switch (msg.operation)
-            {
-                case SceneOperation.LoadAdditive:
-                    Scene loaded = SceneManager.GetSceneByName(msg.sceneName);
-                    if (loaded.IsValid() == false)
-                    {
-                        yield return LoadAddressableScene(msg.sceneName);
-
-                        loaded = SceneManager.GetSceneByName(msg.sceneName);
-                        if (loaded.IsValid() == false)
-                        {
-                            EndSceneLoadPause();
-                            StopSessionAndReturnToMenu();
-                            yield break;
-                        }
-
-                        SceneManager.SetActiveScene(loaded);
-                    }
-
-                    PrepareSceneNetworkIdentities(loaded);
-                    if (NetworkClient.active)
-                        NetworkClient.PrepareToSpawnSceneObjects();
-                    if (NetworkServer.active)
-                        NetworkServer.SpawnObjects();
-
-                    EndSceneLoadPause();
-                    NetworkClient.Send(new MapLoadedMessage());
-                    break;
-
-                case SceneOperation.UnloadAdditive:
-                    if (NetworkServer.active)
-                        DestroyMapObjects(msg.sceneName);
-                    MovePlayersToPersistentScene();
-                    yield return UnloadSceneIfLoaded(msg.sceneName);
-                    Scene leftover = SceneManager.GetSceneByName(msg.sceneName);
-                    if (leftover.IsValid() && leftover.isLoaded)
-                        yield return SceneManager.UnloadSceneAsync(leftover);
-                    break;
-            }
-        }
-
-        void OnClientMapLoaded(NetworkConnectionToClient conn, MapLoadedMessage _)
-        {
-            if (mapLoadedByConnection == null)
-                return;
-
-            mapLoadedByConnection[conn] = true;
-            if (lookForReadyPlayers)
-                CheckIfEverybodyIsReady();
-        }
-
-        void CheckIfEverybodyIsReady()
-        {
-            foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
-            {
-                if (!mapLoadedByConnection.TryGetValue(conn, out bool loaded) || !loaded)
-                    return;
-            }
-
-            foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values.ToArray())
-                mapLoadedByConnection[conn] = false;
-
-            TeleportEverybodyToSpawn();
-            StartCoroutine(SendEveryoneReady());
-        }
-
-        IEnumerator SendEveryoneReady()
-        {
-            yield return new WaitForSeconds(everyoneReadyDelay);
-            NetworkServer.SendToAll(new EveryoneIsReadyMessage { sceneToUnload = sceneToUnload });
-            sceneToUnload = networkSceneName;
-        }
-
-        void OnEveryoneIsReady(EveryoneIsReadyMessage ready)
-        {
-            if (NetworkServer.active && !string.IsNullOrEmpty(ready.sceneToUnload))
-            {
-                NetworkServer.SendToAll(new SceneChangeMessage
-                {
-                    sceneName = ready.sceneToUnload,
-                    operation = SceneOperation.UnloadAdditive
-                });
-            }
-
-            StartCoroutine(FinishMapReady());
-        }
-
-        IEnumerator FinishMapReady()
-        {
-            yield return new WaitForSeconds(everyoneReadyDelay);
-            IsMapLoaded = true;
-            IsChangingMap = false;
-            lookForReadyPlayers = false;
-            if (NetworkServer.active)
-                NetworkServer.isLoadingScene = false;
-            events.RaiseMapReady();
-        }
-
-        void TeleportEverybodyToSpawn()
-        {
-            Transform start = spawn.HasSpawn ? null : GetStartPosition();
-            Vector3 position = spawn.HasSpawn ? spawn.Position : (start != null ? start.position : Vector3.zero);
-            Quaternion rotation = spawn.HasSpawn ? spawn.Rotation : (start != null ? start.rotation : Quaternion.identity);
-
-            foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
-            {
-                if (conn.identity == null)
-                    continue;
-
-                NetworkServer.SendToReady(new TeleportMessage
-                {
-                    netId = conn.identity.netId,
-                    position = position,
-                    rotation = rotation
-                });
-            }
-        }
-
-        static void OnTeleportMessage(TeleportMessage msg)
-        {
-            if (!NetworkClient.spawned.TryGetValue(msg.netId, out NetworkIdentity identity) || identity == null)
-                return;
-
-            ApplyTeleport(identity.transform, msg.position, msg.rotation);
-        }
-
-        static void ApplyTeleport(Transform target, Vector3 position, Quaternion rotation)
-        {
-            CharacterController controller = target.GetComponent<CharacterController>();
-            if (controller != null)
-                controller.enabled = false;
-
-            Rigidbody rigidbody = target.GetComponent<Rigidbody>();
-            if (rigidbody != null)
-            {
-                rigidbody.position = position;
-                rigidbody.rotation = rotation;
-                rigidbody.linearVelocity = Vector3.zero;
-                rigidbody.angularVelocity = Vector3.zero;
-            }
-
-            target.SetPositionAndRotation(position, rotation);
-
-            if (controller != null)
-                controller.enabled = true;
-        }
-
-        static IEnumerator DisconnectAfterDelay(NetworkConnectionToClient conn, float delay)
-        {
-            yield return new WaitForSeconds(delay);
-            conn?.Disconnect();
-        }
-
-        async Task ReturnToMenuAsync()
-        {
             try
             {
-                if (!string.IsNullOrEmpty(menuSceneName))
-                {
-                    await LoadAddressableSceneAsync(menuSceneName);
-                    Scene menu = SceneManager.GetSceneByName(menuSceneName);
-                    if (menu.IsValid())
-                        SceneManager.SetActiveScene(menu);
-                }
-
-                if (!string.IsNullOrEmpty(lobbySceneName))
-                    await UnloadSceneIfLoadedAsync(lobbySceneName);
-
-                if (!string.IsNullOrEmpty(gameSceneName))
-                    await UnloadSceneIfLoadedAsync(gameSceneName);
-
-                for (int i = SceneManager.sceneCount - 1; i >= 0; i--)
-                {
-                    Scene scene = SceneManager.GetSceneAt(i);
-                    if (scene.IsValid() == false)
-                        continue;
-                    if (scene.name == menuSceneName || scene.name == persistentSceneName || scene.name == "DontDestroyOnLoad")
-                        continue;
-
-                    await UnloadSceneIfLoadedAsync(scene.name);
-                }
+                StopHost();
+                mapChange.MarkMapUnloaded();
+                await menuReturn.ReturnAsync();
             }
             finally
             {
@@ -676,130 +286,21 @@ namespace Game.Connection
             }
         }
 
-        IEnumerator LoadAddressableScene(string sceneName)
+        void ResetTransportIfIdle()
         {
-            yield return AwaitTask(LoadAddressableSceneAsync(sceneName));
-        }
-
-        async Task LoadAddressableSceneAsync(string sceneName)
-        {
-            if (string.IsNullOrEmpty(sceneName))
+            if (UsesSteamTransport == false)
+                return;
+            if (NetworkServer.active || NetworkClient.active)
                 return;
 
-            if (sceneLoader == null)
+            try
             {
-                Debug.LogError("ConnectionNetworkManager: ISceneLoaderService is missing.");
-                return;
+                SetUseSteamTransport(false);
             }
-
-            await sceneLoader.LoadSceneAsync(sceneName, false);
-        }
-
-        void MovePlayersToPersistentScene()
-        {
-            if (NetworkServer.active)
+            catch (Exception exception)
             {
-                foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
-                {
-                    if (conn.identity != null)
-                        MoveToPersistentScene(conn.identity.gameObject);
-                }
+                Debug.LogException(exception);
             }
-
-            if (NetworkClient.active == false)
-                return;
-
-            // connectionToClient exists only on the server: a client recognises remote players by the player prefab.
-            uint playerAssetId = playerPrefab.GetComponent<NetworkIdentity>().assetId;
-            foreach (NetworkIdentity identity in NetworkClient.spawned.Values)
-            {
-                if (identity == null || identity.assetId != playerAssetId)
-                    continue;
-
-                MoveToPersistentScene(identity.gameObject);
-            }
-        }
-
-        // Pads, drops, items and wrecks are spawned into the map scene; destroy them through Mirror so clients drop them too
-        // and nothing from this map survives into the next one. Scene objects still go with the scene unload.
-        static void DestroyMapObjects(string sceneName)
-        {
-            foreach (NetworkIdentity identity in NetworkServer.spawned.Values.ToArray())
-            {
-                if (IsMapRuntimeObject(identity, sceneName) == false)
-                    continue;
-
-                NetworkServer.Destroy(identity.gameObject);
-            }
-        }
-
-        static bool IsMapRuntimeObject(NetworkIdentity identity, string sceneName) =>
-            identity != null
-            && identity.sceneId == 0
-            && IsPlayerObject(identity) == false
-            && identity.gameObject.scene.name == sceneName;
-
-        static bool IsPlayerObject(NetworkIdentity identity) =>
-            identity.connectionToClient != null && identity.connectionToClient.identity == identity;
-
-        void MoveToPersistentScene(GameObject target)
-        {
-            if (target == null)
-                return;
-
-            Scene persistent = SceneManager.GetSceneByName(persistentSceneName);
-            if (persistent.IsValid() && persistent.isLoaded)
-            {
-                if (target.scene != persistent)
-                    SceneManager.MoveGameObjectToScene(target, persistent);
-                return;
-            }
-
-            DontDestroyOnLoad(target);
-        }
-
-        static void PrepareSceneNetworkIdentities(Scene scene)
-        {
-            if (scene.IsValid() == false || scene.isLoaded == false)
-                return;
-
-            GameObject[] roots = scene.GetRootGameObjects();
-            for (int i = 0; i < roots.Length; i++)
-            {
-                NetworkIdentity[] identities = roots[i].GetComponentsInChildren<NetworkIdentity>(true);
-                for (int j = 0; j < identities.Length; j++)
-                {
-                    NetworkIdentity identity = identities[j];
-                    if (identity.sceneId != 0)
-                        continue;
-
-                    identity.sceneId = StableSceneId(identity);
-                }
-            }
-        }
-
-        static ulong StableSceneId(NetworkIdentity identity)
-        {
-            string key = identity.gameObject.scene.name + ":" + GetHierarchyPath(identity.transform);
-            unchecked
-            {
-                ulong hash = 2166136261;
-                for (int i = 0; i < key.Length; i++)
-                {
-                    hash ^= key[i];
-                    hash *= 16777619;
-                }
-
-                return hash == 0 ? 1UL : hash;
-            }
-        }
-
-        static string GetHierarchyPath(Transform transform)
-        {
-            if (transform.parent == null)
-                return transform.name;
-
-            return GetHierarchyPath(transform.parent) + "/" + transform.name;
         }
 
         void RegisterInModel()
@@ -808,15 +309,6 @@ namespace Game.Connection
                 return;
 
             sessionModel.NetworkManager = this;
-        }
-
-        static IEnumerator AwaitTask(Task task)
-        {
-            while (task != null && task.IsCompleted == false)
-                yield return null;
-
-            if (task is { IsFaulted: true })
-                Debug.LogException(task.Exception?.InnerException ?? task.Exception);
         }
     }
 }

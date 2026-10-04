@@ -26,7 +26,6 @@ namespace Game.Connection
         [Header("Client")]
         [SerializeField] string playerName = "Player";
 
-        public readonly HashSet<int> JoiningIds = new HashSet<int>();
         readonly HashSet<NetworkConnection> pendingDisconnects = new HashSet<NetworkConnection>();
 
         ConnectionSessionModel sessionModel;
@@ -45,19 +44,12 @@ namespace Game.Connection
 
         public override void OnStartServer()
         {
-            JoiningIds.Clear();
             NetworkServer.RegisterHandler<AuthRequestMessage>(OnAuthRequestMessage, requireAuthentication: false);
         }
 
         public override void OnStopServer()
         {
             NetworkServer.UnregisterHandler<AuthRequestMessage>();
-            JoiningIds.Clear();
-        }
-
-        public override void OnServerAuthenticate(NetworkConnectionToClient conn)
-        {
-            JoiningIds.Add(conn.connectionId);
         }
 
         void OnAuthRequestMessage(NetworkConnectionToClient conn, AuthRequestMessage msg)
@@ -87,7 +79,6 @@ namespace Game.Connection
             conn.authenticationData = msg;
             conn.Send(new AuthResponseMessage { rejection = (byte)ConnectionRejectReason.Accepted });
             ServerAccept(conn);
-            JoiningIds.Remove(conn.connectionId);
         }
 
         void Reject(NetworkConnectionToClient conn, ConnectionRejectReason reason)
@@ -103,7 +94,6 @@ namespace Game.Connection
             yield return new WaitForSeconds(1f);
             ServerReject(conn);
             yield return null;
-            JoiningIds.Remove(conn.connectionId);
             pendingDisconnects.Remove(conn);
         }
 
