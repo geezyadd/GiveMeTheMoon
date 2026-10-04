@@ -4,25 +4,37 @@
 using System.Collections.Generic;
 namespace Features.AddressablesConstantsGenerator.Generated {
     public partial class Address {
-        public static partial class Configurations {
-            public const string ADDRESSABLE_GROUP_NAME = "Configurations";
-            public const string ConnectionConfig_Default = "ConnectionConfig_Default";
-            public const string ShipRunConfig_Default = "ShipRunConfig_Default";
-            public const string ShipFlightConfig_Default = "ShipFlightConfig_Default";
-            public const string ShipAccumulativeStatsConfiguration_Default = "ShipAccumulativeStatsConfiguration_Default";
-            public static List<string> AllAddressablesInGroup = new List<string>() {"ConnectionConfig_Default","ShipRunConfig_Default","ShipFlightConfig_Default","ShipAccumulativeStatsConfiguration_Default",};
+        public static partial class Windows {
+            public const string ADDRESSABLE_GROUP_NAME = "Windows";
+            public const string ShopWindow = "ShopWindow";
+            public const string MenuWindow = "MenuWindow";
+            public const string GameHudWindow = "GameHudWindow";
+            public static List<string> AllAddressablesInGroup = new List<string>() {"ShopWindow","MenuWindow","GameHudWindow",};
         }
         public static partial class Scenes {
             public const string ADDRESSABLE_GROUP_NAME = "Scenes";
-            public const string GlobalScene = "GlobalScene";
-            public const string MenuScene = "MenuScene";
             public const string LobbyScene = "LobbyScene";
             public const string GameScene = "GameScene";
-            public static List<string> AllAddressablesInGroup = new List<string>() {"GlobalScene","MenuScene","LobbyScene","GameScene",};
+            public const string MenuScene = "MenuScene";
+            public const string GlobalScene = "GlobalScene";
+            public static List<string> AllAddressablesInGroup = new List<string>() {"LobbyScene","GameScene","MenuScene","GlobalScene",};
+        }
+        public static partial class Configurations {
+            public const string ADDRESSABLE_GROUP_NAME = "Configurations";
+            public const string ConnectionConfig_Default = "ConnectionConfig_Default";
+            public const string PlayerLifeConfiguration_Default = "PlayerLifeConfiguration_Default";
+            public const string ShipRunConfig_Default = "ShipRunConfig_Default";
+            public const string ShipFlightConfig_Default = "ShipFlightConfig_Default";
+            public const string PlayerDamageConfiguration_Default = "PlayerDamageConfiguration_Default";
+            public const string ShopCatalog_Default = "ShopCatalog_Default";
+            public const string WalletConfiguration_Default = "WalletConfiguration_Default";
+            public const string PlayerStatsConfiguration_Default = "PlayerStatsConfiguration_Default";
+            public const string ShipAccumulativeStatsConfiguration_Default = "ShipAccumulativeStatsConfiguration_Default";
+            public static List<string> AllAddressablesInGroup = new List<string>() {"ConnectionConfig_Default","PlayerLifeConfiguration_Default","ShipRunConfig_Default","ShipFlightConfig_Default","PlayerDamageConfiguration_Default","ShopCatalog_Default","WalletConfiguration_Default","PlayerStatsConfiguration_Default","ShipAccumulativeStatsConfiguration_Default",};
         }
         public static partial class Groups {
-            public static List<List<string>> AllAddressablesGroups = new List<List<string>>() {Configurations.AllAddressablesInGroup,Scenes.AllAddressablesInGroup,};
-            public static List<string> AllAddressablesGroupNames = new List<string>() {Configurations.ADDRESSABLE_GROUP_NAME,Scenes.ADDRESSABLE_GROUP_NAME,};
+            public static List<List<string>> AllAddressablesGroups = new List<List<string>>() {Windows.AllAddressablesInGroup,Scenes.AllAddressablesInGroup,Configurations.AllAddressablesInGroup,};
+            public static List<string> AllAddressablesGroupNames = new List<string>() {Windows.ADDRESSABLE_GROUP_NAME,Scenes.ADDRESSABLE_GROUP_NAME,Configurations.ADDRESSABLE_GROUP_NAME,};
         }
     }
 }

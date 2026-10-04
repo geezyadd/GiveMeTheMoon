@@ -19,11 +19,11 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<ShipAccumulativeStatsConfiguration>(
                     Address.Configurations.ShipAccumulativeStatsConfiguration_Default)
                 .AsSingle();
-            Container.BindConfigurationFromAddressables<ShopCatalog>(ShopConfigurationAddresses.SHOP_CATALOG_DEFAULT).AsSingle();
-            Container.BindConfigurationFromAddressables<WalletConfiguration>(ShopConfigurationAddresses.WALLET_CONFIGURATION_DEFAULT).AsSingle();
-            Container.BindConfigurationFromAddressables<PlayerStatsConfiguration>(PlayerConfigurationAddresses.PLAYER_STATS_DEFAULT).AsSingle();
-            Container.BindConfigurationFromAddressables<PlayerDamageConfiguration>(PlayerDamageConfigurationAddresses.PLAYER_DAMAGE_CONFIGURATION_DEFAULT).AsSingle();
-            Container.BindConfigurationFromAddressables<PlayerLifeConfiguration>(PlayerLifeConfigurationAddresses.PLAYER_LIFE_CONFIGURATION_DEFAULT).AsSingle();
+            Container.BindConfigurationFromAddressables<ShopCatalog>(Address.Configurations.ShopCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<WalletConfiguration>(Address.Configurations.WalletConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<PlayerStatsConfiguration>(Address.Configurations.PlayerStatsConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<PlayerDamageConfiguration>(Address.Configurations.PlayerDamageConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<PlayerLifeConfiguration>(Address.Configurations.PlayerLifeConfiguration_Default).AsSingle();
         }
     }
 }
