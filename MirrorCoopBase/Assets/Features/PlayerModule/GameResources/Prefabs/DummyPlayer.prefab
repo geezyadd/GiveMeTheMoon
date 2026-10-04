@@ -56,6 +56,7 @@ GameObject:
   - component: {fileID: 6409845104136634497}
   - component: {fileID: 1398678206992027593}
   - component: {fileID: 6527957220569057197}
+  - component: {fileID: 7409845104136634498}
   m_Layer: 0
   m_Name: DummyPlayer
   m_TagString: Untagged
@@ -301,10 +302,6 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   _armPoint: {fileID: 2113930397777874509}
-  _interactableMask:
-    serializedVersion: 2
-    m_Bits: 128
-  _range: 4
 --- !u!114 &9209845104136634495
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -321,10 +318,6 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   _grab: {fileID: 7209845104136634493}
-  _interactableMask:
-    serializedVersion: 2
-    m_Bits: 128
-  _range: 4
 --- !u!114 &8209845104136634494
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -412,6 +405,24 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
+--- !u!114 &7409845104136634498
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18d54b4aad145668efedb30a559fc3f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  _grab: {fileID: 7209845104136634493}
+  _use: {fileID: 9209845104136634495}
+  _aimOrigin: {fileID: 7330000000000000032}
 --- !u!1 &2613348676932129866
 GameObject:
   m_ObjectHideFlags: 0

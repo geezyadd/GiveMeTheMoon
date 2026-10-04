@@ -91,8 +91,10 @@ types.
      have their own asmdef.
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader).
-  3. `Features.CameraModule` (CharacterMovable, Contracts, Input) → `Features.GrabModule` (Camera, CharacterMovable).
-  4. `Features.ShipModule` (Camera, Grab, CharacterMovable, FloatingController, GameFlow, Stats, Connection, MiniMap),
+  3. `Features.CameraModule` (CharacterMovable, Contracts, Input) → `Features.GrabModule` (Camera, CharacterMovable,
+     Contracts, NetworkModel).
+  4. `Features.ShipModule` (Camera, Grab, CharacterMovable, FloatingController, GameFlow, Stats, Connection, MiniMap,
+     NetworkModel),
      `Features.MenuModule` (GameFlow, Mvp, Connection).
   5. `Features.PlayerLifeModule` (Ship, Grab, Camera, Mvp, NetworkModel, Connection), `Features.LobbyModule` (Ship,
      GameFlow, Mvp, Connection).
@@ -115,7 +117,7 @@ types.
 | Flight and landing settings | `ShipFlightSettings` (+ `ShipFlightConfig_Default.asset`), `ShipRunConfig` |
 | Modules and slots | `ShipItem`, `ShipSocket`, `Ship*Interactable`, catalogs in `ShipModule/GameResources/Resources/` |
 | Stats | `Assets/Features/StatsModule/`, `ShipStatType`, `ShipStatEntity` |
-| Interaction | `Assets/Features/GrabModule/` (`UseController`, `InteractableBase`, `Grabbable`) |
+| Interaction | `Assets/Features/GrabModule/`: `LocalPlayerInteraction` (aim, highlight, button), `GrabController` (hand, `PlayerHand` model), `UseController`, `HeldItemRegistry`, `InteractableBase`, `Grabbable`, `GrabConfiguration` |
 | Shop and money | `Assets/Features/ShopModule/` (`CrewWallet`, `ShopCatalog`, `WalletConfiguration`) |
 | Scenes | `GameCoreModule/GameResources/Scenes/`: Bootstrap → Menu → Lobby → Game; only Bootstrap is in Build Settings |
 
@@ -125,7 +127,8 @@ ParrelSync clone (`MirrorCoopBase_clone_0`).
 
 ### Loop autotest
 The PlayMode test `LoopSmokeTest` (`Assets/Tests/PlayMode/LoopSmoke/`) plays the M1 loop on a host by itself:
-menu → Host → lobby → Start → `GameScene`, installs 2 engines, takes off and lands twice, and checks the phases,
+menu → Host → lobby → Start → `GameScene`, installs 2 engines, takes the radar off, drops, picks up and reinstalls it by hand through the real third-person
+aim (`LoopSmokeHandCheck`), takes off and lands twice, and checks the phases,
 `LoopIndex`, engines after landing, the ship on the new pad, the player on deck, no wreckage, return to menu and no
 errors in the log. The test shortens flight timings with its own copy of `ShipRunConfig`; assets are not changed. The
 test takes about 30 s.

@@ -1,5 +1,6 @@
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
+using Features.GrabModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Configurations;
@@ -24,6 +25,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<PlayerStatsConfiguration>(Address.Configurations.PlayerStatsConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<PlayerDamageConfiguration>(Address.Configurations.PlayerDamageConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<PlayerLifeConfiguration>(Address.Configurations.PlayerLifeConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<GrabConfiguration>(Address.Configurations.GrabConfiguration_Default).AsSingle();
         }
     }
 }

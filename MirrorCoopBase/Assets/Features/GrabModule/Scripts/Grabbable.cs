@@ -1,30 +1,27 @@
-using System.Collections.Generic;
+using System;
 using Mirror;
 using UnityEngine;
 
 namespace Features.GrabModule.Scripts {
+    // An item a player can carry. Who holds it lives in the holder's PlayerHand model; HeldItemRegistry applies that
+    // state here, so the item has no synced hold state of its own.
     public sealed class Grabbable : NetworkBehaviour {
         [SerializeField] private Rigidbody _rb;
         [SerializeField] private NetworkRigidbodyUnreliable _networkBody;
         [SerializeField] private Outline _outline;
 
-        [SyncVar(hook = nameof(OnHolderChanged))]
-        private uint _holderNetId;
+        private Transform _holdPoint;
+        private bool _isHeld;
 
-        private Transform _cachedArmPoint;
-        private static readonly List<Grabbable> HeldFollow = new List<Grabbable>(8);
+        internal event Action<Grabbable> Stopped;
 
-        public bool CanBeGrabbed => _holderNetId == 0;
+        public bool CanBeGrabbed => _isHeld == false;
 
-        public override void OnStartClient() {
-            ApplyHold(_holderNetId != 0);
-            CacheArmPoint(_holderNetId);
-        }
+        public override void OnStopServer() =>
+            Stopped?.Invoke(this);
 
-        public override void OnStartServer() {
-            ApplyHold(_holderNetId != 0);
-            CacheArmPoint(_holderNetId);
-        }
+        public override void OnStopClient() =>
+            Stopped?.Invoke(this);
 
         internal void SetHovered(bool hovered) {
             if (_outline == null)
@@ -33,97 +30,56 @@ namespace Features.GrabModule.Scripts {
             _outline.enabled = hovered && CanBeGrabbed;
         }
 
-        internal void ServerBind(uint holderNetId) {
-            if (isServer == false || _holderNetId != 0 || holderNetId == 0)
-                return;
+        internal void ApplyHold(Transform holdPoint) {
+            _isHeld = true;
+            _holdPoint = holdPoint;
+            SetHovered(false);
+            if (_networkBody != null)
+                _networkBody.enabled = false;
 
-            _holderNetId = holderNetId;
-        }
-
-        internal void ServerUnbind() {
-            if (isServer == false || _holderNetId == 0)
-                return;
-
-            _holderNetId = 0;
-        }
-
-        private void OnHolderChanged(uint previous, uint current) {
-            ApplyHold(current != 0);
-            CacheArmPoint(current);
-        }
-
-        private void OnEnable() {
-            HeldFollow.Add(this);
-        }
-
-        private void OnDisable() {
-            HeldFollow.Remove(this);
-        }
-
-        internal static void FollowHeldAll() {
-            for (int i = 0; i < HeldFollow.Count; i++) {
-                Grabbable item = HeldFollow[i];
-                if (item != null)
-                    item.FollowHolder();
-            }
-        }
-
-        private void FollowHolder() {
-            if (_cachedArmPoint == null)
-                return;
-
-            transform.SetPositionAndRotation(_cachedArmPoint.position, _cachedArmPoint.rotation);
             if (_rb != null) {
-                _rb.position = _cachedArmPoint.position;
-                _rb.rotation = _cachedArmPoint.rotation;
+                // Velocity can only be cleared while the body is still dynamic.
+                if (_rb.isKinematic == false) {
+                    _rb.linearVelocity = Vector3.zero;
+                    _rb.angularVelocity = Vector3.zero;
+                }
+
+                _rb.isKinematic = true;
+                _rb.detectCollisions = false;
             }
+
+            FollowHolder();
         }
 
-        private void ApplyHold(bool held) {
+        internal void ApplyRelease() {
+            _isHeld = false;
+            _holdPoint = null;
             if (_rb != null) {
-                _rb.linearVelocity = Vector3.zero;
-                _rb.angularVelocity = Vector3.zero;
-                _rb.isKinematic = held;
-                _rb.detectCollisions = held == false;
+                _rb.detectCollisions = true;
+                // Only the server simulates a loose item: on a client the network body keeps it kinematic and moves it,
+                // so a client-side gravity step would only make it twitch before the first snapshot.
+                if (isServer) {
+                    _rb.isKinematic = false;
+                    _rb.linearVelocity = Vector3.zero;
+                    _rb.angularVelocity = Vector3.zero;
+                }
             }
 
             if (_networkBody != null)
-                _networkBody.enabled = held == false;
-
-            if (held)
-                SetHovered(false);
+                _networkBody.enabled = true;
         }
 
-        private void CacheArmPoint(uint holderNetId) {
-            if (holderNetId == 0) {
-                _cachedArmPoint = null;
+        internal void FollowHolder() {
+            if (_holdPoint == null)
                 return;
+
+            Vector3 position = _holdPoint.position;
+            Quaternion rotation = _holdPoint.rotation;
+            transform.SetPositionAndRotation(position, rotation);
+            if (_rb != null) {
+                _rb.position = position;
+                _rb.rotation = rotation;
             }
-
-            if (TryResolveArmPoint(holderNetId, out Transform armPoint) == false) {
-                _cachedArmPoint = null;
-                return;
-            }
-
-            _cachedArmPoint = armPoint;
-        }
-
-        private static bool TryResolveArmPoint(uint holderNetId, out Transform armPoint) {
-            armPoint = null;
-            NetworkIdentity identity = null;
-            if (NetworkServer.active && NetworkServer.spawned.TryGetValue(holderNetId, out identity) == false)
-                identity = null;
-            if (identity == null && NetworkClient.active && NetworkClient.spawned.TryGetValue(holderNetId, out identity) == false)
-                return false;
-            if (identity == null)
-                return false;
-
-            GrabController controller = identity.GetComponent<GrabController>();
-            if (controller == null)
-                return false;
-
-            armPoint = controller.ArmPoint;
-            return armPoint != null;
         }
     }
 }
