@@ -15,7 +15,6 @@ namespace Features.ShopModule.Scripts.Systems {
         private readonly IInputService _inputService;
         private readonly IWindowsService _windowsService;
         private readonly IGameFlowStateMachineService _gameFlowStateMachineService;
-        private readonly GameFlowStateLifecycleEventClass _gameFlowStateLifecycleEventClass;
         private readonly IReadOnlyWalletModel _walletModel;
         private readonly ShopModel _shopModel;
         private readonly CursorModel _cursorModel;
@@ -25,7 +24,6 @@ namespace Features.ShopModule.Scripts.Systems {
             IInputService inputService,
             IWindowsService windowsService,
             IGameFlowStateMachineService gameFlowStateMachineService,
-            GameFlowStateLifecycleEventClass gameFlowStateLifecycleEventClass,
             IReadOnlyWalletModel walletModel,
             ShopModel shopModel,
             CursorModel cursorModel,
@@ -33,7 +31,6 @@ namespace Features.ShopModule.Scripts.Systems {
             _inputService = inputService;
             _windowsService = windowsService;
             _gameFlowStateMachineService = gameFlowStateMachineService;
-            _gameFlowStateLifecycleEventClass = gameFlowStateLifecycleEventClass;
             _walletModel = walletModel;
             _shopModel = shopModel;
             _cursorModel = cursorModel;
@@ -43,7 +40,7 @@ namespace Features.ShopModule.Scripts.Systems {
         public void Initialize() {
             _inputService.Shop.Performed += OnShopPressed;
             _inputService.CloseWindow.Performed += OnCloseWindowPressed;
-            _gameFlowStateLifecycleEventClass.OnStateExited += OnGameFlowStateExited;
+            _gameFlowStateMachineService.StateExited += OnGameFlowStateExited;
             _walletModel.OnBalanceChanged += OnWalletChanged;
             _walletModel.OnAvailableChanged += OnWalletChanged;
             _shopModel.OnOpenChanged += OnShopOpenChanged;
@@ -53,7 +50,7 @@ namespace Features.ShopModule.Scripts.Systems {
         public void Dispose() {
             _inputService.Shop.Performed -= OnShopPressed;
             _inputService.CloseWindow.Performed -= OnCloseWindowPressed;
-            _gameFlowStateLifecycleEventClass.OnStateExited -= OnGameFlowStateExited;
+            _gameFlowStateMachineService.StateExited -= OnGameFlowStateExited;
             _walletModel.OnBalanceChanged -= OnWalletChanged;
             _walletModel.OnAvailableChanged -= OnWalletChanged;
             _shopModel.OnOpenChanged -= OnShopOpenChanged;

@@ -8,21 +8,21 @@ using Zenject;
 namespace Features.GameCoreModule.Scripts {
     public sealed class GameplaySessionLifecycle : IInitializable, IDisposable {
         private readonly List<IGameplaySession> _sessions;
-        private readonly GameFlowStateLifecycleEventClass _lifecycle;
+        private readonly IGameFlowStateMachineService _gameFlow;
 
         public GameplaySessionLifecycle(
             List<IGameplaySession> sessions,
-            GameFlowStateLifecycleEventClass lifecycle) {
+            IGameFlowStateMachineService gameFlow) {
             _sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
-            _lifecycle = lifecycle ?? throw new ArgumentNullException(nameof(lifecycle));
+            _gameFlow = gameFlow ?? throw new ArgumentNullException(nameof(gameFlow));
         }
 
         public void Initialize() {
-            _lifecycle.OnStateEntered += OnStateEntered;
+            _gameFlow.StateEntered += OnStateEntered;
         }
 
         public void Dispose() {
-            _lifecycle.OnStateEntered -= OnStateEntered;
+            _gameFlow.StateEntered -= OnStateEntered;
         }
 
         private void OnStateEntered(Type stateType) {

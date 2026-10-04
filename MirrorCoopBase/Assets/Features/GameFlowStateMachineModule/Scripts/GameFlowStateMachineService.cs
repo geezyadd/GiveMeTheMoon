@@ -7,18 +7,18 @@ using Features.GameFlowStateMachineModule.Scripts.States;
 namespace Features.GameFlowStateMachineModule.Scripts {
     public sealed class GameFlowStateMachineService : IGameFlowStateMachineService {
         private readonly IReadOnlyDictionary<Type, IGameFlowState> _states;
-        private readonly GameFlowStateLifecycleEventClass _lifecycleEvents;
-        private readonly GameFlowSceneTransitionSystem _sceneTransitionSystem;
+        private readonly GameFlowSceneSwitcher _sceneSwitcher;
         private IGameFlowState _currentState;
 
         public GameFlowStateMachineService(
             List<IGameFlowState> states,
-            GameFlowStateLifecycleEventClass lifecycleEvents,
-            GameFlowSceneTransitionSystem sceneTransitionSystem) {
+            GameFlowSceneSwitcher sceneSwitcher) {
             _states = states.ToDictionary(state => state.GetType());
-            _lifecycleEvents = lifecycleEvents;
-            _sceneTransitionSystem = sceneTransitionSystem;
+            _sceneSwitcher = sceneSwitcher;
         }
+
+        public event Action<Type> StateEntered;
+        public event Action<Type> StateExited;
 
         public Type CurrentStateType => _currentState?.GetType();
         public bool IsTransitioning { get; private set; }
@@ -45,13 +45,13 @@ namespace Features.GameFlowStateMachineModule.Scripts {
             try {
                 if (_currentState != null) {
                     await _currentState.ExitAsync();
-                    _lifecycleEvents.InvokeOnStateExited(previousStateType);
+                    StateExited?.Invoke(previousStateType);
                 }
 
+                await _sceneSwitcher.SwitchAsync(previousStateType, nextStateType);
                 await nextState.EnterAsync();
                 _currentState = nextState;
-                _lifecycleEvents.InvokeOnStateEntered(nextStateType);
-                await _sceneTransitionSystem.WaitForActiveTransitionAsync();
+                StateEntered?.Invoke(nextStateType);
             }
             finally {
                 IsTransitioning = false;
