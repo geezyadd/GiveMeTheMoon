@@ -7,12 +7,10 @@ alwaysApply: true
 
 All player-facing text and all code comments are English. Do not add Russian (or any other language) to HUD, labels, prompts, prefab default strings, or comments.
 
-```csharp
-// BAD
-return $"до платформы {minutes}:{remainder:00}";
-// оставшееся время до посадки
+BAD: the HUD string or the comment below written in Russian (or any other non-English language).
 
-// GOOD
+GOOD:
+```csharp
 return $"to platform {minutes}:{remainder:00}";
 // remaining time until landing
 ```
