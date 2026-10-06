@@ -1544,7 +1544,6 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  _ship: {fileID: 1000000003}
 --- !u!1001 &84206931721357219
 PrefabInstance:
   m_ObjectHideFlags: 0

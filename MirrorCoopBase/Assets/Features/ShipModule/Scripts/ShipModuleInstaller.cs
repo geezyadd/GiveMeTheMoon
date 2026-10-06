@@ -6,6 +6,7 @@ namespace Features.ShipModule.Scripts {
         public override void InstallBindings() {
             Container.Bind<IStatFactory<ShipStatType>>().To<ShipStatFactory>().AsSingle();
             Container.Bind<IStatEntityFactory<ShipStatType>>().To<ShipStatEntityFactory>().AsSingle();
+            Container.BindInterfacesTo<ShipStatsConfigurationValidator>().AsSingle();
             Container.BindInterfacesTo<ShipRadarService>().AsSingle();
             Container.BindInterfacesTo<ShipStationPads>().AsSingle();
             Container.BindInterfacesTo<ShipStationDropService>().AsSingle();

@@ -38,9 +38,6 @@ namespace Features.ShipModule.Scripts {
         }
 
         public void ServerOnModuleUninstalled(ShipSocket socket) {
-            if (socket == null)
-                return;
-
             if (_stats.RemoveModule(socket.SocketId))
                 ServerPublishStats();
         }

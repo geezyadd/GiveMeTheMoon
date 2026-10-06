@@ -17,28 +17,6 @@ namespace Features.ShipModule.Scripts {
                 AccumulativeStats = new List<ShipStatType> { ShipStatType.Armor };
         }
 
-        private void OnValidate() {
-            ShipStatType[] statTypes = (ShipStatType[])Enum.GetValues(typeof(ShipStatType));
-            for (int i = 0; i < statTypes.Length; i++) {
-                ShipStatType type = statTypes[i];
-                int count = CountDefaults(type);
-                bool isValid = type == ShipStatType.None ? count == 0 : count == 1;
-                if (isValid == false)
-                    UnityEngine.Debug.LogError($"{name}: {nameof(_defaults)} must list {type} exactly once (None never), found {count}.", this);
-            }
-        }
-
-        private int CountDefaults(ShipStatType type) {
-            int count = 0;
-            for (int i = 0; i < _defaults.Length; i++) {
-                if (_defaults[i].Type == type)
-                    count++;
-            }
-
-            return count;
-        }
-
-        // The stat's cap is set before its value: an accumulative stat clamps the value to the cap.
         [Serializable]
         public sealed class ShipStatDefault {
             public ShipStatType Type;

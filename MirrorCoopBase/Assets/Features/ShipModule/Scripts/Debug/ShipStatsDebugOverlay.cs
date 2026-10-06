@@ -25,13 +25,11 @@ namespace Features.ShipModule.Scripts.Debug {
 
         private void OnEnable() {
             _shipStatsModel.OnChanged += HandleStatsChanged;
-            _shipStatsModel.OnAvailableChanged += HandleStatsChanged;
             HandleStatsChanged();
         }
 
         private void OnDisable() {
             _shipStatsModel.OnChanged -= HandleStatsChanged;
-            _shipStatsModel.OnAvailableChanged -= HandleStatsChanged;
         }
 
         private void OnGUI() {

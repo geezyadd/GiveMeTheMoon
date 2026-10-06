@@ -187,6 +187,8 @@ namespace Features.ShipModule.Scripts {
             _riders.ServerReleaseRiders();
             _seats.ClearAllOccupants();
             _modules.ClearInstalledModules();
+            // A run starts with this reset: a ship without modules publishes nothing on uninstall, so publish here.
+            _modules.ServerPublishStats();
             _flightControl.UnlockControls();
             if (_lever != null)
                 _lever.ServerReset();
