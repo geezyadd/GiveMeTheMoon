@@ -3,6 +3,7 @@
     "rootNamespace": "Features.ShipModule.Editor.Tests",
     "references": [
         "GUID:3b5eff428eda466ebde9ed0aa64229c5",
+        "GUID:30817c1a0e6d646d99c048fc403f5979",
         "GUID:27619889b8ba8c24980f49ee34dbb44a",
         "GUID:0acc523941302664db1f4e527237feb3"
     ],
