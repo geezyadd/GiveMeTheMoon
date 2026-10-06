@@ -51,7 +51,7 @@ namespace Features.ShipModule.Scripts {
                 throw new System.InvalidOperationException(player.name + " has no " + nameof(ShipRider) + ".");
 
             ship.ServerStand(rider);
-            ship.UnregisterRider(rider);
+            ship.Riders.UnregisterRider(rider);
         }
 
         private static bool TryGetDeckSurfaceWorldY(ShipBase ship, out float worldY) {

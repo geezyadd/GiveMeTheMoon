@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Features.GrabModule.Scripts;
 using Mirror;
 using UnityEngine;
@@ -19,13 +18,12 @@ namespace Features.ShipModule.Scripts {
 
         private ShipFlightSettings _flightSettings;
 
-        private readonly List<ShipRider> _riders = new List<ShipRider>();
-        private readonly List<ShipRider> _insideVolume = new List<ShipRider>();
         private readonly ShipFlight _flight = new ShipFlight();
         private readonly ShipDeckCargo _cargo = new ShipDeckCargo();
         private readonly HelmSteer _helmSteer = new HelmSteer();
         private ShipDeckGeometry _deckGeometry;
         private ShipModules _modules;
+        private ShipRiders _riders;
         private bool _debugSteerActive;
         private float _debugSteer;
         private int _fixedSteps;
@@ -47,6 +45,7 @@ namespace Features.ShipModule.Scripts {
         public ShipSocket[] Sockets => _sockets;
         public ShipDeckGeometry DeckGeometry => _deckGeometry;
         internal ShipModules Modules => _modules;
+        internal ShipRiders Riders => _riders;
 
         internal bool IsTakeoffComplete => _flight.IsTakeoffComplete;
         internal ShipPoseSync PoseSync => _poseSync;
@@ -93,73 +92,11 @@ namespace Features.ShipModule.Scripts {
         private void Awake() {
             _deckGeometry = new ShipDeckGeometry(transform, _deck, _deckColliders);
             _modules = new ShipModules(_sockets, _stats, _engines);
+            _riders = new ShipRiders(this, _deckGeometry, _rideVolume, _flightSettings);
             if (_poseSync != null)
                 _poseSync.BindShip(this, transform);
 
             _modules.ApplyDefaultStats();
-        }
-
-        internal void DebugBindRider(ShipRider rider) {
-            if (rider == null || rider.IsRiding)
-                return;
-
-            if (_insideVolume.Contains(rider) == false)
-                _insideVolume.Add(rider);
-
-            if (_riders.Contains(rider) == false)
-                _riders.Add(rider);
-
-            rider.BindToPlatform(this);
-        }
-
-        internal void RegisterRider(ShipRider rider) {
-            if (rider == null)
-                return;
-
-            if (_insideVolume.Contains(rider) == false)
-                _insideVolume.Add(rider);
-
-            if (_riders.Contains(rider) == false)
-                _riders.Add(rider);
-
-            TryBindRider(rider);
-        }
-
-        internal void SetVolumeOverlap(ShipRider rider, bool inside) {
-            if (rider == null)
-                return;
-
-            if (inside) {
-                if (_insideVolume.Contains(rider) == false)
-                    _insideVolume.Add(rider);
-
-                if (_flying)
-                    TryBindRider(rider);
-
-                return;
-            }
-
-            _insideVolume.Remove(rider);
-            // Binding turns the rider's collisions off, which raises this exit; a bound rider is released by its own path.
-            if (rider.IsRiding)
-                return;
-
-            UnregisterRider(rider);
-        }
-
-        internal void UnregisterRider(ShipRider rider) {
-            if (_flying)
-                return;
-
-            if (rider != null && NetworkServer.active)
-                rider.ServerRelease();
-
-            _riders.Remove(rider);
-        }
-
-        internal void TrackRider(ShipRider rider) {
-            if (_riders.Contains(rider) == false)
-                _riders.Add(rider);
         }
 
         internal bool ServerRequestLaunch() {
@@ -193,8 +130,8 @@ namespace Features.ShipModule.Scripts {
             if (_poseSync != null)
                 _poseSync.ServerSetFlying(true);
 
-            CollectRidersInVolume();
-            BindRiders();
+            _riders.CollectRidersInVolume();
+            _riders.BindRiders();
         }
 
         internal void BeginCruise() {
@@ -236,7 +173,7 @@ namespace Features.ShipModule.Scripts {
                 _poseSync.ServerSetFlying(false);
 
             WakeBody();
-            ServerReleaseRiders();
+            _riders.ServerReleaseRiders();
         }
 
         internal void ServerResetForBuild(Vector3 berth, Quaternion rotation) {
@@ -252,7 +189,7 @@ namespace Features.ShipModule.Scripts {
 
             // Seated riders stay bound at a station too: release them on every reset, or one seated at the helm keeps
             // hanging at the seat after the ship and its seats are reset.
-            ServerReleaseRiders();
+            _riders.ServerReleaseRiders();
             ClearAllOccupants();
             _modules.ClearInstalledModules();
             _controlsLocked = false;
@@ -271,13 +208,13 @@ namespace Features.ShipModule.Scripts {
 
             _flight.Stop();
             _controlsLocked = false;
-            FollowRiders(0f);
+            _riders.FollowRiders(0f);
             _flying = false;
             if (_poseSync != null)
                 _poseSync.ServerSetFlying(false);
 
-            for (int i = 0; i < _riders.Count; i++) {
-                ShipRider rider = _riders[i];
+            for (int i = 0; i < _riders.All.Count; i++) {
+                ShipRider rider = _riders.All[i];
                 if (rider != null)
                     ServerUnseat(rider);
             }
@@ -297,8 +234,8 @@ namespace Features.ShipModule.Scripts {
             // Riders are released by the server (ShipRider.ServerRelease) after the landing snap and origin shift.
             _flying = flying;
             if (flying) {
-                CollectRidersInVolume();
-                BindRiders();
+                _riders.CollectRidersInVolume();
+                _riders.BindRiders();
             }
         }
 
@@ -372,8 +309,7 @@ namespace Features.ShipModule.Scripts {
             if (socket.ServerTrySit(rider.netId) == false)
                 return false;
 
-            if (_riders.Contains(rider) == false)
-                _riders.Add(rider);
+            _riders.TrackRider(rider);
 
             Vector3 seatOffset = socket.ResolveSitLocalOffset(transform);
             rider.BindToSeat(this, seatOffset);
@@ -387,8 +323,7 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             if (TryGetOwnedRider(occupant, out ShipRider seated)) {
-                if (_riders.Contains(seated) == false)
-                    _riders.Add(seated);
+                _riders.TrackRider(seated);
 
                 seated.BindToSeat(this, socket.ResolveSitLocalOffset(transform));
                 return;
@@ -405,7 +340,6 @@ namespace Features.ShipModule.Scripts {
 
             ClearOccupant(rider);
             _riders.Remove(rider);
-            _insideVolume.Remove(rider);
         }
 
         internal void ServerStand(ShipRider rider) {
@@ -459,13 +393,13 @@ namespace Features.ShipModule.Scripts {
                     _runService.ServerTick();
             }
             else if (_flying && _poseSync != null) {
-                _poseSync.ApplyInterpolated(HasOwnedHelmPilot());
+                _poseSync.ApplyInterpolated(_riders.HasOwnedHelmPilot());
             }
 
             _cargo.Follow(transform, this, NetworkServer.active, _poseSync);
-            FollowRiders(Time.deltaTime);
+            _riders.FollowRiders(Time.deltaTime);
             if (_flying)
-                CatchDeckRiders();
+                _riders.CatchDeckRiders();
         }
 
         private void PushTravelSpeed() {
@@ -497,23 +431,13 @@ namespace Features.ShipModule.Scripts {
             }
         }
 
-        private bool HasOwnedHelmPilot() {
-            for (int i = 0; i < _riders.Count; i++) {
-                ShipRider rider = _riders[i];
-                if (rider != null && rider.isOwned && rider.IsHelmSeat)
-                    return true;
-            }
-
-            return false;
-        }
-
         private float ReadHelmSteer() {
             uint occupant = HelmOccupantNetId();
             if (occupant == 0)
                 return 0f;
 
-            for (int i = 0; i < _riders.Count; i++) {
-                ShipRider rider = _riders[i];
+            for (int i = 0; i < _riders.All.Count; i++) {
+                ShipRider rider = _riders.All[i];
                 if (rider == null || rider.netId != occupant)
                     continue;
 
@@ -621,107 +545,5 @@ namespace Features.ShipModule.Scripts {
 
             _body.interpolation = RigidbodyInterpolation.None;
         }
-
-        private void CollectRidersInVolume() {
-            if (_rideVolume != null) {
-                Vector3 center = _rideVolume.transform.TransformPoint(_rideVolume.center);
-                Vector3 halfExtents = Vector3.Scale(_rideVolume.size, _rideVolume.transform.lossyScale) * 0.5f;
-                int hits = Physics.OverlapBoxNonAlloc(
-                    center,
-                    halfExtents,
-                    RiderScratch,
-                    _rideVolume.transform.rotation,
-                    ~0,
-                    QueryTriggerInteraction.Collide);
-
-                for (int i = 0; i < hits; i++) {
-                    Collider hit = RiderScratch[i];
-                    if (hit == null)
-                        continue;
-
-                    RegisterRider(hit.GetComponentInParent<ShipRider>());
-                }
-            }
-
-            ShipRider[] riders = FindObjectsByType<ShipRider>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-            Vector3 origin = transform.position;
-            const float radiusSq = 64f;
-            for (int i = 0; i < riders.Length; i++) {
-                ShipRider rider = riders[i];
-                if (rider == null)
-                    continue;
-
-                if ((rider.transform.position - origin).sqrMagnitude > radiusSq)
-                    continue;
-
-                RegisterRider(rider);
-            }
-        }
-
-        private void CatchDeckRiders() {
-            for (int i = 0; i < _insideVolume.Count; i++)
-                TryBindRider(_insideVolume[i]);
-        }
-
-        private void TryBindRider(ShipRider rider) {
-            if (rider == null || rider.IsRiding)
-                return;
-
-            if (rider.WantsLand(this) == false)
-                return;
-
-            if (_riders.Contains(rider) == false)
-                _riders.Add(rider);
-
-            rider.BindToPlatform(this);
-        }
-
-        // Each peer boards only its own player; the others follow their owner's synced ride (ShipRider hooks).
-        private void BindRiders() {
-            for (int i = _riders.Count - 1; i >= 0; i--) {
-                ShipRider rider = _riders[i];
-                if (rider == null || rider.isOwned == false)
-                    continue;
-
-                if (IsAboveDeck(rider.transform.position) == false) {
-                    _riders.RemoveAt(i);
-                    continue;
-                }
-
-                rider.BindToPlatform(this);
-            }
-        }
-
-        private bool IsAboveDeck(Vector3 worldPosition) {
-            Vector3 local = Quaternion.Inverse(transform.rotation) * (worldPosition - transform.position);
-            if (_deckGeometry.TryClosestDeckWalk(local, out _, out float dx, out float dz) == false)
-                return false;
-
-            float edge = _flightSettings.BoardingEdgeTolerance;
-            if (dx * dx + dz * dz > edge * edge)
-                return false;
-
-            if (_deckGeometry.TryGetDeckSurfaceY(local, out float surfaceY) == false)
-                return false;
-
-            float height = local.y - surfaceY;
-            return height >= _flightSettings.BoardingMinHeight && height <= _flightSettings.BoardingMaxHeight;
-        }
-
-        private void FollowRiders(float dt) {
-            for (int i = _riders.Count - 1; i >= 0; i--) {
-                if (_riders[i] != null)
-                    _riders[i].Follow(dt);
-            }
-        }
-
-        internal void ServerReleaseRiders() {
-            for (int i = 0; i < _riders.Count; i++) {
-                if (_riders[i] != null)
-                    _riders[i].ServerRelease();
-            }
-        }
-
-        private static readonly Collider[] RiderScratch = new Collider[16];
     }
 }

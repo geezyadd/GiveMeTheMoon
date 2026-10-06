@@ -154,7 +154,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void BindRemote(ShipBase ship) {
-            ship.TrackRider(this);
+            ship.Riders.TrackRider(this);
             if (_bound == false) {
                 Bind(ship, _syncedLocalOffset);
                 return;

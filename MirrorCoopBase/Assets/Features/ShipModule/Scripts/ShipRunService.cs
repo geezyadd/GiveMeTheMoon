@@ -224,7 +224,7 @@ namespace Features.ShipModule.Scripts {
             Ship.ServerSettleAfterLanding();
             EnterStation(CurrentPad, ShipRunPhase.Build);
             // After EnterStation's origin shift: riders still bound are carried by it, released ones would stay behind.
-            Ship.ServerReleaseRiders();
+            Ship.Riders.ServerReleaseRiders();
         }
 
         private void FinishAtCurrentPose() {

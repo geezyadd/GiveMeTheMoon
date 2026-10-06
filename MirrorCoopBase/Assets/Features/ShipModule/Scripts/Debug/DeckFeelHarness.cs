@@ -273,7 +273,7 @@ namespace Features.ShipModule.Scripts.Debug {
             SpawnDeckItem();
             if (_rider.IsRiding == false) {
                 PlaceRiderOnDeck();
-                _ship.DebugBindRider(_rider);
+                _ship.Riders.DebugBindRider(_rider);
                 if (_rider.IsRiding == false) {
                     Vector3 local = _ship.transform.InverseTransformPoint(_rider.transform.position);
                     Fail("local player did not bind to the deck at " + local.ToString("0.00"));
@@ -1003,7 +1003,7 @@ namespace Features.ShipModule.Scripts.Debug {
 
             if (_rider.IsRiding == false) {
                 PlaceRiderOnDeck();
-                _ship.DebugBindRider(_rider);
+                _ship.Riders.DebugBindRider(_rider);
             }
 
             if (_rider.IsRiding == false)
@@ -1108,7 +1108,7 @@ namespace Features.ShipModule.Scripts.Debug {
         private void StandOnDeck() {
             if (_rider.IsRiding == false) {
                 PlaceRiderOnDeck();
-                _ship.DebugBindRider(_rider);
+                _ship.Riders.DebugBindRider(_rider);
                 return;
             }
 
