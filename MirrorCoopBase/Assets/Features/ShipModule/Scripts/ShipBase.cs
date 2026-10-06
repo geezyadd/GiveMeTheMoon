@@ -16,6 +16,7 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private EngineCatalog _engines;
         [SerializeField] private ShipPoseSync _poseSync;
         [SerializeField] private ShipStatEntity _stats;
+        [SerializeField] private ShipSocketsSync _socketStates;
 
         private ShipFlightSettings _flightSettings;
 
@@ -40,6 +41,7 @@ namespace Features.ShipModule.Scripts {
         internal float ReboardDelaySeconds => _flightSettings.ReboardDelaySeconds;
         internal NetworkIdentity NetIdentity => _poseSync.netIdentity;
         public ShipSocket[] Sockets => _sockets;
+        internal ShipSocketsSync SocketStates => _socketStates;
         public IShipDeckGeometry DeckGeometry => _deckGeometry;
         internal IShipModules Modules => _modules;
         internal IShipRiders Riders => _riders;
@@ -87,7 +89,9 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void Awake() {
-            Assert.IsTrue(_sockets != null && _stats != null, name + " needs its sockets and stat entity wired.");
+            Assert.IsTrue(
+                _sockets != null && _stats != null && _socketStates != null,
+                name + " needs its sockets, socket states and stat entity wired.");
             _deckGeometry = new ShipDeckGeometry(transform, _deck, _deckColliders);
             _modules = new ShipModules(_sockets, _stats, ReadEngines);
             _riders = new ShipRiders(this, _deckGeometry, _rideVolume, ReadFlightSettings);

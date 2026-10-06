@@ -27,6 +27,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             WalletModelInstaller.Install(Container);
             PlayerLifeModelInstaller.Install(Container);
             ShipRunModelInstaller.Install(Container);
+            ShipSocketsModelInstaller.Install(Container);
         }
     }
 }
