@@ -156,10 +156,10 @@ namespace Features.ShipModule.Scripts {
         private static bool IsOnDeck(Grabbable grabbable, Transform ship, ShipBase deck) {
             Vector3 local = ship.InverseTransformPoint(grabbable.transform.position);
             // The whole deck, no edge inset: anything lying on it flies with the ship.
-            if (deck.ContainsDeckWalk(local, 0f) == false)
+            if (deck.DeckGeometry.ContainsDeckWalk(local, 0f) == false)
                 return false;
 
-            if (deck.TryGetDeckSurfaceY(local, out float surfaceY) == false)
+            if (deck.DeckGeometry.TryGetDeckSurfaceY(local, out float surfaceY) == false)
                 return false;
 
             return local.y >= surfaceY - BELOW_DECK_TOLERANCE && local.y <= surfaceY + REST_HEIGHT;

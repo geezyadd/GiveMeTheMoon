@@ -84,7 +84,7 @@ namespace Features.ShipModule.Scripts {
 
             Transform platform = ship.transform;
             Vector3 local = Quaternion.Inverse(platform.rotation) * (transform.position - platform.position);
-            if (ship.ContainsDeckWalk(local, _deckInset) == false)
+            if (ship.DeckGeometry.ContainsDeckWalk(local, _deckInset) == false)
                 return false;
 
             if (_rb.linearVelocity.y > 0.15f)
@@ -98,7 +98,7 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             Vector3 standingOffset = Quaternion.Inverse(ship.transform.rotation) * (transform.position - ship.transform.position);
-            ship.ClampDeckWalk(ref standingOffset, _deckInset);
+            ship.DeckGeometry.ClampDeckWalk(ref standingOffset, _deckInset);
             // A seated rider keeps the server's seat offset; its own standing spot would overwrite it on the server.
             Bind(ship, _seated ? _syncedLocalOffset : standingOffset);
         }
@@ -289,9 +289,9 @@ namespace Features.ShipModule.Scripts {
                 return false;
 
             if (isOwned)
-                return _ship.ContainsDeckWalk(_localOffset, _deckInset) == false;
+                return _ship.DeckGeometry.ContainsDeckWalk(_localOffset, _deckInset) == false;
 
-            return isServer && _ship.ContainsDeckWalk(_syncedLocalOffset, _deckInset) == false;
+            return isServer && _ship.DeckGeometry.ContainsDeckWalk(_syncedLocalOffset, _deckInset) == false;
         }
 
         // The server decides; an owning client releases at once so it does not walk on air for a round trip, and the
@@ -340,7 +340,7 @@ namespace Features.ShipModule.Scripts {
             _localOffset.x += localMove.x;
             _localOffset.z += localMove.z;
             if (_ship.ConfinesRidersToDeck || _ship.IsFlying == false)
-                _ship.ClampDeckWalk(ref _localOffset, _deckInset);
+                _ship.DeckGeometry.ClampDeckWalk(ref _localOffset, _deckInset);
 
             SendOffsetIfNeeded();
         }
@@ -451,7 +451,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         private float ResolveRideRestY() {
-            if (_floating == null || _ship.TryGetDeckSurfaceY(_localOffset, out float deckSurfaceY) == false)
+            if (_floating == null || _ship.DeckGeometry.TryGetDeckSurfaceY(_localOffset, out float deckSurfaceY) == false)
                 return _localOffset.y;
 
             return deckSurfaceY + _floating.StandHeight;

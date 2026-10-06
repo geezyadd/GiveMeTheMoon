@@ -209,7 +209,7 @@ namespace Tests.PlayMode.LoopSmoke {
 
         // Stands in for walking aboard: the player is put above the deck and lands on it under physics.
         private IEnumerator BoardPlayerCoroutine() {
-            Bounds deck = _ship.DeckBounds;
+            Bounds deck = _ship.DeckGeometry.Bounds;
             Vector3 target = new Vector3(deck.center.x, deck.max.y + BOARD_DROP_HEIGHT, deck.center.z);
             Rigidbody body = LocalPlayer().GetComponent<CharacterMovableBase>().Body;
             body.position = target;
@@ -217,7 +217,7 @@ namespace Tests.PlayMode.LoopSmoke {
             body.linearVelocity = Vector3.zero;
 
             yield return new WaitForSeconds(BOARD_SETTLE_SECONDS);
-            Assert.IsTrue(ContainsXZ(_ship.DeckBounds, LocalPlayer().transform.position, PLAYER_ON_SURFACE_TOLERANCE), "The player did not stay on the deck before launch.");
+            Assert.IsTrue(ContainsXZ(_ship.DeckGeometry.Bounds, LocalPlayer().transform.position, PLAYER_ON_SURFACE_TOLERANCE), "The player did not stay on the deck before launch.");
         }
 
         private IEnumerator FlyLoopCoroutine(int expectedLoopIndex) {
@@ -248,7 +248,7 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.AreEqual(ShipRunAbortReason.None, _model.LastAbortReason, "The flight ended as a wreck.");
 
             Bounds padBounds = PadBounds(landingPad);
-            Bounds deck = _ship.DeckBounds;
+            Bounds deck = _ship.DeckGeometry.Bounds;
             Assert.IsTrue(ContainsXZ(padBounds, deck.min, DECK_ON_PAD_TOLERANCE) && ContainsXZ(padBounds, deck.max, DECK_ON_PAD_TOLERANCE),
                 $"The deck {deck} is not inside the pad {padBounds}.");
 

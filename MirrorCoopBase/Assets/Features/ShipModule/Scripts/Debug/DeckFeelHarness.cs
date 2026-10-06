@@ -1097,7 +1097,7 @@ namespace Features.ShipModule.Scripts.Debug {
         }
 
         private void PlaceRiderOnDeck() {
-            if (_ship.TryGetDeckStandPoint(out Vector3 local) == false) {
+            if (_ship.DeckGeometry.TryGetDeckStandPoint(out Vector3 local) == false) {
                 _rider.transform.position = _ship.transform.position + Vector3.up;
                 return;
             }
@@ -1112,7 +1112,7 @@ namespace Features.ShipModule.Scripts.Debug {
                 return;
             }
 
-            if (_ship.TryGetDeckStandPoint(out Vector3 local) == false)
+            if (_ship.DeckGeometry.TryGetDeckStandPoint(out Vector3 local) == false)
                 return;
 
             _rider.DebugSetLocalOffset(local);
@@ -1123,11 +1123,11 @@ namespace Features.ShipModule.Scripts.Debug {
                 return;
 
             Vector3 local = Vector3.up;
-            if (_ship.TryGetDeckStandPoint(out Vector3 stand)) {
+            if (_ship.DeckGeometry.TryGetDeckStandPoint(out Vector3 stand)) {
                 local = stand;
                 local.x += 1.4f;
                 local.y -= 0.7f;
-                if (_ship.ContainsDeckWalk(local, 0f) == false)
+                if (_ship.DeckGeometry.ContainsDeckWalk(local, 0f) == false)
                     local = stand;
             }
 

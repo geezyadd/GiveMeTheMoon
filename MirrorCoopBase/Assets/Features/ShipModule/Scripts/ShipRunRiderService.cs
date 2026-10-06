@@ -56,7 +56,7 @@ namespace Features.ShipModule.Scripts {
 
         private static bool TryGetDeckSurfaceWorldY(ShipBase ship, out float worldY) {
             worldY = 0f;
-            if (ship.TryGetDeckSurfaceY(Vector3.zero, out float surfaceLocalY) == false)
+            if (ship.DeckGeometry.TryGetDeckSurfaceY(Vector3.zero, out float surfaceLocalY) == false)
                 return false;
 
             worldY = ship.transform.TransformPoint(new Vector3(0f, surfaceLocalY, 0f)).y;
