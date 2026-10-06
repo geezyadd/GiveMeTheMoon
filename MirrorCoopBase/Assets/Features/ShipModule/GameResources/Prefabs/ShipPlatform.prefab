@@ -71,6 +71,7 @@ MonoBehaviour:
   _poseSync: {fileID: 6441704599544112580}
   _stats: {fileID: 1000000005}
   _socketStates: {fileID: 5512837465019283746}
+  _statsSync: {fileID: 3318842957701156421}
 --- !u!54 &1000000004
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1456,6 +1457,7 @@ GameObject:
   - component: {fileID: 1540500289163094602}
   - component: {fileID: 6441704599544112580}
   - component: {fileID: 5512837465019283746}
+  - component: {fileID: 3318842957701156421}
   m_Layer: 0
   m_Name: PoseSync
   m_TagString: Untagged
@@ -1527,6 +1529,22 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
+--- !u!114 &3318842957701156421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7916488841181173114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1831e0ebf194ac195ce38ad4d4fb439, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  _ship: {fileID: 1000000003}
 --- !u!1001 &84206931721357219
 PrefabInstance:
   m_ObjectHideFlags: 0
