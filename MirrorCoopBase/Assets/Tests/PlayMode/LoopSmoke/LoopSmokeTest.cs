@@ -95,6 +95,7 @@ namespace Tests.PlayMode.LoopSmoke {
             int firstLandingSpawns = CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values);
             LogSpawnedCounts("run 1 after the first landing");
             Assert.Greater(firstLandingSpawns, 0, "Run 1 spawned no pad or drops on landing.");
+            yield return new LoopSmokeReviveCheck(_ship).BuyBackCrewCoroutine(firstPad, ResolveNetworkManager());
 
             yield return FlyLoopCoroutine(2);
             yield return AssertLandedSafelyCoroutine(firstPad, FindPadUnderShip());
