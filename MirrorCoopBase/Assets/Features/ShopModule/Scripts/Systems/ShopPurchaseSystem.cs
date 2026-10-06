@@ -28,10 +28,10 @@ namespace Features.ShopModule.Scripts.Systems {
             if (result.Status != ShopPurchaseStatus.Success)
                 return;
 
-            if (wallet.ServerTrySpend(result.Entry.Price) == false)
+            if (wallet.ServerTrySpend(result.Module.Price) == false)
                 return;
 
-            _shopItemSpawnService.SpawnAtDelivery(result.Entry.Item, visit.DeliveryPoint);
+            _shopItemSpawnService.SpawnAtDelivery(result.Module.ItemPrefab, visit.DeliveryPoint);
         }
 
         private bool TryGetReachableVisit(IShopBuyer buyer, out ShopKioskVisit visit) =>

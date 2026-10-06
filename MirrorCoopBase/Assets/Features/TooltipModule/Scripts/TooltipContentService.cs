@@ -1,8 +1,6 @@
-using System.Collections.Generic;
 using Features.InputModule.Realization.Scripts.Generated;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Core;
-using Features.ShopModule.Scripts.Data;
 using UnityEngine.InputSystem;
 
 namespace Features.TooltipModule.Scripts {
@@ -31,11 +29,10 @@ namespace Features.TooltipModule.Scripts {
             if (item == null)
                 return data.Description;
 
-            IReadOnlyList<ShopItemStat> stats = _shopItemStatsService.GetStats(item);
-            if (stats.Count == 0)
+            if (item.Module.StatModifiers.Count == 0)
                 return data.Description;
 
-            return data.Description + "\n" + _shopItemStatsService.FormatStats(item);
+            return data.Description + "\n" + _shopItemStatsService.FormatStats(item.Module);
         }
 
         private string BuildActionHint(TooltipData data) {
