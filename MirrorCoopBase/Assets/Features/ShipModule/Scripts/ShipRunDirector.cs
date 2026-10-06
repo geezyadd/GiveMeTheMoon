@@ -155,11 +155,7 @@ namespace Features.ShipModule.Scripts {
                 Destroy(_previousLocalWreck);
 
             _previousLocalWreck = _localWreck;
-            GameObject prefab = _stations.WreckPrefab;
-            if (prefab == null)
-                return;
-
-            _localWreck = Instantiate(prefab, position, rotation);
+            _localWreck = Instantiate(_stations.WreckPrefab, position, rotation);
         }
     }
 }

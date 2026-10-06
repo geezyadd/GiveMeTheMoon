@@ -125,10 +125,10 @@ namespace Features.ShipModule.Scripts {
 
             _route.BeginRoute(stats.CruiseSeconds);
             _route.ApplyFrame(false);
-            ShipRunState state = _route.WithTransit(Director.State);
+            ShipRunState state = Director.State;
             state.LastAbortReason = ShipRunAbortReason.None;
             state.Phase = ShipRunPhase.Takeoff;
-            Director.ServerSetState(state);
+            Director.ServerSetState(_route.WithTransit(state));
             return true;
         }
 
@@ -190,9 +190,9 @@ namespace Features.ShipModule.Scripts {
             Ship.BeginCruise();
             _route.BeginCruise();
             _route.ApplyFrame(false);
-            ShipRunState state = _route.WithTransit(Director.State);
+            ShipRunState state = Director.State;
             state.Phase = ShipRunPhase.Cruise;
-            Director.ServerSetState(state);
+            Director.ServerSetState(_route.WithTransit(state));
         }
 
         private void TickCruise() {
