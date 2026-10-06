@@ -1,7 +1,7 @@
 namespace Features.ShipModule.Scripts {
     public interface IShipFlightStatService {
-        FlightRunStats Sample(ShipBase ship, int loopIndex);
-        float EvaluateRouteWork(int loopIndex);
-        float ReadFlightSpeed(ShipBase ship);
+        public FlightRunStats Sample(ShipBase ship, int loopIndex);
+        public float EvaluateRouteWork(int loopIndex);
+        public float ReadFlightSpeed(ShipBase ship);
     }
 }

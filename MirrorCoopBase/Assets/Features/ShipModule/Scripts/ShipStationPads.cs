@@ -2,11 +2,10 @@ using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    // The landing pads of the run: the current one, the previous one, and spawning the next one.
     internal sealed class ShipStationPads : IShipStationPads {
         private readonly ShipStationCatalog _stations;
         private readonly ShipRunConfig _config;
-        private readonly IShipRunBinding _binding;
+        private readonly IShipRunBindingModel _binding;
 
         private ShipLandingPad _previousPad;
 
@@ -14,7 +13,7 @@ namespace Features.ShipModule.Scripts {
         public NetworkIdentity CurrentIdentity => PadIdentity(CurrentPad);
         public NetworkIdentity PreviousIdentity => PadIdentity(_previousPad);
 
-        public ShipStationPads(ShipStationCatalog stations, ShipRunConfig config, IShipRunBinding binding) {
+        public ShipStationPads(ShipStationCatalog stations, ShipRunConfig config, IShipRunBindingModel binding) {
             _stations = stations;
             _config = config;
             _binding = binding;
@@ -28,7 +27,7 @@ namespace Features.ShipModule.Scripts {
         // Without a pad prefab no pad spawns: the pad stays the current one and the result is false.
         public bool TrySpawnNext(Vector3 padPosition, Vector3 forward, bool matchLandingPoint, out ShipLandingPad pad) {
             pad = CurrentPad;
-            GameObject prefab = _stations != null ? _stations.PadPrefab : null;
+            GameObject prefab = _stations.PadPrefab;
             if (prefab == null)
                 return false;
 

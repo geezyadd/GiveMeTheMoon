@@ -4,23 +4,22 @@ using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    // The run's phase machine: Build -> Takeoff -> Cruise -> Landing -> Build, or Wreck after an abort.
     public sealed class ShipRunService : IShipRunService, IGameplaySession {
         private const float WRECK_PITCH_DEGREES = 12f;
         private const float WRECK_ROLL_DEGREES = 18f;
 
         private readonly ShipRunModel _model;
         private readonly ShipRunConfig _config;
-        private readonly IShipRunBinding _binding;
+        private readonly IShipRunBindingModel _binding;
         private readonly IShipStationPads _pads;
         private readonly IShipStationDropService _drops;
         private readonly IShipFlightStatService _flightStats;
         private readonly IShipRoute _route;
         private readonly IShipWorldShiftService _worldShift;
+        private readonly IShipRadarBinding _radar;
+        private readonly ConnectionSpawnModel _spawn;
 
         private float _wreckUntil;
-        private ShipRadarService _radar;
-        private readonly ConnectionSpawnModel _spawn;
 
         private ShipBase Ship => _binding.Ship;
         private ShipRunDirector Director => _binding.Director;
@@ -29,9 +28,9 @@ namespace Features.ShipModule.Scripts {
         public ShipRunService(
             ShipRunModel model,
             ShipRunConfig config,
-            ShipRadarService radar,
+            IShipRadarBinding radar,
             ConnectionSpawnModel spawn,
-            IShipRunBinding binding,
+            IShipRunBindingModel binding,
             IShipStationPads pads,
             IShipStationDropService drops,
             IShipFlightStatService flightStats,
@@ -64,8 +63,7 @@ namespace Features.ShipModule.Scripts {
             if (ship != null && startPad != null)
                 ship.ServerResetForBuild(startPad.BuildBerth.position, startPad.BuildBerth.rotation);
 
-            if (_radar != null)
-                _radar.BindShip(ship);
+            _radar.BindShip(ship);
             _route.RefreshPreview();
             Publish();
         }
@@ -85,8 +83,7 @@ namespace Features.ShipModule.Scripts {
             _pads.Reset(null);
             _wreckUntil = 0f;
             _route.Reset();
-            if (_radar != null)
-                _radar.UnbindShip();
+            _radar.UnbindShip();
             _model.ResetMatch();
         }
 
@@ -160,6 +157,8 @@ namespace Features.ShipModule.Scripts {
                     if (Ship.FlightControl.HasLanded)
                         FinishLanded();
                     return;
+                default:
+                    throw new System.ArgumentOutOfRangeException(nameof(_model.Phase), _model.Phase, "Unknown run phase.");
             }
         }
 

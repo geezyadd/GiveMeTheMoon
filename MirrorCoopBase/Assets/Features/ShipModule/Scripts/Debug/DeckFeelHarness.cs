@@ -36,8 +36,8 @@ namespace Features.ShipModule.Scripts.Debug {
         private readonly IGameCameraService _cameras;
         private readonly IConnectionSessionService _connection;
         private readonly IGameFlowStateMachineService _flow;
-        private readonly IShipRoute _route;
-        private readonly IShipWorldShiftService _worldShift;
+        private readonly IShipRouteDebug _route;
+        private readonly IShipWorldShiftDebug _worldShift;
         private readonly ShipRunModel _model;
         private readonly ShipStationCatalog _stations;
 
@@ -107,8 +107,8 @@ namespace Features.ShipModule.Scripts.Debug {
             IGameCameraService cameras,
             IConnectionSessionService connection,
             IGameFlowStateMachineService flow,
-            IShipRoute route,
-            IShipWorldShiftService worldShift,
+            IShipRouteDebug route,
+            IShipWorldShiftDebug worldShift,
             ShipRunModel model,
             ShipStationCatalog stations) {
             _input = input;

@@ -2,13 +2,12 @@ using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    // Answers the player modules' questions about the run's ship: where the walkable floor is, and releasing a rider.
     internal sealed class ShipRunRiderService : IShipFloorReferenceProvider, IShipRiderRelease {
         private readonly ShipRunModel _model;
-        private readonly IShipRunBinding _binding;
+        private readonly IShipRunBindingModel _binding;
         private readonly IShipStationPads _pads;
 
-        public ShipRunRiderService(ShipRunModel model, IShipRunBinding binding, IShipStationPads pads) {
+        public ShipRunRiderService(ShipRunModel model, IShipRunBindingModel binding, IShipStationPads pads) {
             _model = model;
             _binding = binding;
             _pads = pads;

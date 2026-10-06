@@ -2,12 +2,19 @@ using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    // The route of one flight: destination, transit progress, speed, alignment and ETA, written into the run model.
-    internal sealed class ShipRoute : IShipRoute {
+    internal sealed class ShipRoute : IShipRoute
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        , IShipRouteDebug
+#endif
+    {
+        private const float DIRECTION_EPSILON = 0.0001f;
+        private const float MIN_RADAR_RANGE = 80f;
+        private const float MIN_TRAVEL_DISTANCE_IN_APPROACHES = 3f;
+
         private readonly ShipRunModel _model;
         private readonly ShipRunConfig _config;
         private readonly ShipFlightSettings _flightSettings;
-        private readonly IShipRunBinding _binding;
+        private readonly IShipRunBindingModel _binding;
         private readonly IShipStationPads _pads;
         private readonly IShipFlightStatService _flightStats;
         private readonly ShipTransit _transit = new ShipTransit();
@@ -46,7 +53,7 @@ namespace Features.ShipModule.Scripts {
             ShipRunModel model,
             ShipRunConfig config,
             ShipFlightSettings flightSettings,
-            IShipRunBinding binding,
+            IShipRunBindingModel binding,
             IShipStationPads pads,
             IShipFlightStatService flightStats) {
             _model = model;
@@ -79,7 +86,7 @@ namespace Features.ShipModule.Scripts {
                 ? FlattenForward(ship.transform.forward)
                 : _launchForward;
             _transit.PreviewRoute(work, ReadFlightSpeed(), destination);
-            if (_destinationPoint.sqrMagnitude < 0.0001f)
+            if (_destinationPoint.sqrMagnitude < DIRECTION_EPSILON)
                 _destinationPoint = RadarPoint(
                     ship != null ? ship.transform.position : Vector3.zero,
                     destination);
@@ -106,7 +113,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         public Vector3 PadForward(Vector3 face) =>
-            FlattenForward(face.sqrMagnitude > 0.0001f ? face : _launchForward);
+            FlattenForward(face.sqrMagnitude > DIRECTION_EPSILON ? face : _launchForward);
 
         public void SetDestinationPoint(Vector3 point) =>
             _destinationPoint = point;
@@ -129,6 +136,7 @@ namespace Features.ShipModule.Scripts {
             _transit.Reset();
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         public void DebugUseFlightMode(ShipFlightMode mode) {
             _modeOverride = mode;
             _hasModeOverride = true;
@@ -136,6 +144,7 @@ namespace Features.ShipModule.Scripts {
 
         public void DebugClearFlightMode() =>
             _hasModeOverride = false;
+#endif
 
         private void ChooseDestination(Vector3 cruiseStart) {
             float halfCone = _config.DestinationConeDegrees * 0.5f;
@@ -143,7 +152,7 @@ namespace Features.ShipModule.Scripts {
             _destinationForward = FlattenForward(Quaternion.AngleAxis(yaw, Vector3.up) * _launchForward);
             if (SelectedFlightMode == ShipFlightMode.TravelInSpace) {
                 float distance = Mathf.Max(
-                    _config.ApproachDistance * 3f,
+                    _config.ApproachDistance * MIN_TRAVEL_DISTANCE_IN_APPROACHES,
                     _flightStats.EvaluateRouteWork(_model.LoopIndex) * Mathf.Max(1f, _flightSettings.CruiseSpeed));
                 ShipLandingPad currentPad = _pads.CurrentPad;
                 float padY = currentPad != null
@@ -158,7 +167,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         private Vector3 RadarPoint(Vector3 origin, Vector3 direction) {
-            float range = Mathf.Max(80f, _config.StationSpacing);
+            float range = Mathf.Max(MIN_RADAR_RANGE, _config.StationSpacing);
             ShipLandingPad currentPad = _pads.CurrentPad;
             float padY = currentPad != null
                 ? currentPad.transform.position.y + _config.TakeoffHeight
@@ -173,7 +182,7 @@ namespace Features.ShipModule.Scripts {
             _model.TransitWorkRemaining = _transit.WorkRemaining;
             _model.TransitSpeed = _transit.Speed;
             _model.TransitAlignment = _transit.Alignment;
-            _model.TransitDestination = _destinationPoint.sqrMagnitude > 0.0001f
+            _model.TransitDestination = _destinationPoint.sqrMagnitude > DIRECTION_EPSILON
                 ? _destinationPoint
                 : RadarPoint(
                     ship != null ? ship.transform.position : Vector3.zero,
@@ -208,7 +217,7 @@ namespace Features.ShipModule.Scripts {
 
         private static Vector3 FlattenForward(Vector3 forward) {
             forward.y = 0f;
-            if (forward.sqrMagnitude < 0.0001f)
+            if (forward.sqrMagnitude < DIRECTION_EPSILON)
                 return Vector3.forward;
 
             return forward.normalized;

@@ -2,7 +2,6 @@ using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    // Spawns the free modules that lie on a station pad when the ship arrives.
     internal sealed class ShipStationDropService : IShipStationDropService {
         private const float DROP_LATERAL = 7.5f;
         private const float DROP_ALONG_ORIGIN = 2f;
@@ -10,15 +9,15 @@ namespace Features.ShipModule.Scripts {
         private const float DROP_HEIGHT = 1f;
 
         private readonly ShipStationCatalog _stations;
-        private readonly IShipRunBinding _binding;
+        private readonly IShipRunBindingModel _binding;
 
-        public ShipStationDropService(ShipStationCatalog stations, IShipRunBinding binding) {
+        public ShipStationDropService(ShipStationCatalog stations, IShipRunBindingModel binding) {
             _stations = stations;
             _binding = binding;
         }
 
         public void SpawnDrops(ShipLandingPad pad, int loopIndex) {
-            if (_stations == null || _stations.Drops == null)
+            if (_stations.Drops == null)
                 return;
 
             ShipBase ship = _binding.Ship;

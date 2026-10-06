@@ -1,9 +1,9 @@
 namespace Features.ShipModule.Scripts {
     public interface IShipRunService {
-        void Bind(ShipRunDirector director, ShipBase ship, ShipLandingPad startPad);
-        void Unbind(ShipRunDirector director);
-        bool ServerTryLaunch(ShipBase ship);
-        void ServerAbort(ShipRunAbortReason reason);
-        void ServerTick();
+        public void Bind(ShipRunDirector director, ShipBase ship, ShipLandingPad startPad);
+        public void Unbind(ShipRunDirector director);
+        public bool ServerTryLaunch(ShipBase ship);
+        public void ServerAbort(ShipRunAbortReason reason);
+        public void ServerTick();
     }
 }
