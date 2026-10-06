@@ -121,9 +121,13 @@ namespace Features.PlayerLifeModule.Scripts {
                 return;
             }
 
-            // A revived body was already moved to its spawn while frozen and starts from rest. The teleport set the
-            // rigidbody's position, which an interpolated body would otherwise blend to from where it died.
+            // A revived body was already moved to its spawn while frozen and starts from rest. An interpolated body
+            // keeps blending from the pose of the last physics step (where it died) until the next one, even after
+            // the transform is set: switching interpolation off and back drops that old pose.
+            RigidbodyInterpolation interpolation = _body.interpolation;
+            _body.interpolation = RigidbodyInterpolation.None;
             transform.SetPositionAndRotation(_body.position, _body.rotation);
+            _body.interpolation = interpolation;
             _body.constraints = _aliveConstraints;
         }
 
