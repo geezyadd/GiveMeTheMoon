@@ -1,39 +1,26 @@
 using System;
-using Mirror;
 
 namespace Features.ShipModule.Scripts {
     internal sealed class ShipModules : IShipModules {
         private readonly ShipSocket[] _sockets;
         private readonly ShipStatSheet _stats;
         private readonly ShipStatsSync _statsSync;
-        // Read on use: the catalog and the configuration can be injected after the parts are created.
-        private readonly Func<EngineCatalog> _engines;
+        // Read on use: the configuration can be injected after the parts are created.
         private readonly Func<ShipAccumulativeStatsConfiguration> _statsConfiguration;
 
         internal ShipModules(
             ShipSocket[] sockets,
             ShipStatSheet stats,
             ShipStatsSync statsSync,
-            Func<EngineCatalog> engines,
             Func<ShipAccumulativeStatsConfiguration> statsConfiguration) {
             _sockets = sockets;
             _stats = stats;
             _statsSync = statsSync;
-            _engines = engines;
             _statsConfiguration = statsConfiguration;
         }
 
-        public void ServerOnModuleInstalled(ShipSocket socket) {
-            if (NetworkServer.active == false || socket == null)
-                return;
-
-            if (_engines().TryGet(socket.InstalledView, out EngineCatalog.EngineStats engine) == false)
-                return;
-
-            if (engine.FlightSpeed <= 0f)
-                return;
-
-            _stats.SetModuleFlightSpeed(socket.SocketId, engine.FlightSpeed);
+        public void ServerOnModuleInstalled(ShipSocket socket, ModuleDefinition module) {
+            _stats.AddModule(socket.SocketId, module.StatModifiers);
             ServerPublishStats();
         }
 
@@ -51,8 +38,7 @@ namespace Features.ShipModule.Scripts {
 
         public bool HasControlModule() {
             for (int i = 0; i < _sockets.Length; i++) {
-                ShipSocket socket = _sockets[i];
-                if (socket != null && socket.AcceptedType == ShipModuleType.Control && socket.IsOccupied)
+                if (_sockets[i].TryGetInstalledModule(out ModuleDefinition module) && module.IsControlModule)
                     return true;
             }
 

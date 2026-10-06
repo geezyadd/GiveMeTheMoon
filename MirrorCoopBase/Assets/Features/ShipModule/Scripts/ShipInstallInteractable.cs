@@ -11,7 +11,7 @@ namespace Features.ShipModule.Scripts {
 
         public override bool CanUse(NetworkIdentity user, GrabController grab) {
             ShipItem item = ResolveHeldItem(grab);
-            return _socket != null && item != null && _socket.CanAccept(item.Type);
+            return _socket != null && item != null && _socket.CanAccept(item.Module.SlotType);
         }
 
         public override void ServerUse(NetworkIdentity user, GrabController grab) {
@@ -19,7 +19,7 @@ namespace Features.ShipModule.Scripts {
             if (_socket == null || item == null)
                 return;
 
-            if (_socket.ServerTryInstall(item.Type, item.View) == false)
+            if (_socket.ServerTryInstall(item.Module.Id) == false)
                 return;
 
             grab.ServerConsumeHeld();

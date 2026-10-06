@@ -15,6 +15,7 @@ namespace Tests.PlayMode.LoopSmoke {
     // Plays the hand the way a player does: aims the real third-person camera and presses interact / release.
     // Takes the radar off by hand, drops it on the deck, picks it up again and installs it back.
     public sealed class LoopSmokeHandCheck {
+        private const string RADAR_MODULE_ID = "radar";
         private const float AIM_DISTANCE = 1.6f;
         private const float AIM_TOLERANCE_DEGREES = 0.5f;
         private const float AIM_TIMEOUT_SECONDS = 3f;
@@ -33,7 +34,7 @@ namespace Tests.PlayMode.LoopSmoke {
 
         public IEnumerator ReinstallRadarByHandCoroutine() {
             ShipSocket socket = FindRadarSocket();
-            Assert.IsTrue(socket.ServerTryInstall(ShipModuleType.Radar, ItemViewId.Radar), "Radar install failed.");
+            Assert.IsTrue(socket.ServerTryInstall(RADAR_MODULE_ID), "Radar install failed.");
             try {
                 CameraLookDriver.DebugPitchOverride = true;
                 Grabbable radar = null;
@@ -81,7 +82,7 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.IsInstanceOf<ShipInstallInteractable>(Interaction.Target.Usable, "The empty socket is not offered for install under the crosshair.");
             Interaction.Interact();
             yield return WaitForCoroutine(() => socket.IsOccupied && Hand.IsHolding == false && radar == null, "the radar installed from the hand");
-            Assert.AreEqual(ItemViewId.Radar, socket.InstalledView, "The socket shows the wrong module.");
+            Assert.AreEqual(RADAR_MODULE_ID, socket.InstalledModuleId, "The socket shows the wrong module.");
         }
 
         // Stands the player in front of the target and tilts the camera until its centre ray points at it.

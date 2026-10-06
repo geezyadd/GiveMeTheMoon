@@ -42,6 +42,7 @@ namespace Tests.PlayMode.LoopSmoke {
         // GameCore has no kill volume yet: a player this far below the pad top counts as lost.
         private const float KILL_DEPTH_BELOW_PAD = 2f;
         private const int REQUIRED_ENGINES = 2;
+        private const string ROCKET_ENGINE_MODULE_ID = "rocket-engine";
         // Only timings are shortened; distances, heights and pads stay as shipped.
         private const string FAST_TIMINGS_JSON =
             "{\"_takeoffSeconds\":1.5,\"_cruiseSeconds\":2,\"_landingSeconds\":1.5,\"_perLoopCruiseSeconds\":0}";
@@ -205,7 +206,7 @@ namespace Tests.PlayMode.LoopSmoke {
                     continue;
 
                 Assert.AreEqual(ShipModuleType.Engine, socket.AcceptedType, $"Required socket {socket.name} does not take an engine.");
-                Assert.IsTrue(socket.ServerTryInstall(ShipModuleType.Engine, ItemViewId.Engine), $"Engine install failed on {socket.name}.");
+                Assert.IsTrue(socket.ServerTryInstall(ROCKET_ENGINE_MODULE_ID), $"Engine install failed on {socket.name}.");
                 installed++;
             }
 
@@ -349,7 +350,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private int CountInstalledEngines() {
             int count = 0;
             foreach (ShipSocket socket in _ship.Sockets) {
-                if (socket.RequiredForLaunch && socket.InstalledView == ItemViewId.Engine)
+                if (socket.RequiredForLaunch && socket.InstalledModuleId == ROCKET_ENGINE_MODULE_ID)
                     count++;
             }
 

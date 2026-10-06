@@ -14,13 +14,10 @@ namespace Features.ShipModule.Scripts {
         public bool CanInstall(bool occupied, ShipModuleType type, ShipSocketRunState run) =>
             occupied == false && type == _acceptedType && IsUnlocked(run) && IsBuildPhase(run);
 
-        public bool CanUninstall(bool occupied, ShipSocketRunState run) =>
-            occupied && IsBuildPhase(run) && CanRemoveModule(_acceptedType);
+        public bool CanUninstall(bool occupied, bool isRemovable, ShipSocketRunState run) =>
+            occupied && isRemovable && IsBuildPhase(run);
 
         private static bool IsBuildPhase(ShipSocketRunState run) =>
             run.Phase == ShipRunPhase.Build;
-
-        private static bool CanRemoveModule(ShipModuleType type) =>
-            type == ShipModuleType.Engine || type == ShipModuleType.Radar;
     }
 }

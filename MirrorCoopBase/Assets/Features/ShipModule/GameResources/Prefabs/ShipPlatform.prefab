@@ -406,7 +406,7 @@ MonoBehaviour:
   _outline: {fileID: 3000000007}
   _defaultInstallPoint: {fileID: 3200000002}
   _viewInstallPoints:
-  - _view: 1
+  - _module: {fileID: 11400000, guid: ff75a78d06c01c043bfcb1689bf9f18e, type: 2}
     _point: {fileID: 3200000002}
   _unlockLoop: 0
   _ship: {fileID: 1000000003}
@@ -647,7 +647,7 @@ MonoBehaviour:
   _outline: {fileID: 4000000007}
   _defaultInstallPoint: {fileID: 4200000002}
   _viewInstallPoints:
-  - _view: 1
+  - _module: {fileID: 11400000, guid: ff75a78d06c01c043bfcb1689bf9f18e, type: 2}
     _point: {fileID: 4200000002}
   _unlockLoop: 0
   _ship: {fileID: 1000000003}
@@ -1137,7 +1137,7 @@ MonoBehaviour:
   _outline: {fileID: 7100000007}
   _defaultInstallPoint: {fileID: 7100000012}
   _viewInstallPoints:
-  - _view: 5
+  - _module: {fileID: 11400000, guid: 545fb73e510c00640acbfc66d56bb1a3, type: 2}
     _point: {fileID: 7100000012}
   _unlockLoop: 0
   _ship: {fileID: 1000000003}
@@ -1378,7 +1378,7 @@ MonoBehaviour:
   _outline: {fileID: 6239377400495620916}
   _defaultInstallPoint: {fileID: 996847198775849381}
   _viewInstallPoints:
-  - _view: 4
+  - _module: {fileID: 11400000, guid: ed0a9eee18ae3044abbdd909ac66cfb6, type: 2}
     _point: {fileID: 996847198775849381}
   _unlockLoop: 0
   _ship: {fileID: 1000000003}

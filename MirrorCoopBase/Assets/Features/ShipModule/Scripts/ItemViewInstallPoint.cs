@@ -4,10 +4,10 @@ using UnityEngine;
 namespace Features.ShipModule.Scripts {
     [Serializable]
     public sealed class ItemViewInstallPoint {
-        [SerializeField] private ItemViewId _view;
+        [SerializeField] private ModuleDefinition _module;
         [SerializeField] private Transform _point;
 
-        public ItemViewId View => _view;
+        public ModuleDefinition Module => _module;
         public Transform Point => _point;
     }
 }

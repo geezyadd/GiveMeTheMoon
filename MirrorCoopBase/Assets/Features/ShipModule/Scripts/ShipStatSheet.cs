@@ -7,7 +7,8 @@ namespace Features.ShipModule.Scripts {
     // The server's source of truth for the ship stats: base values plus the modifiers of the installed modules.
     public sealed class ShipStatSheet {
         private readonly ShipStatEntity _stats;
-        private readonly Dictionary<string, StatModifier> _flightSpeedModifiers = new Dictionary<string, StatModifier>();
+        private readonly Dictionary<string, KeyValuePair<ShipStatType, StatModifier>[]> _moduleModifiers =
+            new Dictionary<string, KeyValuePair<ShipStatType, StatModifier>[]>();
 
         public ShipStatSheet(ShipStatEntity stats) =>
             _stats = stats;
@@ -23,18 +24,27 @@ namespace Features.ShipModule.Scripts {
             }
         }
 
-        public void SetModuleFlightSpeed(string socketId, float flightSpeed) {
+        // Remembers which modifiers came from which socket, so removing a module takes off exactly its own.
+        public void AddModule(string socketId, IReadOnlyList<ModuleDefinition.StatModifierEntry> modifiers) {
             RemoveModule(socketId);
-            StatModifier modifier = new StatModifier(flightSpeed, ModifierType.Flat);
-            _stats.AddModifier(ShipStatType.FlightSpeed, modifier);
-            _flightSpeedModifiers[socketId] = modifier;
+            KeyValuePair<ShipStatType, StatModifier>[] applied = new KeyValuePair<ShipStatType, StatModifier>[modifiers.Count];
+            for (int i = 0; i < modifiers.Count; i++) {
+                ModuleDefinition.StatModifierEntry entry = modifiers[i];
+                StatModifier modifier = new StatModifier(entry.Value, entry.Type);
+                _stats.AddModifier(entry.Stat, modifier);
+                applied[i] = new KeyValuePair<ShipStatType, StatModifier>(entry.Stat, modifier);
+            }
+
+            _moduleModifiers[socketId] = applied;
         }
 
         public bool RemoveModule(string socketId) {
-            if (_flightSpeedModifiers.Remove(socketId, out StatModifier modifier) == false)
+            if (_moduleModifiers.Remove(socketId, out KeyValuePair<ShipStatType, StatModifier>[] applied) == false)
                 return false;
 
-            _stats.RemoveModifier(ShipStatType.FlightSpeed, modifier);
+            for (int i = 0; i < applied.Length; i++)
+                _stats.RemoveModifier(applied[i].Key, applied[i].Value);
+
             return true;
         }
 

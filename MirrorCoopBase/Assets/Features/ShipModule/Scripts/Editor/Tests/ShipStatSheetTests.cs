@@ -1,4 +1,5 @@
 using Features.ShipModule.Scripts.Generated;
+using Features.StatsModule.EntityStatsModule.Scripts.Modifier;
 using Features.StatsModule.EntityStatsModule.Scripts.StatsEntity.Factories;
 using NUnit.Framework;
 using UnityEditor;
@@ -27,6 +28,7 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
 
         private const float ENGINE_FLIGHT_SPEED = 1f;
         private const float SMALL_ENGINE_FLIGHT_SPEED = 0.5f;
+        private const float HANDLING_PERCENT = 0.1f;
 
         private GameObject _host;
         private ShipStatEntity _entity;
@@ -62,7 +64,7 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenEngineInstalled_ThenFinalFlightSpeedAndSnapshotIncludeIt() {
-            _sheet.SetModuleFlightSpeed(LEFT_ENGINE_SOCKET, ENGINE_FLIGHT_SPEED);
+            _sheet.AddModule(LEFT_ENGINE_SOCKET, FlightSpeedModifiers(ENGINE_FLIGHT_SPEED));
 
             Assert.AreEqual(FLIGHT_SPEED + ENGINE_FLIGHT_SPEED, _sheet.GetFull(ShipStatType.FlightSpeed), TOLERANCE);
             ShipStatsState state = _sheet.CreateState();
@@ -75,8 +77,8 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenTwoEnginesInstalled_AndOneUninstalled_ThenSnapshotKeepsOnlyTheOther() {
-            _sheet.SetModuleFlightSpeed(LEFT_ENGINE_SOCKET, ENGINE_FLIGHT_SPEED);
-            _sheet.SetModuleFlightSpeed(RIGHT_ENGINE_SOCKET, SMALL_ENGINE_FLIGHT_SPEED);
+            _sheet.AddModule(LEFT_ENGINE_SOCKET, FlightSpeedModifiers(ENGINE_FLIGHT_SPEED));
+            _sheet.AddModule(RIGHT_ENGINE_SOCKET, FlightSpeedModifiers(SMALL_ENGINE_FLIGHT_SPEED));
             Assert.AreEqual(
                 FLIGHT_SPEED + ENGINE_FLIGHT_SPEED + SMALL_ENGINE_FLIGHT_SPEED,
                 _sheet.CreateState().FlightSpeed,
@@ -89,8 +91,8 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenEngineReinstalledInTheSameSocket_ThenItsSpeedCountsOnce() {
-            _sheet.SetModuleFlightSpeed(LEFT_ENGINE_SOCKET, ENGINE_FLIGHT_SPEED);
-            _sheet.SetModuleFlightSpeed(LEFT_ENGINE_SOCKET, SMALL_ENGINE_FLIGHT_SPEED);
+            _sheet.AddModule(LEFT_ENGINE_SOCKET, FlightSpeedModifiers(ENGINE_FLIGHT_SPEED));
+            _sheet.AddModule(LEFT_ENGINE_SOCKET, FlightSpeedModifiers(SMALL_ENGINE_FLIGHT_SPEED));
 
             Assert.AreEqual(FLIGHT_SPEED + SMALL_ENGINE_FLIGHT_SPEED, _sheet.CreateState().FlightSpeed, TOLERANCE);
         }
@@ -101,6 +103,27 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
 
             Assert.AreEqual(FLIGHT_SPEED, _sheet.CreateState().FlightSpeed, TOLERANCE);
         }
+
+        [Test]
+        public void WhenModuleWithSeveralModifiersUninstalled_ThenEveryStatIsBackToBase() {
+            _sheet.AddModule(LEFT_ENGINE_SOCKET, new[] {
+                Modifier(ShipStatType.FlightSpeed, ENGINE_FLIGHT_SPEED, ModifierType.Flat),
+                Modifier(ShipStatType.Handling, HANDLING_PERCENT, ModifierType.PercentAdd)
+            });
+            Assert.AreEqual(FLIGHT_SPEED + ENGINE_FLIGHT_SPEED, _sheet.GetFull(ShipStatType.FlightSpeed), TOLERANCE);
+            Assert.AreEqual(HANDLING * (1f + HANDLING_PERCENT), _sheet.GetFull(ShipStatType.Handling), TOLERANCE);
+
+            Assert.IsTrue(_sheet.RemoveModule(LEFT_ENGINE_SOCKET));
+
+            Assert.AreEqual(FLIGHT_SPEED, _sheet.GetFull(ShipStatType.FlightSpeed), TOLERANCE);
+            Assert.AreEqual(HANDLING, _sheet.GetFull(ShipStatType.Handling), TOLERANCE);
+        }
+
+        private static ModuleDefinition.StatModifierEntry[] FlightSpeedModifiers(float value) =>
+            new[] { Modifier(ShipStatType.FlightSpeed, value, ModifierType.Flat) };
+
+        private static ModuleDefinition.StatModifierEntry Modifier(ShipStatType stat, float value, ModifierType type) =>
+            new ModuleDefinition.StatModifierEntry { Stat = stat, Value = value, Type = type };
 
         private void AssertStat(ShipStatType type, float maxValue, float value) {
             Assert.AreEqual(maxValue, _entity.GetStat(type).MaxValue, TOLERANCE, type + " max");

@@ -2,10 +2,8 @@ using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
     public sealed class ShipItem : MonoBehaviour {
-        [SerializeField] private ShipModuleType _type = ShipModuleType.Engine;
-        [SerializeField] private ItemViewId _view = ItemViewId.Engine;
+        [SerializeField] private ModuleDefinition _module;
 
-        public ShipModuleType Type => _type;
-        public ItemViewId View => _view;
+        public ModuleDefinition Module => _module;
     }
 }
