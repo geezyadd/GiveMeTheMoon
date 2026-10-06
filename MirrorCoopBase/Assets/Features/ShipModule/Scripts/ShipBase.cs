@@ -49,6 +49,11 @@ namespace Features.ShipModule.Scripts {
         internal IShipFlightControl FlightControl => _flightControl;
         internal IShipDeckCargo Cargo => _cargo;
         internal ShipPoseSync PoseSync => _poseSync;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        internal IShipRidersDebug RidersDebug => _riders;
+        internal IShipFlightControlDebug FlightControlDebug => _flightControl;
+        internal IShipDeckCargoDebug CargoDebug => _cargo;
+#endif
 
         public bool CanLaunch {
             get {

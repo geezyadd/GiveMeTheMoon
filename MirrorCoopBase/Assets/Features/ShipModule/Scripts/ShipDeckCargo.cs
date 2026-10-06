@@ -4,7 +4,11 @@ using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    internal sealed class ShipDeckCargo : IShipDeckCargo {
+    internal sealed class ShipDeckCargo : IShipDeckCargo
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        , IShipDeckCargoDebug
+#endif
+    {
         private const float SCAN_INTERVAL = 0.2f;
         private const float REST_HEIGHT = 2.2f;
         private const float BELOW_DECK_TOLERANCE = 0.2f;
@@ -111,12 +115,14 @@ namespace Features.ShipModule.Scripts {
             }
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         public void DebugAttach(Grabbable grabbable) {
             if (grabbable == null || Contains(grabbable))
                 return;
 
             Attach(grabbable, true);
         }
+#endif
 
         public bool TryMeasure(out Vector3 localPosition, out float drift) {
             localPosition = Vector3.zero;

@@ -3,7 +3,11 @@ using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    internal sealed class ShipRiders : IShipRiders {
+    internal sealed class ShipRiders : IShipRiders
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        , IShipRidersDebug
+#endif
+    {
         private const float NEARBY_RIDER_RADIUS_SQR = 64f;
 
         private static readonly Collider[] _riderScratch = new Collider[16];
@@ -25,6 +29,7 @@ namespace Features.ShipModule.Scripts {
             _flightSettings = flightSettings;
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         public void DebugBindRider(ShipRider rider) {
             if (rider == null || rider.IsRiding)
                 return;
@@ -37,6 +42,7 @@ namespace Features.ShipModule.Scripts {
 
             rider.BindToPlatform(_ship);
         }
+#endif
 
         internal void RegisterRider(ShipRider rider) {
             if (rider == null)
