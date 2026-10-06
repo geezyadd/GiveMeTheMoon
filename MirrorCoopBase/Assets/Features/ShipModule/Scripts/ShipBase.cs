@@ -1,4 +1,3 @@
-using Features.GrabModule.Scripts;
 using Mirror;
 using UnityEngine;
 using Zenject;
@@ -44,6 +43,7 @@ namespace Features.ShipModule.Scripts {
         internal ShipRiders Riders => _riders;
         internal ShipSeats Seats => _seats;
         internal ShipFlightControl FlightControl => _flightControl;
+        internal ShipDeckCargo Cargo => _cargo;
         internal ShipPoseSync PoseSync => _poseSync;
 
         public bool CanLaunch {
@@ -229,28 +229,6 @@ namespace Features.ShipModule.Scripts {
                 _poseSync.ServerShift(delta, position, transform.rotation);
             else
                 _poseSync.ServerSnap(position, transform.rotation);
-        }
-
-        internal int DeckCargoCount => _cargo.AttachedCount;
-
-        internal void DebugAttachDeckItem(Grabbable grabbable) {
-            _cargo.DebugAttach(grabbable, transform, _poseSync);
-        }
-
-        internal bool TryMeasureDeckCargo(out Vector3 localPosition, out float drift) {
-            return _cargo.TryMeasure(transform, out localPosition, out drift);
-        }
-
-        internal void ClientAttachDeckItem(uint netId, Vector3 localPosition, Quaternion localRotation) {
-            _cargo.ClientAttach(netId, localPosition, localRotation, transform);
-        }
-
-        internal void ClientDetachDeckItem(uint netId) {
-            _cargo.ClientDetach(netId, transform);
-        }
-
-        internal void ClientClearDeckCargo() {
-            _cargo.DetachAll(transform, null, false);
         }
 
         internal void ServerRemoveRider(ShipRider rider) {

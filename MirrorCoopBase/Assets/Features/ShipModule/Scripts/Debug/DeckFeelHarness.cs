@@ -304,12 +304,12 @@ namespace Features.ShipModule.Scripts.Debug {
 
             if (_cargoNoted == false) {
                 _cargoNoted = true;
-                if (_ship.DeckCargoCount == 0 && _looseItem != null) {
-                    _ship.DebugAttachDeckItem(_looseItem);
-                    Note("Deck scan missed the loose item; pinned it directly. cargo=" + _ship.DeckCargoCount);
+                if (_ship.Cargo.AttachedCount == 0 && _looseItem != null) {
+                    _ship.Cargo.DebugAttach(_looseItem, _ship.transform, _ship.PoseSync);
+                    Note("Deck scan missed the loose item; pinned it directly. cargo=" + _ship.Cargo.AttachedCount);
                 }
                 else {
-                    Note("Deck cargo attached by scan. cargo=" + _ship.DeckCargoCount);
+                    Note("Deck cargo attached by scan. cargo=" + _ship.Cargo.AttachedCount);
                 }
             }
 
@@ -470,7 +470,7 @@ namespace Features.ShipModule.Scripts.Debug {
             }
 
             _loopsSeen = _model.LoopIndex;
-            Note("Landed loop " + _loopsSeen + ". " + ModuleLine() + " cargoDrift=" + CargoDrift().ToString("0.000") + " cargo=" + _ship.DeckCargoCount);
+            Note("Landed loop " + _loopsSeen + ". " + ModuleLine() + " cargoDrift=" + CargoDrift().ToString("0.000") + " cargo=" + _ship.Cargo.AttachedCount);
             if (hoverDone) {
                 Finish(true);
                 return;
@@ -1139,7 +1139,7 @@ namespace Features.ShipModule.Scripts.Debug {
         }
 
         private float CargoDrift() {
-            if (_ship.TryMeasureDeckCargo(out Vector3 local, out float drift))
+            if (_ship.Cargo.TryMeasure(_ship.transform, out Vector3 local, out float drift))
                 _cargoDriftMax = Mathf.Max(_cargoDriftMax, drift);
 
             return _cargoDriftMax;
@@ -1237,7 +1237,7 @@ namespace Features.ShipModule.Scripts.Debug {
         }
 
         private void Finish(bool success) {
-            if (success && _client == false && _ship != null && _ship.DeckCargoCount == 0) {
+            if (success && _client == false && _ship != null && _ship.Cargo.AttachedCount == 0) {
                 Note("no loose item stayed on the deck");
                 success = false;
             }
@@ -1251,7 +1251,7 @@ namespace Features.ShipModule.Scripts.Debug {
             if (_fixedDt)
                 Time.captureFramerate = 0;
 
-            Note("worldShifts=" + _worldShift.WorldShiftCount + " loops=" + _model.LoopIndex + " cargoDriftMax=" + _cargoDriftMax.ToString("0.000") + " cargo=" + (_ship != null ? _ship.DeckCargoCount : 0));
+            Note("worldShifts=" + _worldShift.WorldShiftCount + " loops=" + _model.LoopIndex + " cargoDriftMax=" + _cargoDriftMax.ToString("0.000") + " cargo=" + (_ship != null ? _ship.Cargo.AttachedCount : 0));
             Note(success ? "PASS" : "FAIL");
             Done = success ? 1 : -1;
             Status = success ? "done" : "failed";
