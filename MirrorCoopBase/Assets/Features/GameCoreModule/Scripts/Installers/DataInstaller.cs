@@ -35,6 +35,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             PlayerProfileModelInstaller.Install(Container);
             ShipRunModelInstaller.Install(Container);
             ShipSocketsModelInstaller.Install(Container);
+            ShipStatsModelInstaller.Install(Container);
         }
     }
 }

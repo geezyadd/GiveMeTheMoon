@@ -16,9 +16,11 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private ShipPoseSync _poseSync;
         [SerializeField] private ShipStatEntity _stats;
         [SerializeField] private ShipSocketsSync _socketStates;
+        [SerializeField] private ShipStatsSync _statsSync;
 
         private EngineCatalog _engines;
         private ShipFlightSettings _flightSettings;
+        private ShipAccumulativeStatsConfiguration _statsConfiguration;
 
         private ShipDeckCargo _cargo;
         private ShipDeckGeometry _deckGeometry;
@@ -79,13 +81,15 @@ namespace Features.ShipModule.Scripts {
         }
 
         [Inject]
-        private void Construct(
+        private void InjectDependencies(
             EngineCatalog engines,
             ShipFlightSettings settings,
+            ShipAccumulativeStatsConfiguration statsConfiguration,
             IReadOnlyShipRunModel run,
             IShipRunService runService) {
             _engines = engines;
             _flightSettings = settings;
+            _statsConfiguration = statsConfiguration;
 
             _run = run;
             _runService = runService;
@@ -93,10 +97,10 @@ namespace Features.ShipModule.Scripts {
 
         private void Awake() {
             Assert.IsTrue(
-                _sockets != null && _stats != null && _socketStates != null,
-                name + " needs its sockets, socket states and stat entity wired.");
+                _sockets != null && _stats != null && _socketStates != null && _statsSync != null,
+                name + " needs its sockets, socket states, stat entity and stats sync wired.");
             _deckGeometry = new ShipDeckGeometry(transform, _deck, _deckColliders);
-            _modules = new ShipModules(_sockets, _stats, ReadEngines);
+            _modules = new ShipModules(_sockets, new ShipStatSheet(_stats), _statsSync, ReadEngines, ReadStatsConfiguration);
             _riders = new ShipRiders(this, _deckGeometry, _rideVolume, ReadFlightSettings);
             _seats = new ShipSeats(this, _sockets, _riders);
             _flightControl = new ShipFlightControl(ReadFlightSettings, _modules, _seats);
@@ -183,6 +187,8 @@ namespace Features.ShipModule.Scripts {
             _riders.ServerReleaseRiders();
             _seats.ClearAllOccupants();
             _modules.ClearInstalledModules();
+            // A run starts with this reset: a ship without modules publishes nothing on uninstall, so publish here.
+            _modules.ServerPublishStats();
             _flightControl.UnlockControls();
             if (_lever != null)
                 _lever.ServerReset();
@@ -305,6 +311,9 @@ namespace Features.ShipModule.Scripts {
 
         private EngineCatalog ReadEngines() =>
             _engines;
+
+        private ShipAccumulativeStatsConfiguration ReadStatsConfiguration() =>
+            _statsConfiguration;
 
         private void SleepBody() {
             if (_body == null)
