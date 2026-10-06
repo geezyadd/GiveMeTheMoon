@@ -12,8 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ff3a281b3ac3394fa856487c3d1ae5f, type: 3}
   m_Name: ShopCatalog_Default
   m_EditorClassIdentifier: 
-  _spawnDistance: 1.5
-  _spawnHeight: 1
   _entries:
   - _item: {fileID: 8200000000000000001, guid: c4e8a91b2d3f40a5b6c7d8e9f0a1b2c3, type: 3}
     _displayName: Rocket Engine

@@ -23,12 +23,8 @@ namespace Features.ShopModule.Scripts.Configurations {
             public string Description => _description;
         }
 
-        [SerializeField] private float _spawnDistance = 1.5f;
-        [SerializeField] private float _spawnHeight = 1f;
         [SerializeField] private Entry[] _entries = Array.Empty<Entry>();
 
-        public float SpawnDistance => _spawnDistance;
-        public float SpawnHeight => _spawnHeight;
         public IReadOnlyList<Entry> Entries => _entries;
     }
 }

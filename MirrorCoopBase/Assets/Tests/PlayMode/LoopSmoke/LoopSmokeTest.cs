@@ -12,6 +12,7 @@ using Features.MenuModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
 using Features.PlayerProfileModule.Scripts;
 using Features.ShipModule.Scripts;
+using Features.ShopModule.Scripts.Network;
 using Game.Connection;
 using Mirror;
 using NUnit.Framework;
@@ -113,6 +114,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return AssertLandedSafelyCoroutine(secondRunStartPad, FindPadUnderShip());
             LogSpawnedCounts("run 2 after the first landing");
             Assert.AreEqual(firstLandingSpawns, CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values), "Run 2 does not spawn the same pad and drops on landing as run 1.");
+            yield return new LoopSmokeShopCheck().BuyAtKioskAndWalkAwayCoroutine(FindPadUnderShip());
 
             yield return LeaveToMenuCoroutine();
             Assert.AreEqual(0, _errorLog.Count, $"Errors were logged during the loop:\n{_errorLog.Describe()}");
@@ -248,6 +250,8 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.AreEqual(REQUIRED_ENGINES, CountInstalledEngines(), "Engines were lost on landing.");
             Assert.AreNotSame(launchPad, landingPad, "The ship is not on a new pad after landing.");
             Assert.AreEqual(ShipRunAbortReason.None, _model.LastAbortReason, "The flight ended as a wreck.");
+            Assert.IsNotNull(landingPad.GetComponentInChildren<ShopKioskInteractable>(), "The new station has no shop kiosk.");
+            Assert.AreEqual(CountSceneObjects<ShipLandingPad>(), CountSceneObjects<ShopKioskInteractable>(), "Shop kiosks do not match the pads one to one.");
 
             Bounds padBounds = PadBounds(landingPad);
             Bounds deck = _ship.DeckBounds;

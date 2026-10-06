@@ -57,7 +57,7 @@ namespace Features.ShopModule.Scripts.Network {
             if (sender.identity == null)
                 return;
 
-            _shopPurchaseSystem.ServerPurchase(this, entryIndex, sender.identity.transform);
+            _shopPurchaseSystem.ServerPurchase(this, entryIndex, sender.identity.GetComponent<ShopCustomer>());
         }
 
         private void OnPurchaseRequested(int entryIndex) =>

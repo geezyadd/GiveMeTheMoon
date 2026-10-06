@@ -7,6 +7,7 @@ using Features.MvpModule;
 using Features.PlayerLifeModule.Scripts.Generated;
 using Features.PlayerProfileModule.Data.Generated;
 using Features.ShipModule.Scripts;
+using Features.ShopModule.Scripts.Data;
 using Features.ShopModule.Scripts.Generated;
 using Game.Connection;
 using Zenject;
@@ -25,6 +26,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<ShipRunModel>().AsSingle();
             Container.Bind<HoveredInteractableModel>().AsSingle();
             Container.Bind<SpectatorModel>().AsSingle();
+            Container.Bind<ShopVisitModel>().AsSingle();
             WalletModelInstaller.Install(Container);
             PlayerLifeModelInstaller.Install(Container);
             PlayerHandModelInstaller.Install(Container);

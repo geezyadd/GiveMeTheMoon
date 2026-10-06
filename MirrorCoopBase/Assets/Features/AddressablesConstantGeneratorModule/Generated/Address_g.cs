@@ -21,6 +21,7 @@ namespace Features.AddressablesConstantsGenerator.Generated {
         }
         public static partial class Configurations {
             public const string ADDRESSABLE_GROUP_NAME = "Configurations";
+            public const string ShopKioskConfiguration_Default = "ShopKioskConfiguration_Default";
             public const string ConnectionConfig_Default = "ConnectionConfig_Default";
             public const string GrabConfiguration_Default = "GrabConfiguration_Default";
             public const string PlayerLifeConfiguration_Default = "PlayerLifeConfiguration_Default";
@@ -32,7 +33,7 @@ namespace Features.AddressablesConstantsGenerator.Generated {
             public const string PlayerNameplateConfiguration_Default = "PlayerNameplateConfiguration_Default";
             public const string PlayerStatsConfiguration_Default = "PlayerStatsConfiguration_Default";
             public const string ShipAccumulativeStatsConfiguration_Default = "ShipAccumulativeStatsConfiguration_Default";
-            public static List<string> AllAddressablesInGroup = new List<string>() {"ConnectionConfig_Default","GrabConfiguration_Default","PlayerLifeConfiguration_Default","ShipRunConfig_Default","ShipFlightConfig_Default","PlayerDamageConfiguration_Default","ShopCatalog_Default","WalletConfiguration_Default","PlayerNameplateConfiguration_Default","PlayerStatsConfiguration_Default","ShipAccumulativeStatsConfiguration_Default",};
+            public static List<string> AllAddressablesInGroup = new List<string>() {"ShopKioskConfiguration_Default","ConnectionConfig_Default","GrabConfiguration_Default","PlayerLifeConfiguration_Default","ShipRunConfig_Default","ShipFlightConfig_Default","PlayerDamageConfiguration_Default","ShopCatalog_Default","WalletConfiguration_Default","PlayerNameplateConfiguration_Default","PlayerStatsConfiguration_Default","ShipAccumulativeStatsConfiguration_Default",};
         }
         public static partial class Groups {
             public static List<List<string>> AllAddressablesGroups = new List<List<string>>() {Windows.AllAddressablesInGroup,Scenes.AllAddressablesInGroup,Configurations.AllAddressablesInGroup,};
