@@ -17,9 +17,6 @@ namespace Features.ShipModule.Scripts {
         }
 
         public void SpawnDrops(ShipLandingPad pad, int loopIndex) {
-            if (_stations.Drops == null)
-                return;
-
             ShipBase ship = _binding.Ship;
             Transform origin = pad != null ? pad.transform : (ship != null ? ship.transform : null);
             if (origin == null)
