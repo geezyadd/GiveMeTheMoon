@@ -1,3 +1,4 @@
+using Features.ShipModule.Scripts.Generated;
 using Mirror;
 using UnityEngine;
 
@@ -11,7 +12,7 @@ namespace Features.ShipModule.Scripts {
         private const float MIN_RADAR_RANGE = 80f;
         private const float MIN_TRAVEL_DISTANCE_IN_APPROACHES = 3f;
 
-        private readonly ShipRunModel _model;
+        private readonly IReadOnlyShipRunModel _model;
         private readonly ShipRunConfig _config;
         private readonly ShipFlightSettings _flightSettings;
         private readonly IShipRunBindingModel _binding;
@@ -50,7 +51,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         public ShipRoute(
-            ShipRunModel model,
+            IReadOnlyShipRunModel model,
             ShipRunConfig config,
             ShipFlightSettings flightSettings,
             IShipRunBindingModel binding,
@@ -90,7 +91,6 @@ namespace Features.ShipModule.Scripts {
                 _destinationPoint = RadarPoint(
                     ship != null ? ship.transform.position : Vector3.zero,
                     destination);
-            CopyTransitToModel();
         }
 
         public void ApplyFrame(bool tickWork) {
@@ -100,7 +100,6 @@ namespace Features.ShipModule.Scripts {
                 float speed = ReadTravelMetersPerSecond();
                 _transit.PreviewRoute(distance, speed, _destinationForward);
                 _transit.SetAlignment(EvaluateTransitAlignment());
-                CopyTransitToModel();
                 return;
             }
 
@@ -108,8 +107,6 @@ namespace Features.ShipModule.Scripts {
             _transit.SetAlignment(EvaluateTransitAlignment());
             if (tickWork)
                 _transit.Tick(Time.deltaTime);
-
-            CopyTransitToModel();
         }
 
         public Vector3 PadForward(Vector3 face) =>
@@ -126,7 +123,6 @@ namespace Features.ShipModule.Scripts {
             _hasModeOverride = false;
             _destinationPoint = Vector3.zero;
             _destinationForward = Vector3.forward;
-            CopyTransitToModel();
         }
 
         public void Reset() {
@@ -134,6 +130,23 @@ namespace Features.ShipModule.Scripts {
             _destinationPoint = Vector3.zero;
             _destinationForward = Vector3.forward;
             _transit.Reset();
+        }
+
+        public ShipRunState WithTransit(ShipRunState state) {
+            ShipBase ship = _binding.Ship;
+            state.TransitWorkRemaining = _transit.WorkRemaining;
+            state.TransitSpeed = _transit.Speed;
+            state.TransitAlignment = _transit.Alignment;
+            state.TransitDestination = _destinationPoint.sqrMagnitude > DIRECTION_EPSILON
+                ? _destinationPoint
+                : RadarPoint(
+                    ship != null ? ship.transform.position : Vector3.zero,
+                    _transit.DestinationDirection);
+            state.TransitSecondsRemaining = _transit.SecondsRemaining;
+            state.CruiseEndNetworkTime = state.Phase == ShipRunPhase.Cruise
+                ? NetworkTime.time + _transit.SecondsRemaining
+                : 0d;
+            return state;
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -175,22 +188,6 @@ namespace Features.ShipModule.Scripts {
             Vector3 point = origin + FlattenForward(direction) * range;
             point.y = padY;
             return point;
-        }
-
-        private void CopyTransitToModel() {
-            ShipBase ship = _binding.Ship;
-            _model.TransitWorkRemaining = _transit.WorkRemaining;
-            _model.TransitSpeed = _transit.Speed;
-            _model.TransitAlignment = _transit.Alignment;
-            _model.TransitDestination = _destinationPoint.sqrMagnitude > DIRECTION_EPSILON
-                ? _destinationPoint
-                : RadarPoint(
-                    ship != null ? ship.transform.position : Vector3.zero,
-                    _transit.DestinationDirection);
-            _model.TransitSecondsRemaining = _transit.SecondsRemaining;
-            _model.CruiseEndNetworkTime = _model.Phase == ShipRunPhase.Cruise
-                ? NetworkTime.time + _model.TransitSecondsRemaining
-                : 0d;
         }
 
         private float ReadFlightSpeed() =>

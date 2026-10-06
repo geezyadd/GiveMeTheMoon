@@ -11,6 +11,7 @@ using Features.CharacterMovableModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.States;
 using Features.GrabModule.Scripts;
+using Features.ShipModule.Scripts.Generated;
 using Game.Connection;
 using Mirror;
 using UnityEngine;
@@ -38,7 +39,7 @@ namespace Features.ShipModule.Scripts.Debug {
         private readonly IGameFlowStateMachineService _flow;
         private readonly IShipRouteDebug _route;
         private readonly IShipWorldShiftDebug _worldShift;
-        private readonly ShipRunModel _model;
+        private readonly IReadOnlyShipRunModel _model;
         private readonly ShipStationCatalog _stations;
 
         private readonly List<Vector3> _player = new List<Vector3>(4096);
@@ -109,7 +110,7 @@ namespace Features.ShipModule.Scripts.Debug {
             IGameFlowStateMachineService flow,
             IShipRouteDebug route,
             IShipWorldShiftDebug worldShift,
-            ShipRunModel model,
+            IReadOnlyShipRunModel model,
             ShipStationCatalog stations) {
             _input = input;
             _cameras = cameras;
@@ -273,7 +274,7 @@ namespace Features.ShipModule.Scripts.Debug {
             SpawnDeckItem();
             if (_rider.IsRiding == false) {
                 PlaceRiderOnDeck();
-                _ship.Riders.DebugBindRider(_rider);
+                _ship.RidersDebug.DebugBindRider(_rider);
                 if (_rider.IsRiding == false) {
                     Vector3 local = _ship.transform.InverseTransformPoint(_rider.transform.position);
                     Fail("local player did not bind to the deck at " + local.ToString("0.00"));
@@ -293,7 +294,7 @@ namespace Features.ShipModule.Scripts.Debug {
         private void TickLaunch(bool hover) {
             Status = hover ? "launch-hover" : "launch-travel";
             _input.EndScripted();
-            _ship.FlightControl.SetDebugSteer(false, 0f);
+            _ship.FlightControlDebug.SetDebugSteer(false, 0f);
             if (_ship.CanLaunch == false) {
                 InstallRequiredModules();
                 if (_ship.CanLaunch == false) {
@@ -305,7 +306,7 @@ namespace Features.ShipModule.Scripts.Debug {
             if (_cargoNoted == false) {
                 _cargoNoted = true;
                 if (_ship.Cargo.AttachedCount == 0 && _looseItem != null) {
-                    _ship.Cargo.DebugAttach(_looseItem);
+                    _ship.CargoDebug.DebugAttach(_looseItem);
                     Note("Deck scan missed the loose item; pinned it directly. cargo=" + _ship.Cargo.AttachedCount);
                 }
                 else {
@@ -381,7 +382,7 @@ namespace Features.ShipModule.Scripts.Debug {
             }
 
             if (_client == false && cruise) {
-                _ship.FlightControl.SetDebugSteer(true, Mathf.Sin(Time.time * 1.7f) * 0.55f);
+                _ship.FlightControlDebug.SetDebugSteer(true, Mathf.Sin(Time.time * 1.7f) * 0.55f);
                 if (_shiftCruise == false && cameraId == CameraIds.FPCamera && _measureStep == 1 && _measureTime > 0.6f) {
                     _shiftCruise = true;
                     _shiftMarks = 3;
@@ -421,7 +422,7 @@ namespace Features.ShipModule.Scripts.Debug {
                 ArmWalkShot(_finishCamera);
 
             if (_ship != null && _client == false)
-                _ship.FlightControl.SetDebugSteer(false, 0f);
+                _ship.FlightControlDebug.SetDebugSteer(false, 0f);
 
             Enter(_finishState);
         }
@@ -445,10 +446,10 @@ namespace Features.ShipModule.Scripts.Debug {
                 }
             }
 
-            _ship.FlightControl.SetDebugSteer(false, 0f);
+            _ship.FlightControlDebug.SetDebugSteer(false, 0f);
             if (_model.Phase == ShipRunPhase.Cruise || _model.Phase == ShipRunPhase.Takeoff) {
                 Vector3 to = _model.TransitDestination - _ship.transform.position;
-                _ship.FlightControl.DebugFace(to);
+                _ship.FlightControlDebug.DebugFace(to);
             }
 
             if (_model.Phase == ShipRunPhase.Landing && _shotApproach == false && hoverDone == false) {
@@ -1003,7 +1004,7 @@ namespace Features.ShipModule.Scripts.Debug {
 
             if (_rider.IsRiding == false) {
                 PlaceRiderOnDeck();
-                _ship.Riders.DebugBindRider(_rider);
+                _ship.RidersDebug.DebugBindRider(_rider);
             }
 
             if (_rider.IsRiding == false)
@@ -1108,7 +1109,7 @@ namespace Features.ShipModule.Scripts.Debug {
         private void StandOnDeck() {
             if (_rider.IsRiding == false) {
                 PlaceRiderOnDeck();
-                _ship.Riders.DebugBindRider(_rider);
+                _ship.RidersDebug.DebugBindRider(_rider);
                 return;
             }
 
@@ -1155,7 +1156,7 @@ namespace Features.ShipModule.Scripts.Debug {
             if (distance > 220f || distance < 45f)
                 return;
 
-            _ship.FlightControl.DebugFace(to);
+            _ship.FlightControlDebug.DebugFace(to);
             CameraLookDriver.DebugPitchOverride = true;
             CameraLookDriver.DebugPitch = 6f;
             if (_stationReady == false) {
@@ -1257,7 +1258,7 @@ namespace Features.ShipModule.Scripts.Debug {
             Status = success ? "done" : "failed";
             _input.EndScripted();
             if (_ship != null)
-                _ship.FlightControl.SetDebugSteer(false, 0f);
+                _ship.FlightControlDebug.SetDebugSteer(false, 0f);
 
             _stopped = true;
             WriteReport();

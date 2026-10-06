@@ -1,3 +1,4 @@
+using Features.ShipModule.Scripts.Generated;
 using Mirror;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -12,10 +13,11 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private BoxCollider _rideVolume;
         [SerializeField] private BoxCollider _deck;
         [SerializeField] private BoxCollider[] _deckColliders;
-        [SerializeField] private EngineCatalog _engines;
         [SerializeField] private ShipPoseSync _poseSync;
         [SerializeField] private ShipStatEntity _stats;
+        [SerializeField] private ShipSocketsSync _socketStates;
 
+        private EngineCatalog _engines;
         private ShipFlightSettings _flightSettings;
 
         private ShipDeckCargo _cargo;
@@ -27,7 +29,7 @@ namespace Features.ShipModule.Scripts {
         private int _fixedSteps;
         private bool _flying;
 
-        private ShipRunModel _run;
+        private IReadOnlyShipRunModel _run;
         private IShipRunService _runService;
 
         public ShipLaunchLever Lever => _lever;
@@ -39,6 +41,7 @@ namespace Features.ShipModule.Scripts {
         internal float ReboardDelaySeconds => _flightSettings.ReboardDelaySeconds;
         internal NetworkIdentity NetIdentity => _poseSync.netIdentity;
         public ShipSocket[] Sockets => _sockets;
+        internal ShipSocketsSync SocketStates => _socketStates;
         public IShipDeckGeometry DeckGeometry => _deckGeometry;
         internal IShipModules Modules => _modules;
         internal IShipRiders Riders => _riders;
@@ -46,6 +49,11 @@ namespace Features.ShipModule.Scripts {
         internal IShipFlightControl FlightControl => _flightControl;
         internal IShipDeckCargo Cargo => _cargo;
         internal ShipPoseSync PoseSync => _poseSync;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        internal IShipRidersDebug RidersDebug => _riders;
+        internal IShipFlightControlDebug FlightControlDebug => _flightControl;
+        internal IShipDeckCargoDebug CargoDebug => _cargo;
+#endif
 
         public bool CanLaunch {
             get {
@@ -74,11 +82,9 @@ namespace Features.ShipModule.Scripts {
         private void Construct(
             EngineCatalog engines,
             ShipFlightSettings settings,
-            ShipRunModel run,
+            IReadOnlyShipRunModel run,
             IShipRunService runService) {
-            if (_engines == null)
-                _engines = engines;
-
+            _engines = engines;
             _flightSettings = settings;
 
             _run = run;
@@ -86,7 +92,9 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void Awake() {
-            Assert.IsTrue(_sockets != null && _stats != null, name + " needs its sockets and stat entity wired.");
+            Assert.IsTrue(
+                _sockets != null && _stats != null && _socketStates != null,
+                name + " needs its sockets, socket states and stat entity wired.");
             _deckGeometry = new ShipDeckGeometry(transform, _deck, _deckColliders);
             _modules = new ShipModules(_sockets, _stats, ReadEngines);
             _riders = new ShipRiders(this, _deckGeometry, _rideVolume, ReadFlightSettings);

@@ -11,6 +11,7 @@ using Features.LobbyModule.Scripts;
 using Features.MenuModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
 using Features.ShipModule.Scripts;
+using Features.ShipModule.Scripts.Generated;
 using Game.Connection;
 using Mirror;
 using NUnit.Framework;
@@ -57,7 +58,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private LoopSmokeErrorLog _errorLog;
         private int _lobbyRuntimeObjects;
         private ShipRunConfig _fastConfig;
-        private ShipRunModel _model;
+        private IReadOnlyShipRunModel _model;
         private ShipBase _ship;
 
         [SetUp]
@@ -310,7 +311,7 @@ namespace Tests.PlayMode.LoopSmoke {
                 return false;
 
             _ship = Object.FindAnyObjectByType<ShipBase>();
-            _model = ProjectContext.Instance.Container.Resolve<ShipRunModel>();
+            _model = ProjectContext.Instance.Container.Resolve<IReadOnlyShipRunModel>();
             return _ship != null && _model.Phase == ShipRunPhase.Build;
         }
 

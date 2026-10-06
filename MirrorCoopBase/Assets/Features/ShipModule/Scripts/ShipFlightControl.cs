@@ -1,7 +1,11 @@
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    internal sealed class ShipFlightControl : IShipFlightControl {
+    internal sealed class ShipFlightControl : IShipFlightControl
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        , IShipFlightControlDebug
+#endif
+    {
         private const float DIRECTION_EPSILON = 0.0001f;
         private const float SIMULATION_STEP = 1f / 60f;
 
@@ -11,8 +15,10 @@ namespace Features.ShipModule.Scripts {
         private readonly IShipModules _modules;
         private readonly IShipSeats _seats;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         private bool _debugSteerActive;
         private float _debugSteer;
+#endif
         private bool _controlsLocked;
 
         public ShipFlightMode Mode => _flight.Mode;
@@ -79,6 +85,7 @@ namespace Features.ShipModule.Scripts {
         internal void ShiftWorld(Vector3 delta) =>
             _flight.ShiftWorld(delta);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         public void SetDebugSteer(bool active, float steer) {
             _debugSteerActive = active;
             _debugSteer = Mathf.Clamp(steer, -1f, 1f);
@@ -86,17 +93,29 @@ namespace Features.ShipModule.Scripts {
 
         public void DebugFace(Vector3 worldForward) =>
             _flight.DebugFace(worldForward);
+#endif
 
         internal void ServerStep(float dt) {
             bool canSteer = _controlsLocked == false && _flight.AllowsSteer;
-            bool manual = canSteer && (_modules.HasControlModule() || _debugSteerActive);
+            bool debugSteering = TryReadDebugSteer(out float debugSteer);
+            bool manual = canSteer && (_modules.HasControlModule() || debugSteering);
             _flight.SetManualHeading(manual);
-            float steer = _debugSteerActive
-                ? _debugSteer
+            float steer = debugSteering
+                ? debugSteer
                 : canSteer && _seats.HasHelmPilot() ? _seats.ReadHelmSteer() : 0f;
             _flight.SetSteer(steer);
             PushTravelSpeed();
             SimulateFlight(dt);
+        }
+
+        private bool TryReadDebugSteer(out float steer) {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            steer = _debugSteer;
+            return _debugSteerActive;
+#else
+            steer = 0f;
+            return false;
+#endif
         }
 
         private void PushTravelSpeed() {
