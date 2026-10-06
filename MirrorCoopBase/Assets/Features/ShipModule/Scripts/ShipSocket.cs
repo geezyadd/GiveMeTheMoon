@@ -91,7 +91,7 @@ namespace Features.ShipModule.Scripts {
             _installedViewId = view;
             _occupied = true;
             if (_ship != null)
-                _ship.ServerOnModuleInstalled(this);
+                _ship.Modules.ServerOnModuleInstalled(this);
             return true;
         }
 
@@ -126,7 +126,7 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             if (_ship != null)
-                _ship.ServerOnModuleUninstalled(this);
+                _ship.Modules.ServerOnModuleUninstalled(this);
 
             _occupantNetId = 0;
             _occupied = false;
@@ -149,7 +149,7 @@ namespace Features.ShipModule.Scripts {
         private void OnOccupantChanged(uint previous, uint current) {
             SetHovered(false);
             if (_ship != null)
-                _ship.ClientSyncSeat(this, previous, current);
+                _ship.Seats.ClientSyncSeat(this, previous, current);
         }
 
         private void RefreshView() {

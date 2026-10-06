@@ -38,7 +38,7 @@ namespace Features.ShipModule.Scripts {
         private Vector3 _transitDestination;
 
         [Inject]
-        private ShipRunService _run;
+        private IShipRunService _run;
 
         [Inject]
         private ShipRunModel _model;
@@ -47,7 +47,7 @@ namespace Features.ShipModule.Scripts {
         private ShipStationCatalog _injectedStations;
 
         [Inject]
-        private ShipRadarService _radar;
+        private IShipRadarBinding _radar;
 
         private GameObject _localWreck;
         private GameObject _previousLocalWreck;
