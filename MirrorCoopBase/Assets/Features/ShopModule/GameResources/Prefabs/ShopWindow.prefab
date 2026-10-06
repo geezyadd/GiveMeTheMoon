@@ -157,7 +157,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Close (L / Esc)
+  m_Text: Close (Esc)
 --- !u!1 &968272991918846305
 GameObject:
   m_ObjectHideFlags: 0

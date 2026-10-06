@@ -14,6 +14,7 @@ namespace Features.GrabModule.Scripts {
 
         public Transform ArmPoint => _armPoint != null ? _armPoint : transform;
         public bool IsHolding => Bound != null && Bound.HeldItemNetId != 0;
+        public bool IsHandFree => IsHolding == false;
         public Grabbable Held => _heldItems.TryGetItem(this, out Grabbable item) ? item : null;
 
         [Inject]

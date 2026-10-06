@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14ada30337244cc29ff5ba2067071ada, type: 3}
+  m_Name: ShopKioskConfiguration_Default
+  m_EditorClassIdentifier: 
+  _openDistance: 5
+  _keepOpenDistance: 6
+  _purchaseDistance: 7
+  _deliveryOccupancyRadius: 1.2
+  _deliveryStackStep: 0.8
+  _deliveryScatter: 0.3

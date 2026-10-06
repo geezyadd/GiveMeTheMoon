@@ -8,7 +8,7 @@ station to station and upgrades the ship with modules along the way.
 
 ### Core loop (current focus)
 1. Start at the first station with base money, enough for the simplest upgrades.
-2. **Management phase.** Players buy modules in the shop (**L** key) and install them in ship slots: engines,
+2. **Management phase.** Players buy modules at the station's shop kiosk (aim + **E**; bought items appear on its delivery pad) and install them in ship slots: engines,
    propeller, helm, radar, more later. The balance is shared by the crew.
 3. **Flight phase.** The ship flies to the next station while players stand and walk on the deck.
 4. Arrival at the next station: new purchases and upgrades, then the loop repeats.
@@ -25,7 +25,6 @@ is not final yet and needs evaluation. **How the code works now** (`ShipFlight`,
 The loop runs from start to end, but it does not match the design yet:
 - on every landing `ServerResetForBuild` removes **all** installed modules;
 - modules drop for free at a station (`ShipStationCatalog.Drops`);
-- the shop opens anywhere;
 - there is no income, only the starting balance;
 - only the `FlightSpeed` stat affects the game;
 - rocks are harmless;
@@ -125,7 +124,7 @@ types.
 | Modules and slots | `ShipItem`, `ShipSocket`, `Ship*Interactable`, catalogs in `ShipModule/GameResources/Resources/` |
 | Stats | `Assets/Features/StatsModule/`, `ShipStatType`, `ShipStatEntity` |
 | Interaction | `Assets/Features/GrabModule/`: `LocalPlayerInteraction` (aim, highlight, button), `GrabController` (hand, `PlayerHand` model), `UseController`, `HeldItemRegistry`, `InteractableBase`, `Grabbable`, `GrabConfiguration` |
-| Shop and money | `Assets/Features/ShopModule/` (`CrewWallet`, `ShopCatalog`, `WalletConfiguration`) |
+| Shop and money | `Assets/Features/ShopModule/` (`CrewWallet`, `ShopCatalog`, `WalletConfiguration`); the kiosk `ShopKioskInteractable` is part of the `StationPad` prefab, `ShopAccessService` / `ShopAccessRule` decide open, keep-open and purchase (Build, alive, distance from `ShopKioskConfiguration`), the server keeps the opened kiosk per player in `ShopVisitModel`; **L** opens the shop only in editor / development builds |
 | Player names and nameplates | `Assets/Features/PlayerProfileModule/`: `PlayerProfile` (bridge of the `PlayerProfile` model, the server fills the name), `PlayerNameSanitizer`, `PlayerNameplate` (TMP over other players' heads), `PlayerNameplateConfiguration`; the model is in `Data/` |
 | Scenes | `GameCoreModule/GameResources/Scenes/`: Bootstrap → Menu → Lobby → Game; only Bootstrap is in Build Settings |
 
@@ -137,7 +136,9 @@ ParrelSync clone (`MirrorCoopBase_clone_0`).
 The PlayMode test `LoopSmokeTest` (`Assets/Tests/PlayMode/LoopSmoke/`) plays the M1 loop on a host by itself:
 menu → Host → lobby → Start → `GameScene`, installs 2 engines, takes the radar off, drops, picks up and reinstalls it by hand through the real third-person
 aim (`LoopSmokeHandCheck`), takes off and lands twice, and checks the phases,
-`LoopIndex`, engines after landing, the ship on the new pad, the player on deck, no wreckage, return to menu and no
+`LoopIndex`, engines after landing, the ship on the new pad, one shop kiosk per pad, the player on deck, no wreckage,
+at the last station buys 5 items at the kiosk through the real aim and the window (`LoopSmokeShopCheck`: delivery
+point, window closes when walking away, a far purchase is refused), return to menu and no
 errors in the log. The test shortens flight timings with its own copy of `ShipRunConfig`; assets are not changed. The
 test takes about 30 s.
 

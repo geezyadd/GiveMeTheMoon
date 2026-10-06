@@ -18,7 +18,7 @@ namespace Features.ShipModule.Scripts {
             if (_socket == null || _socket.CanUninstall == false)
                 return false;
 
-            return grab == null || grab.IsHolding == false;
+            return grab.IsHandFree;
         }
 
         public override void ServerUse(NetworkIdentity user, GrabController grab) {

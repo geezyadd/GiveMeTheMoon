@@ -85,7 +85,7 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         // Stands the player in front of the target and tilts the camera until its centre ray points at it.
-        private static IEnumerator AimAtCoroutine(Vector3 target) {
+        public static IEnumerator AimAtCoroutine(Vector3 target) {
             Transform player = Player.transform;
             Vector3 forward = Vector3.ProjectOnPlane(player.forward, Vector3.up).normalized;
             Rigidbody body = Player.GetComponent<CharacterMovableBase>().Body;
