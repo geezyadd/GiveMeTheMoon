@@ -4,13 +4,13 @@ using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    public sealed class ShipRunService : IShipRunService, IGameplaySession, IShipFloorReferenceProvider, IShipRiderRelease {
+    // The run's phase machine: Build -> Takeoff -> Cruise -> Landing -> Build, or Wreck after an abort.
+    public sealed class ShipRunService : IShipRunService, IGameplaySession {
         private const float WRECK_PITCH_DEGREES = 12f;
         private const float WRECK_ROLL_DEGREES = 18f;
 
         private readonly ShipRunModel _model;
         private readonly ShipRunConfig _config;
-        private readonly ShipFlightSettings _flightSettings;
         private readonly IShipRunBinding _binding;
         private readonly IShipStationPads _pads;
         private readonly IShipStationDropService _drops;
@@ -22,14 +22,13 @@ namespace Features.ShipModule.Scripts {
         private ShipRadarService _radar;
         private readonly ConnectionSpawnModel _spawn;
 
-        private ShipBase _ship => _binding.Ship;
-        private ShipRunDirector _director => _binding.Director;
-        private ShipLandingPad _currentPad => _pads.CurrentPad;
+        private ShipBase Ship => _binding.Ship;
+        private ShipRunDirector Director => _binding.Director;
+        private ShipLandingPad CurrentPad => _pads.CurrentPad;
 
         public ShipRunService(
             ShipRunModel model,
             ShipRunConfig config,
-            ShipFlightSettings flightSettings,
             ShipRadarService radar,
             ConnectionSpawnModel spawn,
             IShipRunBinding binding,
@@ -40,7 +39,6 @@ namespace Features.ShipModule.Scripts {
             IShipWorldShiftService worldShift) {
             _model = model;
             _config = config;
-            _flightSettings = flightSettings;
             _radar = radar;
             _spawn = spawn;
             _binding = binding;
@@ -59,43 +57,6 @@ namespace Features.ShipModule.Scripts {
             ResetRun();
         }
 
-        public bool TryGetWalkableFloorY(out bool isFlying, out float floorY) {
-            isFlying = false;
-            floorY = 0f;
-            ShipRunPhase phase = _model.Phase;
-            bool flying = phase == ShipRunPhase.Takeoff
-                || phase == ShipRunPhase.Cruise
-                || phase == ShipRunPhase.Landing;
-            if (flying) {
-                if (_ship == null || TryGetDeckSurfaceWorldY(_ship, out floorY) == false)
-                    return false;
-
-                isFlying = true;
-                return true;
-            }
-
-            if (_currentPad == null)
-                return false;
-
-            floorY = _currentPad.BuildBerth.position.y;
-            return true;
-        }
-
-        public void ServerReleaseRider(NetworkIdentity player) {
-            if (NetworkServer.active == false)
-                throw new System.InvalidOperationException("ServerReleaseRider can only be called on the server.");
-
-            // No ship outside a run (lobby): there is nothing to release.
-            if (_ship == null)
-                return;
-
-            if (player.TryGetComponent(out ShipRider rider) == false)
-                throw new System.InvalidOperationException(player.name + " has no " + nameof(ShipRider) + ".");
-
-            _ship.ServerStand(rider);
-            _ship.UnregisterRider(rider);
-        }
-
         public void Bind(ShipRunDirector director, ShipBase ship, ShipLandingPad startPad) {
             _binding.Bind(director, ship);
             _pads.Reset(startPad);
@@ -110,15 +71,15 @@ namespace Features.ShipModule.Scripts {
         }
 
         public void Unbind(ShipRunDirector director) {
-            if (_director != director)
+            if (Director != director)
                 return;
 
             ResetRun();
         }
 
         private void ResetRun() {
-            if (NetworkServer.active && _ship != null && _currentPad != null)
-                _ship.ServerResetForBuild(_currentPad.BuildBerth.position, _currentPad.BuildBerth.rotation);
+            if (NetworkServer.active && Ship != null && CurrentPad != null)
+                Ship.ServerResetForBuild(CurrentPad.BuildBerth.position, CurrentPad.BuildBerth.rotation);
 
             _binding.Clear();
             _pads.Reset(null);
@@ -130,7 +91,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         public bool ServerTryLaunch(ShipBase ship) {
-            if (NetworkServer.active == false || ship == null || ship != _ship)
+            if (NetworkServer.active == false || ship == null || ship != Ship)
                 return false;
 
             if (_model.Phase != ShipRunPhase.Build || _model.LaunchLocked)
@@ -165,7 +126,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         public void ServerAbort(ShipRunAbortReason reason) {
-            if (NetworkServer.active == false || _ship == null || _director == null)
+            if (NetworkServer.active == false || Ship == null || Director == null)
                 return;
 
             if (_model.Phase != ShipRunPhase.Takeoff
@@ -178,65 +139,71 @@ namespace Features.ShipModule.Scripts {
         }
 
         public void ServerTick() {
-            if (NetworkServer.active == false || _ship == null || _director == null)
+            if (NetworkServer.active == false || Ship == null || Director == null)
                 return;
 
-            if (_model.Phase == ShipRunPhase.Wreck) {
-                if (Time.time < _wreckUntil)
+            switch (_model.Phase) {
+                case ShipRunPhase.Wreck:
+                    TickWreck();
                     return;
-
-                _model.Phase = ShipRunPhase.Build;
-                _route.RefreshPreview();
-                Publish();
-                return;
-            }
-
-            if (_model.Phase == ShipRunPhase.Build) {
-                _route.RefreshPreview();
-                Publish();
-                return;
-            }
-
-            if (_model.Phase == ShipRunPhase.Takeoff) {
-                _route.ApplyFrame(false);
-                Publish();
-                if (_ship.IsTakeoffComplete == false)
+                case ShipRunPhase.Build:
+                    _route.RefreshPreview();
+                    Publish();
                     return;
+                case ShipRunPhase.Takeoff:
+                    TickTakeoff();
+                    return;
+                case ShipRunPhase.Cruise:
+                    TickCruise();
+                    return;
+                case ShipRunPhase.Landing:
+                    if (Ship.HasLanded)
+                        FinishLanded();
+                    return;
+            }
+        }
 
-                _ship.BeginCruise();
-                _route.BeginCruise();
-                _route.ApplyFrame(false);
-                _model.Phase = ShipRunPhase.Cruise;
-                Publish();
+        private void TickWreck() {
+            if (Time.time < _wreckUntil)
                 return;
-            }
 
-            if (_model.Phase == ShipRunPhase.Cruise) {
-                _route.ApplyFrame(_route.IsTravel == false);
-                Publish();
-                if (_route.HasArrived) {
-                    _ship.ServerLockFlight();
-                    BeginLanding();
-                }
+            _model.Phase = ShipRunPhase.Build;
+            _route.RefreshPreview();
+            Publish();
+        }
 
+        private void TickTakeoff() {
+            _route.ApplyFrame(false);
+            Publish();
+            if (Ship.IsTakeoffComplete == false)
                 return;
-            }
 
-            if (_model.Phase == ShipRunPhase.Landing) {
-                if (_ship.HasLanded)
-                    FinishLanded();
-            }
+            Ship.BeginCruise();
+            _route.BeginCruise();
+            _route.ApplyFrame(false);
+            _model.Phase = ShipRunPhase.Cruise;
+            Publish();
+        }
+
+        private void TickCruise() {
+            _route.ApplyFrame(_route.IsTravel == false);
+            Publish();
+            if (_route.HasArrived == false)
+                return;
+
+            Ship.ServerLockFlight();
+            BeginLanding();
         }
 
         private void BeginLanding() {
             if (_route.IsTravel) {
-                if (_currentPad == null) {
+                if (CurrentPad == null) {
                     FinishAtCurrentPose();
                     return;
                 }
 
-                _route.SetDestinationPoint(_currentPad.LandingPoint.position);
-                _ship.BeginLanding(_route.DestinationPoint, _config.LandingSeconds, _route.DestinationForward);
+                _route.SetDestinationPoint(CurrentPad.LandingPoint.position);
+                Ship.BeginLanding(_route.DestinationPoint, _config.LandingSeconds, _route.DestinationForward);
                 _model.Phase = ShipRunPhase.Landing;
                 Publish();
                 return;
@@ -248,35 +215,35 @@ namespace Features.ShipModule.Scripts {
                 return;
             }
 
-            _ship.BeginLanding(next.LandingPoint.position, _config.LandingSeconds, _route.DestinationForward);
+            Ship.BeginLanding(next.LandingPoint.position, _config.LandingSeconds, _route.DestinationForward);
             _model.Phase = ShipRunPhase.Landing;
             Publish();
         }
 
         private void FinishLanded() {
-            _ship.ServerSettleAfterLanding();
-            EnterStation(_currentPad, ShipRunPhase.Build);
+            Ship.ServerSettleAfterLanding();
+            EnterStation(CurrentPad, ShipRunPhase.Build);
             // After EnterStation's origin shift: riders still bound are carried by it, released ones would stay behind.
-            _ship.ServerReleaseRiders();
+            Ship.ServerReleaseRiders();
         }
 
         private void FinishAtCurrentPose() {
-            Vector3 wreckPos = _ship.transform.position;
-            Quaternion wreckRot = _ship.transform.rotation * Quaternion.Euler(WRECK_PITCH_DEGREES, 0f, WRECK_ROLL_DEGREES);
-            _ship.ServerFinishFlight();
-            _director.ServerPlaceWreck(wreckPos, wreckRot);
+            Vector3 wreckPos = Ship.transform.position;
+            Quaternion wreckRot = Ship.transform.rotation * Quaternion.Euler(WRECK_PITCH_DEGREES, 0f, WRECK_ROLL_DEGREES);
+            Ship.ServerFinishFlight();
+            Director.ServerPlaceWreck(wreckPos, wreckRot);
 
             if (_model.Phase != ShipRunPhase.Landing) {
-                Vector3 origin = _ship != null ? _ship.transform.position : Vector3.zero;
+                Vector3 origin = Ship != null ? Ship.transform.position : Vector3.zero;
                 SpawnNextPad(origin + _route.DestinationForward * _config.StationSpacing, _route.DestinationForward, false);
             }
 
-            ShipLandingPad pad = _currentPad;
+            ShipLandingPad pad = CurrentPad;
             Vector3 berth = pad != null ? pad.BuildBerth.position : wreckPos;
             Quaternion berthRot = pad != null
                 ? pad.BuildBerth.rotation
                 : Quaternion.LookRotation(_route.LaunchForward, Vector3.up);
-            _ship.ServerResetForBuild(berth, berthRot);
+            Ship.ServerResetForBuild(berth, berthRot);
             _wreckUntil = Time.time + _config.WreckSettleSeconds;
             EnterStation(pad, ShipRunPhase.Wreck);
         }
@@ -303,17 +270,8 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void Publish() {
-            if (_director != null)
-                _director.ServerPublish();
-        }
-
-        private static bool TryGetDeckSurfaceWorldY(ShipBase ship, out float worldY) {
-            worldY = 0f;
-            if (ship.TryGetDeckSurfaceY(Vector3.zero, out float surfaceLocalY) == false)
-                return false;
-
-            worldY = ship.transform.TransformPoint(new Vector3(0f, surfaceLocalY, 0f)).y;
-            return true;
+            if (Director != null)
+                Director.ServerPublish();
         }
     }
 }
