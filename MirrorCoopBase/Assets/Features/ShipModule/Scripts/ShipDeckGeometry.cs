@@ -1,8 +1,10 @@
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    // The walkable deck of the ship in ship-local space: walk boxes, deck edge, surface height and stand points.
-    public sealed class ShipDeckGeometry {
+    public sealed class ShipDeckGeometry : IShipDeckGeometry {
+        private const float WALK_EPSILON = 0.0001f;
+        private const float STAND_HEIGHT_ABOVE_DECK = 1.1f;
+
         private readonly Transform _ship;
         private readonly BoxCollider _deck;
         private readonly BoxCollider[] _deckColliders;
@@ -17,38 +19,38 @@ namespace Features.ShipModule.Scripts {
             _deckColliders = deckColliders;
         }
 
-        internal bool ContainsDeckWalk(Vector3 localOffset, float inset) {
+        public bool ContainsDeckWalk(Vector3 localOffset, float inset) {
             if (TryClosestDeckWalk(localOffset, out _, out float dx, out float dz) == false
-                || dx * dx + dz * dz > 0.0001f)
+                || dx * dx + dz * dz > WALK_EPSILON)
                 return false;
 
             Vector3 push = InsetPush(localOffset, inset);
-            return push.x * push.x + push.z * push.z <= 0.0001f;
+            return push.x * push.x + push.z * push.z <= WALK_EPSILON;
         }
 
-        internal void ClampDeckWalk(ref Vector3 localOffset, float inset) {
+        public void ClampDeckWalk(ref Vector3 localOffset, float inset) {
             if (TryClosestDeckWalk(localOffset, out Vector3 closestLocal, out float dx, out float dz) == false)
                 return;
 
-            if (dx * dx + dz * dz > 0.0001f) {
+            if (dx * dx + dz * dz > WALK_EPSILON) {
                 localOffset.x = closestLocal.x;
                 localOffset.z = closestLocal.z;
             }
 
             Vector3 push = InsetPush(localOffset, inset);
-            if (push.x * push.x + push.z * push.z <= 0.0001f)
+            if (push.x * push.x + push.z * push.z <= WALK_EPSILON)
                 return;
 
             Vector3 pushed = localOffset + push;
             // On a deck narrower than twice the inset the push can leave the walk boxes: stay on the deck edge instead.
-            if (TryClosestDeckWalk(pushed, out closestLocal, out dx, out dz) && dx * dx + dz * dz > 0.0001f)
+            if (TryClosestDeckWalk(pushed, out closestLocal, out dx, out dz) && dx * dx + dz * dz > WALK_EPSILON)
                 pushed = closestLocal;
 
             localOffset.x = pushed.x;
             localOffset.z = pushed.z;
         }
 
-        internal bool TryGetDeckSurfaceY(Vector3 localOffset, out float surfaceY) {
+        public bool TryGetDeckSurfaceY(Vector3 localOffset, out float surfaceY) {
             surfaceY = localOffset.y;
             BoxCollider[] boxes = WalkBoxes();
             Transform deckTransform = DeckTransform(boxes);
@@ -65,7 +67,7 @@ namespace Features.ShipModule.Scripts {
             return true;
         }
 
-        internal bool TryGetDeckStandPoint(out Vector3 shipLocal) {
+        public bool TryGetDeckStandPoint(out Vector3 shipLocal) {
             shipLocal = Vector3.up;
             BoxCollider[] boxes = WalkBoxes();
             BoxCollider best = null;
@@ -91,12 +93,12 @@ namespace Features.ShipModule.Scripts {
 
             shipLocal = _ship.InverseTransformPoint(best.transform.TransformPoint(best.center));
             if (TryGetDeckSurfaceY(shipLocal, out float surfaceY))
-                shipLocal.y = surfaceY + 1.1f;
+                shipLocal.y = surfaceY + STAND_HEIGHT_ABOVE_DECK;
 
             return true;
         }
 
-        internal bool TryClosestDeckWalk(Vector3 localOffset, out Vector3 closestLocal, out float dx, out float dz) {
+        public bool TryClosestDeckWalk(Vector3 localOffset, out Vector3 closestLocal, out float dx, out float dz) {
             closestLocal = localOffset;
             dx = 0f;
             dz = 0f;

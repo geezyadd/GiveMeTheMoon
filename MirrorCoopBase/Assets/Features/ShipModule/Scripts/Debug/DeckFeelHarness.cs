@@ -305,7 +305,7 @@ namespace Features.ShipModule.Scripts.Debug {
             if (_cargoNoted == false) {
                 _cargoNoted = true;
                 if (_ship.Cargo.AttachedCount == 0 && _looseItem != null) {
-                    _ship.Cargo.DebugAttach(_looseItem, _ship.transform, _ship.PoseSync);
+                    _ship.Cargo.DebugAttach(_looseItem);
                     Note("Deck scan missed the loose item; pinned it directly. cargo=" + _ship.Cargo.AttachedCount);
                 }
                 else {
@@ -1139,7 +1139,7 @@ namespace Features.ShipModule.Scripts.Debug {
         }
 
         private float CargoDrift() {
-            if (_ship.Cargo.TryMeasure(_ship.transform, out Vector3 local, out float drift))
+            if (_ship.Cargo.TryMeasure(out Vector3 local, out float drift))
                 _cargoDriftMax = Mathf.Max(_cargoDriftMax, drift);
 
             return _cargoDriftMax;

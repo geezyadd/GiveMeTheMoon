@@ -4,24 +4,24 @@ using Features.StatsModule.EntityStatsModule.Scripts.StatsEntity;
 using Mirror;
 
 namespace Features.ShipModule.Scripts {
-    // The modules installed in the ship's sockets, turned into ship stats.
-    internal sealed class ShipModules {
+    internal sealed class ShipModules : IShipModules {
         private readonly ShipSocket[] _sockets;
         private readonly ShipStatEntity _stats;
-        private readonly EngineCatalog _engines;
+        // Read on use: the catalog can be injected after the parts are created.
+        private readonly System.Func<EngineCatalog> _engines;
         private readonly Dictionary<ShipSocket, StatModifier> _flightSpeedModifiers = new Dictionary<ShipSocket, StatModifier>();
 
-        internal ShipModules(ShipSocket[] sockets, ShipStatEntity stats, EngineCatalog engines) {
+        internal ShipModules(ShipSocket[] sockets, ShipStatEntity stats, System.Func<EngineCatalog> engines) {
             _sockets = sockets;
             _stats = stats;
             _engines = engines;
         }
 
-        internal void ServerOnModuleInstalled(ShipSocket socket) {
-            if (NetworkServer.active == false || socket == null || _stats == null || _engines == null)
+        public void ServerOnModuleInstalled(ShipSocket socket) {
+            if (NetworkServer.active == false || socket == null)
                 return;
 
-            if (_engines.TryGet(socket.InstalledView, out EngineCatalog.EngineStats engine) == false)
+            if (_engines().TryGet(socket.InstalledView, out EngineCatalog.EngineStats engine) == false)
                 return;
 
             if (engine.FlightSpeed <= 0f)
@@ -34,21 +34,24 @@ namespace Features.ShipModule.Scripts {
             _flightSpeedModifiers[socket] = modifier;
         }
 
-        internal void ServerOnModuleUninstalled(ShipSocket socket) {
+        public void ServerOnModuleUninstalled(ShipSocket socket) {
             ServerClearFlightSpeedModifier(socket);
         }
 
-        internal float GetStatFull(ShipStatType type) {
-            if (_stats == null)
-                return 0f;
+        public float GetStatFull(ShipStatType type) =>
+            _stats.GetStat(type).FullValue;
 
-            return _stats.GetStat(type).FullValue;
+        public bool HasControlModule() {
+            for (int i = 0; i < _sockets.Length; i++) {
+                ShipSocket socket = _sockets[i];
+                if (socket != null && socket.AcceptedType == ShipModuleType.Control && socket.IsOccupied)
+                    return true;
+            }
+
+            return false;
         }
 
         internal void ApplyDefaultStats() {
-            if (_stats == null)
-                return;
-
             IStat thrust = _stats.GetStat(ShipStatType.Thrust);
             thrust.MaxValue = 999f;
 
@@ -69,23 +72,7 @@ namespace Features.ShipModule.Scripts {
             armor.OverrideValue(100f);
         }
 
-        internal bool HasControlModule() {
-            if (_sockets == null)
-                return false;
-
-            for (int i = 0; i < _sockets.Length; i++) {
-                ShipSocket socket = _sockets[i];
-                if (socket != null && socket.AcceptedType == ShipModuleType.Control && socket.IsOccupied)
-                    return true;
-            }
-
-            return false;
-        }
-
         internal void ClearInstalledModules() {
-            if (_sockets == null)
-                return;
-
             for (int i = 0; i < _sockets.Length; i++) {
                 if (_sockets[i] != null)
                     _sockets[i].ServerClearInstall();
@@ -93,7 +80,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void ServerClearFlightSpeedModifier(ShipSocket socket) {
-            if (socket == null || _stats == null)
+            if (socket == null)
                 return;
 
             if (_flightSpeedModifiers.TryGetValue(socket, out StatModifier modifier) == false)

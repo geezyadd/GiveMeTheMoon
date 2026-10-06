@@ -1,5 +1,6 @@
 using Mirror;
 using UnityEngine;
+using UnityEngine.Assertions;
 using Zenject;
 
 namespace Features.ShipModule.Scripts {
@@ -17,7 +18,7 @@ namespace Features.ShipModule.Scripts {
 
         private ShipFlightSettings _flightSettings;
 
-        private readonly ShipDeckCargo _cargo = new ShipDeckCargo();
+        private ShipDeckCargo _cargo;
         private ShipDeckGeometry _deckGeometry;
         private ShipModules _modules;
         private ShipRiders _riders;
@@ -38,12 +39,12 @@ namespace Features.ShipModule.Scripts {
         internal float ReboardDelaySeconds => _flightSettings.ReboardDelaySeconds;
         internal NetworkIdentity NetIdentity => _poseSync.netIdentity;
         public ShipSocket[] Sockets => _sockets;
-        public ShipDeckGeometry DeckGeometry => _deckGeometry;
-        internal ShipModules Modules => _modules;
-        internal ShipRiders Riders => _riders;
-        internal ShipSeats Seats => _seats;
-        internal ShipFlightControl FlightControl => _flightControl;
-        internal ShipDeckCargo Cargo => _cargo;
+        public IShipDeckGeometry DeckGeometry => _deckGeometry;
+        internal IShipModules Modules => _modules;
+        internal IShipRiders Riders => _riders;
+        internal IShipSeats Seats => _seats;
+        internal IShipFlightControl FlightControl => _flightControl;
+        internal IShipDeckCargo Cargo => _cargo;
         internal ShipPoseSync PoseSync => _poseSync;
 
         public bool CanLaunch {
@@ -85,11 +86,13 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void Awake() {
+            Assert.IsTrue(_sockets != null && _stats != null, name + " needs its sockets and stat entity wired.");
             _deckGeometry = new ShipDeckGeometry(transform, _deck, _deckColliders);
-            _modules = new ShipModules(_sockets, _stats, _engines);
-            _riders = new ShipRiders(this, _deckGeometry, _rideVolume, _flightSettings);
+            _modules = new ShipModules(_sockets, _stats, ReadEngines);
+            _riders = new ShipRiders(this, _deckGeometry, _rideVolume, ReadFlightSettings);
             _seats = new ShipSeats(this, _sockets, _riders);
-            _flightControl = new ShipFlightControl(_flightSettings, _modules, _seats);
+            _flightControl = new ShipFlightControl(ReadFlightSettings, _modules, _seats);
+            _cargo = new ShipDeckCargo(transform, this, _poseSync);
             if (_poseSync != null)
                 _poseSync.BindShip(this, transform);
 
@@ -119,6 +122,7 @@ namespace Features.ShipModule.Scripts {
                 takeoffSeconds,
                 dodgeRangeScale,
                 mode);
+            _seats.ClearSteer();
             SleepBody();
             _flying = true;
             if (_poseSync != null)
@@ -253,7 +257,7 @@ namespace Features.ShipModule.Scripts {
             // Before this frame's flight step: an item released this frame is still at the hand's pose for the ship's
             // pose of the last frame, so it goes back onto the deck exactly where it left the hand.
             if (NetworkServer.active)
-                _cargo.ServerReleaseGrabbed(transform, this, _poseSync);
+                _cargo.ServerReleaseGrabbed();
 
             if (_flying && NetworkServer.active) {
                 _flightControl.ServerStep(Time.deltaTime);
@@ -270,7 +274,7 @@ namespace Features.ShipModule.Scripts {
                 _poseSync.ApplyInterpolated(_riders.HasOwnedHelmPilot());
             }
 
-            _cargo.Follow(transform, this, NetworkServer.active, _poseSync);
+            _cargo.Follow(NetworkServer.active);
             _riders.FollowRiders(Time.deltaTime);
             if (_flying)
                 _riders.CatchDeckRiders();
@@ -286,6 +290,13 @@ namespace Features.ShipModule.Scripts {
             _body.linearVelocity = Vector3.zero;
             _body.angularVelocity = Vector3.zero;
         }
+
+        // The injected settings and catalog are read on use, so the parts do not depend on injection before Awake.
+        private ShipFlightSettings ReadFlightSettings() =>
+            _flightSettings;
+
+        private EngineCatalog ReadEngines() =>
+            _engines;
 
         private void SleepBody() {
             if (_body == null)

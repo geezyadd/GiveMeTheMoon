@@ -2,20 +2,19 @@ using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    // The ship's seats: sitting down and standing up, and the helm pilot with the steer they give.
-    internal sealed class ShipSeats {
+    internal sealed class ShipSeats : IShipSeats {
         private readonly ShipBase _ship;
         private readonly ShipSocket[] _sockets;
-        private readonly ShipRiders _riders;
+        private readonly IShipRiders _riders;
         private readonly HelmSteer _helmSteer = new HelmSteer();
 
-        internal ShipSeats(ShipBase ship, ShipSocket[] sockets, ShipRiders riders) {
+        internal ShipSeats(ShipBase ship, ShipSocket[] sockets, IShipRiders riders) {
             _ship = ship;
             _sockets = sockets;
             _riders = riders;
         }
 
-        internal void ServerSetSteer(uint riderNetId, float lateral) {
+        public void ServerSetSteer(uint riderNetId, float lateral) {
             if (NetworkServer.active == false)
                 return;
 
@@ -25,7 +24,7 @@ namespace Features.ShipModule.Scripts {
             _helmSteer.Set(riderNetId, lateral);
         }
 
-        internal bool ServerTrySit(ShipRider rider, ShipSocket socket) {
+        public bool ServerTrySit(ShipRider rider, ShipSocket socket) {
             if (NetworkServer.active == false || rider == null || socket == null)
                 return false;
 
@@ -46,7 +45,7 @@ namespace Features.ShipModule.Scripts {
             return true;
         }
 
-        internal void ClientSyncSeat(ShipSocket socket, uint previousOccupant, uint occupant) {
+        public void ClientSyncSeat(ShipSocket socket, uint previousOccupant, uint occupant) {
             if (NetworkServer.active)
                 return;
 
@@ -61,7 +60,7 @@ namespace Features.ShipModule.Scripts {
                 stood.ReleaseFromPlatform();
         }
 
-        internal void ServerStand(ShipRider rider) {
+        public void ServerStand(ShipRider rider) {
             if (NetworkServer.active == false || rider == null)
                 return;
 
@@ -80,7 +79,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         internal void ClearOccupant(ShipRider rider) {
-            if (_sockets == null || rider == null)
+            if (rider == null)
                 return;
 
             if (IsHelmOccupant(rider.netId))
@@ -94,8 +93,6 @@ namespace Features.ShipModule.Scripts {
 
         internal void ClearAllOccupants() {
             _helmSteer.Clear();
-            if (_sockets == null)
-                return;
 
             for (int i = 0; i < _sockets.Length; i++) {
                 if (_sockets[i] != null)
@@ -106,10 +103,7 @@ namespace Features.ShipModule.Scripts {
         internal void ClearSteer() =>
             _helmSteer.Clear();
 
-        internal bool HasHelmPilot() {
-            if (_sockets == null)
-                return false;
-
+        public bool HasHelmPilot() {
             for (int i = 0; i < _sockets.Length; i++) {
                 if (_sockets[i] != null && _sockets[i].HasHelmPilot)
                     return true;
@@ -118,7 +112,7 @@ namespace Features.ShipModule.Scripts {
             return false;
         }
 
-        internal float ReadHelmSteer() {
+        public float ReadHelmSteer() {
             uint occupant = HelmOccupantNetId();
             if (occupant == 0)
                 return 0f;
@@ -141,9 +135,6 @@ namespace Features.ShipModule.Scripts {
         }
 
         private uint HelmOccupantNetId() {
-            if (_sockets == null)
-                return 0;
-
             for (int i = 0; i < _sockets.Length; i++) {
                 ShipSocket socket = _sockets[i];
                 if (socket != null && socket.HasHelmPilot)
@@ -154,9 +145,6 @@ namespace Features.ShipModule.Scripts {
         }
 
         private bool IsHelmOccupant(uint riderNetId) {
-            if (_sockets == null)
-                return false;
-
             for (int i = 0; i < _sockets.Length; i++) {
                 ShipSocket socket = _sockets[i];
                 if (socket != null && socket.HasHelmPilot && socket.OccupantNetId == riderNetId)
@@ -167,7 +155,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         private bool IsSeatedOnShip(uint riderNetId) {
-            if (_sockets == null || riderNetId == 0)
+            if (riderNetId == 0)
                 return false;
 
             for (int i = 0; i < _sockets.Length; i++) {

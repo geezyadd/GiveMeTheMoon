@@ -4,73 +4,81 @@ using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    internal sealed class ShipDeckCargo {
+    internal sealed class ShipDeckCargo : IShipDeckCargo {
         private const float SCAN_INTERVAL = 0.2f;
         private const float REST_HEIGHT = 2.2f;
         private const float BELOW_DECK_TOLERANCE = 0.2f;
 
+        private static readonly Collider[] _overlapScratch = new Collider[24];
+
+        private readonly Transform _ship;
+        private readonly ShipBase _deck;
+        private readonly ShipPoseSync _poseSync;
         private readonly List<Attached> _attached = new List<Attached>(8);
         private readonly List<Pending> _pending = new List<Pending>(4);
         private readonly List<Grabbable> _inHand = new List<Grabbable>(4);
         private readonly Dictionary<int, Grabbable> _known = new Dictionary<int, Grabbable>(16);
         private float _nextScan;
 
-        internal int AttachedCount => _attached.Count;
+        public int AttachedCount => _attached.Count;
 
-        internal void ServerReleaseGrabbed(Transform ship, ShipBase deck, ShipPoseSync poseSync) {
+        internal ShipDeckCargo(Transform ship, ShipBase deck, ShipPoseSync poseSync) {
+            _ship = ship;
+            _deck = deck;
+            _poseSync = poseSync;
+        }
+
+        internal void ServerReleaseGrabbed() {
             for (int i = _attached.Count - 1; i >= 0; i--) {
                 Attached item = _attached[i];
                 if (item.Body != null && IsHeld(item))
                     _inHand.Add(item.Grabbable);
 
                 if (item.Body == null || IsHeld(item))
-                    DetachAt(i, ship, poseSync, true);
+                    DetachAt(i, true);
             }
 
-            ServerCatchReleased(ship, deck, poseSync);
+            ServerCatchReleased();
         }
 
         // An item taken from the deck goes back on it in the frame it leaves the hand: until the next scan it would
         // hang in the world while the flying ship moves on. At a station the scan picks it up as before.
-        private void ServerCatchReleased(Transform ship, ShipBase deck, ShipPoseSync poseSync) {
+        private void ServerCatchReleased() {
             for (int i = _inHand.Count - 1; i >= 0; i--) {
                 Grabbable grabbable = _inHand[i];
                 if (grabbable != null && grabbable.CanBeGrabbed == false)
                     continue;
 
                 _inHand.RemoveAt(i);
-                if (grabbable == null || deck.IsFlying == false || Contains(grabbable))
+                if (grabbable == null || _deck.IsFlying == false || Contains(grabbable))
                     continue;
 
-                if (IsOnDeck(grabbable, ship, deck))
-                    Attach(grabbable, ship, poseSync, true);
+                if (IsOnDeck(grabbable))
+                    Attach(grabbable, true);
             }
         }
 
-        internal void Follow(Transform ship, ShipBase deck, bool server, ShipPoseSync poseSync) {
-            if (ship == null)
-                return;
-
-            ResolvePending(ship);
+        internal void Follow(bool server) {
+            ResolvePending();
             if (server && Time.time >= _nextScan) {
                 _nextScan = Time.time + SCAN_INTERVAL;
-                ServerScan(ship, deck, poseSync);
+                ServerScan();
             }
 
             for (int i = _attached.Count - 1; i >= 0; i--) {
                 Attached item = _attached[i];
                 if (item.Body == null || IsHeld(item)) {
-                    DetachAt(i, ship, poseSync, server);
+                    DetachAt(i, server);
                     continue;
                 }
 
-                Pin(item, ship);
+                Pin(item);
             }
         }
 
-        internal void DetachAll(Transform ship, ShipPoseSync poseSync, bool tellClients) {
+        public void DetachAll(bool tellClients) {
             for (int i = _attached.Count - 1; i >= 0; i--)
-                DetachAt(i, ship, poseSync, tellClients);
+                DetachAt(i, tellClients);
 
             _pending.Clear();
             _inHand.Clear();
@@ -86,12 +94,12 @@ namespace Features.ShipModule.Scripts {
             }
         }
 
-        internal void ClientAttach(uint netId, Vector3 localPosition, Quaternion localRotation, Transform ship) {
+        public void ClientAttach(uint netId, Vector3 localPosition, Quaternion localRotation) {
             _pending.Add(new Pending(netId, localPosition, localRotation));
-            ResolvePending(ship);
+            ResolvePending();
         }
 
-        internal void ClientDetach(uint netId, Transform ship) {
+        public void ClientDetach(uint netId) {
             for (int i = _pending.Count - 1; i >= 0; i--) {
                 if (_pending[i].NetId == netId)
                     _pending.RemoveAt(i);
@@ -99,41 +107,38 @@ namespace Features.ShipModule.Scripts {
 
             for (int i = _attached.Count - 1; i >= 0; i--) {
                 if (_attached[i].NetId == netId)
-                    DetachAt(i, ship, null, false);
+                    DetachAt(i, false);
             }
         }
 
-        internal void DebugAttach(Grabbable grabbable, Transform ship, ShipPoseSync poseSync) {
+        public void DebugAttach(Grabbable grabbable) {
             if (grabbable == null || Contains(grabbable))
                 return;
 
-            Attach(grabbable, ship, poseSync, true);
+            Attach(grabbable, true);
         }
 
-        internal bool TryMeasure(Transform ship, out Vector3 localPosition, out float drift) {
+        public bool TryMeasure(out Vector3 localPosition, out float drift) {
             localPosition = Vector3.zero;
             drift = 0f;
-            if (_attached.Count == 0 || ship == null)
+            if (_attached.Count == 0)
                 return false;
 
             Attached item = _attached[0];
             if (item.Body == null)
                 return false;
 
-            localPosition = ship.InverseTransformPoint(item.Body.position);
+            localPosition = _ship.InverseTransformPoint(item.Body.position);
             Vector3 delta = localPosition - item.LocalPosition;
             delta.y = 0f;
             drift = delta.magnitude;
             return true;
         }
 
-        private void ServerScan(Transform ship, ShipBase deck, ShipPoseSync poseSync) {
-            if (deck == null)
-                return;
-
-            int hits = OverlapDeck(deck);
+        private void ServerScan() {
+            int hits = OverlapDeck();
             for (int i = 0; i < hits; i++) {
-                Collider hit = OverlapScratch[i];
+                Collider hit = _overlapScratch[i];
                 if (hit == null)
                     continue;
 
@@ -146,27 +151,27 @@ namespace Features.ShipModule.Scripts {
                 if (grabbable == null || grabbable.CanBeGrabbed == false)
                     continue;
 
-                if (Contains(grabbable) || IsOnDeck(grabbable, ship, deck) == false)
+                if (Contains(grabbable) || IsOnDeck(grabbable) == false)
                     continue;
 
-                Attach(grabbable, ship, poseSync, true);
+                Attach(grabbable, true);
             }
         }
 
-        private static bool IsOnDeck(Grabbable grabbable, Transform ship, ShipBase deck) {
-            Vector3 local = ship.InverseTransformPoint(grabbable.transform.position);
+        private bool IsOnDeck(Grabbable grabbable) {
+            Vector3 local = _ship.InverseTransformPoint(grabbable.transform.position);
             // The whole deck, no edge inset: anything lying on it flies with the ship.
-            if (deck.DeckGeometry.ContainsDeckWalk(local, 0f) == false)
+            if (_deck.DeckGeometry.ContainsDeckWalk(local, 0f) == false)
                 return false;
 
-            if (deck.DeckGeometry.TryGetDeckSurfaceY(local, out float surfaceY) == false)
+            if (_deck.DeckGeometry.TryGetDeckSurfaceY(local, out float surfaceY) == false)
                 return false;
 
             return local.y >= surfaceY - BELOW_DECK_TOLERANCE && local.y <= surfaceY + REST_HEIGHT;
         }
 
-        private static int OverlapDeck(ShipBase deck) {
-            BoxCollider volume = deck.RideVolume;
+        private int OverlapDeck() {
+            BoxCollider volume = _deck.RideVolume;
             if (volume == null)
                 return 0;
 
@@ -175,30 +180,30 @@ namespace Features.ShipModule.Scripts {
             return Physics.OverlapBoxNonAlloc(
                 center,
                 halfExtents,
-                OverlapScratch,
+                _overlapScratch,
                 volume.transform.rotation,
                 ~0,
                 QueryTriggerInteraction.Ignore);
         }
 
-        private void Attach(Grabbable grabbable, Transform ship, ShipPoseSync poseSync, bool tellClients) {
+        private void Attach(Grabbable grabbable, bool tellClients) {
             Transform root = grabbable.transform;
-            Vector3 localPosition = ship.InverseTransformPoint(root.position);
-            Quaternion localRotation = Quaternion.Inverse(ship.rotation) * root.rotation;
+            Vector3 localPosition = _ship.InverseTransformPoint(root.position);
+            Quaternion localRotation = Quaternion.Inverse(_ship.rotation) * root.rotation;
             NetworkIdentity identity = grabbable.GetComponent<NetworkIdentity>();
             uint netId = identity != null ? identity.netId : 0u;
             Attached item = CreateAttached(grabbable, netId, localPosition, localRotation);
             _attached.Add(item);
-            Pin(item, ship);
-            if (tellClients && poseSync != null && netId != 0u)
-                poseSync.ServerAttachDeckItem(netId, localPosition, localRotation);
+            Pin(item);
+            if (tellClients && _poseSync != null && netId != 0u)
+                _poseSync.ServerAttachDeckItem(netId, localPosition, localRotation);
         }
 
-        private void DetachAt(int index, Transform ship, ShipPoseSync poseSync, bool tellClients) {
+        private void DetachAt(int index, bool tellClients) {
             Attached item = _attached[index];
             _attached.RemoveAt(index);
-            if (tellClients && poseSync != null && item.NetId != 0u)
-                poseSync.ServerDetachDeckItem(item.NetId);
+            if (tellClients && _poseSync != null && item.NetId != 0u)
+                _poseSync.ServerDetachDeckItem(item.NetId);
 
             if (item.Body == null)
                 return;
@@ -245,9 +250,9 @@ namespace Features.ShipModule.Scripts {
                 networkBody != null && networkBody.enabled);
         }
 
-        private void Pin(Attached item, Transform ship) {
-            Vector3 world = ship.TransformPoint(item.LocalPosition);
-            Quaternion rotation = ship.rotation * item.LocalRotation;
+        private void Pin(Attached item) {
+            Vector3 world = _ship.TransformPoint(item.LocalPosition);
+            Quaternion rotation = _ship.rotation * item.LocalRotation;
             if (item.Body.parent != null)
                 item.Body.SetParent(null, true);
 
@@ -265,10 +270,7 @@ namespace Features.ShipModule.Scripts {
                 item.NetworkBody.enabled = false;
         }
 
-        private void ResolvePending(Transform ship) {
-            if (ship == null)
-                return;
-
+        private void ResolvePending() {
             for (int i = _pending.Count - 1; i >= 0; i--) {
                 Pending pending = _pending[i];
                 if (NetworkClient.spawned.TryGetValue(pending.NetId, out NetworkIdentity identity) == false)
@@ -281,7 +283,7 @@ namespace Features.ShipModule.Scripts {
 
                 Attached item = CreateAttached(grabbable, pending.NetId, pending.LocalPosition, pending.LocalRotation);
                 _attached.Add(item);
-                Pin(item, ship);
+                Pin(item);
             }
         }
 
@@ -293,8 +295,6 @@ namespace Features.ShipModule.Scripts {
 
             return false;
         }
-
-        private static readonly Collider[] OverlapScratch = new Collider[24];
 
         private readonly struct Pending {
             public Pending(uint netId, Vector3 localPosition, Quaternion localRotation) {

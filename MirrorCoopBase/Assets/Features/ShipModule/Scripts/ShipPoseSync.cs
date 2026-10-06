@@ -149,7 +149,7 @@ namespace Features.ShipModule.Scripts {
 
             _deckCargo.OnAdd -= OnDeckCargoAdded;
             _deckCargo.OnRemove -= OnDeckCargoRemoved;
-            _shipBase.Cargo.DetachAll(_shipBase.transform, null, false);
+            _shipBase.Cargo.DetachAll(false);
         }
 
         private Quaternion ExtrapolateRotation(PoseSample last, float extra) {
@@ -207,10 +207,10 @@ namespace Features.ShipModule.Scripts {
             AttachDeckItem(_deckCargo[index]);
 
         private void OnDeckCargoRemoved(int index, DeckCargoEntry removed) =>
-            _shipBase.Cargo.ClientDetach(removed.NetId, _shipBase.transform);
+            _shipBase.Cargo.ClientDetach(removed.NetId);
 
         private void AttachDeckItem(DeckCargoEntry entry) =>
-            _shipBase.Cargo.ClientAttach(entry.NetId, entry.LocalPosition, entry.LocalRotation, _shipBase.transform);
+            _shipBase.Cargo.ClientAttach(entry.NetId, entry.LocalPosition, entry.LocalRotation);
 
         [ClientRpc]
         private void RpcSnap(Vector3 position, Quaternion rotation) {

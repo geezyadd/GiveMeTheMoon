@@ -3,27 +3,29 @@ using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    // The players riding the ship: who is on the deck, binding them to it in flight and releasing them after.
-    internal sealed class ShipRiders {
-        private static readonly Collider[] RiderScratch = new Collider[16];
+    internal sealed class ShipRiders : IShipRiders {
+        private const float NEARBY_RIDER_RADIUS_SQR = 64f;
+
+        private static readonly Collider[] _riderScratch = new Collider[16];
 
         private readonly ShipBase _ship;
-        private readonly ShipDeckGeometry _deckGeometry;
+        private readonly IShipDeckGeometry _deckGeometry;
         private readonly BoxCollider _rideVolume;
-        private readonly ShipFlightSettings _flightSettings;
+        // Read on use: the settings can be injected after the parts are created.
+        private readonly System.Func<ShipFlightSettings> _flightSettings;
         private readonly List<ShipRider> _riders = new List<ShipRider>();
         private readonly List<ShipRider> _insideVolume = new List<ShipRider>();
 
-        internal IReadOnlyList<ShipRider> All => _riders;
+        public IReadOnlyList<ShipRider> All => _riders;
 
-        internal ShipRiders(ShipBase ship, ShipDeckGeometry deckGeometry, BoxCollider rideVolume, ShipFlightSettings flightSettings) {
+        internal ShipRiders(ShipBase ship, IShipDeckGeometry deckGeometry, BoxCollider rideVolume, System.Func<ShipFlightSettings> flightSettings) {
             _ship = ship;
             _deckGeometry = deckGeometry;
             _rideVolume = rideVolume;
             _flightSettings = flightSettings;
         }
 
-        internal void DebugBindRider(ShipRider rider) {
+        public void DebugBindRider(ShipRider rider) {
             if (rider == null || rider.IsRiding)
                 return;
 
@@ -49,7 +51,7 @@ namespace Features.ShipModule.Scripts {
             TryBindRider(rider);
         }
 
-        internal void SetVolumeOverlap(ShipRider rider, bool inside) {
+        public void SetVolumeOverlap(ShipRider rider, bool inside) {
             if (rider == null)
                 return;
 
@@ -71,7 +73,7 @@ namespace Features.ShipModule.Scripts {
             UnregisterRider(rider);
         }
 
-        internal void UnregisterRider(ShipRider rider) {
+        public void UnregisterRider(ShipRider rider) {
             if (_ship.IsFlying)
                 return;
 
@@ -81,7 +83,7 @@ namespace Features.ShipModule.Scripts {
             _riders.Remove(rider);
         }
 
-        internal void TrackRider(ShipRider rider) {
+        public void TrackRider(ShipRider rider) {
             if (_riders.Contains(rider) == false)
                 _riders.Add(rider);
         }
@@ -98,13 +100,13 @@ namespace Features.ShipModule.Scripts {
                 int hits = Physics.OverlapBoxNonAlloc(
                     center,
                     halfExtents,
-                    RiderScratch,
+                    _riderScratch,
                     _rideVolume.transform.rotation,
                     ~0,
                     QueryTriggerInteraction.Collide);
 
                 for (int i = 0; i < hits; i++) {
-                    Collider hit = RiderScratch[i];
+                    Collider hit = _riderScratch[i];
                     if (hit == null)
                         continue;
 
@@ -114,13 +116,12 @@ namespace Features.ShipModule.Scripts {
 
             ShipRider[] riders = Object.FindObjectsByType<ShipRider>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             Vector3 origin = _ship.transform.position;
-            const float radiusSq = 64f;
             for (int i = 0; i < riders.Length; i++) {
                 ShipRider rider = riders[i];
                 if (rider == null)
                     continue;
 
-                if ((rider.transform.position - origin).sqrMagnitude > radiusSq)
+                if ((rider.transform.position - origin).sqrMagnitude > NEARBY_RIDER_RADIUS_SQR)
                     continue;
 
                 RegisterRider(rider);
@@ -155,7 +156,7 @@ namespace Features.ShipModule.Scripts {
             }
         }
 
-        internal void ServerReleaseRiders() {
+        public void ServerReleaseRiders() {
             for (int i = 0; i < _riders.Count; i++) {
                 if (_riders[i] != null)
                     _riders[i].ServerRelease();
@@ -191,7 +192,8 @@ namespace Features.ShipModule.Scripts {
             if (_deckGeometry.TryClosestDeckWalk(local, out _, out float dx, out float dz) == false)
                 return false;
 
-            float edge = _flightSettings.BoardingEdgeTolerance;
+            ShipFlightSettings flightSettings = _flightSettings();
+            float edge = flightSettings.BoardingEdgeTolerance;
             if (dx * dx + dz * dz > edge * edge)
                 return false;
 
@@ -199,7 +201,7 @@ namespace Features.ShipModule.Scripts {
                 return false;
 
             float height = local.y - surfaceY;
-            return height >= _flightSettings.BoardingMinHeight && height <= _flightSettings.BoardingMaxHeight;
+            return height >= flightSettings.BoardingMinHeight && height <= flightSettings.BoardingMaxHeight;
         }
     }
 }

@@ -1,26 +1,29 @@
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    // Steps the ship's flight simulation on the server and feeds it the helm controls: heading mode, steer, speed.
-    internal sealed class ShipFlightControl {
+    internal sealed class ShipFlightControl : IShipFlightControl {
+        private const float DIRECTION_EPSILON = 0.0001f;
+        private const float SIMULATION_STEP = 1f / 60f;
+
         private readonly ShipFlight _flight = new ShipFlight();
-        private readonly ShipFlightSettings _flightSettings;
-        private readonly ShipModules _modules;
-        private readonly ShipSeats _seats;
+        // Read on use: the settings can be injected after the parts are created.
+        private readonly System.Func<ShipFlightSettings> _flightSettings;
+        private readonly IShipModules _modules;
+        private readonly IShipSeats _seats;
 
         private bool _debugSteerActive;
         private float _debugSteer;
         private bool _controlsLocked;
 
-        internal ShipFlightMode Mode => _flight.Mode;
-        internal bool IsTakeoffComplete => _flight.IsTakeoffComplete;
-        internal bool HasLanded => _flight.HasLanded;
+        public ShipFlightMode Mode => _flight.Mode;
+        public bool IsTakeoffComplete => _flight.IsTakeoffComplete;
+        public bool HasLanded => _flight.HasLanded;
         internal bool IsActive => _flight.IsActive;
         internal Vector3 Position => _flight.Position;
         internal Quaternion Rotation => _flight.Rotation;
         internal Vector3 Velocity => _flight.Velocity;
 
-        internal ShipFlightControl(ShipFlightSettings flightSettings, ShipModules modules, ShipSeats seats) {
+        internal ShipFlightControl(System.Func<ShipFlightSettings> flightSettings, IShipModules modules, IShipSeats seats) {
             _flightSettings = flightSettings;
             _modules = modules;
             _seats = seats;
@@ -39,11 +42,10 @@ namespace Features.ShipModule.Scripts {
                 hover,
                 heading,
                 routeHeading,
-                _flightSettings,
+                _flightSettings(),
                 takeoffSeconds,
                 dodgeRangeScale,
                 mode);
-            _seats.ClearSteer();
             _controlsLocked = false;
         }
 
@@ -56,13 +58,13 @@ namespace Features.ShipModule.Scripts {
             LockControls();
             Vector3 flat = faceDirection;
             flat.y = 0f;
-            Quaternion heading = flat.sqrMagnitude > 0.0001f
+            Quaternion heading = flat.sqrMagnitude > DIRECTION_EPSILON
                 ? Quaternion.LookRotation(flat.normalized, Vector3.up)
                 : currentRotation;
             _flight.BeginLanding(padPoint, landingSeconds, heading);
         }
 
-        internal void LockControls() {
+        public void LockControls() {
             _controlsLocked = true;
             _flight.SetManualHeading(false);
             _flight.SetSteer(0f);
@@ -77,12 +79,12 @@ namespace Features.ShipModule.Scripts {
         internal void ShiftWorld(Vector3 delta) =>
             _flight.ShiftWorld(delta);
 
-        internal void SetDebugSteer(bool active, float steer) {
+        public void SetDebugSteer(bool active, float steer) {
             _debugSteerActive = active;
             _debugSteer = Mathf.Clamp(steer, -1f, 1f);
         }
 
-        internal void DebugFace(Vector3 worldForward) =>
+        public void DebugFace(Vector3 worldForward) =>
             _flight.DebugFace(worldForward);
 
         internal void ServerStep(float dt) {
@@ -98,18 +100,17 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void PushTravelSpeed() {
-            if (_flight.Mode != ShipFlightMode.TravelInSpace || _flightSettings == null)
+            if (_flight.Mode != ShipFlightMode.TravelInSpace)
                 return;
 
             float stat = Mathf.Max(ShipTransit.MinSpeed, _modules.GetStatFull(ShipStatType.FlightSpeed));
-            _flight.SetTravelSpeed(_flightSettings.CruiseSpeed * stat);
+            _flight.SetTravelSpeed(_flightSettings().CruiseSpeed * stat);
         }
 
         private void SimulateFlight(float dt) {
-            const float step = 1f / 60f;
             float left = dt;
             while (left > 0f) {
-                float slice = Mathf.Min(step, left);
+                float slice = Mathf.Min(SIMULATION_STEP, left);
                 _flight.Simulate(slice);
                 left -= slice;
             }
