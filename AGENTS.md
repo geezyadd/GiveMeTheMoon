@@ -87,23 +87,30 @@ types.
 - Module assemblies by layer (an assembly references only lower layers; module references in brackets):
   1. `Features.GameCoreModule.Contracts` (`IGameplaySession`, `SceneNames`),
      `Features.AddressablesConstantGeneratorModule` (`Address_g.cs`), `Features.MvpModule` (AssetLoader),
-     `Features.FloatingControllerModule`; third-party `QuickOutline` and `MiniMapModular` (`Mini Mapa(Radar)`) also
-     have their own asmdef.
+     `Features.FloatingControllerModule`, `Features.PlayerProfileModule.Data` (NetworkModel; the generated
+     `PlayerProfile` model and `IPlayerProfileSource`); third-party `QuickOutline` and `MiniMapModular`
+     (`Mini Mapa(Radar)`) also have their own asmdef.
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader).
   3. `Features.CameraModule` (CharacterMovable, Contracts, Input) → `Features.GrabModule` (Camera, CharacterMovable,
      Contracts, NetworkModel).
   4. `Features.ShipModule` (Camera, Grab, CharacterMovable, FloatingController, GameFlow, Stats, Connection, MiniMap,
      NetworkModel),
-     `Features.MenuModule` (GameFlow, Mvp, Connection).
-  5. `Features.PlayerLifeModule` (Ship, Grab, Camera, Mvp, NetworkModel, Connection), `Features.LobbyModule` (Ship,
+     `Features.MenuModule` (GameFlow, Mvp, Connection),
+     `Features.PlayerProfileModule` (PlayerProfileModule.Data, Camera, NetworkModel, TextMeshPro).
+  5. `Features.PlayerLifeModule` (Ship, Grab, Camera, Mvp, NetworkModel, Connection, PlayerProfileModule.Data),
+     `Features.LobbyModule` (Ship,
      GameFlow, Mvp, Connection).
   6. `Features.ShopModule` (PlayerLife, Ship, Camera, GameFlow, Mvp, NetworkModel) → `Features.TooltipModule` (Shop,
      Ship, Grab, Mvp).
   7. Composition root: `Features.GameCoreModule` (all modules) and `Features.BootstrapersModule` (Contracts,
      GameFlow, SceneLoader).
   Tests: `Features.CharacterMovableModule.Editor.Tests`, `Features.PlayerLifeModule.Editor.Tests`,
-  `Features.ShipModule.Editor.Tests`, `Game.Connection.Editor.Tests`.
+  `Features.ShipModule.Editor.Tests`, `Game.Connection.Editor.Tests`, `Features.PlayerProfileModule.Editor.Tests`.
+- Player identity and name come from Connection only through NetworkModel contracts: `IPlayerIdentityService`
+  (`PlayerKey`) and `IPlayerNameSource` (the authenticated name), implemented in Connection. Other modules read a
+  player's name through `IPlayerProfileSource` / `IReadOnlyPlayerProfileModel` (PlayerProfileModule.Data), not
+  through the `PlayerProfile` bridge.
 - The camera does not know about Grab: `IGameCameraService.LookApplied` fires in `PresentNow()` after
   `ApplyLookRig()` and before the brain update; `HeldItemFollowSystem` (Grab) listens to it. The frame order is the
   same as before.
@@ -119,6 +126,7 @@ types.
 | Stats | `Assets/Features/StatsModule/`, `ShipStatType`, `ShipStatEntity` |
 | Interaction | `Assets/Features/GrabModule/`: `LocalPlayerInteraction` (aim, highlight, button), `GrabController` (hand, `PlayerHand` model), `UseController`, `HeldItemRegistry`, `InteractableBase`, `Grabbable`, `GrabConfiguration` |
 | Shop and money | `Assets/Features/ShopModule/` (`CrewWallet`, `ShopCatalog`, `WalletConfiguration`) |
+| Player names and nameplates | `Assets/Features/PlayerProfileModule/`: `PlayerProfile` (bridge of the `PlayerProfile` model, the server fills the name), `PlayerNameSanitizer`, `PlayerNameplate` (TMP over other players' heads), `PlayerNameplateConfiguration`; the model is in `Data/` |
 | Scenes | `GameCoreModule/GameResources/Scenes/`: Bootstrap → Menu → Lobby → Game; only Bootstrap is in Build Settings |
 
 ### How to verify

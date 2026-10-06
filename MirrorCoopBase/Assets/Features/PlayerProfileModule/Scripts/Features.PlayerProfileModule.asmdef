@@ -1,0 +1,21 @@
+{
+    "name": "Features.PlayerProfileModule",
+    "rootNamespace": "Features.PlayerProfileModule",
+    "references": [
+        "GUID:7c3e1a9b4d2f4e6a8b0c1d2e3f4a5b6c",
+        "GUID:af55949f02014897988afc8d38e2501f",
+        "GUID:7db74d1a1ce84239aafaf8624bce950c",
+        "GUID:30817c1a0e6d646d99c048fc403f5979",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:0d8beb7f090555447a6cf5ce9e54dbb4"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
