@@ -395,7 +395,7 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             if (isServer) {
-                _ship.ServerSetSteer(netId, _input.MoveStick.x);
+                _ship.Seats.ServerSetSteer(netId, _input.MoveStick.x);
                 return;
             }
 
@@ -520,13 +520,13 @@ namespace Features.ShipModule.Scripts {
         [Command]
         private void CmdSetSteer(float lateral) {
             if (_ship != null)
-                _ship.ServerSetSteer(netId, lateral);
+                _ship.Seats.ServerSetSteer(netId, lateral);
         }
 
         [Command]
         private void CmdStand() {
             if (_ship != null)
-                _ship.ServerStand(this);
+                _ship.Seats.ServerStand(this);
         }
 
         private void SilenceNetworkBody() {

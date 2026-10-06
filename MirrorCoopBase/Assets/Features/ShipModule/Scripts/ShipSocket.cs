@@ -149,7 +149,7 @@ namespace Features.ShipModule.Scripts {
         private void OnOccupantChanged(uint previous, uint current) {
             SetHovered(false);
             if (_ship != null)
-                _ship.ClientSyncSeat(this, previous, current);
+                _ship.Seats.ClientSyncSeat(this, previous, current);
         }
 
         private void RefreshView() {

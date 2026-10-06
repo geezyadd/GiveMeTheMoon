@@ -50,7 +50,7 @@ namespace Features.ShipModule.Scripts {
             if (player.TryGetComponent(out ShipRider rider) == false)
                 throw new System.InvalidOperationException(player.name + " has no " + nameof(ShipRider) + ".");
 
-            ship.ServerStand(rider);
+            ship.Seats.ServerStand(rider);
             ship.Riders.UnregisterRider(rider);
         }
 
