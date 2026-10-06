@@ -37,6 +37,7 @@ namespace Features.ShipModule.Scripts.Debug {
         private readonly IConnectionSessionService _connection;
         private readonly IGameFlowStateMachineService _flow;
         private readonly ShipRunService _run;
+        private readonly IShipRoute _route;
         private readonly ShipRunModel _model;
         private readonly ShipStationCatalog _stations;
 
@@ -107,6 +108,7 @@ namespace Features.ShipModule.Scripts.Debug {
             IConnectionSessionService connection,
             IGameFlowStateMachineService flow,
             ShipRunService run,
+            IShipRoute route,
             ShipRunModel model,
             ShipStationCatalog stations) {
             _input = input;
@@ -114,6 +116,7 @@ namespace Features.ShipModule.Scripts.Debug {
             _connection = connection;
             _flow = flow;
             _run = run;
+            _route = route;
             _model = model;
             _stations = stations;
         }
@@ -311,9 +314,9 @@ namespace Features.ShipModule.Scripts.Debug {
             }
 
             if (hover)
-                _run.DebugUseFlightMode(ShipFlightMode.HoverInPlace);
+                _route.DebugUseFlightMode(ShipFlightMode.HoverInPlace);
             else
-                _run.DebugClearFlightMode();
+                _route.DebugClearFlightMode();
 
             if (_ship.ServerRequestLaunch() == false) {
                 if (Age() > 5f)
@@ -514,7 +517,7 @@ namespace Features.ShipModule.Scripts.Debug {
                 return;
             }
 
-            _run.DebugClearFlightMode();
+            _route.DebugClearFlightMode();
             Enter(12);
         }
 

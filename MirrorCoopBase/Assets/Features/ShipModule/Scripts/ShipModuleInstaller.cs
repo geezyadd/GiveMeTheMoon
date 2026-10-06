@@ -10,6 +10,8 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipRunBinding>().AsSingle();
             Container.BindInterfacesTo<ShipStationPads>().AsSingle();
             Container.BindInterfacesTo<ShipStationDropService>().AsSingle();
+            Container.BindInterfacesTo<ShipFlightStatService>().AsSingle();
+            Container.BindInterfacesTo<ShipRoute>().AsSingle();
             Container.BindInterfacesAndSelfTo<ShipRunService>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.BindInterfacesTo<Debug.DeckFeelHarness>().AsSingle();
