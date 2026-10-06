@@ -36,8 +36,8 @@ namespace Features.ShipModule.Scripts.Debug {
         private readonly IGameCameraService _cameras;
         private readonly IConnectionSessionService _connection;
         private readonly IGameFlowStateMachineService _flow;
-        private readonly ShipRunService _run;
         private readonly IShipRoute _route;
+        private readonly IShipWorldShiftService _worldShift;
         private readonly ShipRunModel _model;
         private readonly ShipStationCatalog _stations;
 
@@ -107,16 +107,16 @@ namespace Features.ShipModule.Scripts.Debug {
             IGameCameraService cameras,
             IConnectionSessionService connection,
             IGameFlowStateMachineService flow,
-            ShipRunService run,
             IShipRoute route,
+            IShipWorldShiftService worldShift,
             ShipRunModel model,
             ShipStationCatalog stations) {
             _input = input;
             _cameras = cameras;
             _connection = connection;
             _flow = flow;
-            _run = run;
             _route = route;
+            _worldShift = worldShift;
             _model = model;
             _stations = stations;
         }
@@ -385,13 +385,13 @@ namespace Features.ShipModule.Scripts.Debug {
                 if (_shiftCruise == false && cameraId == CameraIds.FPCamera && _measureStep == 1 && _measureTime > 0.6f) {
                     _shiftCruise = true;
                     _shiftMarks = 3;
-                    _run.DebugForceRecenter();
+                    _worldShift.DebugForceRecenter();
                 }
             }
             else if (_client == false && _shiftDock == false && _measureStep == 0 && _measureTime > 1f) {
                 _shiftDock = true;
                 _shiftMarks = 3;
-                _run.DebugForceRecenter();
+                _worldShift.DebugForceRecenter();
             }
 
             ApplyMeasureInput();
@@ -588,7 +588,7 @@ namespace Features.ShipModule.Scripts.Debug {
         }
 
         private void RecordEvents() {
-            int shifts = _run.WorldShiftCount;
+            int shifts = _worldShift.WorldShiftCount;
             int gc = GC.CollectionCount(0);
             int index = _player.Count - 1;
             float poseDrift = (_player[index] - _rider.DebugLocalOffset).magnitude;
@@ -1251,7 +1251,7 @@ namespace Features.ShipModule.Scripts.Debug {
             if (_fixedDt)
                 Time.captureFramerate = 0;
 
-            Note("worldShifts=" + _run.WorldShiftCount + " loops=" + _model.LoopIndex + " cargoDriftMax=" + _cargoDriftMax.ToString("0.000") + " cargo=" + (_ship != null ? _ship.DeckCargoCount : 0));
+            Note("worldShifts=" + _worldShift.WorldShiftCount + " loops=" + _model.LoopIndex + " cargoDriftMax=" + _cargoDriftMax.ToString("0.000") + " cargo=" + (_ship != null ? _ship.DeckCargoCount : 0));
             Note(success ? "PASS" : "FAIL");
             Done = success ? 1 : -1;
             Status = success ? "done" : "failed";

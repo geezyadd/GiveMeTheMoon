@@ -16,12 +16,12 @@ namespace Features.ShipModule.Scripts {
         private readonly IShipStationDropService _drops;
         private readonly IShipFlightStatService _flightStats;
         private readonly IShipRoute _route;
+        private readonly IShipWorldShiftService _worldShift;
 
         private float _wreckUntil;
         private ShipRadarService _radar;
         private readonly ConnectionSpawnModel _spawn;
 
-        internal int WorldShiftCount => _ship != null ? _ship.PoseSync.WorldShift.Count : 0;
         private ShipBase _ship => _binding.Ship;
         private ShipRunDirector _director => _binding.Director;
         private ShipLandingPad _currentPad => _pads.CurrentPad;
@@ -36,7 +36,8 @@ namespace Features.ShipModule.Scripts {
             IShipStationPads pads,
             IShipStationDropService drops,
             IShipFlightStatService flightStats,
-            IShipRoute route) {
+            IShipRoute route,
+            IShipWorldShiftService worldShift) {
             _model = model;
             _config = config;
             _flightSettings = flightSettings;
@@ -47,6 +48,7 @@ namespace Features.ShipModule.Scripts {
             _drops = drops;
             _flightStats = flightStats;
             _route = route;
+            _worldShift = worldShift;
         }
 
         public void CleanupGameplay() {
@@ -280,7 +282,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void EnterStation(ShipLandingPad pad, ShipRunPhase phase) {
-            RecenterIfFar();
+            _worldShift.RecenterIfFar();
             _drops.SpawnDrops(pad, _model.LoopIndex);
             if (pad != null)
                 _spawn.Set(pad.PlayerSpawn.position, pad.PlayerSpawn.rotation);
@@ -303,38 +305,6 @@ namespace Features.ShipModule.Scripts {
         private void Publish() {
             if (_director != null)
                 _director.ServerPublish();
-        }
-
-        internal void DebugForceRecenter() {
-            if (_ship == null)
-                return;
-
-            Vector3 position = _ship.transform.position;
-            Vector3 delta = new Vector3(-position.x, 0f, -position.z);
-            if (delta.sqrMagnitude < 1f)
-                delta = new Vector3(40f, 0f, -25f);
-
-            ApplyWorldShift(delta);
-        }
-
-        private void RecenterIfFar() {
-            if (_ship == null)
-                return;
-
-            Vector3 position = _ship.transform.position;
-            float limit = _config.OriginRecenterDistance;
-            if (position.x * position.x + position.z * position.z < limit * limit)
-                return;
-
-            ApplyWorldShift(new Vector3(-position.x, 0f, -position.z));
-        }
-
-        private void ApplyWorldShift(Vector3 delta) {
-            _ship.ServerApplyWorldShift(delta);
-            _pads.Shift(delta);
-            _route.ShiftDestination(delta);
-            if (_director != null)
-                _director.ServerShiftWorld(delta, _pads.CurrentIdentity, _pads.PreviousIdentity);
         }
 
         private static bool TryGetDeckSurfaceWorldY(ShipBase ship, out float worldY) {
