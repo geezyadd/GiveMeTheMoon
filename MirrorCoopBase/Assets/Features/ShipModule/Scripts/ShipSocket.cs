@@ -16,6 +16,7 @@ namespace Features.ShipModule.Scripts {
         private ShipRadarCatalog _radarCatalog;
         private ShipSeat _seat;
         private ShipRunModel _run;
+        private ShipSocketRule _rule;
 
         [SyncVar(hook = nameof(OnOccupiedChanged))]
         private bool _occupied;
@@ -37,15 +38,17 @@ namespace Features.ShipModule.Scripts {
         public bool IsSittable => _seat != null;
 
         public bool CanAccept(ShipModuleType type) =>
-            _occupied == false && type == _acceptedType && IsUnlocked;
+            Rule.CanInstall(_occupied, type, RunState);
 
         public bool CanUninstall =>
-            _occupied && IsBuildPhase && CanRemoveModule(_acceptedType);
+            Rule.CanUninstall(_occupied, RunState);
 
-        public bool IsUnlocked => _run == null || _run.LoopIndex >= _unlockLoop;
+        public bool IsUnlocked => Rule.IsUnlocked(RunState);
 
-        private bool IsBuildPhase =>
-            _run == null || _run.Phase == ShipRunPhase.Build;
+        private ShipSocketRule Rule => _rule ??= new ShipSocketRule(_acceptedType, _unlockLoop);
+
+        private ShipSocketRunState RunState =>
+            _run == null ? ShipSocketRunState.NoRun : new ShipSocketRunState(true, _run.LoopIndex, _run.Phase);
 
         public bool HasHelmPilot =>
             _occupantNetId != 0 && _seat != null && _seat.Role == ShipSeatRole.Helm;
@@ -200,10 +203,6 @@ namespace Features.ShipModule.Scripts {
             ShipRadarScreen screen = view.GetComponentInChildren<ShipRadarScreen>(true);
             if (screen != null)
                 screen.Bind(_radarCatalog, _run, _ship);
-        }
-
-        private static bool CanRemoveModule(ShipModuleType type) {
-            return type == ShipModuleType.Engine || type == ShipModuleType.Radar;
         }
 
         private void ClearSpawnedView() {

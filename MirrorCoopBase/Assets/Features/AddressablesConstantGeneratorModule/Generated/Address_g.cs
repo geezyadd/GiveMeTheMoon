@@ -30,7 +30,12 @@ namespace Features.AddressablesConstantsGenerator.Generated {
             public const string WalletConfiguration_Default = "WalletConfiguration_Default";
             public const string PlayerStatsConfiguration_Default = "PlayerStatsConfiguration_Default";
             public const string ShipAccumulativeStatsConfiguration_Default = "ShipAccumulativeStatsConfiguration_Default";
-            public static List<string> AllAddressablesInGroup = new List<string>() {"ConnectionConfig_Default","PlayerLifeConfiguration_Default","ShipRunConfig_Default","ShipFlightConfig_Default","PlayerDamageConfiguration_Default","ShopCatalog_Default","WalletConfiguration_Default","PlayerStatsConfiguration_Default","ShipAccumulativeStatsConfiguration_Default",};
+            public const string ItemViewCatalog_Default = "ItemViewCatalog_Default";
+            public const string EngineCatalog_Default = "EngineCatalog_Default";
+            public const string ShipStationCatalog_Default = "ShipStationCatalog_Default";
+            public const string ShipRadarCatalog_Default = "ShipRadarCatalog_Default";
+            public const string CameraCatalog_Default = "CameraCatalog_Default";
+            public static List<string> AllAddressablesInGroup = new List<string>() {"ConnectionConfig_Default","PlayerLifeConfiguration_Default","ShipRunConfig_Default","ShipFlightConfig_Default","PlayerDamageConfiguration_Default","ShopCatalog_Default","WalletConfiguration_Default","PlayerStatsConfiguration_Default","ShipAccumulativeStatsConfiguration_Default","ItemViewCatalog_Default","EngineCatalog_Default","ShipStationCatalog_Default","ShipRadarCatalog_Default","CameraCatalog_Default",};
         }
         public static partial class Groups {
             public static List<List<string>> AllAddressablesGroups = new List<List<string>>() {Windows.AllAddressablesInGroup,Scenes.AllAddressablesInGroup,Configurations.AllAddressablesInGroup,};

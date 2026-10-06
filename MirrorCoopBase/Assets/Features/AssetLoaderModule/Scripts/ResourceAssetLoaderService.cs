@@ -6,6 +6,8 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace Features.AssetLoaderModule.Scripts {
+    // The Resources backend of the project asset loader: the only allowed Resources.Load in Features
+    // (whitelisted in ConfigurationLoadingGuardTests). Configurations never go through it.
     public class ResourceAssetLoaderService : IResourceAssetLoaderService {
         private const float TIME_OUT_THRESHOLD = 10f;
         protected readonly Dictionary<string, ResourcesGroupHandleContainer> _handlesContainerByGroupName = new();
