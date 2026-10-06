@@ -4,8 +4,6 @@ using UnityEngine;
 namespace Features.ShipModule.Scripts {
     [CreateAssetMenu(menuName = "Game/Ship Station Catalog", fileName = "ShipStationCatalog")]
     public sealed class ShipStationCatalog : ScriptableObject {
-        public const string ResourceName = "ShipStationCatalog";
-
         [Serializable]
         public sealed class DropEntry {
             [SerializeField] private GameObject _prefab;

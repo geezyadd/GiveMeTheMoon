@@ -1,4 +1,5 @@
 using Features.AddressablesConstantsGenerator.Generated;
+using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.PlayerLifeModule.Scripts;
 using Features.ShipModule.Scripts;
@@ -24,6 +25,11 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<PlayerStatsConfiguration>(Address.Configurations.PlayerStatsConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<PlayerDamageConfiguration>(Address.Configurations.PlayerDamageConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<PlayerLifeConfiguration>(Address.Configurations.PlayerLifeConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ItemViewCatalog>(Address.Configurations.ItemViewCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<EngineCatalog>(Address.Configurations.EngineCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ShipStationCatalog>(Address.Configurations.ShipStationCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ShipRadarCatalog>(Address.Configurations.ShipRadarCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<CameraCatalog>(Address.Configurations.CameraCatalog_Default).AsSingle();
         }
     }
 }

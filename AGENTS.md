@@ -101,7 +101,8 @@ types.
   7. Composition root: `Features.GameCoreModule` (all modules) and `Features.BootstrapersModule` (Contracts,
      GameFlow, SceneLoader).
   Tests: `Features.CharacterMovableModule.Editor.Tests`, `Features.PlayerLifeModule.Editor.Tests`,
-  `Features.ShipModule.Editor.Tests`, `Game.Connection.Editor.Tests`.
+  `Features.ShipModule.Editor.Tests`, `Features.GameCoreModule.Editor.Tests` (configuration loading guard),
+  `Game.Connection.Editor.Tests`.
 - The camera does not know about Grab: `IGameCameraService.LookApplied` fires in `PresentNow()` after
   `ApplyLookRig()` and before the brain update; `HeldItemFollowSystem` (Grab) listens to it. The frame order is the
   same as before.
@@ -113,7 +114,7 @@ types.
 |---|---|
 | Ship, flight, riders | `Assets/Features/ShipModule/Scripts/`: `ShipBase`, `ShipFlight`, `ShipPoseSync`, `ShipRider`, `ShipRunService`, `ShipRunDirector` |
 | Flight and landing settings | `ShipFlightSettings` (+ `ShipFlightConfig_Default.asset`), `ShipRunConfig` |
-| Modules and slots | `ShipItem`, `ShipSocket`, `Ship*Interactable`, catalogs in `ShipModule/GameResources/Resources/` |
+| Modules and slots | `ShipItem`, `ShipSocket`, `Ship*Interactable`, catalogs in `ShipModule/GameResources/Configurations/` (Addressables) |
 | Stats | `Assets/Features/StatsModule/`, `ShipStatType`, `ShipStatEntity` |
 | Interaction | `Assets/Features/GrabModule/` (`UseController`, `InteractableBase`, `Grabbable`) |
 | Shop and money | `Assets/Features/ShopModule/` (`CrewWallet`, `ShopCatalog`, `WalletConfiguration`) |

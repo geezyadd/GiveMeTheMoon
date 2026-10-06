@@ -20,6 +20,21 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3bd71940ec6f98c7431f6a0e3c7b5928
+    m_Address: CameraCatalog_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 46bdf038b1c7d8e37495a6b7c8d9e1f0
+    m_Address: ShipStationCatalog_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7870b385a0a90a743bdcf1753f29f3e6
+    m_Address: PlayerLifeConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8b0d3f5a2c9e4d7f8a1b2c3d4e5f6071
     m_Address: ShipRunConfig_Default
     m_ReadOnly: 0
@@ -30,8 +45,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a9e63c1d4f0b4e8a1c2d3e4f5a6b7c8d
+    m_Address: PlayerDamageConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ae144bf2cfcc83e41911d615c268f231
     m_Address: ShopCatalog_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b9e2d3f4a5c6471890b1c2d3e4f50617
+    m_Address: EngineCatalog_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -40,23 +65,23 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: d1e2f3a4b5c64755d6e7f8091a2b3c4d
-    m_Address: ShipAccumulativeStatsConfiguration_Default
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: cbf5d8174e0a419f6d3c2e50817fa3e8
     m_Address: PlayerStatsConfiguration_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: a9e63c1d4f0b4e8a1c2d3e4f5a6b7c8d
-    m_Address: PlayerDamageConfiguration_Default
+  - m_GUID: d1e2f3a4b5c64755d6e7f8091a2b3c4d
+    m_Address: ShipAccumulativeStatsConfiguration_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 7870b385a0a90a743bdcf1753f29f3e6
-    m_Address: PlayerLifeConfiguration_Default
+  - m_GUID: d1f5b68c9e0a17b2c3d4e5f607192a3b
+    m_Address: ItemViewCatalog_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e2f3a4b5c6d7890123e4f5a6b7c8d9e0
+    m_Address: ShipRadarCatalog_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
