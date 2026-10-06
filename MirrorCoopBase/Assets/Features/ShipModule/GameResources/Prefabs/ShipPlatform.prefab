@@ -68,7 +68,6 @@ MonoBehaviour:
   - {fileID: 2000000005}
   - {fileID: 4947457913485359910}
   - {fileID: 8856623827528875787}
-  _engines: {fileID: 11400000, guid: b9e2d3f4a5c6471890b1c2d3e4f50617, type: 2}
   _poseSync: {fileID: 6441704599544112580}
   _stats: {fileID: 1000000005}
   _socketStates: {fileID: 5512837465019283746}

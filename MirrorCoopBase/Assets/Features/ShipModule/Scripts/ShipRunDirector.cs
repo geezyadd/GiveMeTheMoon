@@ -9,13 +9,12 @@ namespace Features.ShipModule.Scripts {
     public sealed class ShipRunDirector : ShipRunBridge {
         [SerializeField] private ShipBase _ship;
         [SerializeField] private ShipLandingPad _startPad;
-        [SerializeField] private ShipStationCatalog _stations;
 
         [Inject]
         private IShipRunService _run;
 
         [Inject]
-        private ShipStationCatalog _injectedStations;
+        private ShipStationCatalog _stations;
 
         [Inject]
         private IShipRadarBinding _radar;
@@ -156,18 +155,11 @@ namespace Features.ShipModule.Scripts {
                 Destroy(_previousLocalWreck);
 
             _previousLocalWreck = _localWreck;
-            GameObject prefab = ResolveWreckPrefab();
+            GameObject prefab = _stations.WreckPrefab;
             if (prefab == null)
                 return;
 
             _localWreck = Instantiate(prefab, position, rotation);
-        }
-
-        private GameObject ResolveWreckPrefab() {
-            if (_stations != null && _stations.WreckPrefab != null)
-                return _stations.WreckPrefab;
-
-            return _injectedStations != null ? _injectedStations.WreckPrefab : null;
         }
     }
 }

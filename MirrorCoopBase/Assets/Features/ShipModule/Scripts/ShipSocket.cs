@@ -44,7 +44,7 @@ namespace Features.ShipModule.Scripts {
         private ShipSocketRule Rule => _rule ??= new ShipSocketRule(_acceptedType, _unlockLoop);
 
         private ShipSocketRunState RunState =>
-            new ShipSocketRunState(true, _run.LoopIndex, _run.Phase);
+            new ShipSocketRunState(_run.LoopIndex, _run.Phase);
 
         // A socket the server has not written yet is empty.
         private ShipSocketState State =>
@@ -105,8 +105,7 @@ namespace Features.ShipModule.Scripts {
             state.View = view;
             state.Occupied = true;
             ServerWriteState(state);
-            if (_ship != null)
-                _ship.Modules.ServerOnModuleInstalled(this);
+            _ship.Modules.ServerOnModuleInstalled(this);
             return true;
         }
 
@@ -140,8 +139,7 @@ namespace Features.ShipModule.Scripts {
             if (isServer == false)
                 return;
 
-            if (_ship != null)
-                _ship.Modules.ServerOnModuleUninstalled(this);
+            _ship.Modules.ServerOnModuleUninstalled(this);
 
             ServerWriteState(default);
         }
@@ -243,8 +241,7 @@ namespace Features.ShipModule.Scripts {
 
         private void HandleOccupantChanged(uint previous, uint current) {
             SetHovered(false);
-            if (_ship != null)
-                _ship.Seats.ClientSyncSeat(this, previous, current);
+            _ship.Seats.ClientSyncSeat(this, previous, current);
         }
     }
 }

@@ -34,10 +34,6 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
             Assert.IsFalse(_engineRule.CanInstall(false, ShipModuleType.Engine, Run(ShipRunPhase.Build, UNLOCK_LOOP - 1)));
 
         [Test]
-        public void WhenThereIsNoRun_ThenModuleCanBeInstalled() =>
-            Assert.IsTrue(_engineRule.CanInstall(false, ShipModuleType.Engine, ShipSocketRunState.NoRun));
-
-        [Test]
         public void WhenOccupiedEngineSocketInBuild_ThenModuleCanBeUninstalled() =>
             Assert.IsTrue(_engineRule.CanUninstall(true, Run(ShipRunPhase.Build)));
 
@@ -67,6 +63,6 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
             Assert.IsTrue(_engineRule.IsUnlocked(Run(ShipRunPhase.Cruise, UNLOCK_LOOP)));
 
         private static ShipSocketRunState Run(ShipRunPhase phase, int loopIndex = UNLOCK_LOOP) =>
-            new(true, loopIndex, phase);
+            new(loopIndex, phase);
     }
 }

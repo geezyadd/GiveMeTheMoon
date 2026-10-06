@@ -13,11 +13,11 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private BoxCollider _rideVolume;
         [SerializeField] private BoxCollider _deck;
         [SerializeField] private BoxCollider[] _deckColliders;
-        [SerializeField] private EngineCatalog _engines;
         [SerializeField] private ShipPoseSync _poseSync;
         [SerializeField] private ShipStatEntity _stats;
         [SerializeField] private ShipSocketsSync _socketStates;
 
+        private EngineCatalog _engines;
         private ShipFlightSettings _flightSettings;
 
         private ShipDeckCargo _cargo;
@@ -79,9 +79,7 @@ namespace Features.ShipModule.Scripts {
             ShipFlightSettings settings,
             IReadOnlyShipRunModel run,
             IShipRunService runService) {
-            if (_engines == null)
-                _engines = engines;
-
+            _engines = engines;
             _flightSettings = settings;
 
             _run = run;
