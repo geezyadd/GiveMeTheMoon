@@ -23,8 +23,7 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             int placed = 0;
-            ModuleDefinition control = FindControlDrop();
-            if (control != null) {
+            if (TryFindControlDrop(out ModuleDefinition control)) {
                 SpawnDrop(control, origin, placed);
                 placed++;
             }
@@ -50,14 +49,18 @@ namespace Features.ShipModule.Scripts {
         }
 
         // A control module drops once at every station, ahead of the other drops, whatever its loop and count.
-        private ModuleDefinition FindControlDrop() {
+        private bool TryFindControlDrop(out ModuleDefinition control) {
+            control = null;
             for (int i = 0; i < _stations.Drops.Length; i++) {
                 ModuleDefinition module = _stations.Drops[i].Module;
-                if (module.IsControlModule)
-                    return module;
+                if (module.IsControlModule == false)
+                    continue;
+
+                control = module;
+                return true;
             }
 
-            return null;
+            return false;
         }
     }
 }

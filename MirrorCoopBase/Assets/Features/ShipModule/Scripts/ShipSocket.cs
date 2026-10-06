@@ -1,3 +1,4 @@
+using System;
 using Features.ShipModule.Scripts.Generated;
 using Mirror;
 using UnityEngine;
@@ -6,10 +7,11 @@ using Zenject;
 
 namespace Features.ShipModule.Scripts {
     public sealed class ShipSocket : NetworkBehaviour {
-        private const string UNKNOWN_MODULE_ERROR_FORMAT = "{0}: module '{1}' is not in the {2}, it cannot be installed.";
+        private const string UNKNOWN_MODULE_INSTALL_FORMAT = "{0}: module '{1}' is not in the {2}, it cannot be installed.";
+        private const string UNKNOWN_MODULE_VIEW_FORMAT = "{0}: installed module '{1}' is not in the {2}, its slot view is not shown.";
 
         [SerializeField] private string _socketId;
-        [SerializeField] private ShipModuleType _acceptedType;
+        [SerializeField] private ShipModuleType _acceptedType = ShipModuleType.Engine;
         [SerializeField] private bool _requiredForLaunch;
         [SerializeField] private Outline _outline;
         [SerializeField] private Transform _defaultInstallPoint;
@@ -111,10 +113,8 @@ namespace Features.ShipModule.Scripts {
             if (isServer == false)
                 return false;
 
-            if (_moduleCatalog.TryGet(moduleId, out ModuleDefinition module) == false) {
-                UnityEngine.Debug.LogError(string.Format(UNKNOWN_MODULE_ERROR_FORMAT, name, moduleId, nameof(ModuleCatalog)));
-                return false;
-            }
+            if (_moduleCatalog.TryGet(moduleId, out ModuleDefinition module) == false)
+                throw new InvalidOperationException(string.Format(UNKNOWN_MODULE_INSTALL_FORMAT, name, moduleId, nameof(ModuleCatalog)));
 
             if (CanAccept(module.SlotType) == false)
                 return false;
@@ -183,8 +183,11 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             SetHovered(false);
-            if (TryGetInstalledModule(out ModuleDefinition module) == false)
+            // A synced id this peer's catalog does not know: report it, but keep the client running.
+            if (TryGetInstalledModule(out ModuleDefinition module) == false) {
+                UnityEngine.Debug.LogError(string.Format(UNKNOWN_MODULE_VIEW_FORMAT, name, State.ModuleId, nameof(ModuleCatalog)));
                 return;
+            }
 
             GameObject prefab = module.SlotViewPrefab;
             Transform point = ResolveInstallPoint(module);

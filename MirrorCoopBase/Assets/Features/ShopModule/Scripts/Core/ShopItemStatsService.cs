@@ -5,7 +5,6 @@ using Features.ShipModule.Scripts;
 using Features.StatsModule.EntityStatsModule.Scripts.Modifier;
 
 namespace Features.ShopModule.Scripts.Core {
-    // Shows the stat modifiers of any module from its definition: "FlightSpeed +4", "Handling +10%".
     public sealed class ShopItemStatsService : IShopItemStatsService {
         private const string FLAT_FORMAT = "{0} {1:+0.##;-0.##;+0}";
         private const string PERCENT_ADD_FORMAT = "{0} {1:+0.##;-0.##;+0}%";

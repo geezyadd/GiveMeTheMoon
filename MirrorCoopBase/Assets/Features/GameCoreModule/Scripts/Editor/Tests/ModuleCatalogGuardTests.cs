@@ -22,16 +22,19 @@ namespace Features.GameCoreModule.Editor.Tests {
         private const string GLOBAL_SCENE_PATH = "Assets/Features/GameCoreModule/GameResources/Scenes/GlobalScene.unity";
         private const string SOURCE_PATTERN = "*.cs";
         private const string TESTS_FOLDER = "/Editor/Tests/";
-        private const string CONCRETE_MODULE_PATTERN = @"\bItemViewId\b|\bShipModuleType\.[A-Z]";
+        // ItemViewId, or a category compared with or switched on a concrete value to pick behaviour (the former
+        // "Engine and Radar are removable" and "the Control slot steers" rules). Declaring a slot category, passing it
+        // on or comparing two categories stays allowed.
+        private const string CONCRETE_MODULE_PATTERN =
+            @"\bItemViewId\b"
+            + @"|[Tt]ype\s*[!=]=\s*ShipModuleType\."
+            + @"|ShipModuleType\.\w+\s*[!=]="
+            + @"|switch\s*\([^)]*[Tt]ype\)"
+            + @"|case\s+ShipModuleType\.";
 
         private static readonly string[] _moduleCodeFolders = {
             "Assets/Features/ShipModule/Scripts",
             "Assets/Features/ShopModule/Scripts",
-        };
-
-        private static readonly string[] _allowedConcreteModuleFiles = {
-            // The debug harness puts any engine-slot module on the deck to measure carried cargo; it is not game logic.
-            "Assets/Features/ShipModule/Scripts/Debug/DeckFeelHarness.cs",
         };
 
         private ModuleCatalog _moduleCatalog;
@@ -93,7 +96,6 @@ namespace Features.GameCoreModule.Editor.Tests {
                 .SelectMany(folder => Directory.GetFiles(folder, SOURCE_PATTERN, SearchOption.AllDirectories))
                 .Select(ToAssetPath)
                 .Where(path => path.Contains(TESTS_FOLDER) == false)
-                .Where(path => _allowedConcreteModuleFiles.Contains(path) == false)
                 .Where(path => Regex.IsMatch(File.ReadAllText(path), CONCRETE_MODULE_PATTERN))
                 .ToArray();
 
