@@ -17,9 +17,9 @@ namespace Features.ShipModule.Scripts {
             };
 
             ShipSocket[] sockets = ship != null ? ship.Sockets : null;
-            stats.TotalThrust = ship != null ? ship.GetStatFull(ShipStatType.FlightSpeed) : 0f;
+            stats.TotalThrust = ship != null ? ship.Modules.GetStatFull(ShipStatType.FlightSpeed) : 0f;
 
-            float dodge = ship != null ? ship.GetStatFull(ShipStatType.DodgeRange) : 0f;
+            float dodge = ship != null ? ship.Modules.GetStatFull(ShipStatType.DodgeRange) : 0f;
             if (dodge > 0f)
                 stats.DodgeRangeScale = dodge;
 
@@ -37,7 +37,7 @@ namespace Features.ShipModule.Scripts {
             _config.RouteWorkSeconds + loopIndex * _config.PerLoopCruiseSeconds;
 
         public float ReadFlightSpeed(ShipBase ship) {
-            float speed = ship != null ? ship.GetStatFull(ShipStatType.FlightSpeed) : 1f;
+            float speed = ship != null ? ship.Modules.GetStatFull(ShipStatType.FlightSpeed) : 1f;
             return Mathf.Max(ShipTransit.MinSpeed, speed);
         }
     }

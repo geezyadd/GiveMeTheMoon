@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using Features.GrabModule.Scripts;
 using Mirror;
-using Features.StatsModule.EntityStatsModule.Scripts.Modifier;
-using Features.StatsModule.EntityStatsModule.Scripts.StatsEntity;
 using UnityEngine;
 using Zenject;
 
@@ -27,13 +25,13 @@ namespace Features.ShipModule.Scripts {
         private readonly ShipDeckCargo _cargo = new ShipDeckCargo();
         private readonly HelmSteer _helmSteer = new HelmSteer();
         private ShipDeckGeometry _deckGeometry;
+        private ShipModules _modules;
         private bool _debugSteerActive;
         private float _debugSteer;
         private int _fixedSteps;
         private bool _flying;
         private bool _controlsLocked;
 
-        private readonly Dictionary<ShipSocket, StatModifier> _flightSpeedModifiers = new Dictionary<ShipSocket, StatModifier>();
         private ShipRunModel _run;
         private IShipRunService _runService;
 
@@ -48,7 +46,7 @@ namespace Features.ShipModule.Scripts {
         internal NetworkIdentity NetIdentity => _poseSync.netIdentity;
         public ShipSocket[] Sockets => _sockets;
         public ShipDeckGeometry DeckGeometry => _deckGeometry;
-        internal IStatEntity<ShipStatType> Stats => _stats;
+        internal ShipModules Modules => _modules;
 
         internal bool IsTakeoffComplete => _flight.IsTakeoffComplete;
         internal ShipPoseSync PoseSync => _poseSync;
@@ -92,75 +90,13 @@ namespace Features.ShipModule.Scripts {
             _runService = runService;
         }
 
-        internal void ServerOnModuleInstalled(ShipSocket socket) {
-            if (NetworkServer.active == false || socket == null || _stats == null || _engines == null)
-                return;
-
-            if (_engines.TryGet(socket.InstalledView, out EngineCatalog.EngineStats engine) == false)
-                return;
-
-            if (engine.FlightSpeed <= 0f)
-                return;
-
-            ServerClearFlightSpeedModifier(socket);
-            _stats.GetStat(ShipStatType.FlightSpeed);
-            StatModifier modifier = new StatModifier(engine.FlightSpeed, ModifierType.Flat);
-            _stats.AddModifier(ShipStatType.FlightSpeed, modifier);
-            _flightSpeedModifiers[socket] = modifier;
-        }
-
-        internal void ServerOnModuleUninstalled(ShipSocket socket) {
-            ServerClearFlightSpeedModifier(socket);
-        }
-
-        internal float GetStatFull(ShipStatType type) {
-            if (_stats == null)
-                return 0f;
-
-            return _stats.GetStat(type).FullValue;
-        }
-
-        private void ApplyDefaultStats() {
-            if (_stats == null)
-                return;
-
-            IStat thrust = _stats.GetStat(ShipStatType.Thrust);
-            thrust.MaxValue = 999f;
-
-            IStat flightSpeed = _stats.GetStat(ShipStatType.FlightSpeed);
-            flightSpeed.MaxValue = 99f;
-            flightSpeed.OverrideValue(1f);
-
-            IStat dodge = _stats.GetStat(ShipStatType.DodgeRange);
-            dodge.MaxValue = 20f;
-            dodge.OverrideValue(1f);
-
-            IStat handling = _stats.GetStat(ShipStatType.Handling);
-            handling.MaxValue = 20f;
-            handling.OverrideValue(1f);
-
-            IStat armor = _stats.GetStat(ShipStatType.Armor);
-            armor.MaxValue = 100f;
-            armor.OverrideValue(100f);
-        }
-
-        private void ServerClearFlightSpeedModifier(ShipSocket socket) {
-            if (socket == null || _stats == null)
-                return;
-
-            if (_flightSpeedModifiers.TryGetValue(socket, out StatModifier modifier) == false)
-                return;
-
-            _flightSpeedModifiers.Remove(socket);
-            _stats.RemoveModifier(ShipStatType.FlightSpeed, modifier);
-        }
-
         private void Awake() {
             _deckGeometry = new ShipDeckGeometry(transform, _deck, _deckColliders);
+            _modules = new ShipModules(_sockets, _stats, _engines);
             if (_poseSync != null)
                 _poseSync.BindShip(this, transform);
 
-            ApplyDefaultStats();
+            _modules.ApplyDefaultStats();
         }
 
         internal void DebugBindRider(ShipRider rider) {
@@ -318,7 +254,7 @@ namespace Features.ShipModule.Scripts {
             // hanging at the seat after the ship and its seats are reset.
             ServerReleaseRiders();
             ClearAllOccupants();
-            ClearInstalledModules();
+            _modules.ClearInstalledModules();
             _controlsLocked = false;
             if (_lever != null)
                 _lever.ServerReset();
@@ -505,7 +441,7 @@ namespace Features.ShipModule.Scripts {
 
             if (_flying && NetworkServer.active) {
                 bool canSteer = _controlsLocked == false && _flight.AllowsSteer;
-                bool manual = canSteer && (HasControlModule() || _debugSteerActive);
+                bool manual = canSteer && (_modules.HasControlModule() || _debugSteerActive);
                 _flight.SetManualHeading(manual);
                 float steer = _debugSteerActive
                     ? _debugSteer
@@ -536,7 +472,7 @@ namespace Features.ShipModule.Scripts {
             if (_flight.Mode != ShipFlightMode.TravelInSpace || _flightSettings == null)
                 return;
 
-            float stat = Mathf.Max(ShipTransit.MinSpeed, GetStatFull(ShipStatType.FlightSpeed));
+            float stat = Mathf.Max(ShipTransit.MinSpeed, _modules.GetStatFull(ShipStatType.FlightSpeed));
             _flight.SetTravelSpeed(_flightSettings.CruiseSpeed * stat);
         }
 
@@ -599,19 +535,6 @@ namespace Features.ShipModule.Scripts {
             }
 
             return 0;
-        }
-
-        private bool HasControlModule() {
-            if (_sockets == null)
-                return false;
-
-            for (int i = 0; i < _sockets.Length; i++) {
-                ShipSocket socket = _sockets[i];
-                if (socket != null && socket.AcceptedType == ShipModuleType.Control && socket.IsOccupied)
-                    return true;
-            }
-
-            return false;
         }
 
         private bool HasHelmPilot() {
@@ -680,16 +603,6 @@ namespace Features.ShipModule.Scripts {
             for (int i = 0; i < _sockets.Length; i++) {
                 if (_sockets[i] != null)
                     _sockets[i].ServerClearOccupant();
-            }
-        }
-
-        private void ClearInstalledModules() {
-            if (_sockets == null)
-                return;
-
-            for (int i = 0; i < _sockets.Length; i++) {
-                if (_sockets[i] != null)
-                    _sockets[i].ServerClearInstall();
             }
         }
 
