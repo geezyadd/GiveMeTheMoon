@@ -57,7 +57,7 @@ namespace Tests.PlayMode.LoopSmoke {
             }
         }
 
-        private static IEnumerator OpenAtKioskCoroutine(ShopKioskInteractable kiosk, ShopModel shop) {
+        internal static IEnumerator OpenAtKioskCoroutine(ShopKioskInteractable kiosk, ShopModel shop) {
             Vector3 front = kiosk.transform.position - FlatForward() * APPROACH_DISTANCE;
             yield return StandAtCoroutine(front + Vector3.up * STAND_HEIGHT);
             yield return LoopSmokeHandCheck.AimAtCoroutine(CounterCenter(kiosk));
@@ -151,7 +151,7 @@ namespace Tests.PlayMode.LoopSmoke {
             throw new InvalidOperationException("The shop kiosk has no solid counter.");
         }
 
-        private static T Resolve<T>() {
+        internal static T Resolve<T>() {
             foreach (SceneContext context in Object.FindObjectsByType<SceneContext>(FindObjectsSortMode.None)) {
                 if (context.Container.HasBinding<T>())
                     return context.Container.Resolve<T>();
@@ -160,7 +160,7 @@ namespace Tests.PlayMode.LoopSmoke {
             throw new InvalidOperationException($"No scene context binds {typeof(T).Name}.");
         }
 
-        private static IEnumerator WaitForCoroutine(Func<bool> condition, string target) {
+        internal static IEnumerator WaitForCoroutine(Func<bool> condition, string target) {
             float deadline = Time.realtimeSinceStartup + COMMAND_TIMEOUT_SECONDS;
             while (condition() == false) {
                 if (Time.realtimeSinceStartup > deadline)

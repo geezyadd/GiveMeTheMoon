@@ -13,6 +13,7 @@ namespace Features.ShipModule.Scripts {
             Container.Bind<IStatEntityFactory<ShipStatType>>().To<ShipStatEntityFactory>().AsSingle();
             Container.BindInterfacesAndSelfTo<ShipRadarService>().AsSingle();
             Container.BindInterfacesAndSelfTo<ShipRunService>().AsSingle();
+            Container.BindInterfacesTo<ShipDeckSpawnPointRegistry>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.BindInterfacesTo<Debug.DeckFeelHarness>().AsSingle();
 #endif

@@ -3,20 +3,25 @@ using System.Collections.Generic;
 using Features.GameCoreModule.Contracts;
 using Features.NetworkModelModule.Scripts;
 using Features.PlayerLifeModule.Scripts.Generated;
+using Features.ShipModule.Scripts;
 using Game.Connection;
 using Mirror;
 using UnityEngine;
 using Zenject;
 
 namespace Features.PlayerLifeModule.Scripts {
-    // Server: one life state machine per connected player, the all-dead return to the lobby and the revive on a new map.
+    // Server: one life state machine per connected player, the all-dead return to the lobby, the revive on a new map
+    // and the revive of one player on the ship's deck.
     public sealed class PlayerLifeSystem : IInitializable, IDisposable, ITickable, IGameplaySession, IPlayerLifeReviver {
+        private const string REVIVE_ERROR = "Player {0} cannot be revived: not dead, not spawned or no deck spawn point.";
+
         private readonly IPlayerBodyRegistry _playerBodyRegistry;
         private readonly PlayerLifeRegistry _playerLifeRegistry;
         private readonly IAllDeadRule _allDeadRule;
         private readonly IPlayerLifeStateMachineFactory _playerLifeStateMachineFactory;
         private readonly IConnectionSessionService _connectionSessionService;
         private readonly PlayerLifeConfiguration _playerLifeConfiguration;
+        private readonly IShipDeckSpawnPoints _shipDeckSpawnPoints;
         private readonly Dictionary<PlayerLifeBody, IPlayerLifeStateMachine> _machinesByBody = new();
         private readonly List<IPlayerLifeStateMachine> _machines = new();
         private readonly List<PlayerKey> _knownKeys = new();
@@ -29,13 +34,15 @@ namespace Features.PlayerLifeModule.Scripts {
             IAllDeadRule allDeadRule,
             IPlayerLifeStateMachineFactory playerLifeStateMachineFactory,
             IConnectionSessionService connectionSessionService,
-            PlayerLifeConfiguration playerLifeConfiguration) {
+            PlayerLifeConfiguration playerLifeConfiguration,
+            IShipDeckSpawnPoints shipDeckSpawnPoints) {
             _playerBodyRegistry = playerBodyRegistry;
             _playerLifeRegistry = playerLifeRegistry;
             _allDeadRule = allDeadRule;
             _playerLifeStateMachineFactory = playerLifeStateMachineFactory;
             _connectionSessionService = connectionSessionService;
             _playerLifeConfiguration = playerLifeConfiguration;
+            _shipDeckSpawnPoints = shipDeckSpawnPoints;
         }
 
         public void Initialize() {
@@ -71,6 +78,22 @@ namespace Features.PlayerLifeModule.Scripts {
                 _machines[i].Revive();
 
             EvaluateAllDead();
+        }
+
+        public bool CanServerRevive(PlayerKey key) =>
+            NetworkServer.active
+            && TryFindMachine(key, out _, out IPlayerLifeStateMachine machine)
+            && machine.State == PlayerLifeState.Dead
+            && _shipDeckSpawnPoints.HasSpawnPoint;
+
+        public void ServerRevive(PlayerKey key) {
+            if (CanServerRevive(key) == false)
+                throw new InvalidOperationException(string.Format(REVIVE_ERROR, key));
+
+            TryFindMachine(key, out PlayerLifeBody body, out IPlayerLifeStateMachine machine);
+            // Moved while still frozen and hidden: the Alive state unfreezes it already on the deck.
+            body.ServerTeleport(_shipDeckSpawnPoints.TakeSpawnPose());
+            machine.Revive();
         }
 
         public void CleanupGameplay() {
@@ -109,6 +132,21 @@ namespace Features.PlayerLifeModule.Scripts {
             machine.Stop();
             _machines.Remove(machine);
             EvaluateAllDead();
+        }
+
+        private bool TryFindMachine(PlayerKey key, out PlayerLifeBody body, out IPlayerLifeStateMachine machine) {
+            body = null;
+            machine = null;
+            foreach (KeyValuePair<PlayerLifeBody, IPlayerLifeStateMachine> pair in _machinesByBody) {
+                if (pair.Key.Key.Equals(key) == false)
+                    continue;
+
+                body = pair.Key;
+                machine = pair.Value;
+                return true;
+            }
+
+            return false;
         }
 
         private void OnLifeRecordAdded(PlayerKey key, IReadOnlyPlayerLifeModel model) =>

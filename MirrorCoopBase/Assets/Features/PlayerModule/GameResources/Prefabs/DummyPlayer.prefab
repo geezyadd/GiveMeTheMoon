@@ -386,6 +386,7 @@ MonoBehaviour:
   syncInterval: 0
   _damageable: {fileID: 6409845104136634497}
   _body: {fileID: 7148192738405830123}
+  _networkBody: {fileID: 919415383680135416}
   _followTarget: {fileID: 7110000000000000012}
   _renderers:
   - {fileID: 5055733605705099643}

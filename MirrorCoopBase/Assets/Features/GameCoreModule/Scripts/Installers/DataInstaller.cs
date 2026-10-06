@@ -27,6 +27,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<HoveredInteractableModel>().AsSingle();
             Container.Bind<SpectatorModel>().AsSingle();
             Container.Bind<ShopVisitModel>().AsSingle();
+            Container.Bind<DeadCrewModel>().AsSingle();
             WalletModelInstaller.Install(Container);
             PlayerLifeModelInstaller.Install(Container);
             PlayerHandModelInstaller.Install(Container);

@@ -45,6 +45,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a35935974a701b446a96499c50c1d176
+    m_Address: ReviveConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a9e63c1d4f0b4e8a1c2d3e4f5a6b7c8d
     m_Address: PlayerDamageConfiguration_Default
     m_ReadOnly: 0

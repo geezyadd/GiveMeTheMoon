@@ -1,5 +1,6 @@
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.GrabModule.Scripts;
+using Features.NetworkModelModule.Scripts;
 using Features.PlayerLifeModule.Scripts.Generated;
 using Features.ShipModule.Scripts;
 using Mirror;
@@ -12,6 +13,7 @@ namespace Features.PlayerLifeModule.Scripts {
     public sealed class PlayerLifeBody : NetworkBehaviour, IPlayerLifeActor {
         [SerializeField] private PlayerDamageable _damageable;
         [SerializeField] private Rigidbody _body;
+        [SerializeField] private NetworkRigidbodyUnreliable _networkBody;
         [SerializeField] private Transform _followTarget;
         [SerializeField] private Renderer[] _renderers;
         [SerializeField] private Collider[] _colliders;
@@ -30,6 +32,9 @@ namespace Features.PlayerLifeModule.Scripts {
 
         public IReadOnlyPlayerLifeModel Life =>
             _damageable.Life;
+
+        public PlayerKey Key =>
+            _damageable.Key;
 
         public Transform FollowTarget =>
             _followTarget;
@@ -81,6 +86,12 @@ namespace Features.PlayerLifeModule.Scripts {
         public void ServerSetLifeState(PlayerLifeState state) =>
             _damageable.ServerSetLifeState(state);
 
+        // Every peer, the owner whose client moves the body included, jumps straight to the pose instead of
+        // interpolating there from where the player died.
+        [Server]
+        public void ServerTeleport(Pose pose) =>
+            _networkBody.ServerTeleport(pose.position, pose.rotation);
+
         [Server]
         public void ServerApplyDeath() {
             _heldItemRelease.ServerReleaseHeld();
@@ -104,17 +115,24 @@ namespace Features.PlayerLifeModule.Scripts {
                 _colliders[i].enabled = dead == false;
 
             // Collisions are off while dead, so the body is pinned in place instead of falling forever.
+            StopBody();
             if (dead) {
-                if (_body.isKinematic == false) {
-                    _body.linearVelocity = Vector3.zero;
-                    _body.angularVelocity = Vector3.zero;
-                }
-
                 _body.constraints = RigidbodyConstraints.FreezeAll;
                 return;
             }
 
+            // A revived body was already moved to its spawn while frozen and starts from rest. The teleport set the
+            // rigidbody's position, which an interpolated body would otherwise blend to from where it died.
+            transform.SetPositionAndRotation(_body.position, _body.rotation);
             _body.constraints = _aliveConstraints;
+        }
+
+        private void StopBody() {
+            if (_body.isKinematic)
+                return;
+
+            _body.linearVelocity = Vector3.zero;
+            _body.angularVelocity = Vector3.zero;
         }
 
         private void SetControlBlocked(bool blocked) {
