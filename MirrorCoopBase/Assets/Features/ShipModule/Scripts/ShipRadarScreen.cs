@@ -1,3 +1,4 @@
+using Features.ShipModule.Scripts.Generated;
 using MiniMapModular;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +10,7 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private RectTransform _slot;
 
         private ShipRadarCatalog _catalog;
-        private ShipRunModel _model;
+        private IReadOnlyShipRunModel _model;
         private ShipBase _ship;
         private RectTransform _slotLive;
         private GameObject _map;
@@ -23,7 +24,7 @@ namespace Features.ShipModule.Scripts {
         private Image _arrowImage;
         private float _sweepZ;
 
-        public void Bind(ShipRadarCatalog catalog, ShipRunModel model, ShipBase ship) {
+        public void Bind(ShipRadarCatalog catalog, IReadOnlyShipRunModel model, ShipBase ship) {
             Unbind();
             _catalog = catalog;
             _model = model;

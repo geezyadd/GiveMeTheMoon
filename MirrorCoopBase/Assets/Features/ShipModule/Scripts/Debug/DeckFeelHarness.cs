@@ -11,6 +11,7 @@ using Features.CharacterMovableModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.States;
 using Features.GrabModule.Scripts;
+using Features.ShipModule.Scripts.Generated;
 using Game.Connection;
 using Mirror;
 using UnityEngine;
@@ -38,7 +39,7 @@ namespace Features.ShipModule.Scripts.Debug {
         private readonly IGameFlowStateMachineService _flow;
         private readonly IShipRouteDebug _route;
         private readonly IShipWorldShiftDebug _worldShift;
-        private readonly ShipRunModel _model;
+        private readonly IReadOnlyShipRunModel _model;
         private readonly ShipStationCatalog _stations;
 
         private readonly List<Vector3> _player = new List<Vector3>(4096);
@@ -109,7 +110,7 @@ namespace Features.ShipModule.Scripts.Debug {
             IGameFlowStateMachineService flow,
             IShipRouteDebug route,
             IShipWorldShiftDebug worldShift,
-            ShipRunModel model,
+            IReadOnlyShipRunModel model,
             ShipStationCatalog stations) {
             _input = input;
             _cameras = cameras;

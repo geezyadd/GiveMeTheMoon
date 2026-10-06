@@ -1,3 +1,4 @@
+using Features.ShipModule.Scripts.Generated;
 using Mirror;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -27,7 +28,7 @@ namespace Features.ShipModule.Scripts {
         private int _fixedSteps;
         private bool _flying;
 
-        private ShipRunModel _run;
+        private IReadOnlyShipRunModel _run;
         private IShipRunService _runService;
 
         public ShipLaunchLever Lever => _lever;
@@ -74,7 +75,7 @@ namespace Features.ShipModule.Scripts {
         private void Construct(
             EngineCatalog engines,
             ShipFlightSettings settings,
-            ShipRunModel run,
+            IReadOnlyShipRunModel run,
             IShipRunService runService) {
             if (_engines == null)
                 _engines = engines;

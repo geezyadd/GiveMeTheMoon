@@ -82,7 +82,14 @@ namespace Features.NetworkModelModule.Scripts.Editor {
 
         private static string EmitState(NetworkModelSpec spec) {
             List<NetworkModelResolvedField> scalars = Scalars(spec);
-            NetworkModelCodeWriter writer = Begin(new List<string> { "System", "System.Collections.Generic" });
+            List<string> usings = new() { "System", "System.Collections.Generic" };
+            if (NeedsUnity(spec))
+                usings.Add("UnityEngine");
+
+            if (NeedsMirror(spec))
+                usings.Add("Mirror");
+
+            NetworkModelCodeWriter writer = Begin(usings);
             writer.Open("namespace " + spec.Namespace);
             writer.Open("public struct " + StateName(spec) + " : IEquatable<" + StateName(spec) + ">");
             for (int i = 0; i < scalars.Count; i++)

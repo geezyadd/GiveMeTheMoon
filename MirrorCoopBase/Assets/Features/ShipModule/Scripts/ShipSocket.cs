@@ -1,3 +1,4 @@
+using Features.ShipModule.Scripts.Generated;
 using Mirror;
 using UnityEngine;
 using Zenject;
@@ -15,7 +16,7 @@ namespace Features.ShipModule.Scripts {
         private ItemViewCatalog _catalog;
         private ShipRadarCatalog _radarCatalog;
         private ShipSeat _seat;
-        private ShipRunModel _run;
+        private IReadOnlyShipRunModel _run;
         private ShipSocketRule _rule;
 
         [SyncVar(hook = nameof(OnOccupiedChanged))]
@@ -57,7 +58,7 @@ namespace Features.ShipModule.Scripts {
         private void Construct(
             ItemViewCatalog catalog,
             ShipRadarCatalog radarCatalog,
-            [Inject(Optional = true)] ShipRunModel run) {
+            [Inject(Optional = true)] IReadOnlyShipRunModel run) {
             _catalog = catalog;
             _radarCatalog = radarCatalog;
             _run = run;

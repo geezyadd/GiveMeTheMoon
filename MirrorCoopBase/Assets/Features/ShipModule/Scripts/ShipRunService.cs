@@ -1,4 +1,5 @@
 using Features.GameCoreModule.Contracts;
+using Features.ShipModule.Scripts.Generated;
 using Game.Connection;
 using Mirror;
 using UnityEngine;
@@ -8,7 +9,7 @@ namespace Features.ShipModule.Scripts {
         private const float WRECK_PITCH_DEGREES = 12f;
         private const float WRECK_ROLL_DEGREES = 18f;
 
-        private readonly ShipRunModel _model;
+        private readonly IReadOnlyShipRunModel _model;
         private readonly ShipRunConfig _config;
         private readonly IShipRunBindingModel _binding;
         private readonly IShipStationPads _pads;
@@ -26,7 +27,7 @@ namespace Features.ShipModule.Scripts {
         private ShipLandingPad CurrentPad => _pads.CurrentPad;
 
         public ShipRunService(
-            ShipRunModel model,
+            IReadOnlyShipRunModel model,
             ShipRunConfig config,
             IShipRadarBinding radar,
             ConnectionSpawnModel spawn,
@@ -59,13 +60,12 @@ namespace Features.ShipModule.Scripts {
         public void Bind(ShipRunDirector director, ShipBase ship, ShipLandingPad startPad) {
             _binding.Bind(director, ship);
             _pads.Reset(startPad);
-            _model.ResetMatch();
+            ServerResetRunState();
             if (ship != null && startPad != null)
                 ship.ServerResetForBuild(startPad.BuildBerth.position, startPad.BuildBerth.rotation);
 
             _radar.BindShip(ship);
             _route.RefreshPreview();
-            Publish();
         }
 
         public void Unbind(ShipRunDirector director) {
@@ -79,12 +79,27 @@ namespace Features.ShipModule.Scripts {
             if (NetworkServer.active && Ship != null && CurrentPad != null)
                 Ship.ServerResetForBuild(CurrentPad.BuildBerth.position, CurrentPad.BuildBerth.rotation);
 
+            if (NetworkServer.active && Director != null)
+                ServerResetRunState();
+
             _binding.Clear();
             _pads.Reset(null);
             _wreckUntil = 0f;
             _route.Reset();
             _radar.UnbindShip();
-            _model.ResetMatch();
+        }
+
+        private void ServerResetRunState() {
+            Director.ServerSetPhase(ShipRunPhase.Build);
+            Director.ServerSetLoopIndex(0);
+            Director.ServerSetCruiseEndNetworkTime(0d);
+            Director.ServerSetLaunchLocked(false);
+            Director.ServerSetLastAbortReason(ShipRunAbortReason.None);
+            Director.ServerSetTransitWorkRemaining(0f);
+            Director.ServerSetTransitSpeed(1f);
+            Director.ServerSetTransitAlignment(1f);
+            Director.ServerSetTransitDestination(Vector3.zero);
+            Director.ServerSetTransitSecondsRemaining(0f);
         }
 
         public bool ServerTryLaunch(ShipBase ship) {
@@ -116,9 +131,8 @@ namespace Features.ShipModule.Scripts {
 
             _route.BeginRoute(stats.CruiseSeconds);
             _route.ApplyFrame(false);
-            _model.LastAbortReason = ShipRunAbortReason.None;
-            _model.Phase = ShipRunPhase.Takeoff;
-            Publish();
+            Director.ServerSetLastAbortReason(ShipRunAbortReason.None);
+            Director.ServerSetPhase(ShipRunPhase.Takeoff);
             return true;
         }
 
@@ -131,7 +145,7 @@ namespace Features.ShipModule.Scripts {
                 && _model.Phase != ShipRunPhase.Landing)
                 return;
 
-            _model.LastAbortReason = reason;
+            Director.ServerSetLastAbortReason(reason);
             FinishAtCurrentPose();
         }
 
@@ -145,7 +159,6 @@ namespace Features.ShipModule.Scripts {
                     return;
                 case ShipRunPhase.Build:
                     _route.RefreshPreview();
-                    Publish();
                     return;
                 case ShipRunPhase.Takeoff:
                     TickTakeoff();
@@ -166,27 +179,23 @@ namespace Features.ShipModule.Scripts {
             if (Time.time < _wreckUntil)
                 return;
 
-            _model.Phase = ShipRunPhase.Build;
+            Director.ServerSetPhase(ShipRunPhase.Build);
             _route.RefreshPreview();
-            Publish();
         }
 
         private void TickTakeoff() {
             _route.ApplyFrame(false);
-            Publish();
             if (Ship.FlightControl.IsTakeoffComplete == false)
                 return;
 
             Ship.BeginCruise();
             _route.BeginCruise();
             _route.ApplyFrame(false);
-            _model.Phase = ShipRunPhase.Cruise;
-            Publish();
+            Director.ServerSetPhase(ShipRunPhase.Cruise);
         }
 
         private void TickCruise() {
             _route.ApplyFrame(_route.IsTravel == false);
-            Publish();
             if (_route.HasArrived == false)
                 return;
 
@@ -203,8 +212,7 @@ namespace Features.ShipModule.Scripts {
 
                 _route.SetDestinationPoint(CurrentPad.LandingPoint.position);
                 Ship.BeginLanding(_route.DestinationPoint, _config.LandingSeconds, _route.DestinationForward);
-                _model.Phase = ShipRunPhase.Landing;
-                Publish();
+                Director.ServerSetPhase(ShipRunPhase.Landing);
                 return;
             }
 
@@ -215,8 +223,7 @@ namespace Features.ShipModule.Scripts {
             }
 
             Ship.BeginLanding(next.LandingPoint.position, _config.LandingSeconds, _route.DestinationForward);
-            _model.Phase = ShipRunPhase.Landing;
-            Publish();
+            Director.ServerSetPhase(ShipRunPhase.Landing);
         }
 
         private void FinishLanded() {
@@ -253,11 +260,10 @@ namespace Features.ShipModule.Scripts {
             if (pad != null)
                 _spawn.Set(pad.PlayerSpawn.position, pad.PlayerSpawn.rotation);
 
-            _model.LoopIndex += 1;
-            _model.LaunchLocked = _config.MaxLoops > 0 && _model.LoopIndex >= _config.MaxLoops;
-            _model.Phase = phase;
+            Director.ServerSetLoopIndex(_model.LoopIndex + 1);
+            Director.ServerSetLaunchLocked(_config.MaxLoops > 0 && _model.LoopIndex >= _config.MaxLoops);
+            Director.ServerSetPhase(phase);
             _route.EndRoute();
-            Publish();
         }
 
         private ShipLandingPad SpawnNextPad(Vector3 padPos, Vector3 face, bool matchLandingPoint) {
@@ -266,11 +272,6 @@ namespace Features.ShipModule.Scripts {
                 _route.SetDestinationPoint(pad.LandingPoint.position);
 
             return pad;
-        }
-
-        private void Publish() {
-            if (Director != null)
-                Director.ServerPublish();
         }
     }
 }

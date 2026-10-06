@@ -1,3 +1,4 @@
+using Features.ShipModule.Scripts.Generated;
 using Mirror;
 using UnityEngine;
 
@@ -11,7 +12,7 @@ namespace Features.ShipModule.Scripts {
         private const float MIN_RADAR_RANGE = 80f;
         private const float MIN_TRAVEL_DISTANCE_IN_APPROACHES = 3f;
 
-        private readonly ShipRunModel _model;
+        private readonly IReadOnlyShipRunModel _model;
         private readonly ShipRunConfig _config;
         private readonly ShipFlightSettings _flightSettings;
         private readonly IShipRunBindingModel _binding;
@@ -50,7 +51,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         public ShipRoute(
-            ShipRunModel model,
+            IReadOnlyShipRunModel model,
             ShipRunConfig config,
             ShipFlightSettings flightSettings,
             IShipRunBindingModel binding,
@@ -178,19 +179,23 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void CopyTransitToModel() {
+            ShipRunDirector director = _binding.Director;
+            if (director == null)
+                return;
+
             ShipBase ship = _binding.Ship;
-            _model.TransitWorkRemaining = _transit.WorkRemaining;
-            _model.TransitSpeed = _transit.Speed;
-            _model.TransitAlignment = _transit.Alignment;
-            _model.TransitDestination = _destinationPoint.sqrMagnitude > DIRECTION_EPSILON
+            director.ServerSetTransitWorkRemaining(_transit.WorkRemaining);
+            director.ServerSetTransitSpeed(_transit.Speed);
+            director.ServerSetTransitAlignment(_transit.Alignment);
+            director.ServerSetTransitDestination(_destinationPoint.sqrMagnitude > DIRECTION_EPSILON
                 ? _destinationPoint
                 : RadarPoint(
                     ship != null ? ship.transform.position : Vector3.zero,
-                    _transit.DestinationDirection);
-            _model.TransitSecondsRemaining = _transit.SecondsRemaining;
-            _model.CruiseEndNetworkTime = _model.Phase == ShipRunPhase.Cruise
-                ? NetworkTime.time + _model.TransitSecondsRemaining
-                : 0d;
+                    _transit.DestinationDirection));
+            director.ServerSetTransitSecondsRemaining(_transit.SecondsRemaining);
+            director.ServerSetCruiseEndNetworkTime(_model.Phase == ShipRunPhase.Cruise
+                ? NetworkTime.time + _transit.SecondsRemaining
+                : 0d);
         }
 
         private float ReadFlightSpeed() =>

@@ -81,6 +81,12 @@ namespace Features.NetworkModelModule.Scripts.Editor.Tests {
         }
 
         [Test]
+        public void Emit_AtomicWithUnityType_StateImportsUnityEngine() {
+            NetworkModelSpec spec = Spec("AtomicPose", true, Field("Position", NetworkModelFieldKind.Scalar, "Vector3", true));
+            Assert.That(StateText(spec), Does.Contain("using UnityEngine;"));
+        }
+
+        [Test]
         public void Emit_DictionaryHashSetAndNetworkIdentity() {
             NetworkModelSpec spec = Spec(
                 "SyncCoverage",

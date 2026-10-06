@@ -1,13 +1,14 @@
+using Features.ShipModule.Scripts.Generated;
 using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
     internal sealed class ShipRunRiderService : IShipFloorReferenceProvider, IShipRiderRelease {
-        private readonly ShipRunModel _model;
+        private readonly IReadOnlyShipRunModel _model;
         private readonly IShipRunBindingModel _binding;
         private readonly IShipStationPads _pads;
 
-        public ShipRunRiderService(ShipRunModel model, IShipRunBindingModel binding, IShipStationPads pads) {
+        public ShipRunRiderService(IReadOnlyShipRunModel model, IShipRunBindingModel binding, IShipStationPads pads) {
             _model = model;
             _binding = binding;
             _pads = pads;
