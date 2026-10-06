@@ -27,7 +27,7 @@ namespace Features.ShipModule.Scripts {
             get {
                 ShipBase ship = _binding.Ship;
                 if (ship != null && ship.IsFlying)
-                    return ship.ActiveFlightMode == ShipFlightMode.TravelInSpace;
+                    return ship.FlightControl.Mode == ShipFlightMode.TravelInSpace;
 
                 return SelectedFlightMode == ShipFlightMode.TravelInSpace;
             }

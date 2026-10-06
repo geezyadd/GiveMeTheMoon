@@ -157,7 +157,7 @@ namespace Features.ShipModule.Scripts {
                     TickCruise();
                     return;
                 case ShipRunPhase.Landing:
-                    if (Ship.HasLanded)
+                    if (Ship.FlightControl.HasLanded)
                         FinishLanded();
                     return;
             }
@@ -175,7 +175,7 @@ namespace Features.ShipModule.Scripts {
         private void TickTakeoff() {
             _route.ApplyFrame(false);
             Publish();
-            if (Ship.IsTakeoffComplete == false)
+            if (Ship.FlightControl.IsTakeoffComplete == false)
                 return;
 
             Ship.BeginCruise();
@@ -191,7 +191,7 @@ namespace Features.ShipModule.Scripts {
             if (_route.HasArrived == false)
                 return;
 
-            Ship.ServerLockFlight();
+            Ship.FlightControl.LockControls();
             BeginLanding();
         }
 

@@ -18,17 +18,14 @@ namespace Features.ShipModule.Scripts {
 
         private ShipFlightSettings _flightSettings;
 
-        private readonly ShipFlight _flight = new ShipFlight();
         private readonly ShipDeckCargo _cargo = new ShipDeckCargo();
         private ShipDeckGeometry _deckGeometry;
         private ShipModules _modules;
         private ShipRiders _riders;
         private ShipSeats _seats;
-        private bool _debugSteerActive;
-        private float _debugSteer;
+        private ShipFlightControl _flightControl;
         private int _fixedSteps;
         private bool _flying;
-        private bool _controlsLocked;
 
         private ShipRunModel _run;
         private IShipRunService _runService;
@@ -37,7 +34,6 @@ namespace Features.ShipModule.Scripts {
         public Transform Destination => _destination;
         public bool IsFlying => _flying;
         internal BoxCollider RideVolume => _rideVolume;
-        internal ShipFlightMode ActiveFlightMode => _flight.Mode;
         internal float StandUpSpeed => _flightSettings.StandUpSpeed;
         internal bool ConfinesRidersToDeck => _flightSettings.ConfineRidersToDeck;
         internal float ReboardDelaySeconds => _flightSettings.ReboardDelaySeconds;
@@ -47,10 +43,8 @@ namespace Features.ShipModule.Scripts {
         internal ShipModules Modules => _modules;
         internal ShipRiders Riders => _riders;
         internal ShipSeats Seats => _seats;
-
-        internal bool IsTakeoffComplete => _flight.IsTakeoffComplete;
+        internal ShipFlightControl FlightControl => _flightControl;
         internal ShipPoseSync PoseSync => _poseSync;
-        internal bool HasLanded => _flight.HasLanded;
 
         public bool CanLaunch {
             get {
@@ -95,6 +89,7 @@ namespace Features.ShipModule.Scripts {
             _modules = new ShipModules(_sockets, _stats, _engines);
             _riders = new ShipRiders(this, _deckGeometry, _rideVolume, _flightSettings);
             _seats = new ShipSeats(this, _sockets, _riders);
+            _flightControl = new ShipFlightControl(_flightSettings, _modules, _seats);
             if (_poseSync != null)
                 _poseSync.BindShip(this, transform);
 
@@ -116,17 +111,14 @@ namespace Features.ShipModule.Scripts {
             if (NetworkServer.active == false || _flying)
                 return;
 
-            _flight.BeginTakeoff(
+            _flightControl.BeginTakeoff(
                 from,
                 hover,
                 heading,
                 routeHeading,
-                _flightSettings,
                 takeoffSeconds,
                 dodgeRangeScale,
                 mode);
-            _seats.ClearSteer();
-            _controlsLocked = false;
             SleepBody();
             _flying = true;
             if (_poseSync != null)
@@ -140,36 +132,21 @@ namespace Features.ShipModule.Scripts {
             if (NetworkServer.active == false || _flying == false)
                 return;
 
-            _controlsLocked = false;
-            _flight.BeginCruise();
+            _flightControl.BeginCruise();
         }
 
         internal void BeginLanding(Vector3 padPoint, float landingSeconds, Vector3 faceDirection) {
             if (NetworkServer.active == false || _flying == false)
                 return;
 
-            _controlsLocked = true;
-            _flight.SetManualHeading(false);
-            _flight.SetSteer(0f);
-            Vector3 flat = faceDirection;
-            flat.y = 0f;
-            Quaternion heading = flat.sqrMagnitude > 0.0001f
-                ? Quaternion.LookRotation(flat.normalized, Vector3.up)
-                : transform.rotation;
-            _flight.BeginLanding(padPoint, landingSeconds, heading);
-        }
-
-        internal void ServerLockFlight() {
-            _controlsLocked = true;
-            _flight.SetManualHeading(false);
-            _flight.SetSteer(0f);
+            _flightControl.BeginLanding(padPoint, landingSeconds, faceDirection, transform.rotation);
         }
 
         internal void ServerFinishFlight() {
             if (NetworkServer.active == false)
                 return;
 
-            _flight.Stop();
+            _flightControl.Stop();
             _flying = false;
             if (_poseSync != null)
                 _poseSync.ServerSetFlying(false);
@@ -183,7 +160,7 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             if (_flying) {
-                _flight.Stop();
+                _flightControl.Stop();
                 _flying = false;
                 if (_poseSync != null)
                     _poseSync.ServerSetFlying(false);
@@ -194,7 +171,7 @@ namespace Features.ShipModule.Scripts {
             _riders.ServerReleaseRiders();
             _seats.ClearAllOccupants();
             _modules.ClearInstalledModules();
-            _controlsLocked = false;
+            _flightControl.UnlockControls();
             if (_lever != null)
                 _lever.ServerReset();
 
@@ -208,8 +185,8 @@ namespace Features.ShipModule.Scripts {
             if (NetworkServer.active == false)
                 return;
 
-            _flight.Stop();
-            _controlsLocked = false;
+            _flightControl.Stop();
+            _flightControl.UnlockControls();
             _riders.FollowRiders(0f);
             _flying = false;
             if (_poseSync != null)
@@ -237,17 +214,8 @@ namespace Features.ShipModule.Scripts {
             }
         }
 
-        internal void SetDebugSteer(bool active, float steer) {
-            _debugSteerActive = active;
-            _debugSteer = Mathf.Clamp(steer, -1f, 1f);
-        }
-
-        internal void DebugFace(Vector3 worldForward) {
-            _flight.DebugFace(worldForward);
-        }
-
         internal void ServerApplyWorldShift(Vector3 delta) {
-            _flight.ShiftWorld(delta);
+            _flightControl.ShiftWorld(delta);
             Vector3 position = transform.position + delta;
             ApplyDisplayPose(position, transform.rotation);
             if (_poseSync == null)
@@ -310,20 +278,12 @@ namespace Features.ShipModule.Scripts {
                 _cargo.ServerReleaseGrabbed(transform, this, _poseSync);
 
             if (_flying && NetworkServer.active) {
-                bool canSteer = _controlsLocked == false && _flight.AllowsSteer;
-                bool manual = canSteer && (_modules.HasControlModule() || _debugSteerActive);
-                _flight.SetManualHeading(manual);
-                float steer = _debugSteerActive
-                    ? _debugSteer
-                    : canSteer && _seats.HasHelmPilot() ? _seats.ReadHelmSteer() : 0f;
-                _flight.SetSteer(steer);
-                PushTravelSpeed();
-                SimulateFlight(Time.deltaTime);
-                if (_flight.IsActive)
-                    ApplyDisplayPose(_flight.Position, _flight.Rotation);
+                _flightControl.ServerStep(Time.deltaTime);
+                if (_flightControl.IsActive)
+                    ApplyDisplayPose(_flightControl.Position, _flightControl.Rotation);
 
                 if (_poseSync != null)
-                    _poseSync.ServerPublish(transform.position, transform.rotation, _flight.Velocity);
+                    _poseSync.ServerPublish(transform.position, transform.rotation, _flightControl.Velocity);
 
                 if (_runService != null)
                     _runService.ServerTick();
@@ -338,14 +298,6 @@ namespace Features.ShipModule.Scripts {
                 _riders.CatchDeckRiders();
         }
 
-        private void PushTravelSpeed() {
-            if (_flight.Mode != ShipFlightMode.TravelInSpace || _flightSettings == null)
-                return;
-
-            float stat = Mathf.Max(ShipTransit.MinSpeed, _modules.GetStatFull(ShipStatType.FlightSpeed));
-            _flight.SetTravelSpeed(_flightSettings.CruiseSpeed * stat);
-        }
-
         internal void ApplyDisplayPose(Vector3 position, Quaternion rotation) {
             transform.SetPositionAndRotation(position, rotation);
             if (_body == null)
@@ -355,16 +307,6 @@ namespace Features.ShipModule.Scripts {
             _body.rotation = rotation;
             _body.linearVelocity = Vector3.zero;
             _body.angularVelocity = Vector3.zero;
-        }
-
-        private void SimulateFlight(float dt) {
-            const float step = 1f / 60f;
-            float left = dt;
-            while (left > 0f) {
-                float slice = Mathf.Min(step, left);
-                _flight.Simulate(slice);
-                left -= slice;
-            }
         }
 
         private void SleepBody() {

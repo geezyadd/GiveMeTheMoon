@@ -293,7 +293,7 @@ namespace Features.ShipModule.Scripts.Debug {
         private void TickLaunch(bool hover) {
             Status = hover ? "launch-hover" : "launch-travel";
             _input.EndScripted();
-            _ship.SetDebugSteer(false, 0f);
+            _ship.FlightControl.SetDebugSteer(false, 0f);
             if (_ship.CanLaunch == false) {
                 InstallRequiredModules();
                 if (_ship.CanLaunch == false) {
@@ -381,7 +381,7 @@ namespace Features.ShipModule.Scripts.Debug {
             }
 
             if (_client == false && cruise) {
-                _ship.SetDebugSteer(true, Mathf.Sin(Time.time * 1.7f) * 0.55f);
+                _ship.FlightControl.SetDebugSteer(true, Mathf.Sin(Time.time * 1.7f) * 0.55f);
                 if (_shiftCruise == false && cameraId == CameraIds.FPCamera && _measureStep == 1 && _measureTime > 0.6f) {
                     _shiftCruise = true;
                     _shiftMarks = 3;
@@ -421,7 +421,7 @@ namespace Features.ShipModule.Scripts.Debug {
                 ArmWalkShot(_finishCamera);
 
             if (_ship != null && _client == false)
-                _ship.SetDebugSteer(false, 0f);
+                _ship.FlightControl.SetDebugSteer(false, 0f);
 
             Enter(_finishState);
         }
@@ -445,10 +445,10 @@ namespace Features.ShipModule.Scripts.Debug {
                 }
             }
 
-            _ship.SetDebugSteer(false, 0f);
+            _ship.FlightControl.SetDebugSteer(false, 0f);
             if (_model.Phase == ShipRunPhase.Cruise || _model.Phase == ShipRunPhase.Takeoff) {
                 Vector3 to = _model.TransitDestination - _ship.transform.position;
-                _ship.DebugFace(to);
+                _ship.FlightControl.DebugFace(to);
             }
 
             if (_model.Phase == ShipRunPhase.Landing && _shotApproach == false && hoverDone == false) {
@@ -511,7 +511,7 @@ namespace Features.ShipModule.Scripts.Debug {
 
             Vector3 delta = _ship.transform.position - _hoverStart;
             delta.y = 0f;
-            Note("Hover cruise horizontal move in 3s: " + delta.magnitude.ToString("0.00") + " m (mode " + _ship.ActiveFlightMode + ").");
+            Note("Hover cruise horizontal move in 3s: " + delta.magnitude.ToString("0.00") + " m (mode " + _ship.FlightControl.Mode + ").");
             if (delta.magnitude > 15f) {
                 Fail("hover cruise translated " + delta.magnitude.ToString("0.00") + " m");
                 return;
@@ -1155,7 +1155,7 @@ namespace Features.ShipModule.Scripts.Debug {
             if (distance > 220f || distance < 45f)
                 return;
 
-            _ship.DebugFace(to);
+            _ship.FlightControl.DebugFace(to);
             CameraLookDriver.DebugPitchOverride = true;
             CameraLookDriver.DebugPitch = 6f;
             if (_stationReady == false) {
@@ -1206,7 +1206,7 @@ namespace Features.ShipModule.Scripts.Debug {
                     occupied += 1;
             }
 
-            return "required " + occupied + "/" + required + " flightMode=" + _ship.ActiveFlightMode;
+            return "required " + occupied + "/" + required + " flightMode=" + _ship.FlightControl.Mode;
         }
 
         private static ShipRider FindOwnedRider() {
@@ -1257,7 +1257,7 @@ namespace Features.ShipModule.Scripts.Debug {
             Status = success ? "done" : "failed";
             _input.EndScripted();
             if (_ship != null)
-                _ship.SetDebugSteer(false, 0f);
+                _ship.FlightControl.SetDebugSteer(false, 0f);
 
             _stopped = true;
             WriteReport();
