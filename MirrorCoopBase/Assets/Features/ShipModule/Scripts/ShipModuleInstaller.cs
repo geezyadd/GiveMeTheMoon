@@ -8,6 +8,7 @@ namespace Features.ShipModule.Scripts {
             Container.Bind<IStatEntityFactory<ShipStatType>>().To<ShipStatEntityFactory>().AsSingle();
             Container.BindInterfacesTo<ShipDeckSpawnPointRegistry>().AsSingle();
             Container.BindInterfacesTo<ShipStatsConfigurationValidator>().AsSingle();
+            Container.BindInterfacesTo<ModuleCatalogValidator>().AsSingle();
             Container.BindInterfacesTo<ShipRadarService>().AsSingle();
             Container.BindInterfacesTo<ShipStationPads>().AsSingle();
             Container.BindInterfacesTo<ShipStationDropService>().AsSingle();
