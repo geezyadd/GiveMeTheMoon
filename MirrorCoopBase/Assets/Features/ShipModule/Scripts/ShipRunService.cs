@@ -4,7 +4,7 @@ using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    public sealed class ShipRunService : IGameplaySession, IShipFloorReferenceProvider, IShipRiderRelease {
+    public sealed class ShipRunService : IShipRunService, IGameplaySession, IShipFloorReferenceProvider, IShipRiderRelease {
         private const float WRECK_PITCH_DEGREES = 12f;
         private const float WRECK_ROLL_DEGREES = 18f;
         private const float DROP_LATERAL = 7.5f;
@@ -16,12 +16,10 @@ namespace Features.ShipModule.Scripts {
         private readonly ShipRunConfig _config;
         private readonly ShipFlightSettings _flightSettings;
         private readonly ShipStationCatalog _stations;
+        private readonly IShipRunBinding _binding;
+        private readonly IShipStationPads _pads;
         private readonly IFlightStatContributor[] _contributors = System.Array.Empty<IFlightStatContributor>();
 
-        private ShipRunDirector _director;
-        private ShipBase _ship;
-        private ShipLandingPad _currentPad;
-        private ShipLandingPad _previousPad;
         private float _wreckUntil;
         private Vector3 _launchForward = Vector3.forward;
         private Vector3 _destinationPoint;
@@ -33,6 +31,9 @@ namespace Features.ShipModule.Scripts {
         private bool _hasModeOverride;
 
         internal int WorldShiftCount => _ship != null ? _ship.PoseSync.WorldShift.Count : 0;
+        private ShipBase _ship => _binding.Ship;
+        private ShipRunDirector _director => _binding.Director;
+        private ShipLandingPad _currentPad => _pads.CurrentPad;
 
         public ShipRunService(
             ShipRunModel model,
@@ -40,13 +41,17 @@ namespace Features.ShipModule.Scripts {
             ShipFlightSettings flightSettings,
             ShipStationCatalog stations,
             ShipRadarService radar,
-            ConnectionSpawnModel spawn) {
+            ConnectionSpawnModel spawn,
+            IShipRunBinding binding,
+            IShipStationPads pads) {
             _model = model;
             _config = config;
             _flightSettings = flightSettings;
             _stations = stations;
             _radar = radar;
             _spawn = spawn;
+            _binding = binding;
+            _pads = pads;
         }
 
         internal void DebugUseFlightMode(ShipFlightMode mode) {
@@ -103,11 +108,9 @@ namespace Features.ShipModule.Scripts {
             _ship.UnregisterRider(rider);
         }
 
-        internal void Bind(ShipRunDirector director, ShipBase ship, ShipLandingPad startPad) {
-            _director = director;
-            _ship = ship;
-            _currentPad = startPad;
-            _previousPad = null;
+        public void Bind(ShipRunDirector director, ShipBase ship, ShipLandingPad startPad) {
+            _binding.Bind(director, ship);
+            _pads.Reset(startPad);
             _model.ResetMatch();
             if (ship != null && startPad != null)
                 ship.ServerResetForBuild(startPad.BuildBerth.position, startPad.BuildBerth.rotation);
@@ -118,7 +121,7 @@ namespace Features.ShipModule.Scripts {
             Publish();
         }
 
-        internal void Unbind(ShipRunDirector director) {
+        public void Unbind(ShipRunDirector director) {
             if (_director != director)
                 return;
 
@@ -129,10 +132,8 @@ namespace Features.ShipModule.Scripts {
             if (NetworkServer.active && _ship != null && _currentPad != null)
                 _ship.ServerResetForBuild(_currentPad.BuildBerth.position, _currentPad.BuildBerth.rotation);
 
-            _director = null;
-            _ship = null;
-            _currentPad = null;
-            _previousPad = null;
+            _binding.Clear();
+            _pads.Reset(null);
             _wreckUntil = 0f;
             _launchForward = Vector3.forward;
             _destinationPoint = Vector3.zero;
@@ -143,7 +144,7 @@ namespace Features.ShipModule.Scripts {
             _model.ResetMatch();
         }
 
-        internal bool ServerTryLaunch(ShipBase ship) {
+        public bool ServerTryLaunch(ShipBase ship) {
             if (NetworkServer.active == false || ship == null || ship != _ship)
                 return false;
 
@@ -182,7 +183,7 @@ namespace Features.ShipModule.Scripts {
             return true;
         }
 
-        internal void ServerAbort(ShipRunAbortReason reason) {
+        public void ServerAbort(ShipRunAbortReason reason) {
             if (NetworkServer.active == false || _ship == null || _director == null)
                 return;
 
@@ -195,7 +196,7 @@ namespace Features.ShipModule.Scripts {
             FinishAtCurrentPose();
         }
 
-        internal void ServerTick() {
+        public void ServerTick() {
             if (NetworkServer.active == false || _ship == null || _director == null)
                 return;
 
@@ -317,33 +318,10 @@ namespace Features.ShipModule.Scripts {
         }
 
         private ShipLandingPad SpawnNextPad(Vector3 padPos, Vector3 face, bool matchLandingPoint) {
-            GameObject prefab = _stations != null ? _stations.PadPrefab : null;
-            if (prefab == null)
-                return _currentPad;
-
-            Vector3 origin = _ship != null ? _ship.transform.position : padPos;
-            if (matchLandingPoint == false) {
-                float padY = _currentPad != null ? _currentPad.transform.position.y : origin.y;
-                padPos.y = padY + _config.TakeoffHeight;
-            }
-
             Vector3 forward = FlattenForward(face.sqrMagnitude > 0.0001f ? face : _launchForward);
-            Quaternion padRot = Quaternion.LookRotation(forward, Vector3.up);
-            GameObject instance = Object.Instantiate(prefab, padPos, padRot);
-            ShipLandingPad pad = instance.GetComponentInChildren<ShipLandingPad>();
-            // Pads have no transform sync: clients only get the spawn pose, so the pad is placed before the spawn.
-            if (matchLandingPoint) {
-                instance.transform.position += padPos - pad.LandingPoint.position;
+            if (_pads.TrySpawnNext(padPos, forward, matchLandingPoint, out ShipLandingPad pad) && matchLandingPoint)
                 _destinationPoint = pad.LandingPoint.position;
-            }
 
-            NetworkServer.Spawn(instance);
-
-            if (_previousPad != null)
-                NetworkServer.Destroy(_previousPad.gameObject);
-
-            _previousPad = _currentPad;
-            _currentPad = pad;
             return pad;
         }
 
@@ -553,15 +531,11 @@ namespace Features.ShipModule.Scripts {
 
         private void ApplyWorldShift(Vector3 delta) {
             _ship.ServerApplyWorldShift(delta);
-            ShiftPad(_currentPad, delta);
-            ShiftPad(_previousPad, delta);
+            _pads.Shift(delta);
             _destinationPoint += delta;
             if (_director != null)
-                _director.ServerShiftWorld(delta, PadIdentity(_currentPad), PadIdentity(_previousPad));
+                _director.ServerShiftWorld(delta, _pads.CurrentIdentity, _pads.PreviousIdentity);
         }
-
-        private static NetworkIdentity PadIdentity(ShipLandingPad pad) =>
-            pad != null ? pad.GetComponent<NetworkIdentity>() : null;
 
         private bool CruiseArrived() {
             if (CruiseIsTravel() == false)
@@ -586,11 +560,6 @@ namespace Features.ShipModule.Scripts {
 
         private float ReadTravelMetersPerSecond() {
             return _flightSettings.CruiseSpeed * ReadFlightSpeed();
-        }
-
-        private static void ShiftPad(ShipLandingPad pad, Vector3 delta) {
-            if (pad != null)
-                pad.transform.position += delta;
         }
 
         private static float HorizontalDistance(Vector3 from, Vector3 to) {

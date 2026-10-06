@@ -35,7 +35,7 @@ namespace Features.ShipModule.Scripts {
 
         private readonly Dictionary<ShipSocket, StatModifier> _flightSpeedModifiers = new Dictionary<ShipSocket, StatModifier>();
         private ShipRunModel _run;
-        private ShipRunService _runService;
+        private IShipRunService _runService;
 
         public ShipLaunchLever Lever => _lever;
         public Transform Destination => _destination;
@@ -226,7 +226,7 @@ namespace Features.ShipModule.Scripts {
             EngineCatalog engines,
             ShipFlightSettings settings,
             ShipRunModel run,
-            ShipRunService runService) {
+            IShipRunService runService) {
             if (_engines == null)
                 _engines = engines;
 

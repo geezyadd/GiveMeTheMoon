@@ -38,7 +38,7 @@ namespace Features.ShipModule.Scripts {
         private Vector3 _transitDestination;
 
         [Inject]
-        private ShipRunService _run;
+        private IShipRunService _run;
 
         [Inject]
         private ShipRunModel _model;
