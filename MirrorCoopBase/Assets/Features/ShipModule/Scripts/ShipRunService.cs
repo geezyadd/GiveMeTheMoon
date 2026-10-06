@@ -7,17 +7,13 @@ namespace Features.ShipModule.Scripts {
     public sealed class ShipRunService : IShipRunService, IGameplaySession, IShipFloorReferenceProvider, IShipRiderRelease {
         private const float WRECK_PITCH_DEGREES = 12f;
         private const float WRECK_ROLL_DEGREES = 18f;
-        private const float DROP_LATERAL = 7.5f;
-        private const float DROP_ALONG_ORIGIN = 2f;
-        private const float DROP_ALONG_STEP = 1.8f;
-        private const float DROP_HEIGHT = 1f;
 
         private readonly ShipRunModel _model;
         private readonly ShipRunConfig _config;
         private readonly ShipFlightSettings _flightSettings;
-        private readonly ShipStationCatalog _stations;
         private readonly IShipRunBinding _binding;
         private readonly IShipStationPads _pads;
+        private readonly IShipStationDropService _drops;
         private readonly IFlightStatContributor[] _contributors = System.Array.Empty<IFlightStatContributor>();
 
         private float _wreckUntil;
@@ -39,19 +35,19 @@ namespace Features.ShipModule.Scripts {
             ShipRunModel model,
             ShipRunConfig config,
             ShipFlightSettings flightSettings,
-            ShipStationCatalog stations,
             ShipRadarService radar,
             ConnectionSpawnModel spawn,
             IShipRunBinding binding,
-            IShipStationPads pads) {
+            IShipStationPads pads,
+            IShipStationDropService drops) {
             _model = model;
             _config = config;
             _flightSettings = flightSettings;
-            _stations = stations;
             _radar = radar;
             _spawn = spawn;
             _binding = binding;
             _pads = pads;
+            _drops = drops;
         }
 
         internal void DebugUseFlightMode(ShipFlightMode mode) {
@@ -302,7 +298,7 @@ namespace Features.ShipModule.Scripts {
 
         private void EnterStation(ShipLandingPad pad, ShipRunPhase phase) {
             RecenterIfFar();
-            SpawnDrops(pad);
+            _drops.SpawnDrops(pad, _model.LoopIndex);
             if (pad != null)
                 _spawn.Set(pad.PlayerSpawn.position, pad.PlayerSpawn.rotation);
 
@@ -323,65 +319,6 @@ namespace Features.ShipModule.Scripts {
                 _destinationPoint = pad.LandingPoint.position;
 
             return pad;
-        }
-
-        private void SpawnDrops(ShipLandingPad pad) {
-            if (_stations == null || _stations.Drops == null)
-                return;
-
-            Transform origin = pad != null ? pad.transform : (_ship != null ? _ship.transform : null);
-            if (origin == null)
-                return;
-
-            int placed = 0;
-            GameObject helm = FindDropPrefab(ShipModuleType.Control);
-            if (helm != null) {
-                SpawnDrop(helm, origin, placed);
-                placed++;
-            }
-
-            for (int i = 0; i < _stations.Drops.Length; i++) {
-                ShipStationCatalog.DropEntry entry = _stations.Drops[i];
-                if (entry == null || entry.Prefab == null || entry.MinLoop > _model.LoopIndex)
-                    continue;
-
-                if (IsDropType(entry.Prefab, ShipModuleType.Control))
-                    continue;
-
-                for (int n = 0; n < entry.Count; n++) {
-                    SpawnDrop(entry.Prefab, origin, placed);
-                    placed++;
-                }
-            }
-        }
-
-        private void SpawnDrop(GameObject prefab, Transform origin, int placed) {
-            float side = placed % 2 == 0 ? -1f : 1f;
-            float along = placed / 2 * DROP_ALONG_STEP;
-            Vector3 local = new Vector3(side * DROP_LATERAL, DROP_HEIGHT, DROP_ALONG_ORIGIN - along);
-            GameObject item = Object.Instantiate(prefab, origin.TransformPoint(local), origin.rotation);
-            NetworkServer.Spawn(item);
-        }
-
-        private GameObject FindDropPrefab(ShipModuleType type) {
-            if (_stations == null || _stations.Drops == null)
-                return null;
-
-            for (int i = 0; i < _stations.Drops.Length; i++) {
-                ShipStationCatalog.DropEntry entry = _stations.Drops[i];
-                if (entry != null && IsDropType(entry.Prefab, type))
-                    return entry.Prefab;
-            }
-
-            return null;
-        }
-
-        private static bool IsDropType(GameObject prefab, ShipModuleType type) {
-            if (prefab == null)
-                return false;
-
-            ShipItem item = prefab.GetComponent<ShipItem>();
-            return item != null && item.Type == type;
         }
 
         private FlightRunStats SampleStats(ShipBase ship) {
