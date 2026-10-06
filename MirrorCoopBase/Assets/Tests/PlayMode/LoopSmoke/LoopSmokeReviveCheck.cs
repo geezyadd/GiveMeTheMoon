@@ -135,7 +135,7 @@ namespace Tests.PlayMode.LoopSmoke {
             float largestStep = 0f;
             yield return TrackLargestStepCoroutine(step => largestStep = Mathf.Max(largestStep, step));
             Assert.Less(largestStep, MAX_FRAME_STEP, $"The revived host jumped {largestStep} m in one frame.");
-            Assert.IsTrue(IsOnDeck(Player.transform.position), $"The revived host at {Player.transform.position} is not on the deck {_ship.DeckBounds}.");
+            Assert.IsTrue(IsOnDeck(Player.transform.position), $"The revived host at {Player.transform.position} is not on the deck {_ship.DeckGeometry.Bounds}.");
             Assert.IsFalse(spectator.IsSpectating, "The revived host still spectates.");
             Assert.IsFalse(LoopSmokeShopCheck.Resolve<PlayerControlBlockModel>().IsBlocked, "The revived host cannot move.");
             yield return CaptureScreenshotCoroutine(DECK_SCREENSHOT);
@@ -153,7 +153,7 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         private bool IsOnDeck(Vector3 position) {
-            Bounds deck = _ship.DeckBounds;
+            Bounds deck = _ship.DeckGeometry.Bounds;
             return position.x >= deck.min.x - DECK_TOLERANCE && position.x <= deck.max.x + DECK_TOLERANCE
                 && position.z >= deck.min.z - DECK_TOLERANCE && position.z <= deck.max.z + DECK_TOLERANCE
                 && position.y > deck.max.y;

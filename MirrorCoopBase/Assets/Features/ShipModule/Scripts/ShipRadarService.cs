@@ -1,14 +1,15 @@
 using Features.GameCoreModule.Contracts;
+using Features.ShipModule.Scripts.Generated;
 using MiniMapModular;
 using UnityEngine;
 using Zenject;
 
 namespace Features.ShipModule.Scripts {
-    public sealed class ShipRadarService : ITickable, IGameplaySession {
+    public sealed class ShipRadarService : IShipRadarBinding, IShipRadarDisplay, ITickable, IGameplaySession {
         private const string CameraName = "Cam_Map";
 
         private readonly ShipRadarCatalog _catalog;
-        private readonly ShipRunModel _model;
+        private readonly IReadOnlyShipRunModel _model;
 
         private ShipBase _ship;
         private RectTransform _slot;
@@ -18,7 +19,7 @@ namespace Features.ShipModule.Scripts {
         private GameObject _beacon;
         private MP _minimap;
 
-        public ShipRadarService(ShipRadarCatalog catalog, ShipRunModel model) {
+        public ShipRadarService(ShipRadarCatalog catalog, IReadOnlyShipRunModel model) {
             _catalog = catalog;
             _model = model;
         }

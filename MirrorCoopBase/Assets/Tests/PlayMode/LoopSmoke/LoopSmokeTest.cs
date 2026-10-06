@@ -13,6 +13,7 @@ using Features.PlayerLifeModule.Scripts;
 using Features.PlayerProfileModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Network;
+using Features.ShipModule.Scripts.Generated;
 using Game.Connection;
 using Mirror;
 using NUnit.Framework;
@@ -59,7 +60,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private LoopSmokeErrorLog _errorLog;
         private int _lobbyRuntimeObjects;
         private ShipRunConfig _fastConfig;
-        private ShipRunModel _model;
+        private IReadOnlyShipRunModel _model;
         private ShipBase _ship;
 
         [SetUp]
@@ -214,7 +215,7 @@ namespace Tests.PlayMode.LoopSmoke {
 
         // Stands in for walking aboard: the player is put above the deck and lands on it under physics.
         private IEnumerator BoardPlayerCoroutine() {
-            Bounds deck = _ship.DeckBounds;
+            Bounds deck = _ship.DeckGeometry.Bounds;
             Vector3 target = new Vector3(deck.center.x, deck.max.y + BOARD_DROP_HEIGHT, deck.center.z);
             Rigidbody body = LocalPlayer().GetComponent<CharacterMovableBase>().Body;
             body.position = target;
@@ -222,7 +223,7 @@ namespace Tests.PlayMode.LoopSmoke {
             body.linearVelocity = Vector3.zero;
 
             yield return new WaitForSeconds(BOARD_SETTLE_SECONDS);
-            Assert.IsTrue(ContainsXZ(_ship.DeckBounds, LocalPlayer().transform.position, PLAYER_ON_SURFACE_TOLERANCE), "The player did not stay on the deck before launch.");
+            Assert.IsTrue(ContainsXZ(_ship.DeckGeometry.Bounds, LocalPlayer().transform.position, PLAYER_ON_SURFACE_TOLERANCE), "The player did not stay on the deck before launch.");
         }
 
         private IEnumerator FlyLoopCoroutine(int expectedLoopIndex) {
@@ -255,7 +256,7 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.AreEqual(CountSceneObjects<ShipLandingPad>(), CountSceneObjects<ShopKioskInteractable>(), "Shop kiosks do not match the pads one to one.");
 
             Bounds padBounds = PadBounds(landingPad);
-            Bounds deck = _ship.DeckBounds;
+            Bounds deck = _ship.DeckGeometry.Bounds;
             Assert.IsTrue(ContainsXZ(padBounds, deck.min, DECK_ON_PAD_TOLERANCE) && ContainsXZ(padBounds, deck.max, DECK_ON_PAD_TOLERANCE),
                 $"The deck {deck} is not inside the pad {padBounds}.");
 
@@ -317,7 +318,7 @@ namespace Tests.PlayMode.LoopSmoke {
                 return false;
 
             _ship = Object.FindAnyObjectByType<ShipBase>();
-            _model = ProjectContext.Instance.Container.Resolve<ShipRunModel>();
+            _model = ProjectContext.Instance.Container.Resolve<IReadOnlyShipRunModel>();
             return _ship != null && _model.Phase == ShipRunPhase.Build;
         }
 

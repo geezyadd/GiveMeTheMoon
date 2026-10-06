@@ -8,6 +8,7 @@ using Features.PlayerLifeModule.Scripts.Generated;
 using Features.PlayerProfileModule.Data.Generated;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Data;
+using Features.ShipModule.Scripts.Generated;
 using Features.ShopModule.Scripts.Generated;
 using Game.Connection;
 using Zenject;
@@ -23,7 +24,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<CharacterMovableModel>().AsSingle();
             Container.Bind<PlayerControlBlockModel>().AsSingle();
             Container.Bind<GameCameraModel>().AsSingle();
-            Container.Bind<ShipRunModel>().AsSingle();
+            Container.Bind<IShipRunBindingModel>().To<ShipRunBindingModel>().AsSingle();
             Container.Bind<HoveredInteractableModel>().AsSingle();
             Container.Bind<SpectatorModel>().AsSingle();
             Container.Bind<ShopVisitModel>().AsSingle();
@@ -32,6 +33,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             PlayerLifeModelInstaller.Install(Container);
             PlayerHandModelInstaller.Install(Container);
             PlayerProfileModelInstaller.Install(Container);
+            ShipRunModelInstaller.Install(Container);
+            ShipSocketsModelInstaller.Install(Container);
         }
     }
 }

@@ -30,6 +30,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3bd71940ec6f98c7431f6a0e3c7b5928
+    m_Address: CameraCatalog_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 46bdf038b1c7d8e37495a6b7c8d9e1f0
+    m_Address: ShipStationCatalog_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7870b385a0a90a743bdcf1753f29f3e6
     m_Address: PlayerLifeConfiguration_Default
     m_ReadOnly: 0
@@ -60,6 +70,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b9e2d3f4a5c6471890b1c2d3e4f50617
+    m_Address: EngineCatalog_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c3dde0722651bd54caf061cf9ac2aed3
     m_Address: WalletConfiguration_Default
     m_ReadOnly: 0
@@ -77,6 +92,16 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d1e2f3a4b5c64755d6e7f8091a2b3c4d
     m_Address: ShipAccumulativeStatsConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d1f5b68c9e0a17b2c3d4e5f607192a3b
+    m_Address: ItemViewCatalog_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e2f3a4b5c6d7890123e4f5a6b7c8d9e0
+    m_Address: ShipRadarCatalog_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

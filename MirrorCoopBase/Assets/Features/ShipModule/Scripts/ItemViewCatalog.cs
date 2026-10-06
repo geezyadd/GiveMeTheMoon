@@ -4,8 +4,6 @@ using UnityEngine;
 namespace Features.ShipModule.Scripts {
     [CreateAssetMenu(menuName = "Game/Item View Catalog", fileName = "ItemViewCatalog")]
     public sealed class ItemViewCatalog : ScriptableObject {
-        public const string ResourceName = "ItemViewCatalog";
-
         [Serializable]
         public sealed class Entry {
             [SerializeField] private ItemViewId _id;

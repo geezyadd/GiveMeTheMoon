@@ -106,7 +106,8 @@ types.
   7. Composition root: `Features.GameCoreModule` (all modules) and `Features.BootstrapersModule` (Contracts,
      GameFlow, SceneLoader).
   Tests: `Features.CharacterMovableModule.Editor.Tests`, `Features.PlayerLifeModule.Editor.Tests`,
-  `Features.ShipModule.Editor.Tests`, `Game.Connection.Editor.Tests`, `Features.PlayerProfileModule.Editor.Tests`.
+  `Features.ShipModule.Editor.Tests`, `Features.GameCoreModule.Editor.Tests` (configuration loading guard),
+  `Game.Connection.Editor.Tests`, `Features.PlayerProfileModule.Editor.Tests`.
 - Player identity and name come from Connection only through NetworkModel contracts: `IPlayerIdentityService`
   (`PlayerKey`) and `IPlayerNameSource` (the authenticated name), implemented in Connection. Other modules read a
   player's name through `IPlayerProfileSource` / `IReadOnlyPlayerProfileModel` (PlayerProfileModule.Data), not
@@ -120,9 +121,9 @@ types.
 ### Key places
 | What | Where |
 |---|---|
-| Ship, flight, riders | `Assets/Features/ShipModule/Scripts/`: `ShipBase`, `ShipFlight`, `ShipPoseSync`, `ShipRider`, `ShipRunService`, `ShipRunDirector` |
+| Ship, flight, riders | `Assets/Features/ShipModule/Scripts/`: `ShipBase` (ties its parts: `ShipDeckGeometry`, `ShipModules`, `ShipRiders`, `ShipSeats`, `ShipFlightControl`, `ShipDeckCargo`), `ShipFlight`, `ShipPoseSync`, `ShipRider`, `ShipRunDirector`, `ShipRunService` (phase machine) with `ShipStationPads`, `ShipStationDropService`, `ShipRoute`, `ShipFlightStatService`, `ShipWorldShiftService`, `ShipRunRiderService`, `ShipRunBindingModel` |
 | Flight and landing settings | `ShipFlightSettings` (+ `ShipFlightConfig_Default.asset`), `ShipRunConfig` |
-| Modules and slots | `ShipItem`, `ShipSocket`, `Ship*Interactable`, catalogs in `ShipModule/GameResources/Resources/` |
+| Modules and slots | `ShipItem`, `ShipSocket`, `Ship*Interactable`, catalogs in `ShipModule/GameResources/Configurations/` (Addressables) |
 | Stats | `Assets/Features/StatsModule/`, `ShipStatType`, `ShipStatEntity` |
 | Interaction | `Assets/Features/GrabModule/`: `LocalPlayerInteraction` (aim, highlight, button), `GrabController` (hand, `PlayerHand` model), `UseController`, `HeldItemRegistry`, `InteractableBase`, `Grabbable`, `GrabConfiguration` |
 | Shop and money | `Assets/Features/ShopModule/` (`CrewWallet`, `ShopCatalog`, `WalletConfiguration`); the kiosk `ShopKioskInteractable` is part of the `StationPad` prefab, `ShopAccessService` / `ShopAccessRule` decide open, keep-open and purchase (Build, alive, distance from `ShopKioskConfiguration`), the server keeps the opened kiosk per player in `ShopVisitModel`; **L** opens the shop only in editor / development builds |

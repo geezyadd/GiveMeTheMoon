@@ -1,5 +1,6 @@
 using System;
 using Features.ShipModule.Scripts;
+using Features.ShipModule.Scripts.Generated;
 using Features.ShopModule.Scripts.Configurations;
 using UnityEngine;
 
@@ -7,12 +8,12 @@ namespace Features.ShopModule.Scripts.Core {
     // One place that decides whether a player may use a kiosk: opening the window, keeping it open and buying
     // differ only in the allowed distance.
     public sealed class ShopAccessService : IShopAccessService {
-        private readonly ShipRunModel _shipRunModel;
+        private readonly IReadOnlyShipRunModel _shipRunModel;
         private readonly ShopKioskConfiguration _shopKioskConfiguration;
         private readonly IShopAccessRule _shopAccessRule;
 
         public ShopAccessService(
-            ShipRunModel shipRunModel,
+            IReadOnlyShipRunModel shipRunModel,
             ShopKioskConfiguration shopKioskConfiguration,
             IShopAccessRule shopAccessRule) {
             _shipRunModel = shipRunModel;

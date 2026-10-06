@@ -14,18 +14,15 @@ namespace Features.NetworkModelModule.Scripts.Generated {
         public event Action OnRightChanged;
 
         internal void ApplyState(AtomicPairState state) {
-            bool changed = false;
-            if (EqualityComparer<int>.Default.Equals(Left, state.Left) == false) {
-                Left = state.Left;
+            bool leftChanged = EqualityComparer<int>.Default.Equals(Left, state.Left) == false;
+            bool rightChanged = EqualityComparer<int>.Default.Equals(Right, state.Right) == false;
+            Left = state.Left;
+            Right = state.Right;
+            if (leftChanged)
                 OnLeftChanged?.Invoke();
-                changed = true;
-            }
-            if (EqualityComparer<int>.Default.Equals(Right, state.Right) == false) {
-                Right = state.Right;
+            if (rightChanged)
                 OnRightChanged?.Invoke();
-                changed = true;
-            }
-            if (changed)
+            if (leftChanged || rightChanged)
                 RaiseChanged();
         }
     }
