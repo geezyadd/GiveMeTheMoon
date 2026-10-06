@@ -1,3 +1,4 @@
+using Features.ShipModule.Scripts.Generated;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
@@ -18,5 +19,6 @@ namespace Features.ShipModule.Scripts {
         public void ShiftDestination(Vector3 delta);
         public void EndRoute();
         public void Reset();
+        public ShipRunState WithTransit(ShipRunState state);
     }
 }

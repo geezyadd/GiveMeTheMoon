@@ -87,6 +87,16 @@ namespace Features.NetworkModelModule.Scripts.Editor.Tests {
         }
 
         [Test]
+        public void Emit_Atomic_HasOneBatchSetterAndAssignsBeforeEvents() {
+            NetworkModelSpec spec = Spec("AtomicPair", true, Field("Left", NetworkModelFieldKind.Scalar, "int"), Field("Right", NetworkModelFieldKind.Scalar, "int"));
+            string bridge = Bridge(spec);
+            string model = ModelText(spec);
+            Assert.That(bridge, Does.Contain("public void ServerSetState(AtomicPairState value) =>"));
+            Assert.That(bridge, Does.Contain("public AtomicPairState State => _state;"));
+            Assert.That(model.IndexOf("Right = state.Right;", System.StringComparison.Ordinal), Is.LessThan(model.IndexOf("OnLeftChanged?.Invoke();", System.StringComparison.Ordinal)));
+        }
+
+        [Test]
         public void Emit_DictionaryHashSetAndNetworkIdentity() {
             NetworkModelSpec spec = Spec(
                 "SyncCoverage",

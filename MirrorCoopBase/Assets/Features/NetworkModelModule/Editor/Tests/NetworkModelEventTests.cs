@@ -40,5 +40,16 @@ namespace Features.NetworkModelModule.Scripts.Editor.Tests {
             Assert.That(addedIndex, Is.EqualTo(0));
             Assert.That(addedValue, Is.EqualTo(7));
         }
+
+        [Test]
+        public void ApplyState_FieldEventSeesTheWholeNewState() {
+            AtomicPairModel model = new AtomicPairModel();
+            int rightSeenOnLeftChanged = 0;
+            model.OnLeftChanged += () => rightSeenOnLeftChanged = model.Right;
+
+            model.ApplyState(new AtomicPairState { Left = 1, Right = 2 });
+
+            Assert.That(rightSeenOnLeftChanged, Is.EqualTo(2));
+        }
     }
 }

@@ -31,58 +31,47 @@ namespace Features.ShipModule.Scripts.Generated {
         public event Action OnTransitSecondsRemainingChanged;
 
         internal void ApplyState(ShipRunState state) {
-            bool changed = false;
-            if (EqualityComparer<global::Features.ShipModule.Scripts.ShipRunPhase>.Default.Equals(Phase, state.Phase) == false) {
-                Phase = state.Phase;
+            bool phaseChanged = EqualityComparer<global::Features.ShipModule.Scripts.ShipRunPhase>.Default.Equals(Phase, state.Phase) == false;
+            bool loopIndexChanged = EqualityComparer<int>.Default.Equals(LoopIndex, state.LoopIndex) == false;
+            bool cruiseEndNetworkTimeChanged = EqualityComparer<double>.Default.Equals(CruiseEndNetworkTime, state.CruiseEndNetworkTime) == false;
+            bool launchLockedChanged = EqualityComparer<bool>.Default.Equals(LaunchLocked, state.LaunchLocked) == false;
+            bool lastAbortReasonChanged = EqualityComparer<global::Features.ShipModule.Scripts.ShipRunAbortReason>.Default.Equals(LastAbortReason, state.LastAbortReason) == false;
+            bool transitWorkRemainingChanged = EqualityComparer<float>.Default.Equals(TransitWorkRemaining, state.TransitWorkRemaining) == false;
+            bool transitSpeedChanged = EqualityComparer<float>.Default.Equals(TransitSpeed, state.TransitSpeed) == false;
+            bool transitAlignmentChanged = EqualityComparer<float>.Default.Equals(TransitAlignment, state.TransitAlignment) == false;
+            bool transitDestinationChanged = EqualityComparer<Vector3>.Default.Equals(TransitDestination, state.TransitDestination) == false;
+            bool transitSecondsRemainingChanged = EqualityComparer<float>.Default.Equals(TransitSecondsRemaining, state.TransitSecondsRemaining) == false;
+            Phase = state.Phase;
+            LoopIndex = state.LoopIndex;
+            CruiseEndNetworkTime = state.CruiseEndNetworkTime;
+            LaunchLocked = state.LaunchLocked;
+            LastAbortReason = state.LastAbortReason;
+            TransitWorkRemaining = state.TransitWorkRemaining;
+            TransitSpeed = state.TransitSpeed;
+            TransitAlignment = state.TransitAlignment;
+            TransitDestination = state.TransitDestination;
+            TransitSecondsRemaining = state.TransitSecondsRemaining;
+            if (phaseChanged)
                 OnPhaseChanged?.Invoke();
-                changed = true;
-            }
-            if (EqualityComparer<int>.Default.Equals(LoopIndex, state.LoopIndex) == false) {
-                LoopIndex = state.LoopIndex;
+            if (loopIndexChanged)
                 OnLoopIndexChanged?.Invoke();
-                changed = true;
-            }
-            if (EqualityComparer<double>.Default.Equals(CruiseEndNetworkTime, state.CruiseEndNetworkTime) == false) {
-                CruiseEndNetworkTime = state.CruiseEndNetworkTime;
+            if (cruiseEndNetworkTimeChanged)
                 OnCruiseEndNetworkTimeChanged?.Invoke();
-                changed = true;
-            }
-            if (EqualityComparer<bool>.Default.Equals(LaunchLocked, state.LaunchLocked) == false) {
-                LaunchLocked = state.LaunchLocked;
+            if (launchLockedChanged)
                 OnLaunchLockedChanged?.Invoke();
-                changed = true;
-            }
-            if (EqualityComparer<global::Features.ShipModule.Scripts.ShipRunAbortReason>.Default.Equals(LastAbortReason, state.LastAbortReason) == false) {
-                LastAbortReason = state.LastAbortReason;
+            if (lastAbortReasonChanged)
                 OnLastAbortReasonChanged?.Invoke();
-                changed = true;
-            }
-            if (EqualityComparer<float>.Default.Equals(TransitWorkRemaining, state.TransitWorkRemaining) == false) {
-                TransitWorkRemaining = state.TransitWorkRemaining;
+            if (transitWorkRemainingChanged)
                 OnTransitWorkRemainingChanged?.Invoke();
-                changed = true;
-            }
-            if (EqualityComparer<float>.Default.Equals(TransitSpeed, state.TransitSpeed) == false) {
-                TransitSpeed = state.TransitSpeed;
+            if (transitSpeedChanged)
                 OnTransitSpeedChanged?.Invoke();
-                changed = true;
-            }
-            if (EqualityComparer<float>.Default.Equals(TransitAlignment, state.TransitAlignment) == false) {
-                TransitAlignment = state.TransitAlignment;
+            if (transitAlignmentChanged)
                 OnTransitAlignmentChanged?.Invoke();
-                changed = true;
-            }
-            if (EqualityComparer<Vector3>.Default.Equals(TransitDestination, state.TransitDestination) == false) {
-                TransitDestination = state.TransitDestination;
+            if (transitDestinationChanged)
                 OnTransitDestinationChanged?.Invoke();
-                changed = true;
-            }
-            if (EqualityComparer<float>.Default.Equals(TransitSecondsRemaining, state.TransitSecondsRemaining) == false) {
-                TransitSecondsRemaining = state.TransitSecondsRemaining;
+            if (transitSecondsRemainingChanged)
                 OnTransitSecondsRemainingChanged?.Invoke();
-                changed = true;
-            }
-            if (changed)
+            if (phaseChanged || loopIndexChanged || cruiseEndNetworkTimeChanged || launchLockedChanged || lastAbortReasonChanged || transitWorkRemainingChanged || transitSpeedChanged || transitAlignmentChanged || transitDestinationChanged || transitSecondsRemainingChanged)
                 RaiseChanged();
         }
     }

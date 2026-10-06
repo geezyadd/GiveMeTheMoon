@@ -80,6 +80,12 @@ namespace Features.ShipModule.Scripts.Generated {
             AssignState(state);
         }
 
+        public ShipRunState State => _state;
+
+        [Server]
+        public void ServerSetState(ShipRunState value) =>
+            AssignState(value);
+
         private void AssignState(ShipRunState state) {
             _state = state;
             if (NetworkServer.activeHost == false)

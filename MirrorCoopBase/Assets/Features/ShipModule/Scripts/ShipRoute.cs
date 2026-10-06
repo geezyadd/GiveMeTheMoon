@@ -91,7 +91,6 @@ namespace Features.ShipModule.Scripts {
                 _destinationPoint = RadarPoint(
                     ship != null ? ship.transform.position : Vector3.zero,
                     destination);
-            CopyTransitToModel();
         }
 
         public void ApplyFrame(bool tickWork) {
@@ -101,7 +100,6 @@ namespace Features.ShipModule.Scripts {
                 float speed = ReadTravelMetersPerSecond();
                 _transit.PreviewRoute(distance, speed, _destinationForward);
                 _transit.SetAlignment(EvaluateTransitAlignment());
-                CopyTransitToModel();
                 return;
             }
 
@@ -109,8 +107,6 @@ namespace Features.ShipModule.Scripts {
             _transit.SetAlignment(EvaluateTransitAlignment());
             if (tickWork)
                 _transit.Tick(Time.deltaTime);
-
-            CopyTransitToModel();
         }
 
         public Vector3 PadForward(Vector3 face) =>
@@ -127,7 +123,6 @@ namespace Features.ShipModule.Scripts {
             _hasModeOverride = false;
             _destinationPoint = Vector3.zero;
             _destinationForward = Vector3.forward;
-            CopyTransitToModel();
         }
 
         public void Reset() {
@@ -135,6 +130,23 @@ namespace Features.ShipModule.Scripts {
             _destinationPoint = Vector3.zero;
             _destinationForward = Vector3.forward;
             _transit.Reset();
+        }
+
+        public ShipRunState WithTransit(ShipRunState state) {
+            ShipBase ship = _binding.Ship;
+            state.TransitWorkRemaining = _transit.WorkRemaining;
+            state.TransitSpeed = _transit.Speed;
+            state.TransitAlignment = _transit.Alignment;
+            state.TransitDestination = _destinationPoint.sqrMagnitude > DIRECTION_EPSILON
+                ? _destinationPoint
+                : RadarPoint(
+                    ship != null ? ship.transform.position : Vector3.zero,
+                    _transit.DestinationDirection);
+            state.TransitSecondsRemaining = _transit.SecondsRemaining;
+            state.CruiseEndNetworkTime = state.Phase == ShipRunPhase.Cruise
+                ? NetworkTime.time + _transit.SecondsRemaining
+                : 0d;
+            return state;
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -176,26 +188,6 @@ namespace Features.ShipModule.Scripts {
             Vector3 point = origin + FlattenForward(direction) * range;
             point.y = padY;
             return point;
-        }
-
-        private void CopyTransitToModel() {
-            ShipRunDirector director = _binding.Director;
-            if (director == null)
-                return;
-
-            ShipBase ship = _binding.Ship;
-            director.ServerSetTransitWorkRemaining(_transit.WorkRemaining);
-            director.ServerSetTransitSpeed(_transit.Speed);
-            director.ServerSetTransitAlignment(_transit.Alignment);
-            director.ServerSetTransitDestination(_destinationPoint.sqrMagnitude > DIRECTION_EPSILON
-                ? _destinationPoint
-                : RadarPoint(
-                    ship != null ? ship.transform.position : Vector3.zero,
-                    _transit.DestinationDirection));
-            director.ServerSetTransitSecondsRemaining(_transit.SecondsRemaining);
-            director.ServerSetCruiseEndNetworkTime(_model.Phase == ShipRunPhase.Cruise
-                ? NetworkTime.time + _transit.SecondsRemaining
-                : 0d);
         }
 
         private float ReadFlightSpeed() =>
