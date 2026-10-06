@@ -6,6 +6,7 @@ using Features.CameraModule.Scripts.Services;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.GameCoreModule.Contracts;
 using Features.InputModule.Realization.Scripts.Generated;
+using Features.PlayerProfileModule.Data.Generated;
 using UnityEngine;
 using Zenject;
 
@@ -22,6 +23,8 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
         private readonly PlayerControlBlockModel _controlBlockModel;
         private readonly ISpectatorTargetService _targetService;
         private readonly List<Transform> _targets = new();
+
+        private IReadOnlyPlayerProfileModel _watchedProfile;
 
         private Transform _savedFollow;
         private Transform _savedLookAt;
@@ -114,6 +117,7 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
             _controlBlockModel.Release(this);
             _input.DisableSpectatorMap();
             _targets.Clear();
+            WatchProfile(null);
             if (_spectatorModel.IsSpectating == false)
                 return;
 
@@ -146,10 +150,25 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
             if (target != _spectatorModel.Target)
                 _cameras.RetargetOrbit(target);
 
+            WatchProfile(_targetService.TryGetProfile(target, out IReadOnlyPlayerProfileModel profile) ? profile : null);
             _spectatorModel.Focus(target, index, _targetService.BuildTargetLabel(target, index));
         }
 
+        // The label shows the target's name, so it is rebuilt when the name arrives or changes while it is watched.
+        private void WatchProfile(IReadOnlyPlayerProfileModel profile) {
+            if (_watchedProfile == profile)
+                return;
+
+            if (_watchedProfile != null)
+                _watchedProfile.OnDisplayNameChanged -= OnWatchedNameChanged;
+
+            _watchedProfile = profile;
+            if (_watchedProfile != null)
+                _watchedProfile.OnDisplayNameChanged += OnWatchedNameChanged;
+        }
+
         private void WaitForTargets() {
+            WatchProfile(null);
             if (_spectatorModel.IsWaitingForTargets == false)
                 _cameras.HoldOrbit();
 
@@ -192,6 +211,14 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
         private void OnAlivePlayersChanged() {
             if (_spectatorModel.IsSpectating)
                 ApplyTargets();
+        }
+
+        private void OnWatchedNameChanged() {
+            if (_spectatorModel.Target != null)
+                _spectatorModel.Focus(
+                    _spectatorModel.Target,
+                    _spectatorModel.TargetIndex,
+                    _targetService.BuildTargetLabel(_spectatorModel.Target, _spectatorModel.TargetIndex));
         }
 
         private void OnSpectatePrev() =>

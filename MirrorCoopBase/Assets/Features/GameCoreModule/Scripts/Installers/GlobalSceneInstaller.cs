@@ -4,6 +4,7 @@ using Features.GameFlowStateMachineModule.Scripts.Installers;
 using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts;
 using Features.PlayerLifeModule.Scripts.Installers;
+using Features.PlayerProfileModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Installers;
 using Features.TooltipModule.Scripts.Installers;
@@ -20,6 +21,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             GrabModuleInstaller.Install(Container);
             ShipModuleInstaller.Install(Container);
             PlayerLifeModuleInstaller.Install(Container);
+            PlayerProfileModuleInstaller.Install(Container);
             ShopModuleInstaller.Install(Container);
             TooltipModuleInstaller.Install(Container);
             ConnectionModuleInstaller.Install(Container);

@@ -36,6 +36,15 @@ namespace Game.Connection
             set => playerName = value;
         }
 
+        // The one place that knows how the server stores the accepted request on a connection.
+        public static AuthRequestMessage GetAuthRequest(NetworkConnectionToClient connection)
+        {
+            if (connection == null || connection.authenticationData is AuthRequestMessage == false)
+                throw new System.InvalidOperationException("Player connection has no authentication data.");
+
+            return (AuthRequestMessage)connection.authenticationData;
+        }
+
         [Inject]
         void Construct(ConnectionSessionModel connectionSessionModel)
         {

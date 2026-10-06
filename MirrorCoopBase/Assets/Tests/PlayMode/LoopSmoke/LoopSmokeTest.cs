@@ -10,6 +10,7 @@ using Features.GrabModule.Scripts;
 using Features.LobbyModule.Scripts;
 using Features.MenuModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
+using Features.PlayerProfileModule.Scripts;
 using Features.ShipModule.Scripts;
 using Game.Connection;
 using Mirror;
@@ -185,7 +186,7 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         private static bool IsRuntimeNonPlayer(NetworkIdentity identity) =>
-            identity != null && identity.sceneId == 0 && identity.GetComponent<ConnectionPlayerName>() == null;
+            identity != null && identity.sceneId == 0 && identity.GetComponent<PlayerProfile>() == null;
 
         private static void LogSpawnedCounts(string moment) =>
             Debug.Log($"[LoopSmoke] {moment}: server spawned {NetworkServer.spawned.Count} "

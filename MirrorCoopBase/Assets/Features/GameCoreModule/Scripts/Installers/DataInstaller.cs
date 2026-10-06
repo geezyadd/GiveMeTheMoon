@@ -5,6 +5,7 @@ using Features.GrabModule.Scripts;
 using Features.GrabModule.Scripts.Generated;
 using Features.MvpModule;
 using Features.PlayerLifeModule.Scripts.Generated;
+using Features.PlayerProfileModule.Data.Generated;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Generated;
 using Game.Connection;
@@ -27,6 +28,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             WalletModelInstaller.Install(Container);
             PlayerLifeModelInstaller.Install(Container);
             PlayerHandModelInstaller.Install(Container);
+            PlayerProfileModelInstaller.Install(Container);
         }
     }
 }
