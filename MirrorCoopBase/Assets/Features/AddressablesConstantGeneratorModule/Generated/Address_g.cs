@@ -23,23 +23,22 @@ namespace Features.AddressablesConstantsGenerator.Generated {
             public const string ADDRESSABLE_GROUP_NAME = "Configurations";
             public const string ShopKioskConfiguration_Default = "ShopKioskConfiguration_Default";
             public const string ConnectionConfig_Default = "ConnectionConfig_Default";
+            public const string CameraCatalog_Default = "CameraCatalog_Default";
+            public const string ShipStationCatalog_Default = "ShipStationCatalog_Default";
             public const string GrabConfiguration_Default = "GrabConfiguration_Default";
             public const string PlayerLifeConfiguration_Default = "PlayerLifeConfiguration_Default";
             public const string ShipRunConfig_Default = "ShipRunConfig_Default";
             public const string ShipFlightConfig_Default = "ShipFlightConfig_Default";
+            public const string ReviveConfiguration_Default = "ReviveConfiguration_Default";
             public const string PlayerDamageConfiguration_Default = "PlayerDamageConfiguration_Default";
             public const string ShopCatalog_Default = "ShopCatalog_Default";
             public const string WalletConfiguration_Default = "WalletConfiguration_Default";
             public const string PlayerNameplateConfiguration_Default = "PlayerNameplateConfiguration_Default";
             public const string PlayerStatsConfiguration_Default = "PlayerStatsConfiguration_Default";
             public const string ShipAccumulativeStatsConfiguration_Default = "ShipAccumulativeStatsConfiguration_Default";
-            public const string ReviveConfiguration_Default = "ReviveConfiguration_Default";
-            public static List<string> AllAddressablesInGroup = new List<string>() {"ShopKioskConfiguration_Default","ConnectionConfig_Default","GrabConfiguration_Default","CameraCatalog_Default","ShipStationCatalog_Default","PlayerLifeConfiguration_Default","ShipRunConfig_Default","ShipFlightConfig_Default","ReviveConfiguration_Default","PlayerDamageConfiguration_Default","ShopCatalog_Default","EngineCatalog_Default","WalletConfiguration_Default","PlayerNameplateConfiguration_Default","PlayerStatsConfiguration_Default","ShipAccumulativeStatsConfiguration_Default","ItemViewCatalog_Default","ShipRadarCatalog_Default",};
-            public const string ItemViewCatalog_Default = "ItemViewCatalog_Default";
-            public const string EngineCatalog_Default = "EngineCatalog_Default";
-            public const string ShipStationCatalog_Default = "ShipStationCatalog_Default";
             public const string ShipRadarCatalog_Default = "ShipRadarCatalog_Default";
-            public const string CameraCatalog_Default = "CameraCatalog_Default";
+            public const string ModuleCatalog_Default = "ModuleCatalog_Default";
+            public static List<string> AllAddressablesInGroup = new List<string>() {"ShopKioskConfiguration_Default","ConnectionConfig_Default","CameraCatalog_Default","ShipStationCatalog_Default","GrabConfiguration_Default","PlayerLifeConfiguration_Default","ShipRunConfig_Default","ShipFlightConfig_Default","ReviveConfiguration_Default","PlayerDamageConfiguration_Default","ShopCatalog_Default","WalletConfiguration_Default","PlayerNameplateConfiguration_Default","PlayerStatsConfiguration_Default","ShipAccumulativeStatsConfiguration_Default","ShipRadarCatalog_Default","ModuleCatalog_Default",};
         }
         public static partial class Groups {
             public static List<List<string>> AllAddressablesGroups = new List<List<string>>() {Windows.AllAddressablesInGroup,Scenes.AllAddressablesInGroup,Configurations.AllAddressablesInGroup,};
