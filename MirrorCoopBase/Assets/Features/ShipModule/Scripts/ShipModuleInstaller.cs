@@ -16,6 +16,7 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipRunService>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.BindInterfacesTo<Debug.DeckFeelHarness>().AsSingle();
+            Container.Bind<Debug.ShipStatsDebugOverlay>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
 #endif
         }
     }
