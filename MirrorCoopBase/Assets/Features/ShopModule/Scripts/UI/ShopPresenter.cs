@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Features.MvpModule;
+using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Configurations;
 using Features.ShopModule.Scripts.Core;
 using Features.ShopModule.Scripts.Data;
@@ -47,21 +48,21 @@ namespace Features.ShopModule.Scripts.UI {
         }
 
         private IReadOnlyList<ShopItemDisplay> CreateDisplays() {
-            List<ShopItemDisplay> displays = new(_shopCatalog.Entries.Count);
-            foreach (ShopCatalog.Entry entry in _shopCatalog.Entries)
+            List<ShopItemDisplay> displays = new(_shopCatalog.Modules.Count);
+            foreach (ModuleDefinition module in _shopCatalog.Modules)
                 displays.Add(new ShopItemDisplay(
-                    entry.DisplayName,
-                    string.Format(MODULE_TYPE_FORMAT, entry.Item.Type),
-                    _shopItemStatsService.FormatStats(entry.Item),
-                    entry.Description,
-                    string.Format(PRICE_FORMAT, entry.Price),
-                    entry.Icon));
+                    module.DisplayName,
+                    string.Format(MODULE_TYPE_FORMAT, module.SlotType),
+                    _shopItemStatsService.FormatStats(module),
+                    module.Description,
+                    string.Format(PRICE_FORMAT, module.Price),
+                    module.Icon));
 
             return displays;
         }
 
         private void OnBalanceChanged() {
-            for (int i = 0; i < _shopCatalog.Entries.Count; i++)
+            for (int i = 0; i < _shopCatalog.Modules.Count; i++)
                 View.SetItemAffordable(i, _shopPurchaseService.CanAfford(_walletModel.Balance, i));
         }
 

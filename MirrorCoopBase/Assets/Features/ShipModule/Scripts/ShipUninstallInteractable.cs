@@ -1,18 +1,13 @@
 using Features.GrabModule.Scripts;
 using Mirror;
 using UnityEngine;
-using Zenject;
 
 namespace Features.ShipModule.Scripts {
     public sealed class ShipUninstallInteractable : InteractableBase {
+        private const string MISSING_ITEM_ERROR_FORMAT =
+            "{0}: module '{1}' has no item prefab in the {2}, it stays in the slot.";
+
         [SerializeField] private ShipSocket _socket;
-
-        private ShipStationCatalog _stations;
-
-        [Inject]
-        private void Construct(ShipStationCatalog stations) {
-            _stations = stations;
-        }
 
         public override bool CanUse(NetworkIdentity user, GrabController grab) {
             if (_socket == null || _socket.CanUninstall == false)
@@ -25,14 +20,15 @@ namespace Features.ShipModule.Scripts {
             if (_socket == null || grab == null || grab.IsHolding)
                 return;
 
-            ItemViewId view = _socket.InstalledView;
-            if (_stations == null || _stations.TryGetItemPrefab(view, out GameObject prefab) == false)
+            if (TryGetInstalledItemPrefab(out ShipItem prefab) == false) {
+                UnityEngine.Debug.LogError(string.Format(MISSING_ITEM_ERROR_FORMAT, _socket.name, _socket.InstalledModuleId, nameof(ModuleCatalog)));
                 return;
+            }
 
             Transform arm = grab.ArmPoint;
             Vector3 position = arm != null ? arm.position : _socket.transform.position;
             Quaternion rotation = arm != null ? arm.rotation : _socket.transform.rotation;
-            GameObject instance = Instantiate(prefab, position, rotation);
+            GameObject instance = Instantiate(prefab.gameObject, position, rotation);
             NetworkServer.Spawn(instance);
             Grabbable item = instance.GetComponent<Grabbable>();
             if (item == null || grab.ServerGive(item) == false) {
@@ -41,6 +37,15 @@ namespace Features.ShipModule.Scripts {
             }
 
             _socket.ServerClearInstall();
+        }
+
+        private bool TryGetInstalledItemPrefab(out ShipItem prefab) {
+            prefab = null;
+            if (_socket.TryGetInstalledModule(out ModuleDefinition module) == false)
+                return false;
+
+            prefab = module.ItemPrefab;
+            return prefab != null;
         }
     }
 }

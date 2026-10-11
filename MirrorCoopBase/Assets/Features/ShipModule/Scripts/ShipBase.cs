@@ -18,7 +18,6 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private ShipSocketsSync _socketStates;
         [SerializeField] private ShipStatsSync _statsSync;
 
-        private EngineCatalog _engines;
         private ShipFlightSettings _flightSettings;
         private ShipAccumulativeStatsConfiguration _statsConfiguration;
 
@@ -82,12 +81,10 @@ namespace Features.ShipModule.Scripts {
 
         [Inject]
         private void InjectDependencies(
-            EngineCatalog engines,
             ShipFlightSettings settings,
             ShipAccumulativeStatsConfiguration statsConfiguration,
             IReadOnlyShipRunModel run,
             IShipRunService runService) {
-            _engines = engines;
             _flightSettings = settings;
             _statsConfiguration = statsConfiguration;
 
@@ -100,7 +97,7 @@ namespace Features.ShipModule.Scripts {
                 _sockets != null && _stats != null && _socketStates != null && _statsSync != null,
                 name + " needs its sockets, socket states, stat entity and stats sync wired.");
             _deckGeometry = new ShipDeckGeometry(transform, _deck, _deckColliders);
-            _modules = new ShipModules(_sockets, new ShipStatSheet(_stats), _statsSync, ReadEngines, ReadStatsConfiguration);
+            _modules = new ShipModules(_sockets, new ShipStatSheet(_stats), _statsSync, ReadStatsConfiguration);
             _riders = new ShipRiders(this, _deckGeometry, _rideVolume, ReadFlightSettings);
             _seats = new ShipSeats(this, _sockets, _riders);
             _flightControl = new ShipFlightControl(ReadFlightSettings, _modules, _seats);
@@ -305,12 +302,9 @@ namespace Features.ShipModule.Scripts {
             _body.angularVelocity = Vector3.zero;
         }
 
-        // The injected settings and catalog are read on use, so the parts do not depend on injection before Awake.
+        // The injected settings are read on use, so the parts do not depend on injection before Awake.
         private ShipFlightSettings ReadFlightSettings() =>
             _flightSettings;
-
-        private EngineCatalog ReadEngines() =>
-            _engines;
 
         private ShipAccumulativeStatsConfiguration ReadStatsConfiguration() =>
             _statsConfiguration;

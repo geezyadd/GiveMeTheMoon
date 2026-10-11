@@ -1,3 +1,4 @@
+using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Configurations;
 
 namespace Features.ShopModule.Scripts.Core {
@@ -8,14 +9,14 @@ namespace Features.ShopModule.Scripts.Core {
             _shopCatalog = shopCatalog;
 
         public ShopPurchaseResult Evaluate(long balance, int entryIndex) {
-            if (entryIndex < 0 || entryIndex >= _shopCatalog.Entries.Count)
+            if (entryIndex < 0 || entryIndex >= _shopCatalog.Modules.Count)
                 return new ShopPurchaseResult(ShopPurchaseStatus.UnknownItem, null);
 
-            ShopCatalog.Entry entry = _shopCatalog.Entries[entryIndex];
-            if (balance < entry.Price)
-                return new ShopPurchaseResult(ShopPurchaseStatus.NotEnoughMoney, entry);
+            ModuleDefinition module = _shopCatalog.Modules[entryIndex];
+            if (balance < module.Price)
+                return new ShopPurchaseResult(ShopPurchaseStatus.NotEnoughMoney, module);
 
-            return new ShopPurchaseResult(ShopPurchaseStatus.Success, entry);
+            return new ShopPurchaseResult(ShopPurchaseStatus.Success, module);
         }
 
         public bool CanAfford(long balance, int entryIndex) =>

@@ -8,23 +8,8 @@ namespace Features.ShopModule.Scripts.Configurations {
         fileName = nameof(ShopCatalog) + "_Default",
         menuName = "Configurations/ShopModule/" + nameof(ShopCatalog))]
     public sealed class ShopCatalog : ScriptableObject {
-        [Serializable]
-        public sealed class Entry {
-            [SerializeField] private ShipItem _item;
-            [SerializeField] private string _displayName;
-            [SerializeField] private Sprite _icon;
-            [SerializeField] private long _price;
-            [SerializeField, TextArea] private string _description;
+        [SerializeField] private ModuleDefinition[] _modules = Array.Empty<ModuleDefinition>();
 
-            public ShipItem Item => _item;
-            public string DisplayName => _displayName;
-            public Sprite Icon => _icon;
-            public long Price => _price;
-            public string Description => _description;
-        }
-
-        [SerializeField] private Entry[] _entries = Array.Empty<Entry>();
-
-        public IReadOnlyList<Entry> Entries => _entries;
+        public IReadOnlyList<ModuleDefinition> Modules => _modules;
     }
 }

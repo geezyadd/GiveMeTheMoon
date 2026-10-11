@@ -31,8 +31,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<PlayerLifeConfiguration>(Address.Configurations.PlayerLifeConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<GrabConfiguration>(Address.Configurations.GrabConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<PlayerNameplateConfiguration>(Address.Configurations.PlayerNameplateConfiguration_Default).AsSingle();
-            Container.BindConfigurationFromAddressables<ItemViewCatalog>(Address.Configurations.ItemViewCatalog_Default).AsSingle();
-            Container.BindConfigurationFromAddressables<EngineCatalog>(Address.Configurations.EngineCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ModuleCatalog>(Address.Configurations.ModuleCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShipStationCatalog>(Address.Configurations.ShipStationCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShipRadarCatalog>(Address.Configurations.ShipRadarCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<CameraCatalog>(Address.Configurations.CameraCatalog_Default).AsSingle();

@@ -15,21 +15,21 @@ MonoBehaviour:
   _padPrefab: {fileID: 956412859401598705, guid: 181b5ec58bae5d643840d0ebe2b1f093, type: 3}
   _wreckPrefab: {fileID: 5660766188749124005, guid: 10d08395dec54e64f97814057311f1f1, type: 3}
   _drops:
-  - _prefab: {fileID: 8101338388048282597, guid: c4e8a91b2d3f40a5b6c7d8e9f0a1b2c3, type: 3}
+  - _module: {fileID: 11400000, guid: ff75a78d06c01c043bfcb1689bf9f18e, type: 2}
     _minLoop: 0
     _count: 4
-  - _prefab: {fileID: 8201338388048282597, guid: 5b8d02f3c4e15701b2d3e4f506172839, type: 3}
+  - _module: {fileID: 11400000, guid: 18e611b809e42b54d86c75587eabe0fd, type: 2}
     _minLoop: 0
     _count: 1
-  - _prefab: {fileID: 8401338388048282597, guid: 7d0f24b5e6037923d4f50617283a4b5c, type: 3}
+  - _module: {fileID: 11400000, guid: c1c580efab94a8849b12152cea7b8e60, type: 2}
     _minLoop: 0
     _count: 1
-  - _prefab: {fileID: 994844451999365020, guid: 224c26326f73b4e4e8a12a383d1cfc82, type: 3}
+  - _module: {fileID: 11400000, guid: ed0a9eee18ae3044abbdd909ac66cfb6, type: 2}
     _minLoop: 0
     _count: 1
-  - _prefab: {fileID: 8101338388048282597, guid: c4e8a91b2d3f40a5b6c7d8e9f0a1b2c3, type: 3}
+  - _module: {fileID: 11400000, guid: ff75a78d06c01c043bfcb1689bf9f18e, type: 2}
     _minLoop: 1
     _count: 2
-  - _prefab: {fileID: 8601338388048282597, guid: f9a2b3c4d5e61728394a5b6c7d8e90f1, type: 3}
+  - _module: {fileID: 11400000, guid: 545fb73e510c00640acbfc66d56bb1a3, type: 2}
     _minLoop: 0
     _count: 1

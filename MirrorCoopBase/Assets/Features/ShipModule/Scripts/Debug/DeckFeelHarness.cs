@@ -1072,7 +1072,7 @@ namespace Features.ShipModule.Scripts.Debug {
                 if (TryFindDrop(socket.AcceptedType, out ShipItem item) == false)
                     continue;
 
-                socket.ServerTryInstall(item.Type, item.View);
+                socket.ServerTryInstall(item.Module.Id);
             }
         }
 
@@ -1082,15 +1082,11 @@ namespace Features.ShipModule.Scripts.Debug {
                 return false;
 
             for (int i = 0; i < _stations.Drops.Length; i++) {
-                GameObject prefab = _stations.Drops[i].Prefab;
-                if (prefab == null)
+                ModuleDefinition module = _stations.Drops[i].Module;
+                if (module.SlotType != type)
                     continue;
 
-                ShipItem candidate = prefab.GetComponent<ShipItem>();
-                if (candidate == null || candidate.Type != type)
-                    continue;
-
-                item = candidate;
+                item = module.ItemPrefab;
                 return true;
             }
 

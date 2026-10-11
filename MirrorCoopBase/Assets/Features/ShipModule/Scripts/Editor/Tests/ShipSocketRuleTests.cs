@@ -34,29 +34,23 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
             Assert.IsFalse(_engineRule.CanInstall(false, ShipModuleType.Engine, Run(ShipRunPhase.Build, UNLOCK_LOOP - 1)));
 
         [Test]
-        public void WhenOccupiedEngineSocketInBuild_ThenModuleCanBeUninstalled() =>
-            Assert.IsTrue(_engineRule.CanUninstall(true, Run(ShipRunPhase.Build)));
+        public void WhenRemovableModuleInstalledInBuild_ThenModuleCanBeUninstalled() =>
+            Assert.IsTrue(_engineRule.CanUninstall(true, true, Run(ShipRunPhase.Build)));
 
         [TestCase(ShipRunPhase.Takeoff)]
         [TestCase(ShipRunPhase.Cruise)]
         [TestCase(ShipRunPhase.Landing)]
         [TestCase(ShipRunPhase.Wreck)]
         public void WhenNotInBuild_ThenModuleCannotBeUninstalled(ShipRunPhase phase) =>
-            Assert.IsFalse(_engineRule.CanUninstall(true, Run(phase)));
+            Assert.IsFalse(_engineRule.CanUninstall(true, true, Run(phase)));
 
         [Test]
         public void WhenSocketIsEmpty_ThenNothingCanBeUninstalled() =>
-            Assert.IsFalse(_engineRule.CanUninstall(false, Run(ShipRunPhase.Build)));
-
-        [TestCase(ShipModuleType.Control)]
-        [TestCase(ShipModuleType.Seat)]
-        [TestCase(ShipModuleType.Turret)]
-        public void WhenModuleTypeIsNotRemovable_ThenModuleCannotBeUninstalled(ShipModuleType type) =>
-            Assert.IsFalse(new ShipSocketRule(type, UNLOCK_LOOP).CanUninstall(true, Run(ShipRunPhase.Build)));
+            Assert.IsFalse(_engineRule.CanUninstall(false, true, Run(ShipRunPhase.Build)));
 
         [Test]
-        public void WhenRadarSocketIsOccupiedInBuild_ThenModuleCanBeUninstalled() =>
-            Assert.IsTrue(new ShipSocketRule(ShipModuleType.Radar, UNLOCK_LOOP).CanUninstall(true, Run(ShipRunPhase.Build)));
+        public void WhenInstalledModuleIsNotRemovable_ThenModuleCannotBeUninstalled() =>
+            Assert.IsFalse(_engineRule.CanUninstall(true, false, Run(ShipRunPhase.Build)));
 
         [Test]
         public void WhenLoopReachesUnlockLoop_ThenSocketIsUnlocked() =>

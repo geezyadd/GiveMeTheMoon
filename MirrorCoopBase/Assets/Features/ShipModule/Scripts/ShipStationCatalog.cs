@@ -6,11 +6,11 @@ namespace Features.ShipModule.Scripts {
     public sealed class ShipStationCatalog : ScriptableObject {
         [Serializable]
         public sealed class DropEntry {
-            [SerializeField] private GameObject _prefab;
+            [SerializeField] private ModuleDefinition _module;
             [SerializeField] private int _minLoop;
             [SerializeField] private int _count = 1;
 
-            public GameObject Prefab => _prefab;
+            public ModuleDefinition Module => _module;
             public int MinLoop => Mathf.Max(0, _minLoop);
             public int Count => Mathf.Max(0, _count);
         }
@@ -22,26 +22,5 @@ namespace Features.ShipModule.Scripts {
         public GameObject PadPrefab => _padPrefab;
         public GameObject WreckPrefab => _wreckPrefab;
         public DropEntry[] Drops => _drops;
-
-        public bool TryGetItemPrefab(ItemViewId view, out GameObject prefab) {
-            prefab = null;
-            if (view == ItemViewId.None || _drops == null)
-                return false;
-
-            for (int i = 0; i < _drops.Length; i++) {
-                DropEntry entry = _drops[i];
-                if (entry == null || entry.Prefab == null)
-                    continue;
-
-                ShipItem item = entry.Prefab.GetComponent<ShipItem>();
-                if (item == null || item.View != view)
-                    continue;
-
-                prefab = entry.Prefab;
-                return true;
-            }
-
-            return false;
-        }
     }
 }
