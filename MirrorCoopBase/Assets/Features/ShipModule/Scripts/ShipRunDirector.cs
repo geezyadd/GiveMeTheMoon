@@ -1,57 +1,27 @@
 using System.Collections.Generic;
 using Features.GrabModule.Scripts;
+using Features.ShipModule.Scripts.Generated;
 using Mirror;
 using UnityEngine;
 using Zenject;
 
 namespace Features.ShipModule.Scripts {
-    public sealed class ShipRunDirector : NetworkBehaviour {
+    public sealed class ShipRunDirector : ShipRunBridge {
         [SerializeField] private ShipBase _ship;
         [SerializeField] private ShipLandingPad _startPad;
-        [SerializeField] private ShipStationCatalog _stations;
-
-        [SyncVar(hook = nameof(OnRunStateChanged))]
-        private ShipRunPhase _phase;
-
-        [SyncVar(hook = nameof(OnRunStateChangedInt))]
-        private int _loopIndex;
-
-        [SyncVar(hook = nameof(OnRunStateChangedDouble))]
-        private double _cruiseEndNetworkTime;
-
-        [SyncVar(hook = nameof(OnRunStateChangedBool))]
-        private bool _launchLocked;
-
-        [SyncVar(hook = nameof(OnRunStateChangedFloat))]
-        private float _transitWorkRemaining;
-
-        [SyncVar(hook = nameof(OnRunStateChangedFloat))]
-        private float _transitSpeed = 1f;
-
-        [SyncVar(hook = nameof(OnRunStateChangedFloat))]
-        private float _transitAlignment = 1f;
-
-        [SyncVar(hook = nameof(OnRunStateChangedFloat))]
-        private float _transitSecondsRemaining;
-
-        [SyncVar(hook = nameof(OnRunStateChangedVector3))]
-        private Vector3 _transitDestination;
 
         [Inject]
-        private ShipRunService _run;
+        private IShipRunService _run;
 
         [Inject]
-        private ShipRunModel _model;
+        private ShipStationCatalog _stations;
 
         [Inject]
-        private ShipStationCatalog _injectedStations;
-
-        [Inject]
-        private ShipRadarService _radar;
+        private IShipRadarBinding _radar;
 
         private GameObject _localWreck;
         private GameObject _previousLocalWreck;
-        private bool _clientOwnsModel;
+        private bool _clientStarted;
 
         private void LateUpdate() {
             if (isServer && _run != null && (_ship == null || _ship.IsFlying == false))
@@ -59,6 +29,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         public override void OnStartServer() {
+            base.OnStartServer();
             if (_run != null)
                 _run.Bind(this, _ship, _startPad);
         }
@@ -70,44 +41,22 @@ namespace Features.ShipModule.Scripts {
 
         // The server binds the ship in ShipRunService.Bind; a client's HUD radar needs the same ship.
         public override void OnStartClient() {
-            _clientOwnsModel = isServer == false;
-            ApplyToModel();
+            base.OnStartClient();
+            _clientStarted = true;
             _radar.BindShip(_ship);
         }
 
         public override void OnStopClient() {
+            _clientStarted = false;
             _radar.UnbindShip();
-            ClientResetModel();
+            base.OnStopClient();
         }
 
-        // A scene unload can destroy the director without OnStopClient.
-        private void OnDestroy() =>
-            ClientResetModel();
-
-        // The server resets the model in ShipRunService.Unbind; a remote client wrote it from the SyncVars, so it resets
-        // its own copy, or the lobby keeps the last run's frozen flight timer.
-        private void ClientResetModel() {
-            if (_clientOwnsModel == false)
-                return;
-
-            _clientOwnsModel = false;
-            _model.ResetMatch();
-        }
-
-        internal void ServerPublish() {
-            if (_model == null)
-                return;
-
-            _phase = _model.Phase;
-            _loopIndex = _model.LoopIndex;
-            _cruiseEndNetworkTime = _model.CruiseEndNetworkTime;
-            _launchLocked = _model.LaunchLocked;
-            _transitWorkRemaining = _model.TransitWorkRemaining;
-            _transitSpeed = _model.TransitSpeed;
-            _transitAlignment = _model.TransitAlignment;
-            _transitSecondsRemaining = _model.TransitSecondsRemaining;
-            _transitDestination = _model.TransitDestination;
-            ApplyToModel();
+        // A scene unload can destroy the director without OnStopClient; the bridge must still clear the run model, or
+        // the lobby keeps the last run's frozen flight timer.
+        private void OnDestroy() {
+            if (_clientStarted)
+                OnStopClient();
         }
 
         internal void ServerPlaceWreck(Vector3 position, Quaternion rotation) {
@@ -206,60 +155,7 @@ namespace Features.ShipModule.Scripts {
                 Destroy(_previousLocalWreck);
 
             _previousLocalWreck = _localWreck;
-            GameObject prefab = ResolveWreckPrefab();
-            if (prefab == null)
-                return;
-
-            _localWreck = Instantiate(prefab, position, rotation);
-        }
-
-        private GameObject ResolveWreckPrefab() {
-            if (_stations != null && _stations.WreckPrefab != null)
-                return _stations.WreckPrefab;
-
-            return _injectedStations != null ? _injectedStations.WreckPrefab : null;
-        }
-
-        private void OnRunStateChanged(ShipRunPhase previous, ShipRunPhase current) =>
-            ApplyToClientModel();
-
-        private void OnRunStateChangedInt(int previous, int current) =>
-            ApplyToClientModel();
-
-        private void OnRunStateChangedDouble(double previous, double current) =>
-            ApplyToClientModel();
-
-        private void OnRunStateChangedBool(bool previous, bool current) =>
-            ApplyToClientModel();
-
-        private void OnRunStateChangedFloat(float previous, float current) =>
-            ApplyToClientModel();
-
-        private void OnRunStateChangedVector3(Vector3 previous, Vector3 current) =>
-            ApplyToClientModel();
-
-        // Mirror runs these hooks on the host while ServerPublish is still assigning the SyncVars one by one;
-        // copying the half-updated set back would overwrite the server model (e.g. LoopIndex reset to 0).
-        private void ApplyToClientModel() {
-            if (isServer)
-                return;
-
-            ApplyToModel();
-        }
-
-        private void ApplyToModel() {
-            if (_model == null)
-                return;
-
-            _model.Phase = _phase;
-            _model.LoopIndex = _loopIndex;
-            _model.CruiseEndNetworkTime = _cruiseEndNetworkTime;
-            _model.LaunchLocked = _launchLocked;
-            _model.TransitWorkRemaining = _transitWorkRemaining;
-            _model.TransitSpeed = _transitSpeed;
-            _model.TransitAlignment = _transitAlignment;
-            _model.TransitSecondsRemaining = _transitSecondsRemaining;
-            _model.TransitDestination = _transitDestination;
+            _localWreck = Instantiate(_stations.WreckPrefab, position, rotation);
         }
     }
 }

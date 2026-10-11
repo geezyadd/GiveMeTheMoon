@@ -14,3 +14,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   AccumulativeStats:
   - 4
+  _defaults:
+  - Type: 1
+    MaxValue: 999
+    Value: 0
+  - Type: 5
+    MaxValue: 99
+    Value: 1
+  - Type: 2
+    MaxValue: 20
+    Value: 1
+  - Type: 3
+    MaxValue: 20
+    Value: 1
+  - Type: 4
+    MaxValue: 100
+    Value: 100

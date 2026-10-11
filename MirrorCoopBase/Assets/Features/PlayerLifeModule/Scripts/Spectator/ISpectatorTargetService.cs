@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.PlayerProfileModule.Data.Generated;
 using UnityEngine;
 
 namespace Features.PlayerLifeModule.Scripts.Spectator {
@@ -8,5 +9,6 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
         public int Step(int index, int direction, int count);
         public string BuildTargetLabel(Transform target, int index);
         public string BuildNoTargetsLabel();
+        public bool TryGetProfile(Transform target, out IReadOnlyPlayerProfileModel profile);
     }
 }

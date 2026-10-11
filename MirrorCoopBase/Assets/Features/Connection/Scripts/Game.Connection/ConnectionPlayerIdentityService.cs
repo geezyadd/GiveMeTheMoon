@@ -29,14 +29,13 @@ namespace Game.Connection {
         private readonly List<NetworkConnectionToClient> _closedConnections = new List<NetworkConnectionToClient>();
 
         public PlayerKey GetKey(NetworkConnectionToClient connection) {
-            if (connection == null || connection.authenticationData is ConnectionAuthenticator.AuthRequestMessage == false)
-                throw new InvalidOperationException("Player connection has no authentication data.");
+            ConnectionAuthenticator.AuthRequestMessage request = ConnectionAuthenticator.GetAuthRequest(connection);
 
             ForgetClosedConnections();
             if (_keyByConnection.TryGetValue(connection, out PlayerKey assigned))
                 return assigned;
 
-            string baseId = GetBaseKeyId((ConnectionAuthenticator.AuthRequestMessage)connection.authenticationData);
+            string baseId = GetBaseKeyId(request);
             if (string.IsNullOrEmpty(baseId))
                 throw new InvalidOperationException("Direct connection has no client id.");
 

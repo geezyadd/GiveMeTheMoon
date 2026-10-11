@@ -134,6 +134,7 @@ namespace Features.ShipModule.Scripts {
             _travelSpeed = Mathf.Max(0f, metersPerSecond);
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         public void DebugFace(Vector3 worldForward) {
             Vector3 flat = worldForward;
             flat.y = 0f;
@@ -143,6 +144,7 @@ namespace Features.ShipModule.Scripts {
             _restHeading = Quaternion.LookRotation(flat.normalized, Vector3.up);
             _routeHeading = _restHeading;
         }
+#endif
 
         public void ShiftWorld(Vector3 delta) {
             _from += delta;

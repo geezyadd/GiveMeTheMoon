@@ -3,8 +3,6 @@ using UnityEngine;
 namespace Features.CameraModule.Scripts {
     [CreateAssetMenu(menuName = "Game/Camera Catalog", fileName = "CameraCatalog")]
     public sealed class CameraCatalog : ScriptableObject {
-        public const string ResourceName = "CameraCatalog";
-
         [SerializeField] private string _startupCameraId = CameraIds.TPCamera;
         [SerializeField] private float _defaultBlendSeconds = 0.45f;
         [SerializeField] private float _lookSensitivity = 0.18f;

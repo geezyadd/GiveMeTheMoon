@@ -1,9 +1,16 @@
+using System;
+using Features.ShipModule.Scripts.Generated;
 using Mirror;
 using UnityEngine;
+using UnityEngine.Assertions;
 using Zenject;
 
 namespace Features.ShipModule.Scripts {
     public sealed class ShipSocket : NetworkBehaviour {
+        private const string UNKNOWN_MODULE_INSTALL_FORMAT = "{0}: module '{1}' is not in the {2}, it cannot be installed.";
+        private const string UNKNOWN_MODULE_VIEW_FORMAT = "{0}: installed module '{1}' is not in the {2}, its slot view is not shown.";
+
+        [SerializeField] private string _socketId;
         [SerializeField] private ShipModuleType _acceptedType = ShipModuleType.Engine;
         [SerializeField] private bool _requiredForLaunch;
         [SerializeField] private Outline _outline;
@@ -12,94 +19,122 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private int _unlockLoop;
         [SerializeField] private ShipBase _ship;
 
-        private ItemViewCatalog _catalog;
+        private ModuleCatalog _moduleCatalog;
         private ShipRadarCatalog _radarCatalog;
+        private IReadOnlyShipRunModel _run;
+        private IReadOnlyShipSocketsModel _sockets;
         private ShipSeat _seat;
-        private ShipRunModel _run;
-
-        [SyncVar(hook = nameof(OnOccupiedChanged))]
-        private bool _occupied;
-
-        [SyncVar(hook = nameof(OnInstalledViewChanged))]
-        private ItemViewId _installedViewId;
-
-        [SyncVar(hook = nameof(OnOccupantChanged))]
-        private uint _occupantNetId;
-
+        private ShipSocketRule _rule;
+        private ShipSocketState _shownState;
         private GameObject _spawnedView;
 
+        public string SocketId => _socketId;
         public ShipModuleType AcceptedType => _acceptedType;
         public bool RequiredForLaunch => _requiredForLaunch;
-        public bool IsOccupied => _occupied;
-        public ItemViewId InstalledView => _occupied ? _installedViewId : ItemViewId.None;
-        public uint OccupantNetId => _occupantNetId;
+        public bool IsOccupied => State.Occupied;
+        public string InstalledModuleId => IsOccupied ? State.ModuleId : null;
+        public uint OccupantNetId => State.OccupantNetId;
         public ShipSeat Seat => _seat;
         public bool IsSittable => _seat != null;
 
         public bool CanAccept(ShipModuleType type) =>
-            _occupied == false && type == _acceptedType && IsUnlocked;
+            Rule.CanInstall(IsOccupied, type, RunState);
 
         public bool CanUninstall =>
-            _occupied && IsBuildPhase && CanRemoveModule(_acceptedType);
+            Rule.CanUninstall(IsOccupied, IsInstalledModuleRemovable, RunState);
 
-        public bool IsUnlocked => _run == null || _run.LoopIndex >= _unlockLoop;
+        public bool IsUnlocked => Rule.IsUnlocked(RunState);
 
-        private bool IsBuildPhase =>
-            _run == null || _run.Phase == ShipRunPhase.Build;
+        private ShipSocketRule Rule => _rule ??= new ShipSocketRule(_acceptedType, _unlockLoop);
+
+        private bool IsInstalledModuleRemovable =>
+            TryGetInstalledModule(out ModuleDefinition module) && module.IsRemovable;
+
+        private ShipSocketRunState RunState =>
+            new ShipSocketRunState(_run.LoopIndex, _run.Phase);
+
+        // A socket the server has not written yet is empty.
+        private ShipSocketState State =>
+            _sockets.States.TryGetValue(_socketId, out ShipSocketState state) ? state : default;
 
         public bool HasHelmPilot =>
-            _occupantNetId != 0 && _seat != null && _seat.Role == ShipSeatRole.Helm;
+            OccupantNetId != 0 && _seat != null && _seat.Role == ShipSeatRole.Helm;
 
         [Inject]
-        private void Construct(
-            ItemViewCatalog catalog,
+        private void InjectDependencies(
+            ModuleCatalog moduleCatalog,
             ShipRadarCatalog radarCatalog,
-            [Inject(Optional = true)] ShipRunModel run) {
-            _catalog = catalog;
+            IReadOnlyShipRunModel run,
+            IReadOnlyShipSocketsModel sockets) {
+            _moduleCatalog = moduleCatalog;
             _radarCatalog = radarCatalog;
             _run = run;
-            RefreshView();
+            _sockets = sockets;
         }
 
+        private void Awake() =>
+            Assert.IsFalse(string.IsNullOrEmpty(_socketId), name + " needs a socket id unique within the ship.");
+
+        // The sockets bridge may start before or after this socket; when it starts later, its availability change
+        // shows the full state.
         public override void OnStartClient() {
+            _sockets.OnStatesChanged += HandleSocketsChanged;
+            _sockets.OnAvailableChanged += HandleSocketsChanged;
+            _shownState = State;
             RefreshView();
         }
 
-        public override void OnStartServer() {
-            RefreshView();
+        public override void OnStopClient() {
+            _sockets.OnStatesChanged -= HandleSocketsChanged;
+            _sockets.OnAvailableChanged -= HandleSocketsChanged;
         }
+
+        public override void OnStartServer() =>
+            RefreshView();
 
         internal void SetHovered(bool hovered) {
             if (_outline == null)
                 return;
 
-            if (_occupied && IsSittable)
-                _outline.enabled = hovered && _occupantNetId == 0;
-            else if (_occupied)
+            if (IsOccupied && IsSittable)
+                _outline.enabled = hovered && OccupantNetId == 0;
+            else if (IsOccupied)
                 _outline.enabled = hovered && CanUninstall;
             else
                 _outline.enabled = hovered && IsUnlocked;
         }
 
-        public bool ServerTryInstall(ShipModuleType type, ItemViewId view) {
-            if (isServer == false || CanAccept(type) == false || view == ItemViewId.None)
+        public bool TryGetInstalledModule(out ModuleDefinition module) {
+            module = null;
+            return IsOccupied && _moduleCatalog.TryGet(State.ModuleId, out module);
+        }
+
+        public bool ServerTryInstall(string moduleId) {
+            if (isServer == false)
                 return false;
 
-            _installedViewId = view;
-            _occupied = true;
-            if (_ship != null)
-                _ship.ServerOnModuleInstalled(this);
+            if (_moduleCatalog.TryGet(moduleId, out ModuleDefinition module) == false)
+                throw new InvalidOperationException(string.Format(UNKNOWN_MODULE_INSTALL_FORMAT, name, moduleId, nameof(ModuleCatalog)));
+
+            if (CanAccept(module.SlotType) == false)
+                return false;
+
+            ShipSocketState state = State;
+            state.ModuleId = module.Id;
+            state.Occupied = true;
+            ServerWriteState(state);
+            _ship.Modules.ServerOnModuleInstalled(this, module);
             return true;
         }
 
         internal bool CanSeat(uint riderNetId) =>
-            IsSittable && riderNetId != 0 && _occupantNetId == 0;
+            IsSittable && riderNetId != 0 && OccupantNetId == 0;
 
         internal bool ServerTrySit(uint riderNetId) {
             if (isServer == false || CanSeat(riderNetId) == false)
                 return false;
 
-            _occupantNetId = riderNetId;
+            ServerWriteOccupant(riderNetId);
             return true;
         }
 
@@ -107,27 +142,24 @@ namespace Features.ShipModule.Scripts {
             if (isServer == false)
                 return;
 
-            if (_occupantNetId == riderNetId)
-                _occupantNetId = 0;
+            if (OccupantNetId == riderNetId)
+                ServerWriteOccupant(0);
         }
 
         internal void ServerClearOccupant() {
-            if (isServer == false)
+            if (isServer == false || OccupantNetId == 0)
                 return;
 
-            _occupantNetId = 0;
+            ServerWriteOccupant(0);
         }
 
         internal void ServerClearInstall() {
             if (isServer == false)
                 return;
 
-            if (_ship != null)
-                _ship.ServerOnModuleUninstalled(this);
+            _ship.Modules.ServerOnModuleUninstalled(this);
 
-            _occupantNetId = 0;
-            _occupied = false;
-            _installedViewId = ItemViewId.None;
+            ServerWriteState(default);
         }
 
         internal Vector3 ResolveSitLocalOffset(Transform ship) {
@@ -135,31 +167,30 @@ namespace Features.ShipModule.Scripts {
             return Quaternion.Inverse(ship.rotation) * (point.position - ship.position);
         }
 
-        private void OnOccupiedChanged(bool previous, bool current) {
-            RefreshView();
+        private void ServerWriteOccupant(uint riderNetId) {
+            ShipSocketState state = State;
+            state.OccupantNetId = riderNetId;
+            ServerWriteState(state);
         }
 
-        private void OnInstalledViewChanged(ItemViewId previous, ItemViewId current) {
-            RefreshView();
-        }
-
-        private void OnOccupantChanged(uint previous, uint current) {
-            SetHovered(false);
-            if (_ship != null)
-                _ship.ClientSyncSeat(this, previous, current);
-        }
+        private void ServerWriteState(ShipSocketState state) =>
+            _ship.SocketStates.ServerSetStates(_socketId, state);
 
         private void RefreshView() {
             ClearSpawnedView();
             _seat = null;
-            if (_occupied == false || _installedViewId == ItemViewId.None)
+            if (IsOccupied == false)
                 return;
 
             SetHovered(false);
-            if (_catalog == null || _catalog.TryGetPrefab(_installedViewId, out GameObject prefab) == false)
+            // A synced id this peer's catalog does not know: report it, but keep the client running.
+            if (TryGetInstalledModule(out ModuleDefinition module) == false) {
+                UnityEngine.Debug.LogError(string.Format(UNKNOWN_MODULE_VIEW_FORMAT, name, State.ModuleId, nameof(ModuleCatalog)));
                 return;
+            }
 
-            Transform point = ResolveInstallPoint(_installedViewId);
+            GameObject prefab = module.SlotViewPrefab;
+            Transform point = ResolveInstallPoint(module);
             _spawnedView = Instantiate(prefab, point);
             _spawnedView.transform.localPosition = Vector3.zero;
             _spawnedView.transform.localRotation = Quaternion.identity;
@@ -168,11 +199,11 @@ namespace Features.ShipModule.Scripts {
             BindRadarScreen(_spawnedView);
         }
 
-        private Transform ResolveInstallPoint(ItemViewId view) {
+        private Transform ResolveInstallPoint(ModuleDefinition module) {
             if (_viewInstallPoints != null) {
                 for (int i = 0; i < _viewInstallPoints.Length; i++) {
                     ItemViewInstallPoint entry = _viewInstallPoints[i];
-                    if (entry == null || entry.View != view || entry.Point == null)
+                    if (entry == null || entry.Module != module || entry.Point == null)
                         continue;
 
                     return entry.Point;
@@ -202,10 +233,6 @@ namespace Features.ShipModule.Scripts {
                 screen.Bind(_radarCatalog, _run, _ship);
         }
 
-        private static bool CanRemoveModule(ShipModuleType type) {
-            return type == ShipModuleType.Engine || type == ShipModuleType.Radar;
-        }
-
         private void ClearSpawnedView() {
             if (_spawnedView == null)
                 return;
@@ -216,6 +243,26 @@ namespace Features.ShipModule.Scripts {
 
             Destroy(_spawnedView);
             _spawnedView = null;
+        }
+
+        // A remote client's bridge clears the model on stop, after IsAvailable turned false: the modules and seats shown
+        // then stay as they were, as before the model.
+        private void HandleSocketsChanged() {
+            if (_sockets.IsAvailable == false)
+                return;
+
+            ShipSocketState shown = _shownState;
+            _shownState = State;
+            if (shown.OccupantNetId != _shownState.OccupantNetId)
+                HandleOccupantChanged(shown.OccupantNetId, _shownState.OccupantNetId);
+
+            if (shown.Occupied != _shownState.Occupied || shown.ModuleId != _shownState.ModuleId)
+                RefreshView();
+        }
+
+        private void HandleOccupantChanged(uint previous, uint current) {
+            SetHovered(false);
+            _ship.Seats.ClientSyncSeat(this, previous, current);
         }
     }
 }

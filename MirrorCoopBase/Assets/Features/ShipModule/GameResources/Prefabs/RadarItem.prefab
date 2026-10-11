@@ -37,7 +37,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 8716994252094384491}
+  - {fileID: 8247866367336282723}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &8602851584363655409
@@ -187,8 +187,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e10dcfcf246c11344aec2c93a175cefe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _type: 4
-  _view: 5
+  _module: {fileID: 11400000, guid: 545fb73e510c00640acbfc66d56bb1a3, type: 2}
+--- !u!114 &8671000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8601338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea2e96eb0fc33df49bdad2a6927f17c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _idleData: {fileID: 11400000, guid: c4d8e1a0000000019a0b1c2d3e4f500e, type: 2}
+  _readyData: {fileID: 0}
+  _source: {fileID: 0}
 --- !u!1001 &319168041852201282
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -246,24 +260,8 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e8f1a2b3c4d5061728394a5b6c7d8e90, type: 3}
---- !u!4 &8716994252094384491 stripped
+--- !u!4 &8247866367336282723 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8510579984047903521, guid: e8f1a2b3c4d5061728394a5b6c7d8e90, type: 3}
   m_PrefabInstance: {fileID: 319168041852201282}
   m_PrefabAsset: {fileID: 0}
-
---- !u!114 &8671000000000000001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8601338388048282597}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ea2e96eb0fc33df49bdad2a6927f17c9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _data: {fileID: 11400000, guid: c4d8e1a0000000019a0b1c2d3e4f500e, type: 2}
-  _readyData: {fileID: 0}
-  _source: {fileID: 0}

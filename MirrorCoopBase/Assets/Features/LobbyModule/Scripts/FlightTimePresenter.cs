@@ -1,12 +1,13 @@
 using Features.MvpModule;
 using Features.ShipModule.Scripts;
+using Features.ShipModule.Scripts.Generated;
 using UnityEngine;
 
 namespace Features.LobbyModule.Scripts {
     public sealed class FlightTimePresenter : PresenterBehaviour<FlightTimeViewBase> {
-        private readonly ShipRunModel _run;
+        private readonly IReadOnlyShipRunModel _run;
 
-        public FlightTimePresenter(ShipRunModel run) {
+        public FlightTimePresenter(IReadOnlyShipRunModel run) {
             _run = run;
         }
 
@@ -26,7 +27,7 @@ namespace Features.LobbyModule.Scripts {
             View.SetTimeText(Format(_run));
         }
 
-        private static string Format(ShipRunModel run) {
+        private static string Format(IReadOnlyShipRunModel run) {
             if (run == null || run.Phase == ShipRunPhase.Wreck)
                 return "to platform —";
 

@@ -3,8 +3,6 @@ using UnityEngine;
 namespace Features.ShipModule.Scripts {
     [CreateAssetMenu(menuName = "Game/Ship Radar Catalog", fileName = "ShipRadarCatalog")]
     public sealed class ShipRadarCatalog : ScriptableObject {
-        public const string ResourceName = "ShipRadarCatalog";
-
         [SerializeField] private GameObject _mapStatusPrefab;
         [SerializeField] private GameObject _camMapPrefab;
         [SerializeField] private GameObject _iconPrefab;

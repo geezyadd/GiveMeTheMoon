@@ -53,6 +53,12 @@ namespace Features.PlayerLifeModule.Scripts.Generated {
             AssignState(state);
         }
 
+        public PlayerLifeState State => _state;
+
+        [Server]
+        public void ServerSetState(PlayerLifeState value) =>
+            AssignState(value);
+
         private void AssignState(PlayerLifeState state) {
             _state = state;
             if (NetworkServer.activeHost == false)

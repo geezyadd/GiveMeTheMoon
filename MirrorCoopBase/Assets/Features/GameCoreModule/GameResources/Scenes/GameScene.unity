@@ -551,7 +551,6 @@ MonoBehaviour:
   syncInterval: 0
   _ship: {fileID: 1919157910}
   _startPad: {fileID: 887142471}
-  _stations: {fileID: 11400000, guid: 46bdf038b1c7d8e37495a6b7c8d9e1f0, type: 2}
 --- !u!114 &619906492
 MonoBehaviour:
   m_ObjectHideFlags: 0

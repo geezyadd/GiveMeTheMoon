@@ -8,28 +8,51 @@ station to station and upgrades the ship with modules along the way.
 
 ### Core loop (current focus)
 1. Start at the first station with base money, enough for the simplest upgrades.
-2. **Management phase.** Players buy modules in the shop (**L** key) and install them in ship slots: engines,
+2. **Management phase.** Players buy modules at the station's shop kiosk (aim + **E**; bought items appear on its delivery pad) and install them in ship slots: engines,
    propeller, helm, radar, more later. The balance is shared by the crew.
 3. **Flight phase.** The ship flies to the next station while players stand and walk on the deck.
 4. Arrival at the next station: new purchases and upgrades, then the loop repeats.
 
 Intent: in flight the ship stays almost still and the world moves past it, so players on deck get less jitter. This
-is not final yet and needs evaluation. **How the code works now** (`ShipFlight`, `ShipRunService`):
-- on takeoff the ship moves over 9 s to a hover point (+350 m forward, +100 m up);
-- in cruise it hangs at that point: only heading and side sway during dodging change;
-- flight progress is a timer (`ShipTransit`), not distance;
-- only rocks fly past the ship;
-- on landing the next pad spawns and the ship moves onto it over 9 s.
+is not final yet and needs evaluation. **How the code works now** (`ShipFlightSettings`, `ShipFlight`, `ShipRoute`,
+`ShipRunService`):
+- there are two flight modes (`ShipFlightMode`). The default is `TravelInSpace` (`ShipFlightConfig_Default.asset`):
+  the ship really flies to the next station;
+- on launch the route is chosen and the next pad spawns right away at the destination: a random direction inside a
+  170° cone ahead, 280 m from the hover point plus 112 m per loop (`ShipRoute.ChooseDestination`);
+- on takeoff the ship moves over 9 s to a hover point (+350 m forward, +100 m up) and turns its nose to the route;
+- in cruise it flies along its heading at `CruiseSpeed` (14 m/s) × the `FlightSpeed` stat. With a helm module
+  installed, the pilot in the helm seat turns the heading and sways the ship sideways; without a helm module the ship
+  keeps the route heading;
+- arrival is by distance: the ship is within `ApproachDistance` (70 m) of the destination (`ShipRoute.HasArrived`).
+  In this mode `ShipTransit` only gives the time estimate for the HUD (distance / speed);
+- on landing the ship eases onto the pad's landing point (`LandingSeconds` = 9 s) and the phase becomes `Build`;
+- after a landing farther than 800 m from the world origin the world is shifted back to it
+  (`ShipWorldShiftService.RecenterIfFar`, `WorldShift`; clients get it through `ShipRunDirector`);
+- nothing flies past the ship: rocks are removed and there is no scenery yet;
+- the old mode `HoverInPlace` is still in the code: the ship hangs at the hover point, progress is the `ShipTransit`
+  timer and the next pad spawns at landing. It is chosen in the config asset or, in editor / development builds,
+  through `IShipRouteDebug.DebugUseFlightMode`.
 
-## Loop status (2026-10-01)
+## Loop status (2026-10-11)
 The loop runs from start to end, but it does not match the design yet:
-- on every landing `ServerResetForBuild` removes **all** installed modules;
-- modules drop for free at a station (`ShipStationCatalog.Drops`);
-- the shop opens anywhere;
-- there is no income, only the starting balance;
-- only the `FlightSpeed` stat affects the game;
-- rocks are harmless;
+- modules stay on the ship after a normal landing. `ServerResetForBuild` removes **all** installed modules only at the
+  start and end of a run and on an aborted flight (`ShipRunService.FinishAtCurrentPose`; nothing calls `ServerAbort`
+  yet);
+- modules are installed and removed only in the `Build` phase (`ShipSocketRule`);
+- modules still drop for free on every arrival at a station (`ShipStationCatalog.Drops`,
+  `ShipStationDropService.SpawnDrops`), so the shop is not needed yet;
+- there is no income, only the starting balance (`WalletConfiguration`, 1 000 000 now);
+- the final ship stats are synced to clients (`ShipStats` model), but only `FlightSpeed` (cruise speed) and
+  `DodgeRange` (side sway) affect the game, and no module changes `DodgeRange`; `Thrust`, `Handling` and `Armor` are
+  not read by gameplay;
+- a pilot who turns the ship away from the destination can fly forever: there is no autopilot and no timeout;
+- the run has no goal: it ends only when the whole crew is dead (`PlayerLifeSystem` → lobby);
+- nobody can join after the run has started (`ConnectionRejectReason.MapAlreadyStarted`);
 - there is no sound or VFX.
+
+Known issue: on the first landing of a `DeckFeelHarness` run the player jumps about 136 m in one frame, dies and the
+crew returns to the lobby. Seen on 2026-10-06, also on the base commit; not fixed and not investigated.
 
 M1 priorities are in `Docs/ROADMAP.md`.
 
@@ -87,21 +110,33 @@ types.
 - Module assemblies by layer (an assembly references only lower layers; module references in brackets):
   1. `Features.GameCoreModule.Contracts` (`IGameplaySession`, `SceneNames`),
      `Features.AddressablesConstantGeneratorModule` (`Address_g.cs`), `Features.MvpModule` (AssetLoader),
-     `Features.FloatingControllerModule`; third-party `QuickOutline` and `MiniMapModular` (`Mini Mapa(Radar)`) also
-     have their own asmdef.
+     `Features.FloatingControllerModule`, `Features.PlayerProfileModule.Data` (NetworkModel; the generated
+     `PlayerProfile` model and `IPlayerProfileSource`); third-party `QuickOutline` and `MiniMapModular`
+     (`Mini Mapa(Radar)`) also have their own asmdef.
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader).
-  3. `Features.CameraModule` (CharacterMovable, Contracts, Input) → `Features.GrabModule` (Camera, CharacterMovable).
-  4. `Features.ShipModule` (Camera, Grab, CharacterMovable, FloatingController, GameFlow, Stats, Connection, MiniMap),
-     `Features.MenuModule` (GameFlow, Mvp, Connection).
-  5. `Features.PlayerLifeModule` (Ship, Grab, Camera, Mvp, NetworkModel, Connection), `Features.LobbyModule` (Ship,
+  3. `Features.CameraModule` (CharacterMovable, Contracts, Input) → `Features.GrabModule` (Camera, CharacterMovable,
+     Contracts, NetworkModel).
+  4. `Features.ShipModule` (Camera, Grab, CharacterMovable, FloatingController, GameFlow, Stats, Connection, MiniMap,
+     NetworkModel),
+     `Features.MenuModule` (GameFlow, Mvp, Connection),
+     `Features.PlayerProfileModule` (PlayerProfileModule.Data, Camera, NetworkModel, TextMeshPro).
+  5. `Features.PlayerLifeModule` (Ship, Grab, Camera, Mvp, NetworkModel, Connection, PlayerProfileModule.Data),
+     `Features.LobbyModule` (Ship,
      GameFlow, Mvp, Connection).
-  6. `Features.ShopModule` (PlayerLife, Ship, Camera, GameFlow, Mvp, NetworkModel) → `Features.TooltipModule` (Shop,
+  6. `Features.ShopModule` (PlayerLife, Ship, Camera, GameFlow, Mvp, NetworkModel, PlayerProfileModule.Data) →
+     `Features.TooltipModule` (Shop,
      Ship, Grab, Mvp).
   7. Composition root: `Features.GameCoreModule` (all modules) and `Features.BootstrapersModule` (Contracts,
      GameFlow, SceneLoader).
   Tests: `Features.CharacterMovableModule.Editor.Tests`, `Features.PlayerLifeModule.Editor.Tests`,
-  `Features.ShipModule.Editor.Tests`, `Game.Connection.Editor.Tests`.
+  `Features.ShipModule.Editor.Tests`, `Features.ShopModule.Editor.Tests`, `Features.GameCoreModule.Editor.Tests`
+  (configuration loading and module catalog guards), `Game.Connection.Editor.Tests`,
+  `Features.PlayerProfileModule.Editor.Tests`, `NetworkModelModule.Editor.Tests`.
+- Player identity and name come from Connection only through NetworkModel contracts: `IPlayerIdentityService`
+  (`PlayerKey`) and `IPlayerNameSource` (the authenticated name), implemented in Connection. Other modules read a
+  player's name through `IPlayerProfileSource` / `IReadOnlyPlayerProfileModel` (PlayerProfileModule.Data), not
+  through the `PlayerProfile` bridge.
 - The camera does not know about Grab: `IGameCameraService.LookApplied` fires in `PresentNow()` after
   `ApplyLookRig()` and before the brain update; `HeldItemFollowSystem` (Grab) listens to it. The frame order is the
   same as before.
@@ -111,12 +146,21 @@ types.
 ### Key places
 | What | Where |
 |---|---|
-| Ship, flight, riders | `Assets/Features/ShipModule/Scripts/`: `ShipBase`, `ShipFlight`, `ShipPoseSync`, `ShipRider`, `ShipRunService`, `ShipRunDirector` |
+| Ship, flight, riders | `Assets/Features/ShipModule/Scripts/`: `ShipBase` (ties its parts: `ShipDeckGeometry`, `ShipModules`, `ShipRiders`, `ShipSeats`, `ShipFlightControl`, `ShipDeckCargo`), `ShipFlight`, `ShipPoseSync`, `ShipRider`, `ShipRunDirector`, `ShipRunService` (phase machine) with `ShipStationPads`, `ShipStationDropService`, `ShipRoute`, `ShipFlightStatService`, `ShipWorldShiftService`, `ShipRunRiderService`, `ShipRunBindingModel` |
 | Flight and landing settings | `ShipFlightSettings` (+ `ShipFlightConfig_Default.asset`), `ShipRunConfig` |
-| Modules and slots | `ShipItem`, `ShipSocket`, `Ship*Interactable`, catalogs in `ShipModule/GameResources/Resources/` |
-| Stats | `Assets/Features/StatsModule/`, `ShipStatType`, `ShipStatEntity` |
-| Interaction | `Assets/Features/GrabModule/` (`UseController`, `InteractableBase`, `Grabbable`) |
-| Shop and money | `Assets/Features/ShopModule/` (`CrewWallet`, `ShopCatalog`, `WalletConfiguration`) |
+| Modules and slots | a module is one `ModuleDefinition` asset (`ShipModule/GameResources/Modules/`: id, slot type, item prefab, slot view, name, price, stat modifiers); `ModuleCatalog` lists them all and resolves a module id (`ModuleCatalogValidator` checks it at startup); `ShipItem`, `ShipSocket` (+ `ShipSocketRule`, state in the `ShipSockets` model), `Ship*Interactable`; catalogs in `ShipModule/GameResources/Configurations/` (Addressables) |
+| Stats | `Assets/Features/StatsModule/`, `ShipStatType`, `ShipStatEntity`, `ShipStatSheet` (server: base values from `ShipAccumulativeStatsConfiguration` plus module modifiers), synced `ShipStats` model; player movement stats are `PlayerStatType` / `PlayerStatsConfiguration` in `CharacterMovableModule/Scripts/PlayerStats/` |
+| World shift | `WorldShift` (count and total of the shifts), `ShipWorldShiftService`, `ShipPoseSync` |
+| Cargo on the deck | `ShipDeckCargo`: items lying on the deck are attached to the ship and travel with it |
+| Radar | `ShipRadarService`, `ShipRadarScreen`, `ShipRadarCatalog` |
+| Deck debugging | `ShipModule/Scripts/Debug/` (editor / development builds only): `DeckFeelHarness` (deck feel measurements), `ShipStatsDebugOverlay` |
+| Death, damage, spectator | `Assets/Features/PlayerLifeModule/`: `PlayerLifeSystem` (life state machines, all dead → lobby), `PlayerDamageable`, `FallKillSystem`, `SpectatorSystem`, `PlayerLifeConfiguration`, `PlayerDamageConfiguration`; **F9** kills the local player in editor / development builds |
+| Tooltips | `Assets/Features/TooltipModule/`: `InteractionTooltip` on the object, `TooltipContentService`, `Tooltip_*.asset` in `GameResources/Configurations/` |
+| Synced models | `Assets/Features/NetworkModelModule/` (model + bridge + generator), see "Synced models" |
+| Interaction | `Assets/Features/GrabModule/`: `LocalPlayerInteraction` (aim, highlight, button), `GrabController` (hand, `PlayerHand` model), `UseController`, `HeldItemRegistry`, `InteractableBase`, `Grabbable`, `GrabConfiguration` |
+| Shop and money | `Assets/Features/ShopModule/` (`CrewWallet`, `ShopCatalog`, `WalletConfiguration`); the kiosk `ShopKioskInteractable` is part of the `StationPad` prefab, `ShopAccessService` / `ShopAccessRule` decide open, keep-open and purchase (Build, alive, distance from `ShopKioskConfiguration`), the server keeps the opened kiosk per player in `ShopVisitModel`; **L** opens the shop only in editor / development builds |
+| Buying back a dead crewmate | the shop window's "Crew" section (`CrewReviveView` / `CrewRevivePresenter`, list `DeadCrewModel`, kept by `DeadCrewSystem` from the synced `PlayerLifeRegistry`) → `CrewWallet.CmdRevive` → `ReviveShopSystem` (kiosk check like a purchase, `ReviveRule`, then `ServerTrySpend`, then `IPlayerLifeReviver.ServerRevive(PlayerKey)`); price in `ReviveConfiguration`; the revived body is teleported to the ship's next `ShipDeckSpawnPoint` in turn (`IShipDeckSpawnPoints`); `ReviveConfigurationValidator` fails startup on a price <= 0 |
+| Player names and nameplates | `Assets/Features/PlayerProfileModule/`: `PlayerProfile` (bridge of the `PlayerProfile` model, the server fills the name), `PlayerNameSanitizer`, `PlayerNameplate` (TMP over other players' heads), `PlayerNameplateConfiguration`; the model is in `Data/` |
 | Scenes | `GameCoreModule/GameResources/Scenes/`: Bootstrap → Menu → Lobby → Game; only Bootstrap is in Build Settings |
 
 ### How to verify
@@ -125,10 +169,21 @@ ParrelSync clone (`MirrorCoopBase_clone_0`).
 
 ### Loop autotest
 The PlayMode test `LoopSmokeTest` (`Assets/Tests/PlayMode/LoopSmoke/`) plays the M1 loop on a host by itself:
-menu → Host → lobby → Start → `GameScene`, installs 2 engines, takes off and lands twice, and checks the phases,
-`LoopIndex`, engines after landing, the ship on the new pad, the player on deck, no wreckage, return to menu and no
+menu → Host → lobby → Start → `GameScene`, installs 2 engines, takes the radar off, drops, picks up and reinstalls it by hand through the real third-person
+aim (`LoopSmokeHandCheck`), takes off and lands twice, and checks the phases,
+`LoopIndex`, engines after landing, the ship on the new pad, one shop kiosk per pad, the player on deck, no wreckage.
+At the first station it reaches it buys back a dead crewmate with a second player, a bot on the host (`LoopSmokeReviveCheck`:
+the price is taken once for a double click, no buy-back without money, the revived player stands at a deck spawn
+point; then the host dies and the bot buys them back). After the second landing everyone dies, the crew returns to
+the lobby and the test checks that no object of the first run is left. Then it starts a second run, flies one loop
+and at that station buys 5 items at the kiosk through the real aim and the window (`LoopSmokeShopCheck`: delivery
+point, window closes when walking away, a far purchase is refused), returns to the menu and checks that there are no
 errors in the log. The test shortens flight timings with its own copy of `ShipRunConfig`; assets are not changed. The
-test takes about 30 s.
+test timeout is 180 s.
+
+EditMode guard tests keep the data rules: `ConfigurationLoadingGuardTests` (no `Resources.Load`, every configuration
+address loads), `ModuleCatalogGuardTests` (module ids set and unique, shop and drops only use catalog modules, no code
+checks a concrete module), `ShipSocketIdTests` (every ship socket has a unique id).
 
 Run from the workspace root:
 `Invoke-AgentEditor.ps1 -AgentDir . -Command run-tests -Mode PlayMode -Filter LoopSmoke`
@@ -169,7 +224,7 @@ A reference to a network object is a `NetworkIdentity` or `GameObject` field: Mi
 The shop wallet is the `Wallet` model (`long Balance`). The start value comes from `WalletConfiguration`, a purchase lowers the balance, HUD and shop read `IReadOnlyWalletModel`.
 
 ## Working rules
-- Development branch: `GameCore`.
+- Work branch: `GameCore`. Feature branches are created from it and merged back by pull request.
 - Prefer conservative fixes, no rewrites. Change feel values (speeds, springs) only deliberately and write
   "was → now".
 - **Never use singletons.** Neither your own (`static Instance`, `Singleton`) nor built-in ones

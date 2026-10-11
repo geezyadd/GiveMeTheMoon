@@ -3,6 +3,6 @@ using UnityEngine;
 
 namespace Features.ShopModule.Scripts.Core {
     public interface IShopItemSpawnService {
-        public void SpawnNear(ShipItem itemPrefab, Transform buyer);
+        public void SpawnAtDelivery(ShipItem itemPrefab, Transform deliveryPoint);
     }
 }

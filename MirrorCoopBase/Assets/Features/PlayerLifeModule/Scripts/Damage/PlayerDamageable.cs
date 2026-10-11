@@ -1,4 +1,5 @@
 using System;
+using Features.NetworkModelModule.Scripts;
 using Features.PlayerLifeModule.Scripts.Generated;
 using Mirror;
 using Zenject;
@@ -15,6 +16,9 @@ namespace Features.PlayerLifeModule.Scripts {
 
         public IReadOnlyPlayerLifeModel Life =>
             Bound;
+
+        public PlayerKey Key =>
+            new PlayerKey(PlayerKeyId);
 
         public float Health =>
             Bound.Health;

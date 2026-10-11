@@ -11,6 +11,7 @@ namespace Game.Connection
             Container.BindInterfacesTo<ConnectionSessionService>().AsSingle();
             Container.BindInterfacesTo<SteamLobbyService>().AsSingle();
             Container.Bind<IPlayerIdentityService>().To<ConnectionPlayerIdentityService>().AsSingle();
+            Container.Bind<IPlayerNameSource>().To<ConnectionPlayerNameSource>().AsSingle();
             Container.Bind<IGameplaySession>().To<ConnectionGameplaySession>().AsSingle();
         }
     }

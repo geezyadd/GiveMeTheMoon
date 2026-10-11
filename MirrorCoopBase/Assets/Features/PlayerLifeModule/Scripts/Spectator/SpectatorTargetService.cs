@@ -1,5 +1,6 @@
 using System.Collections.Generic;
-using Game.Connection;
+using Features.PlayerProfileModule.Data;
+using Features.PlayerProfileModule.Data.Generated;
 using Mirror;
 using UnityEngine;
 
@@ -40,23 +41,33 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
         public string BuildNoTargetsLabel() =>
             NO_TARGETS_LABEL;
 
+        public bool TryGetProfile(Transform target, out IReadOnlyPlayerProfileModel profile) {
+            profile = null;
+            IPlayerProfileSource source = target.GetComponentInParent<IPlayerProfileSource>();
+            if (source == null || source.Model == null)
+                return false;
+
+            profile = source.Model;
+            return true;
+        }
+
         private static bool BelongsToLocalPlayer(Transform target) {
             NetworkIdentity identity = target.GetComponentInParent<NetworkIdentity>();
             return identity != null && identity.isLocalPlayer;
         }
 
-        private static string ResolveDisplayName(Transform target, int index) =>
+        private string ResolveDisplayName(Transform target, int index) =>
             TryGetSyncedName(target, out string playerName)
                 ? playerName
                 : PLAYER_PREFIX + (index + 1).ToString();
 
-        private static bool TryGetSyncedName(Transform target, out string playerName) {
+        private bool TryGetSyncedName(Transform target, out string playerName) {
             playerName = null;
-            ConnectionPlayerName playerNameSource = target.GetComponentInParent<ConnectionPlayerName>();
-            if (playerNameSource == null || string.IsNullOrWhiteSpace(playerNameSource.DisplayName))
+            if (TryGetProfile(target, out IReadOnlyPlayerProfileModel profile) == false
+                || string.IsNullOrWhiteSpace(profile.DisplayName))
                 return false;
 
-            playerName = playerNameSource.DisplayName;
+            playerName = profile.DisplayName;
             return true;
         }
 

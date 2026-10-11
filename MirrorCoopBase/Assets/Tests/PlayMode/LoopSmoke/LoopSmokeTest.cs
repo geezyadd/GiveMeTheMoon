@@ -10,7 +10,10 @@ using Features.GrabModule.Scripts;
 using Features.LobbyModule.Scripts;
 using Features.MenuModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
+using Features.PlayerProfileModule.Scripts;
 using Features.ShipModule.Scripts;
+using Features.ShopModule.Scripts.Network;
+using Features.ShipModule.Scripts.Generated;
 using Game.Connection;
 using Mirror;
 using NUnit.Framework;
@@ -39,6 +42,7 @@ namespace Tests.PlayMode.LoopSmoke {
         // GameCore has no kill volume yet: a player this far below the pad top counts as lost.
         private const float KILL_DEPTH_BELOW_PAD = 2f;
         private const int REQUIRED_ENGINES = 2;
+        private const string ROCKET_ENGINE_MODULE_ID = "rocket-engine";
         // Only timings are shortened; distances, heights and pads stay as shipped.
         private const string FAST_TIMINGS_JSON =
             "{\"_takeoffSeconds\":1.5,\"_cruiseSeconds\":2,\"_landingSeconds\":1.5,\"_perLoopCruiseSeconds\":0}";
@@ -57,7 +61,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private LoopSmokeErrorLog _errorLog;
         private int _lobbyRuntimeObjects;
         private ShipRunConfig _fastConfig;
-        private ShipRunModel _model;
+        private IReadOnlyShipRunModel _model;
         private ShipBase _ship;
 
         [SetUp]
@@ -84,6 +88,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return BoardPlayerCoroutine();
             int startStationItems = CountSceneObjects<ShipItem>();
             Assert.Greater(startStationItems, 0, "Run 1 has no items at the start station.");
+            yield return new LoopSmokeHandCheck(_ship).ReinstallRadarByHandCoroutine();
 
             ShipLandingPad startPad = FindPadUnderShip();
             yield return FlyLoopCoroutine(1);
@@ -92,6 +97,7 @@ namespace Tests.PlayMode.LoopSmoke {
             int firstLandingSpawns = CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values);
             LogSpawnedCounts("run 1 after the first landing");
             Assert.Greater(firstLandingSpawns, 0, "Run 1 spawned no pad or drops on landing.");
+            yield return new LoopSmokeReviveCheck(_ship).BuyBackCrewCoroutine(firstPad, ResolveNetworkManager());
 
             yield return FlyLoopCoroutine(2);
             yield return AssertLandedSafelyCoroutine(firstPad, FindPadUnderShip());
@@ -111,6 +117,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return AssertLandedSafelyCoroutine(secondRunStartPad, FindPadUnderShip());
             LogSpawnedCounts("run 2 after the first landing");
             Assert.AreEqual(firstLandingSpawns, CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values), "Run 2 does not spawn the same pad and drops on landing as run 1.");
+            yield return new LoopSmokeShopCheck().BuyAtKioskAndWalkAwayCoroutine(FindPadUnderShip());
 
             yield return LeaveToMenuCoroutine();
             Assert.AreEqual(0, _errorLog.Count, $"Errors were logged during the loop:\n{_errorLog.Describe()}");
@@ -184,7 +191,7 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         private static bool IsRuntimeNonPlayer(NetworkIdentity identity) =>
-            identity != null && identity.sceneId == 0 && identity.GetComponent<ConnectionPlayerName>() == null;
+            identity != null && identity.sceneId == 0 && identity.GetComponent<PlayerProfile>() == null;
 
         private static void LogSpawnedCounts(string moment) =>
             Debug.Log($"[LoopSmoke] {moment}: server spawned {NetworkServer.spawned.Count} "
@@ -199,7 +206,7 @@ namespace Tests.PlayMode.LoopSmoke {
                     continue;
 
                 Assert.AreEqual(ShipModuleType.Engine, socket.AcceptedType, $"Required socket {socket.name} does not take an engine.");
-                Assert.IsTrue(socket.ServerTryInstall(ShipModuleType.Engine, ItemViewId.Engine), $"Engine install failed on {socket.name}.");
+                Assert.IsTrue(socket.ServerTryInstall(ROCKET_ENGINE_MODULE_ID), $"Engine install failed on {socket.name}.");
                 installed++;
             }
 
@@ -209,7 +216,7 @@ namespace Tests.PlayMode.LoopSmoke {
 
         // Stands in for walking aboard: the player is put above the deck and lands on it under physics.
         private IEnumerator BoardPlayerCoroutine() {
-            Bounds deck = _ship.DeckBounds;
+            Bounds deck = _ship.DeckGeometry.Bounds;
             Vector3 target = new Vector3(deck.center.x, deck.max.y + BOARD_DROP_HEIGHT, deck.center.z);
             Rigidbody body = LocalPlayer().GetComponent<CharacterMovableBase>().Body;
             body.position = target;
@@ -217,7 +224,7 @@ namespace Tests.PlayMode.LoopSmoke {
             body.linearVelocity = Vector3.zero;
 
             yield return new WaitForSeconds(BOARD_SETTLE_SECONDS);
-            Assert.IsTrue(ContainsXZ(_ship.DeckBounds, LocalPlayer().transform.position, PLAYER_ON_SURFACE_TOLERANCE), "The player did not stay on the deck before launch.");
+            Assert.IsTrue(ContainsXZ(_ship.DeckGeometry.Bounds, LocalPlayer().transform.position, PLAYER_ON_SURFACE_TOLERANCE), "The player did not stay on the deck before launch.");
         }
 
         private IEnumerator FlyLoopCoroutine(int expectedLoopIndex) {
@@ -246,9 +253,11 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.AreEqual(REQUIRED_ENGINES, CountInstalledEngines(), "Engines were lost on landing.");
             Assert.AreNotSame(launchPad, landingPad, "The ship is not on a new pad after landing.");
             Assert.AreEqual(ShipRunAbortReason.None, _model.LastAbortReason, "The flight ended as a wreck.");
+            Assert.IsNotNull(landingPad.GetComponentInChildren<ShopKioskInteractable>(), "The new station has no shop kiosk.");
+            Assert.AreEqual(CountSceneObjects<ShipLandingPad>(), CountSceneObjects<ShopKioskInteractable>(), "Shop kiosks do not match the pads one to one.");
 
             Bounds padBounds = PadBounds(landingPad);
-            Bounds deck = _ship.DeckBounds;
+            Bounds deck = _ship.DeckGeometry.Bounds;
             Assert.IsTrue(ContainsXZ(padBounds, deck.min, DECK_ON_PAD_TOLERANCE) && ContainsXZ(padBounds, deck.max, DECK_ON_PAD_TOLERANCE),
                 $"The deck {deck} is not inside the pad {padBounds}.");
 
@@ -310,7 +319,7 @@ namespace Tests.PlayMode.LoopSmoke {
                 return false;
 
             _ship = Object.FindAnyObjectByType<ShipBase>();
-            _model = ProjectContext.Instance.Container.Resolve<ShipRunModel>();
+            _model = ProjectContext.Instance.Container.Resolve<IReadOnlyShipRunModel>();
             return _ship != null && _model.Phase == ShipRunPhase.Build;
         }
 
@@ -341,7 +350,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private int CountInstalledEngines() {
             int count = 0;
             foreach (ShipSocket socket in _ship.Sockets) {
-                if (socket.RequiredForLaunch && socket.InstalledView == ItemViewId.Engine)
+                if (socket.RequiredForLaunch && socket.InstalledModuleId == ROCKET_ENGINE_MODULE_ID)
                     count++;
             }
 

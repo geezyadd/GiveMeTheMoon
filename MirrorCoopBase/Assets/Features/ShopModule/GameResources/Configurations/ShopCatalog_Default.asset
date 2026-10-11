@@ -12,31 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ff3a281b3ac3394fa856487c3d1ae5f, type: 3}
   m_Name: ShopCatalog_Default
   m_EditorClassIdentifier: 
-  _spawnDistance: 1.5
-  _spawnHeight: 1
-  _entries:
-  - _item: {fileID: 8200000000000000001, guid: c4e8a91b2d3f40a5b6c7d8e9f0a1b2c3, type: 3}
-    _displayName: Rocket Engine
-    _icon: {fileID: 0}
-    _price: 300
-    _description: Compact rocket engine. Fits any engine socket.
-  - _item: {fileID: 8300000000000000001, guid: 5b8d02f3c4e15701b2d3e4f506172839, type: 3}
-    _displayName: Large Engine
-    _icon: {fileID: 0}
-    _price: 800
-    _description: Heavy engine with high thrust and top speed.
-  - _item: {fileID: 8500000000000000001, guid: 7d0f24b5e6037923d4f50617283a4b5c, type: 3}
-    _displayName: Propeller
-    _icon: {fileID: 0}
-    _price: 150
-    _description: Cheap propeller. Adds a little thrust.
-  - _item: {fileID: 8434903783980145932, guid: 224c26326f73b4e4e8a12a383d1cfc82, type: 3}
-    _displayName: Helm
-    _icon: {fileID: 0}
-    _price: 500
-    _description: Ship controls. Required to launch the ship.
-  - _item: {fileID: 8664903783980145932, guid: f9a2b3c4d5e61728394a5b6c7d8e90f1, type: 3}
-    _displayName: Radar
-    _icon: {fileID: 0}
-    _price: 400
-    _description: Shows the route and incoming obstacles.
+  _modules:
+  - {fileID: 11400000, guid: ff75a78d06c01c043bfcb1689bf9f18e, type: 2}
+  - {fileID: 11400000, guid: 18e611b809e42b54d86c75587eabe0fd, type: 2}
+  - {fileID: 11400000, guid: c1c580efab94a8849b12152cea7b8e60, type: 2}
+  - {fileID: 11400000, guid: ed0a9eee18ae3044abbdd909ac66cfb6, type: 2}
+  - {fileID: 11400000, guid: 545fb73e510c00640acbfc66d56bb1a3, type: 2}

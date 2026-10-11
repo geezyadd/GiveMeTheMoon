@@ -10,7 +10,7 @@ namespace Features.ShipModule.Scripts {
 
             ShipRider rider = other.GetComponentInParent<ShipRider>();
             if (rider != null)
-                _ship.SetVolumeOverlap(rider, true);
+                _ship.Riders.SetVolumeOverlap(rider, true);
         }
 
         private void OnTriggerExit(Collider other) {
@@ -19,7 +19,7 @@ namespace Features.ShipModule.Scripts {
 
             ShipRider rider = other.GetComponentInParent<ShipRider>();
             if (rider != null)
-                _ship.SetVolumeOverlap(rider, false);
+                _ship.Riders.SetVolumeOverlap(rider, false);
         }
     }
 }

@@ -82,7 +82,14 @@ namespace Features.NetworkModelModule.Scripts.Editor {
 
         private static string EmitState(NetworkModelSpec spec) {
             List<NetworkModelResolvedField> scalars = Scalars(spec);
-            NetworkModelCodeWriter writer = Begin(new List<string> { "System", "System.Collections.Generic" });
+            List<string> usings = new() { "System", "System.Collections.Generic" };
+            if (NeedsUnity(spec))
+                usings.Add("UnityEngine");
+
+            if (NeedsMirror(spec))
+                usings.Add("Mirror");
+
+            NetworkModelCodeWriter writer = Begin(usings);
             writer.Open("namespace " + spec.Namespace);
             writer.Open("public struct " + StateName(spec) + " : IEquatable<" + StateName(spec) + ">");
             for (int i = 0; i < scalars.Count; i++)
@@ -378,19 +385,37 @@ namespace Features.NetworkModelModule.Scripts.Editor {
             List<NetworkModelResolvedField> scalars = Scalars(spec);
             writer.Line();
             writer.Open("internal void ApplyState(" + StateName(spec) + " state)");
-            writer.Line("bool changed = false;");
             for (int i = 0; i < scalars.Count; i++) {
                 NetworkModelResolvedField field = scalars[i];
-                writer.Open("if (EqualityComparer<" + field.TypeName + ">.Default.Equals(" + field.PropertyName + ", state." + field.PropertyName + ") == false)");
-                writer.Line(field.PropertyName + " = state." + field.PropertyName + ";");
-                writer.Line("On" + field.PropertyName + "Changed?.Invoke();");
-                writer.Line("changed = true;");
-                writer.Close();
+                writer.Line("bool " + ChangedFlag(field) + " = EqualityComparer<" + field.TypeName + ">.Default.Equals(" + field.PropertyName + ", state." + field.PropertyName + ") == false;");
             }
 
-            writer.Line("if (changed)");
+            // Every field is assigned before any event fires, so a subscriber reads one consistent snapshot.
+            for (int i = 0; i < scalars.Count; i++)
+                writer.Line(scalars[i].PropertyName + " = state." + scalars[i].PropertyName + ";");
+
+            for (int i = 0; i < scalars.Count; i++) {
+                writer.Line("if (" + ChangedFlag(scalars[i]) + ")");
+                writer.Line("    On" + scalars[i].PropertyName + "Changed?.Invoke();");
+            }
+
+            writer.Line("if (" + AnyChanged(scalars) + ")");
             writer.Line("    RaiseChanged();");
             writer.Close();
+        }
+
+        private static string ChangedFlag(NetworkModelResolvedField field) =>
+            field.FieldName.TrimStart('_') + "Changed";
+
+        private static string AnyChanged(List<NetworkModelResolvedField> scalars) {
+            if (scalars.Count == 0)
+                return "false";
+
+            string text = ChangedFlag(scalars[0]);
+            for (int i = 1; i < scalars.Count; i++)
+                text += " || " + ChangedFlag(scalars[i]);
+
+            return text;
         }
 
         private static void WriteCollectionMutators(NetworkModelCodeWriter writer, NetworkModelSpec spec) {
@@ -631,8 +656,10 @@ namespace Features.NetworkModelModule.Scripts.Editor {
                 for (int i = 0; i < scalars.Count; i++)
                     WriteAtomicServerSet(writer, spec, scalars[i]);
 
-                if (scalars.Count > 0)
+                if (scalars.Count > 0) {
+                    WriteAtomicBatchSet(writer, spec);
                     WriteAssignState(writer, spec);
+                }
             }
             else {
                 List<NetworkModelResolvedField> scalars = Scalars(spec);
@@ -669,6 +696,16 @@ namespace Features.NetworkModelModule.Scripts.Editor {
             writer.Line("state." + field.PropertyName + " = value;");
             writer.Line("AssignState(state);");
             writer.Close();
+        }
+
+        // Several fields changed by one server step go out as one state, so no peer sees the half-written mix.
+        private static void WriteAtomicBatchSet(NetworkModelCodeWriter writer, NetworkModelSpec spec) {
+            writer.Line();
+            writer.Line("public " + StateName(spec) + " State => _state;");
+            writer.Line();
+            writer.Line("[Server]");
+            writer.Line("public void ServerSetState(" + StateName(spec) + " value) =>");
+            writer.Line("    AssignState(value);");
         }
 
         private static void WriteAssignState(NetworkModelCodeWriter writer, NetworkModelSpec spec) {

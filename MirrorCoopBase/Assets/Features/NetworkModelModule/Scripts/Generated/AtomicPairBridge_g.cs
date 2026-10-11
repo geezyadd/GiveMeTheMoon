@@ -23,6 +23,12 @@ namespace Features.NetworkModelModule.Scripts.Generated {
             AssignState(state);
         }
 
+        public AtomicPairState State => _state;
+
+        [Server]
+        public void ServerSetState(AtomicPairState value) =>
+            AssignState(value);
+
         private void AssignState(AtomicPairState state) {
             _state = state;
             if (NetworkServer.activeHost == false)

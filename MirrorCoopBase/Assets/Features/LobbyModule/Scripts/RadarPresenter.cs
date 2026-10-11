@@ -3,9 +3,9 @@ using Features.ShipModule.Scripts;
 
 namespace Features.LobbyModule.Scripts {
     public sealed class RadarPresenter : PresenterBehaviour<RadarViewBase> {
-        private readonly ShipRadarService _radar;
+        private readonly IShipRadarDisplay _radar;
 
-        public RadarPresenter(ShipRadarService radar) {
+        public RadarPresenter(IShipRadarDisplay radar) {
             _radar = radar;
         }
 

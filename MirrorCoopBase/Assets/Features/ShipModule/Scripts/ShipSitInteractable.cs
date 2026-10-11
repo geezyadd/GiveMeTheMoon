@@ -27,9 +27,9 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             if (_socket.OccupantNetId == rider.netId)
-                _ship.ServerStand(rider);
+                _ship.Seats.ServerStand(rider);
             else
-                _ship.ServerTrySit(rider, _socket);
+                _ship.Seats.ServerTrySit(rider, _socket);
         }
     }
 }

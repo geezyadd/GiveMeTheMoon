@@ -1,6 +1,9 @@
 using Features.AddressablesConstantsGenerator.Generated;
+using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
+using Features.GrabModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
+using Features.PlayerProfileModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Configurations;
 using Features.Zenject.Zenject.Addons.AddressablesConfigurationsLoader;
@@ -21,9 +24,17 @@ namespace Features.GameCoreModule.Scripts.Installers {
                 .AsSingle();
             Container.BindConfigurationFromAddressables<ShopCatalog>(Address.Configurations.ShopCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WalletConfiguration>(Address.Configurations.WalletConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ShopKioskConfiguration>(Address.Configurations.ShopKioskConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ReviveConfiguration>(Address.Configurations.ReviveConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<PlayerStatsConfiguration>(Address.Configurations.PlayerStatsConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<PlayerDamageConfiguration>(Address.Configurations.PlayerDamageConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<PlayerLifeConfiguration>(Address.Configurations.PlayerLifeConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<GrabConfiguration>(Address.Configurations.GrabConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<PlayerNameplateConfiguration>(Address.Configurations.PlayerNameplateConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ModuleCatalog>(Address.Configurations.ModuleCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ShipStationCatalog>(Address.Configurations.ShipStationCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ShipRadarCatalog>(Address.Configurations.ShipRadarCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<CameraCatalog>(Address.Configurations.CameraCatalog_Default).AsSingle();
         }
     }
 }

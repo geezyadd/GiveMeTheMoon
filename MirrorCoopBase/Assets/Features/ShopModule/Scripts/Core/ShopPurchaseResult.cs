@@ -1,13 +1,13 @@
-using Features.ShopModule.Scripts.Configurations;
+using Features.ShipModule.Scripts;
 
 namespace Features.ShopModule.Scripts.Core {
     public readonly struct ShopPurchaseResult {
         public ShopPurchaseStatus Status { get; }
-        public ShopCatalog.Entry Entry { get; }
+        public ModuleDefinition Module { get; }
 
-        public ShopPurchaseResult(ShopPurchaseStatus status, ShopCatalog.Entry entry) {
+        public ShopPurchaseResult(ShopPurchaseStatus status, ModuleDefinition module) {
             Status = status;
-            Entry = entry;
+            Module = module;
         }
     }
 }

@@ -18,28 +18,23 @@ namespace Features.PlayerLifeModule.Scripts.Generated {
         public event Action OnLastDamageTypeChanged;
 
         internal void ApplyState(PlayerLifeState state) {
-            bool changed = false;
-            if (EqualityComparer<global::Features.PlayerLifeModule.Scripts.PlayerLifeState>.Default.Equals(LifeState, state.LifeState) == false) {
-                LifeState = state.LifeState;
+            bool lifeStateChanged = EqualityComparer<global::Features.PlayerLifeModule.Scripts.PlayerLifeState>.Default.Equals(LifeState, state.LifeState) == false;
+            bool healthChanged = EqualityComparer<float>.Default.Equals(Health, state.Health) == false;
+            bool maxHealthChanged = EqualityComparer<float>.Default.Equals(MaxHealth, state.MaxHealth) == false;
+            bool lastDamageTypeChanged = EqualityComparer<global::Features.PlayerLifeModule.Scripts.DamageType>.Default.Equals(LastDamageType, state.LastDamageType) == false;
+            LifeState = state.LifeState;
+            Health = state.Health;
+            MaxHealth = state.MaxHealth;
+            LastDamageType = state.LastDamageType;
+            if (lifeStateChanged)
                 OnLifeStateChanged?.Invoke();
-                changed = true;
-            }
-            if (EqualityComparer<float>.Default.Equals(Health, state.Health) == false) {
-                Health = state.Health;
+            if (healthChanged)
                 OnHealthChanged?.Invoke();
-                changed = true;
-            }
-            if (EqualityComparer<float>.Default.Equals(MaxHealth, state.MaxHealth) == false) {
-                MaxHealth = state.MaxHealth;
+            if (maxHealthChanged)
                 OnMaxHealthChanged?.Invoke();
-                changed = true;
-            }
-            if (EqualityComparer<global::Features.PlayerLifeModule.Scripts.DamageType>.Default.Equals(LastDamageType, state.LastDamageType) == false) {
-                LastDamageType = state.LastDamageType;
+            if (lastDamageTypeChanged)
                 OnLastDamageTypeChanged?.Invoke();
-                changed = true;
-            }
-            if (changed)
+            if (lifeStateChanged || healthChanged || maxHealthChanged || lastDamageTypeChanged)
                 RaiseChanged();
         }
     }
