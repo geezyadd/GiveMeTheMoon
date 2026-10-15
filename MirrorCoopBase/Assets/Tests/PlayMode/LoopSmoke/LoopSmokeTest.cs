@@ -133,6 +133,7 @@ namespace Tests.PlayMode.LoopSmoke {
             LogSpawnedCounts("run 2 after the first landing");
             Assert.AreEqual(firstLandingSpawns, CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values), "Run 2 does not spawn the same pad and drops on landing as run 1.");
             yield return FlyMoreLoopsCoroutine(2, RUN_TWO_LOOPS);
+            _fieldCheck.AssertNetworkedPathWasChecked();
             yield return new LoopSmokeShopCheck().BuyAtKioskAndWalkAwayCoroutine(FindPadUnderShip());
 
             yield return LeaveToMenuCoroutine();

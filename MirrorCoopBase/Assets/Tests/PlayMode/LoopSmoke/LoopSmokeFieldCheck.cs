@@ -37,6 +37,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private readonly FieldStructureCatalog _fieldStructureCatalog;
 
         private int _lastFieldNumber;
+        private int _networkedPlacementsSeen;
 
         public LoopSmokeFieldCheck(DiContainer container) {
             _liveFieldModel = container.Resolve<IReadOnlyLiveFieldModel>();
@@ -69,13 +70,17 @@ namespace Tests.PlayMode.LoopSmoke {
             int localPlacements = Sum(localByStructure);
             Assert.AreEqual(localPlacements, CountActiveLocalObjects(), $"Loop {loopIndex}: local field objects differ from the local placements.");
             Assert.AreEqual(networkedPlacements, CountSpawnedNetworkedStructures(), $"Loop {loopIndex}: Mirror field objects differ from the networked placements.");
-            Assert.Greater(networkedPlacements, 0, $"Loop {loopIndex}: no networked placement, the Mirror path was not checked.");
+            _networkedPlacementsSeen += networkedPlacements;
             RememberMostLocalObjects(localByStructure);
             Assert.LessOrEqual(_flightFieldSceneModel.Root.childCount, Sum(_mostLocalObjectsByStructure), "The pool holds more objects than any field needed.");
             Debug.Log($"[LoopSmoke] loop {loopIndex} field {_liveFieldModel.Number}: {_liveFieldModel.SideCells} x {_liveFieldModel.SideCells} cells, "
                       + $"{localPlacements} local + {networkedPlacements} networked placements, {CountActiveLocalObjects()} local objects active, "
                       + $"{_flightFieldSceneModel.Root.childCount} pooled in all");
         }
+
+        // The beacon is picked by weight like any obstacle, so a single field may have none.
+        public void AssertNetworkedPathWasChecked() =>
+            Assert.Greater(_networkedPlacementsSeen, 0, "No field had a networked placement: the Mirror path was not checked.");
 
         // A player who joins at this station gets this state as the model snapshot: no field, nothing to build.
         public IEnumerator AssertFieldClearedCoroutine(int loopIndex) {
@@ -91,8 +96,8 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return WaitForCoroutine(IsLiveFieldBuilt, BUILD_TIMEOUT_SECONDS, "the field to be built before the world shift");
             Transform root = _flightFieldSceneModel.Root;
             Vector3 rootFromShip = root.position - ship.position;
-            Transform networked = FindSpawnedNetworkedStructure();
-            Vector3 networkedFromShip = networked.position - ship.position;
+            bool hasNetworked = TryFindSpawnedNetworkedStructure(out Transform networked);
+            Vector3 networkedFromShip = hasNetworked ? networked.position - ship.position : Vector3.zero;
             Vector3 origin = _liveFieldModel.Origin;
             int shifts = shipWorldShiftDebug.WorldShiftCount;
 
@@ -101,7 +106,8 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.AreEqual(shifts + 1, shipWorldShiftDebug.WorldShiftCount, "The debug recenter did not shift the world.");
             Assert.Greater((_liveFieldModel.Origin - origin).magnitude, MIN_SHIFT, "The live field origin did not move with the world shift.");
             Assert.Less((root.position - ship.position - rootFromShip).magnitude, SHIFT_TOLERANCE, "The local field objects jumped against the ship in the world shift.");
-            Assert.Less((networked.position - ship.position - networkedFromShip).magnitude, SHIFT_TOLERANCE, "A Mirror field object jumped against the ship in the world shift.");
+            if (hasNetworked)
+                Assert.Less((networked.position - ship.position - networkedFromShip).magnitude, SHIFT_TOLERANCE, "A Mirror field object jumped against the ship in the world shift.");
         }
 
         private bool IsLiveFieldBuilt() =>
@@ -157,14 +163,17 @@ namespace Tests.PlayMode.LoopSmoke {
             return count;
         }
 
-        private static Transform FindSpawnedNetworkedStructure() {
+        private static bool TryFindSpawnedNetworkedStructure(out Transform structure) {
+            structure = null;
             foreach (NetworkIdentity identity in NetworkServer.spawned.Values) {
-                if (identity != null && identity.GetComponent<FieldNetworkedStructure>() != null)
-                    return identity.transform;
+                if (identity == null || identity.GetComponent<FieldNetworkedStructure>() == null)
+                    continue;
+
+                structure = identity.transform;
+                return true;
             }
 
-            Assert.Fail("No Mirror field object to check the world shift with.");
-            return null;
+            return false;
         }
 
         private static int Sum(Dictionary<string, int> counts) {
