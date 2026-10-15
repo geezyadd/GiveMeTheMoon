@@ -209,7 +209,8 @@ point; then the host dies and the bot buys them back). The bot joins through the
 (`LoopSmokeBot`, `LoopSmokeTransportInput`). `LoopSmokeRejoinCheck`: a new player joins at that station on a deck spawn
 point, dies, leaves in flight, a join in flight is turned away with `InFlight`, and after landing it comes back dead, in
 the Crew list, under its new name. After the second landing everyone dies, the crew returns to
-the lobby and the test checks that no object of the first run is left. Then it starts a second run, flies five loops
+the lobby and the test checks that no object of the first run is left. Then it starts a second run, flies five loops (after the first one it checks the station's crew terminal and puts the
+player back on the deck)
 in a row and at the last station buys 5 items at the kiosk through the real aim and the window (`LoopSmokeShopCheck`: delivery
 point, window closes when walking away, a far purchase is refused), returns to the menu and checks that there are no
 errors in the log. Before that check `LoopSmokeRejectCheck` joins a silent loopback "host", hands the client an
