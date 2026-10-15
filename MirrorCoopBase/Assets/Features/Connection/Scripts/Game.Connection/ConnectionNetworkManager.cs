@@ -15,9 +15,10 @@ namespace Game.Connection
     [AddComponentMenu("Network/Connection Network Manager")]
     public class ConnectionNetworkManager : NetworkManager
     {
-        // One transport connection over the player slots: a player over the limit is accepted by the transport and
-        // turned away by the join rule with "the crew is full", instead of being dropped without a word.
-        const int OVER_LIMIT_CONNECTIONS = 1;
+        // Transport only: one connection over the player slots (ConnectionConfig.MaxConnections), so a player over the
+        // limit reaches the join rule and hears "the crew is full" instead of being dropped by Mirror without a word.
+        // The Steam lobby size and the join rule use the player slots themselves.
+        const int TRANSPORT_HEADROOM_CONNECTIONS = 1;
 
         [Header("Connection Scenes")]
         [SerializeField] string lobbySceneName = "LobbyScene";
@@ -65,11 +66,8 @@ namespace Game.Connection
             sessionModel = connectionSessionModel;
             events = networkEvents;
 
-            if (connectionConfig != null)
-            {
-                maxConnections = connectionConfig.MaxConnections + OVER_LIMIT_CONNECTIONS;
-                everyoneReadyDelay = connectionConfig.EveryoneReadyDelay;
-            }
+            maxConnections = connectionConfig.MaxConnections + TRANSPORT_HEADROOM_CONNECTIONS;
+            everyoneReadyDelay = connectionConfig.EveryoneReadyDelay;
 
             var sceneNames = new ConnectionSceneNames(lobbySceneName, menuSceneName, gameSceneName, persistentSceneName);
             sceneLoading = new ConnectionSceneLoading(sceneLoaderService);

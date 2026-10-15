@@ -150,7 +150,7 @@ namespace Game.Connection
                 return;
             }
 
-            Debug.LogWarning($"Connection rejected: {reason}");
+            // An expected answer, not a failure: the menu shows the reason.
             rejectModel.Set(reason);
             sessionModel.NetworkManager.StopSessionAndReturnToMenu();
             if (NetworkClient.connection != null)

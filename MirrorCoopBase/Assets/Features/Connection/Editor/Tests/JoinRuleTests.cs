@@ -25,6 +25,14 @@ namespace Game.Connection.Editor.Tests {
             Assert.That(_rule.Evaluate(Request(runWindow: RunJoinWindow.NoRun)), Is.EqualTo(ConnectionRejectReason.MapChanging));
 
         [Test]
+        public void WhenGateReportsNoRunState_ThenRuleThrows() =>
+            Assert.Throws<System.ArgumentOutOfRangeException>(() => _rule.Evaluate(Request(runWindow: RunJoinWindow.None)));
+
+        [Test]
+        public void WhenGateReportsNoRunStateInLobby_ThenPlayerIsAccepted() =>
+            Assert.That(_rule.Evaluate(Request(isInLobby: true, runWindow: RunJoinWindow.None)), Is.EqualTo(ConnectionRejectReason.Accepted));
+
+        [Test]
         public void WhenMapIsChanging_ThenPlayerIsAskedToRetryEvenFromLobby() =>
             Assert.That(_rule.Evaluate(Request(isInLobby: true, isChangingMap: true)), Is.EqualTo(ConnectionRejectReason.MapChanging));
 

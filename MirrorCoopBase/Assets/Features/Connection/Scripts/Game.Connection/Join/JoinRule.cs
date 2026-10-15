@@ -1,3 +1,4 @@
+using System;
 using Features.GameCoreModule.Contracts;
 
 namespace Game.Connection
@@ -17,15 +18,22 @@ namespace Game.Connection
             if (request.IsChangingMap)
                 return ConnectionRejectReason.MapChanging;
 
-            if (request.IsInLobby == false && request.RunWindow != RunJoinWindow.AtStation)
-                return request.RunWindow == RunJoinWindow.InFlight
-                    ? ConnectionRejectReason.InFlight
-                    : ConnectionRejectReason.MapChanging;
+            bool isJoinWindowOpen = request.IsInLobby || request.RunWindow == RunJoinWindow.AtStation;
+            if (isJoinWindowOpen == false)
+                return ClosedWindowReason(request.RunWindow);
 
             if (request.PlayerCount >= request.PlayerSlots)
                 return ConnectionRejectReason.ServerFull;
 
             return ConnectionRejectReason.Accepted;
         }
+
+        private static ConnectionRejectReason ClosedWindowReason(RunJoinWindow window) =>
+            window switch
+            {
+                RunJoinWindow.InFlight => ConnectionRejectReason.InFlight,
+                RunJoinWindow.NoRun => ConnectionRejectReason.MapChanging,
+                _ => throw new ArgumentOutOfRangeException(nameof(window), window, "The join gate reported no run state.")
+            };
     }
 }
