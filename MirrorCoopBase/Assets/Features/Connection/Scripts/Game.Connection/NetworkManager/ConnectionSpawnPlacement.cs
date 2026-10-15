@@ -64,7 +64,7 @@ namespace Game.Connection
             ApplyTeleport(identity.transform, msg.position, msg.rotation);
         }
 
-        static void ApplyTeleport(Transform target, Vector3 position, Quaternion rotation)
+        private static void ApplyTeleport(Transform target, Vector3 position, Quaternion rotation)
         {
             CharacterController controller = target.GetComponent<CharacterController>();
             if (controller != null)

@@ -8,6 +8,8 @@ namespace Tests.Coop.Shared {
     // Two append-only line files in one folder: the client writes its reports, the host writes its commands. Each side
     // only reads complete lines, so a line being written is never half-read.
     public sealed class CoopTestExchange {
+        // How often a side re-reads the other side's file: each side writes rarely, reading every frame would only cost.
+        public const float POLL_SECONDS = 0.2f;
         private const string REPORTS_FILE = "client-reports.jsonl";
         private const string COMMANDS_FILE = "host-commands.txt";
         private const char LINE_END = '\n';

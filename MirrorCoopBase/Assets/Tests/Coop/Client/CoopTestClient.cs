@@ -24,11 +24,9 @@ namespace Tests.Coop.Client {
         private const int LEAVE_LOOP = 2;
         private const int LAST_LOOP = 3;
         private const int FAILURE_EXIT_CODE = 1;
-        // The host writes each command once; reading its file every frame would only cost.
-        private const float EXCHANGE_POLL_SECONDS = 0.2f;
 
         private readonly WaitForSeconds _settle = new WaitForSeconds(SETTLE_SECONDS);
-        private readonly WaitForSeconds _exchangePoll = new WaitForSeconds(EXCHANGE_POLL_SECONDS);
+        private readonly WaitForSeconds _exchangePoll = new WaitForSeconds(CoopTestExchange.POLL_SECONDS);
 
         private CoopTestArguments _arguments;
         private CoopTestExchange _exchange;

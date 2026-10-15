@@ -38,14 +38,12 @@ namespace Tests.Coop.Host {
         private const float STEP_TIMEOUT_SECONDS = 90f;
         private const float CLIENT_EXIT_TIMEOUT_SECONDS = 30f;
         private const string LOOPBACK_ADDRESS = "127.0.0.1";
-        // The client writes a report every few seconds at most: reading its file every frame would only cost.
-        private const float EXCHANGE_POLL_SECONDS = 0.2f;
         private const string CLIENT_LOG_FILE = "client.log";
         private const string RUN_FOLDER_FORMAT = "yyyyMMdd-HHmmss";
         private const int LEAVE_LOOP = 2;
         private const int LAST_LOOP = 3;
 
-        private readonly WaitForSeconds _exchangePoll = new WaitForSeconds(EXCHANGE_POLL_SECONDS);
+        private readonly WaitForSeconds _exchangePoll = new WaitForSeconds(CoopTestExchange.POLL_SECONDS);
 
         private LoopSmokeErrorLog _errorLog;
         private LoopSmokeShipRunConfigOverride _configOverride;
