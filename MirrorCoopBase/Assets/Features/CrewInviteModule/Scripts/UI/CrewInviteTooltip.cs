@@ -1,8 +1,9 @@
 using System;
+using Features.CrewInviteModule.Scripts.Core;
 using Features.TooltipModule.Scripts;
 using UnityEngine;
 
-namespace Features.CrewInviteModule.Scripts {
+namespace Features.CrewInviteModule.Scripts.UI {
     // The terminal's tooltip for each invite status; a description may hold {0} (players) and {1} (slots).
     public sealed class CrewInviteTooltip : MonoBehaviour {
         [SerializeField] private TooltipData _available;

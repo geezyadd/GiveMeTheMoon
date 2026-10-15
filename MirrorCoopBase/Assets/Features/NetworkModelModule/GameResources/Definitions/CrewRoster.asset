@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: CrewRoster
   m_EditorClassIdentifier:
   _modelName: CrewRoster
-  _namespace: Features.CrewInviteModule.Scripts.Generated
-  _folder: Assets/Features/CrewInviteModule/Scripts/Generated
+  _namespace: Features.CrewInviteModule.Data.Generated
+  _folder: Assets/Features/CrewInviteModule/Data/Generated
   _atomic: 1
   _scope: 0
   _fields:

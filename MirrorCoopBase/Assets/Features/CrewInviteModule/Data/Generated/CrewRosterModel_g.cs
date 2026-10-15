@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using Features.NetworkModelModule.Scripts;
 
-namespace Features.CrewInviteModule.Scripts.Generated {
+namespace Features.CrewInviteModule.Data.Generated {
     public sealed class CrewRosterModel : NetworkModelBase, IReadOnlyCrewRosterModel {
         public int PlayerCount { get; private set; }
         public int PlayerSlots { get; private set; }

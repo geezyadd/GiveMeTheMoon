@@ -2,9 +2,7 @@ using Features.GrabModule.Scripts;
 using Mirror;
 using UnityEngine;
 
-namespace Features.CrewInviteModule.Scripts {
-    // The "Hire crew" terminal in the lobby and on every station pad; the player's CrewInviter decides and opens the
-    // Steam invite overlay on that player's machine.
+namespace Features.CrewInviteModule.Scripts.Network {
     public sealed class CrewInviteInteractable : InteractableBase {
         private const string MISSING_INVITER_ERROR = "{0} has no " + nameof(CrewInviter) + ".";
 

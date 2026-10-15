@@ -1,29 +1,35 @@
 using System;
-using Features.CrewInviteModule.Scripts.Generated;
+using Features.CrewInviteModule.Data.Generated;
+using Features.CrewInviteModule.Scripts.Core;
 using Features.TooltipModule.Scripts;
+using Game.Connection;
 using Zenject;
 
-namespace Features.CrewInviteModule.Scripts {
-    // The invite terminal's tooltip follows the local player's invite status and shows the crew as "N/M".
+namespace Features.CrewInviteModule.Scripts.UI {
     public sealed class CrewInviteTooltipProvider : ITooltipStateProvider, IInitializable, IDisposable {
         private readonly ICrewInviteStatusService _crewInviteStatusService;
         private readonly IReadOnlyCrewRosterModel _crewRosterModel;
-
-        public CrewInviteTooltipProvider(ICrewInviteStatusService crewInviteStatusService, IReadOnlyCrewRosterModel crewRosterModel) {
-            _crewInviteStatusService = crewInviteStatusService;
-            _crewRosterModel = crewRosterModel;
-        }
+        private readonly ISteamLobbyService _steamLobbyService;
 
         public event Action OnStateChanged;
 
+        public CrewInviteTooltipProvider(
+            ICrewInviteStatusService crewInviteStatusService,
+            IReadOnlyCrewRosterModel crewRosterModel,
+            ISteamLobbyService steamLobbyService) {
+            _crewInviteStatusService = crewInviteStatusService;
+            _crewRosterModel = crewRosterModel;
+            _steamLobbyService = steamLobbyService;
+        }
+
         public void Initialize() {
-            _crewRosterModel.OnChanged += OnRosterChanged;
-            _crewRosterModel.OnAvailableChanged += OnRosterChanged;
+            _crewRosterModel.OnChanged += OnInviteInputChanged;
+            _steamLobbyService.InviteStateChanged += OnInviteInputChanged;
         }
 
         public void Dispose() {
-            _crewRosterModel.OnChanged -= OnRosterChanged;
-            _crewRosterModel.OnAvailableChanged -= OnRosterChanged;
+            _crewRosterModel.OnChanged -= OnInviteInputChanged;
+            _steamLobbyService.InviteStateChanged -= OnInviteInputChanged;
         }
 
         public bool TrySelect(InteractionTooltip tooltip, out TooltipData data, out string description) {
@@ -37,7 +43,7 @@ namespace Features.CrewInviteModule.Scripts {
             return true;
         }
 
-        private void OnRosterChanged() =>
+        private void OnInviteInputChanged() =>
             OnStateChanged?.Invoke();
     }
 }

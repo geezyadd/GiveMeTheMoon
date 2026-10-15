@@ -1,4 +1,4 @@
-namespace Features.CrewInviteModule.Scripts {
+namespace Features.CrewInviteModule.Scripts.Core {
     public interface ICrewInviteStatusService {
         public CrewInviteStatus EvaluateForLocalPlayer();
 

@@ -1,4 +1,4 @@
-namespace Features.CrewInviteModule.Scripts {
+namespace Features.CrewInviteModule.Scripts.Core {
     public enum CrewInviteStatus {
         None = 0,
         Available = 1,

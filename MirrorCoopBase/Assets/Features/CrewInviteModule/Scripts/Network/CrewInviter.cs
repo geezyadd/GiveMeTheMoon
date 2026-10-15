@@ -1,10 +1,10 @@
+using Features.CrewInviteModule.Scripts.Core;
 using Game.Connection;
 using Mirror;
 using Zenject;
 
-namespace Features.CrewInviteModule.Scripts {
-    // The player's side of the invite terminal: whether this player may invite now, and the Steam invite overlay
-    // opened on this player's own machine.
+namespace Features.CrewInviteModule.Scripts.Network {
+    // Steam lives on each player's machine: the server only routes E back to the player who pressed it.
     public sealed class CrewInviter : NetworkBehaviour {
         private ICrewInviteStatusService _crewInviteStatusService;
         private ISteamLobbyService _steamLobbyService;

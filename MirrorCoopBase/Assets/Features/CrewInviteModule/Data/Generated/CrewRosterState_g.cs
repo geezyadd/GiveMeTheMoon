@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Features.CrewInviteModule.Scripts.Generated {
+namespace Features.CrewInviteModule.Data.Generated {
     public struct CrewRosterState : IEquatable<CrewRosterState> {
         public int PlayerCount;
         public int PlayerSlots;

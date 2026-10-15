@@ -1,40 +1,24 @@
-using Features.CrewInviteModule.Scripts.Generated;
-using Features.GameCoreModule.Contracts;
+using Features.CrewInviteModule.Data.Generated;
 using Game.Connection;
 using Mirror;
 using Zenject;
 
-namespace Features.CrewInviteModule.Scripts {
-    // Server: keeps the shared crew size and join window up to date for every player's invite terminal.
+namespace Features.CrewInviteModule.Scripts.Network {
     public sealed class CrewRoster : CrewRosterBridge {
         private IConnectionJoinPolicy _connectionJoinPolicy;
-        private ISessionJoinGate _sessionJoinGate;
-        private ConnectionNetworkEvents _connectionNetworkEvents;
 
         [Inject]
-        private void InjectDependencies(
-            IConnectionJoinPolicy connectionJoinPolicy,
-            ISessionJoinGate sessionJoinGate,
-            ConnectionNetworkEvents connectionNetworkEvents) {
+        private void InjectDependencies(IConnectionJoinPolicy connectionJoinPolicy) =>
             _connectionJoinPolicy = connectionJoinPolicy;
-            _sessionJoinGate = sessionJoinGate;
-            _connectionNetworkEvents = connectionNetworkEvents;
-        }
 
         public override void OnStartServer() {
             base.OnStartServer();
-            _sessionJoinGate.OnWindowChanged += OnSessionChanged;
-            _connectionNetworkEvents.MapLoadStarted += OnSessionChanged;
-            _connectionNetworkEvents.MapReady += OnSessionChanged;
-            _connectionNetworkEvents.ServerPlayersChanged += OnSessionChanged;
+            _connectionJoinPolicy.OnJoinStateChanged += OnJoinStateChanged;
             WriteRoster();
         }
 
         public override void OnStopServer() {
-            _sessionJoinGate.OnWindowChanged -= OnSessionChanged;
-            _connectionNetworkEvents.MapLoadStarted -= OnSessionChanged;
-            _connectionNetworkEvents.MapReady -= OnSessionChanged;
-            _connectionNetworkEvents.ServerPlayersChanged -= OnSessionChanged;
+            _connectionJoinPolicy.OnJoinStateChanged -= OnJoinStateChanged;
             base.OnStopServer();
         }
 
@@ -46,7 +30,7 @@ namespace Features.CrewInviteModule.Scripts {
                 IsJoinWindowOpen = _connectionJoinPolicy.IsJoinWindowOpen
             });
 
-        private void OnSessionChanged() =>
+        private void OnJoinStateChanged() =>
             WriteRoster();
     }
 }

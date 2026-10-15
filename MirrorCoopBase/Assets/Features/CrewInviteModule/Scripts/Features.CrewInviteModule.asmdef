@@ -2,6 +2,7 @@
     "name": "Features.CrewInviteModule",
     "rootNamespace": "Features.CrewInviteModule",
     "references": [
+        "GUID:126af2196ed84224a40f584300166970",
         "GUID:a637b2d2f1cb470a8bea9746a87397c0",
         "GUID:1f74e8c7b4c74b6ab22be0bd160a9a17",
         "GUID:379df4dc8d1082248b970ee14b4725f2",

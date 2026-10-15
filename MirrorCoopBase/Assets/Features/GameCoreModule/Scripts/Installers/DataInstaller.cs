@@ -1,7 +1,7 @@
 using Features.CameraModule.Scripts.Models;
 using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.CharacterMovableModule.Scripts.Models;
-using Features.CrewInviteModule.Scripts.Generated;
+using Features.CrewInviteModule.Data.Generated;
 using Features.GrabModule.Scripts;
 using Features.GrabModule.Scripts.Generated;
 using Features.MvpModule;

@@ -1,6 +1,5 @@
-namespace Features.CrewInviteModule.Scripts {
-    // A friend can be invited when the inviting player has a Steam lobby with the overlay, the session lets players in
-    // right now (the join rule's window: lobby or a station) and a slot is free.
+namespace Features.CrewInviteModule.Scripts.Core {
+    // The reasons are checked in the order the player can fix them: Steam first, then the station, then the crew.
     public sealed class CrewInviteRule : ICrewInviteRule {
         public CrewInviteStatus Evaluate(CrewInviteRequest request) {
             if (request.HasSteamLobby == false)

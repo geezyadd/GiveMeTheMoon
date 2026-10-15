@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Features.CrewInviteModule.Scripts.Generated {
+namespace Features.CrewInviteModule.Data.Generated {
     public interface IReadOnlyCrewRosterModel {
         public int PlayerCount { get; }
         public int PlayerSlots { get; }

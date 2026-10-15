@@ -3,7 +3,7 @@
 
 using Zenject;
 
-namespace Features.CrewInviteModule.Scripts.Generated {
+namespace Features.CrewInviteModule.Data.Generated {
     public static class CrewRosterModelInstaller {
         public static void Install(DiContainer container) =>
             container.BindInterfacesAndSelfTo<CrewRosterModel>().AsSingle();

@@ -1,3 +1,5 @@
+using Features.CrewInviteModule.Scripts.Core;
+using Features.CrewInviteModule.Scripts.UI;
 using Zenject;
 
 namespace Features.CrewInviteModule.Scripts.Installers {

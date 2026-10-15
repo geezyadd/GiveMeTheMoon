@@ -1,7 +1,7 @@
-using Features.CrewInviteModule.Scripts.Generated;
+using Features.CrewInviteModule.Data.Generated;
 using Game.Connection;
 
-namespace Features.CrewInviteModule.Scripts {
+namespace Features.CrewInviteModule.Scripts.Core {
     public sealed class CrewInviteStatusService : ICrewInviteStatusService {
         private readonly ICrewInviteRule _crewInviteRule;
         private readonly IReadOnlyCrewRosterModel _crewRosterModel;

@@ -4,7 +4,7 @@
 using Features.NetworkModelModule.Scripts;
 using Mirror;
 
-namespace Features.CrewInviteModule.Scripts.Generated {
+namespace Features.CrewInviteModule.Data.Generated {
     public class CrewRosterBridge : NetworkModelBridge<CrewRosterModel> {
         [SyncVar(hook = nameof(OnStateSynced))]
         private CrewRosterState _state;

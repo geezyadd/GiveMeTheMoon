@@ -1,4 +1,4 @@
-using Features.CrewInviteModule.Scripts;
+using Features.CrewInviteModule.Scripts.Core;
 using NUnit.Framework;
 
 namespace Features.CrewInviteModule.Editor.Tests {
