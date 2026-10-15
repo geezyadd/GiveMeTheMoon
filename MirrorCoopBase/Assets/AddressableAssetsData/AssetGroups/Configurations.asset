@@ -45,6 +45,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 86b71de44a03e2b41a33c2001eec1ae1
+    m_Address: FlightFieldConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8b0d3f5a2c9e4d7f8a1b2c3d4e5f6071
     m_Address: ShipRunConfig_Default
     m_ReadOnly: 0
@@ -72,6 +77,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: af6e5d70aa0a9824881b0791a2d217bf
     m_Address: ModuleCatalog_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b6c04fe845d73fa4e8c316b586722fd0
+    m_Address: FieldStructureCatalog_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

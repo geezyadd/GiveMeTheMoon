@@ -51,7 +51,7 @@ namespace Features.MatrixModule.Scripts.Services.MatrixInsertShaper {
 
         public bool TryInsertFullShapeMatrix<TMatrixEntity>(IMatrix<TMatrixEntity> matrix, IMatrix<TMatrixEntity> shape, int x, int y, out List<TMatrixEntity> matrixEntities, Predicate<TMatrixEntity> matrixPredicate = null, Predicate<TMatrixEntity> shapePredicate = null) {
             matrixEntities = new List<TMatrixEntity>();
-            if (!ValidateShape(matrix, shape, x, y, matrixPredicate))
+            if (!ValidateShape(matrix, shape, x, y, matrixPredicate, shapePredicate))
                 return false;
 
             for (int shapeY = 0; shapeY < shape.GetRowCount(); shapeY++)
@@ -71,18 +71,26 @@ namespace Features.MatrixModule.Scripts.Services.MatrixInsertShaper {
             }
         }
 
-        private bool ValidateShape<TMatrixEntity>(IMatrix<TMatrixEntity> matrix, IMatrix<TMatrixEntity> shape, int x, int y, Predicate<TMatrixEntity> matrixPredicate = null) {
+        private bool ValidateShape<TMatrixEntity>(IMatrix<TMatrixEntity> matrix, IMatrix<TMatrixEntity> shape, int x, int y, Predicate<TMatrixEntity> matrixPredicate,
+                                                  Predicate<TMatrixEntity> shapePredicate) {
             for (int shapeY = 0; shapeY < shape.GetRowCount(); shapeY++)
-                if (!ValidateShapeRow(matrix, shape.GetRowById(shapeY).Count, x, y + shapeY, matrixPredicate))
+                if (!ValidateShapeRow(matrix, shape.GetRowById(shapeY), x, y + shapeY, matrixPredicate, shapePredicate))
                     return false;
 
             return true;
         }
 
-        private bool ValidateShapeRow<TMatrixEntity>(IMatrix<TMatrixEntity> matrix, int rowLength, int x, int y, Predicate<TMatrixEntity> matrixPredicate) {
-            for (int ownX = x; ownX < x + rowLength; ownX++) {
-                Vector2Int position = new(ownX, y);
-                if (!matrix.ValidateIndex(position) || !matrix.ValidatePredicate(position, matrixPredicate))
+        // The whole shape box must lie inside the matrix, but the matrix predicate is checked only under the cells the
+        // shape predicate inserts: the free corner of an L-shaped shape may cover an occupied matrix cell.
+        private bool ValidateShapeRow<TMatrixEntity>(IMatrix<TMatrixEntity> matrix, List<TMatrixEntity> row, int x, int y, Predicate<TMatrixEntity> matrixPredicate,
+                                                     Predicate<TMatrixEntity> shapePredicate) {
+            for (int shapeX = 0; shapeX < row.Count; shapeX++) {
+                Vector2Int position = new(x + shapeX, y);
+                if (!matrix.ValidateIndex(position))
+                    return false;
+
+                bool isInserted = shapePredicate == null || shapePredicate(row[shapeX]);
+                if (isInserted && !matrix.ValidatePredicate(position, matrixPredicate))
                     return false;
             }
 

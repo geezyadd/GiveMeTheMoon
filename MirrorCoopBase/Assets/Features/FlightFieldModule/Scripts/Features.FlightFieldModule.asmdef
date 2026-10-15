@@ -1,0 +1,17 @@
+{
+    "name": "Features.FlightFieldModule",
+    "rootNamespace": "Features.FlightFieldModule",
+    "references": [
+        "GUID:1baf1984ba18f484c9db7270a36bfd43",
+        "GUID:0d8beb7f090555447a6cf5ce9e54dbb4"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
