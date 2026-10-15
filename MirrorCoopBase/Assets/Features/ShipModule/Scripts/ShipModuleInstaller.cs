@@ -19,6 +19,7 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipRunService>().AsSingle();
             Container.BindInterfacesTo<ShipRunJoinGate>().AsSingle();
             Container.BindInterfacesTo<ShipDeckJoinSpawn>().AsSingle();
+            Container.BindInterfacesTo<ShipPositionSource>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.BindInterfacesTo<Debug.DeckFeelHarness>().AsSingle();
             Container.Bind<Debug.ShipStatsDebugOverlay>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();

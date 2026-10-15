@@ -31,6 +31,12 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             return texture;
         }
 
+        // The ship may be outside the field: then it is not shown.
+        public void PaintShip(Texture2D texture, Vector2Int cell, int pixelsPerCell) {
+            PaintMarker(texture, cell, pixelsPerCell, FlightFieldMapLegend.Ship);
+            texture.Apply();
+        }
+
         private static void PaintCell(Texture2D texture, IMatrix<FieldCell> cells, Vector2Int cell, int pixelsPerCell) {
             FieldCell fieldCell = cells[cell];
             Color fill = GetCellColor(fieldCell);
