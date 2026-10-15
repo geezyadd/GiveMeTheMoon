@@ -1,4 +1,5 @@
 #if UNITY_INCLUDE_TESTS
+using System;
 using Features.NetworkModelModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
 using Features.ShopModule.Scripts.Network;
@@ -15,7 +16,6 @@ namespace Tests.PlayMode.LoopSmoke {
         public const string NAME = "SmokeBot";
         private const int CONNECTION_ID = 90001;
         private const string CLIENT_ID = "loop-smoke-bot";
-        private const int BATCH_THRESHOLD = 1200;
 
         private readonly LoopSmokeBotConnection _connection;
         private readonly string _clientId;
@@ -84,15 +84,11 @@ namespace Tests.PlayMode.LoopSmoke {
             NetworkServer.OnDisconnectedEvent?.Invoke(_connection);
         }
 
-        private void Send<T>(T message) where T : struct, NetworkMessage {
-            using NetworkWriterPooled packed = NetworkWriterPool.Get();
-            NetworkMessages.Pack(message, packed);
-            Batcher batcher = new Batcher(BATCH_THRESHOLD);
-            batcher.AddMessage(packed.ToArraySegment(), NetworkTime.localTime);
-            using NetworkWriterPooled batch = NetworkWriterPool.Get();
-            Assert.IsTrue(batcher.GetBatch(batch), $"The bot could not batch {typeof(T).Name}.");
-            Transport.active.OnServerDataReceived.Invoke(_connection.connectionId, batch.ToArraySegment(), Channels.Reliable);
-        }
+        private void Send<T>(T message) where T : struct, NetworkMessage =>
+            LoopSmokeTransportInput.Deliver(message, ReceiveOnServer);
+
+        private void ReceiveOnServer(ArraySegment<byte> batch, int channelId) =>
+            Transport.active.OnServerDataReceived.Invoke(_connection.connectionId, batch, channelId);
     }
 }
 #endif

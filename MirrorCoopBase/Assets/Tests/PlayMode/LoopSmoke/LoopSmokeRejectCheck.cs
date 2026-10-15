@@ -2,44 +2,54 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using Features.GameFlowStateMachineModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.States;
 using Features.MenuModule.Scripts;
 using Game.Connection;
 using Mirror;
-using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace Tests.PlayMode.LoopSmoke {
-    // A player turned away by the host reads why in the menu. From the menu the test joins an address that never
-    // answers, then hands the client the host's "in flight" answer through the transport's receive callback: the
-    // client's real authenticator, the return to the menu and the menu window do the rest.
+    // A player turned away by the host reads why in the menu. From the menu the test joins a "host" on this machine:
+    // a loopback socket that takes the connection and never answers, so the client stays connected and waits, with
+    // no dependence on routing. The test then hands the client the host's "in flight" answer through the transport's
+    // receive callback: the client's real authenticator, the return to the menu and the menu window do the rest.
     public sealed class LoopSmokeRejectCheck {
-        // Not routable: the connect attempt hangs instead of failing at once, so only the injected answer ends it.
-        private const string SILENT_ADDRESS = "10.255.255.1";
-        private const int BATCH_THRESHOLD = 1200;
+        private const string LOOPBACK_ADDRESS = "127.0.0.1";
         private const string SCREENSHOT_FOLDER = "Temp/LoopSmoke";
         private const string REJECT_SCREENSHOT = "join-rejected-in-flight.png";
 
         public IEnumerator JoinRejectedInFlightCoroutine() {
             string expected = LoopSmokeShopCheck.Resolve<IConnectionRejectMessages>().Describe(ConnectionRejectReason.InFlight);
-            MenuSessionViewBase menu = Object.FindAnyObjectByType<MenuSessionViewBase>();
-            Object.FindAnyObjectByType<InputField>().text = SILENT_ADDRESS;
-            menu.OnJoinClicked.Invoke();
-            yield return LoopSmokeShopCheck.WaitForCoroutine(IsConnecting, "the client connecting to the host in the session state");
+            TelepathyTransport telepathy = Object.FindAnyObjectByType<TelepathyTransport>(FindObjectsInactive.Include);
+            ushort shippedPort = telepathy.port;
+            TcpListener silentHost = new TcpListener(IPAddress.Loopback, 0);
+            silentHost.Start();
+            try {
+                telepathy.port = (ushort)((IPEndPoint)silentHost.LocalEndpoint).Port;
+                Object.FindAnyObjectByType<InputField>().text = LOOPBACK_ADDRESS;
+                Object.FindAnyObjectByType<MenuSessionViewBase>().OnJoinClicked.Invoke();
+                yield return LoopSmokeShopCheck.WaitForCoroutine(IsWaitingForHost, "the client connected and waiting for the host's answer");
 
-            SendHostAnswer(ConnectionRejectReason.InFlight);
-            yield return LoopSmokeShopCheck.WaitForCoroutine(IsBackInMenu, "the menu after the host turned the player away");
-            yield return LoopSmokeShopCheck.WaitForCoroutine(() => IsShown(expected), $"the menu text \"{expected}\"");
-            yield return CaptureScreenshotCoroutine();
+                LoopSmokeTransportInput.Deliver(
+                    new ConnectionAuthenticator.AuthResponseMessage { rejection = (byte)ConnectionRejectReason.InFlight },
+                    Transport.active.OnClientDataReceived);
+                yield return LoopSmokeShopCheck.WaitForCoroutine(IsBackInMenu, "the menu after the host turned the player away");
+                yield return LoopSmokeShopCheck.WaitForCoroutine(() => IsShown(expected), $"the menu text \"{expected}\"");
+                yield return CaptureScreenshotCoroutine();
+            } finally {
+                telepathy.port = shippedPort;
+                silentHost.Stop();
+            }
         }
 
         // The host's answer takes a network round trip: the client is in the session state by then.
-        private static bool IsConnecting() =>
-            NetworkClient.active && NetworkClient.connection != null && NetworkServer.active == false
-            && IsFlowSettledIn(typeof(SessionGameFlowState));
+        private static bool IsWaitingForHost() =>
+            NetworkClient.isConnected && NetworkServer.active == false && IsFlowSettledIn(typeof(SessionGameFlowState));
 
         private static bool IsBackInMenu() =>
             NetworkClient.active == false && IsFlowSettledIn(typeof(MenuGameFlowState));
@@ -56,16 +66,6 @@ namespace Tests.PlayMode.LoopSmoke {
             }
 
             return false;
-        }
-
-        private static void SendHostAnswer(ConnectionRejectReason reason) {
-            using NetworkWriterPooled packed = NetworkWriterPool.Get();
-            NetworkMessages.Pack(new ConnectionAuthenticator.AuthResponseMessage { rejection = (byte)reason }, packed);
-            Batcher batcher = new Batcher(BATCH_THRESHOLD);
-            batcher.AddMessage(packed.ToArraySegment(), NetworkTime.localTime);
-            using NetworkWriterPooled batch = NetworkWriterPool.Get();
-            Assert.IsTrue(batcher.GetBatch(batch), "The host's answer could not be batched.");
-            Transport.active.OnClientDataReceived.Invoke(batch.ToArraySegment(), Channels.Reliable);
         }
 
         // Kept in the project's Temp folder for a human to look at; the test does not compare images.
