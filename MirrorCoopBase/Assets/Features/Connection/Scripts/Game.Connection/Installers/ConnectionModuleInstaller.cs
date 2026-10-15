@@ -10,6 +10,10 @@ namespace Game.Connection
         {
             Container.BindInterfacesTo<ConnectionSessionService>().AsSingle();
             Container.BindInterfacesTo<SteamLobbyService>().AsSingle();
+            Container.BindInterfacesTo<SteamLobbyJoinableSystem>().AsSingle();
+            Container.Bind<IJoinRule>().To<JoinRule>().AsSingle();
+            Container.Bind<IConnectionJoinPolicy>().To<ConnectionJoinPolicy>().AsSingle();
+            Container.Bind<IConnectionRejectMessages>().To<ConnectionRejectMessages>().AsSingle();
             Container.Bind<IPlayerIdentityService>().To<ConnectionPlayerIdentityService>().AsSingle();
             Container.Bind<IPlayerNameSource>().To<ConnectionPlayerNameSource>().AsSingle();
             Container.Bind<IGameplaySession>().To<ConnectionGameplaySession>().AsSingle();

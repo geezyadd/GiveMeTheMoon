@@ -11,15 +11,21 @@ namespace Features.MenuModule.Scripts {
         private readonly IConnectionSessionService _connectionSession;
         private readonly ISteamLobbyService _steamLobby;
         private readonly IGameFlowStateMachineService _gameFlowStateMachine;
+        private readonly ConnectionRejectModel _connectionRejectModel;
+        private readonly IConnectionRejectMessages _connectionRejectMessages;
         private bool _isBusy;
 
         public MenuSessionPresenter(
             IConnectionSessionService connectionSession,
             ISteamLobbyService steamLobby,
-            IGameFlowStateMachineService gameFlowStateMachine) {
+            IGameFlowStateMachineService gameFlowStateMachine,
+            ConnectionRejectModel connectionRejectModel,
+            IConnectionRejectMessages connectionRejectMessages) {
             _connectionSession = connectionSession;
             _steamLobby = steamLobby;
             _gameFlowStateMachine = gameFlowStateMachine;
+            _connectionRejectModel = connectionRejectModel;
+            _connectionRejectMessages = connectionRejectMessages;
         }
 
         protected override void OnViewSet() {
@@ -28,7 +34,8 @@ namespace Features.MenuModule.Scripts {
             View.OnHostSteamClicked += OnHostSteamClicked;
             View.OnJoinSteamClicked += OnJoinSteamClicked;
             _steamLobby.JoinRequested += OnSteamJoinRequested;
-            View.SetStatus(string.Empty);
+            _connectionRejectModel.OnLastRejectionChanged += OnLastRejectionChanged;
+            ShowLastRejection();
         }
 
         protected override void OnDisposed() {
@@ -37,6 +44,7 @@ namespace Features.MenuModule.Scripts {
             View.OnHostSteamClicked -= OnHostSteamClicked;
             View.OnJoinSteamClicked -= OnJoinSteamClicked;
             _steamLobby.JoinRequested -= OnSteamJoinRequested;
+            _connectionRejectModel.OnLastRejectionChanged -= OnLastRejectionChanged;
         }
 
         void OnHostClicked() =>
@@ -53,6 +61,17 @@ namespace Features.MenuModule.Scripts {
 
         void OnSteamJoinRequested(ulong lobbyId) =>
             _ = RunAsync(() => JoinSteamLobbyAsync(lobbyId));
+
+        // A new attempt clears the rejection; its own status text stays.
+        void OnLastRejectionChanged() {
+            if (_connectionRejectModel.HasRejection)
+                ShowLastRejection();
+        }
+
+        void ShowLastRejection() =>
+            SetStatus(_connectionRejectModel.HasRejection
+                ? _connectionRejectMessages.Describe(_connectionRejectModel.LastRejection)
+                : string.Empty);
 
         async Task HostAsync() {
             await _connectionSession.HostAsync();

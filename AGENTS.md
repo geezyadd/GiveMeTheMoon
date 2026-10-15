@@ -48,7 +48,9 @@ The loop runs from start to end, but it does not match the design yet:
   not read by gameplay;
 - a pilot who turns the ship away from the destination can fly forever: there is no autopilot and no timeout;
 - the run has no goal: it ends only when the whole crew is dead (`PlayerLifeSystem` → lobby);
-- nobody can join after the run has started (`ConnectionRejectReason.MapAlreadyStarted`);
+- players can join or come back in the lobby or while the ship stands at a station (`Build`); in flight, in a wreck,
+  while the map changes and with a full crew they are turned away with a reason the menu shows (see "Player data and
+  rejoin");
 - there is no sound or VFX.
 
 Known issue: on the first landing of a `DeckFeelHarness` run the player jumps about 136 m in one frame, dies and the
@@ -163,6 +165,7 @@ types.
 | Interaction | `Assets/Features/GrabModule/`: `LocalPlayerInteraction` (aim, highlight, button), `GrabController` (hand, `PlayerHand` model), `UseController`, `HeldItemRegistry`, `InteractableBase`, `Grabbable`, `GrabConfiguration` |
 | Shop and money | `Assets/Features/ShopModule/` (`CrewWallet`, `ShopCatalog`, `WalletConfiguration`); the kiosk `ShopKioskInteractable` is part of the `StationPad` prefab, `ShopAccessService` / `ShopAccessRule` decide open, keep-open and purchase (Build, alive, distance from `ShopKioskConfiguration`), the server keeps the opened kiosk per player in `ShopVisitModel`; **L** opens the shop only in editor / development builds |
 | Buying back a dead crewmate | the shop window's "Crew" section (`CrewReviveView` / `CrewRevivePresenter`, list `DeadCrewModel`, kept by `DeadCrewSystem` from the synced `PlayerLifeRegistry`) → `CrewWallet.CmdRevive` → `ReviveShopSystem` (kiosk check like a purchase, `ReviveRule`, then `ServerTrySpend`, then `IPlayerLifeReviver.ServerRevive(PlayerKey)`); price in `ReviveConfiguration`; the revived body is teleported to the ship's next `ShipDeckSpawnPoint` in turn (`IShipDeckSpawnPoints`); `ReviveConfigurationValidator` fails startup on a price <= 0 |
+| Joining a running session | `Connection/Scripts/Game.Connection/Join/`: `JoinRule` (pure: lobby or `RunJoinWindow.AtStation`, free slot out of `ConnectionConfig.MaxConnections`, version, Steam id; reasons `InFlight` / `ServerFull` / `MapChanging`), `ConnectionJoinPolicy` (the rule on the live session, used by `ConnectionAuthenticator` once at authentication), `SteamLobbyJoinableSystem` (Steam lobby joinable exactly when the rule lets a new player in), `ConnectionRejectModel` + `ConnectionRejectMessages` (the reason shown in the menu; `RejectedJoinMenuSystem` in GameCore switches a turned-away client to the menu state). Connection reads the run only through the contracts `ISessionJoinGate` (`ShipRunJoinGate`) and `ISessionJoinSpawn` (`ShipDeckJoinSpawn`, the next `IShipDeckSpawnPoints` pose) in `GameCoreModule.Contracts`. A mid-run joiner loads the map through Mirror's scene message and reports `MapLoadedMessage`; `ConnectionLateJoin` makes its player only then, on the deck. The transport allows one connection over the slots so an extra player hears "the crew is full" |
 | Player names and nameplates | `Assets/Features/PlayerProfileModule/`: `PlayerProfile` (bridge of the `PlayerProfile` model, the server fills the name), `PlayerNameSanitizer`, `PlayerNameplate` (TMP over other players' heads), `PlayerNameplateConfiguration`; the model is in `Data/` |
 | Scenes | `GameCoreModule/GameResources/Scenes/`: Bootstrap → Menu → Lobby → Game; only Bootstrap is in Build Settings |
 
@@ -177,11 +180,15 @@ aim (`LoopSmokeHandCheck`), takes off and lands twice, and checks the phases,
 `LoopIndex`, engines after landing, the ship on the new pad, one shop kiosk per pad, the player on deck, no wreckage.
 At the first station it reaches it buys back a dead crewmate with a second player, a bot on the host (`LoopSmokeReviveCheck`:
 the price is taken once for a double click, no buy-back without money, the revived player stands at a deck spawn
-point; then the host dies and the bot buys them back). After the second landing everyone dies, the crew returns to
+point; then the host dies and the bot buys them back). The bot joins through the server's real receive path
+(`LoopSmokeBot`, `LoopSmokeTransportInput`). `LoopSmokeRejoinCheck`: a new player joins at that station on a deck spawn
+point, dies, leaves in flight, a join in flight is turned away with `InFlight`, and after landing it comes back dead, in
+the Crew list, under its new name. After the second landing everyone dies, the crew returns to
 the lobby and the test checks that no object of the first run is left. Then it starts a second run, flies one loop
 and at that station buys 5 items at the kiosk through the real aim and the window (`LoopSmokeShopCheck`: delivery
 point, window closes when walking away, a far purchase is refused), returns to the menu and checks that there are no
-errors in the log. The test shortens flight timings with its own copy of `ShipRunConfig`; assets are not changed. The
+errors in the log. Before that check `LoopSmokeRejectCheck` joins a silent loopback "host", hands the client an
+`InFlight` answer and checks the reason text in the menu. The test shortens flight timings with its own copy of `ShipRunConfig`; assets are not changed. The
 test timeout is 180 s.
 
 EditMode guard tests keep the data rules: `ConfigurationLoadingGuardTests` (no `Resources.Load`, every configuration
@@ -264,8 +271,10 @@ The shop wallet is the `Wallet` model (`long Balance`). The start value comes fr
   When you touch a file with a non-English comment, translate that comment.
 
 ## Player data and rejoin (rule for all new features)
-Future goal: players can **join a running session while the crew is at a station** (Build phase; joining is closed in
-flight). A player who disconnected and joined again **gets their data back**.
+Players can **join a running session while the crew is at a station** (Build phase; joining is closed in flight, see
+"Joining a running session" in Key places). A player who disconnected and joined again **gets their data back**: life
+state, name and the shared crew state come from the models; the hand is empty (the item dropped on leaving); the
+player appears at a deck spawn point.
 
 Therefore:
 - **All synced player state is stored in that player's model** (one model or a set of models per player), not only in

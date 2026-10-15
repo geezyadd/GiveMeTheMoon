@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Features.GameCoreModule.Contracts;
 using Features.SceneLoaderModule.Scripts;
 using Mirror;
 using UnityEngine;
@@ -14,6 +15,11 @@ namespace Game.Connection
     [AddComponentMenu("Network/Connection Network Manager")]
     public class ConnectionNetworkManager : NetworkManager
     {
+        // Transport only: one connection over the player slots (ConnectionConfig.MaxConnections), so a player over the
+        // limit reaches the join rule and hears "the crew is full" instead of being dropped by Mirror without a word.
+        // The Steam lobby size and the join rule use the player slots themselves.
+        const int TRANSPORT_HEADROOM_CONNECTIONS = 1;
+
         [Header("Connection Scenes")]
         [SerializeField] string lobbySceneName = "LobbyScene";
         [SerializeField] string menuSceneName = "MenuScene";
@@ -34,6 +40,7 @@ namespace Game.Connection
         ConnectionSpawnPlacement spawnPlacement;
         ConnectionPersistentScene persistentScene;
         ConnectionMapChange mapChange;
+        ConnectionLateJoin lateJoin;
         ConnectionMenuReturn menuReturn;
         bool returningToMenu;
 
@@ -44,7 +51,7 @@ namespace Game.Connection
         public bool IsChangingMap => mapChange.IsChangingMap;
         public bool UsesSteamTransport => transportSwitch.UsesSteam;
 
-        public bool IsJoinable =>
+        public bool IsInLobby =>
             string.IsNullOrEmpty(networkSceneName) || networkSceneName == lobbySceneName;
 
         [Inject]
@@ -53,20 +60,19 @@ namespace Game.Connection
             ConnectionConfig connectionConfig,
             ConnectionSessionModel connectionSessionModel,
             ConnectionSpawnModel spawnModel,
+            ISessionJoinSpawn sessionJoinSpawn,
             ConnectionNetworkEvents networkEvents)
         {
             sessionModel = connectionSessionModel;
             events = networkEvents;
 
-            if (connectionConfig != null)
-            {
-                maxConnections = connectionConfig.MaxConnections;
-                everyoneReadyDelay = connectionConfig.EveryoneReadyDelay;
-            }
+            maxConnections = connectionConfig.MaxConnections + TRANSPORT_HEADROOM_CONNECTIONS;
+            everyoneReadyDelay = connectionConfig.EveryoneReadyDelay;
 
             var sceneNames = new ConnectionSceneNames(lobbySceneName, menuSceneName, gameSceneName, persistentSceneName);
             sceneLoading = new ConnectionSceneLoading(sceneLoaderService);
-            spawnPlacement = new ConnectionSpawnPlacement(spawnModel, GetStartPosition);
+            spawnPlacement = new ConnectionSpawnPlacement(spawnModel, sessionJoinSpawn, GetStartPosition);
+            lateJoin = new ConnectionLateJoin(SpawnPlayer);
             persistentScene = new ConnectionPersistentScene(sceneNames, playerPrefab);
             menuReturn = new ConnectionMenuReturn(sceneLoading, sceneNames);
             mapChange = new ConnectionMapChange(
@@ -78,7 +84,8 @@ namespace Game.Connection
                 networkEvents,
                 everyoneReadyDelay,
                 OnClientSceneChanged,
-                StopSessionAndReturnToMenu);
+                StopSessionAndReturnToMenu,
+                lateJoin.OnMapLoaded);
 
             RegisterInModel();
         }
@@ -126,6 +133,7 @@ namespace Game.Connection
         public override void OnStopServer()
         {
             mapChange.StopServer();
+            lateJoin.Clear();
             spawnPlacement.ClearSpawn();
             events.RaiseServerStopped();
             base.OnStopServer();
@@ -152,16 +160,32 @@ namespace Game.Connection
             ResetTransportIfIdle();
         }
 
+        public override void OnServerConnect(NetworkConnectionToClient conn)
+        {
+            base.OnServerConnect(conn);
+            events.RaiseServerPlayersChanged();
+        }
+
         public override void OnServerDisconnect(NetworkConnectionToClient conn)
         {
             mapChange.ForgetConnection(conn);
+            lateJoin.Forget(conn);
             base.OnServerDisconnect(conn);
             mapChange.RecheckReadyPlayers();
+            events.RaiseServerPlayersChanged();
         }
 
         public override void OnServerAddPlayer(NetworkConnectionToClient conn)
         {
-            Pose spawn = spawnPlacement.GetSpawnPose();
+            if (lateJoin.TryDeferPlayer(conn))
+                return;
+
+            SpawnPlayer(conn);
+        }
+
+        void SpawnPlayer(NetworkConnectionToClient conn)
+        {
+            Pose spawn = spawnPlacement.GetPlayerPose();
             GameObject player = Instantiate(playerPrefab, spawn.position, spawn.rotation);
             player.name = $"{playerPrefab.name} [connId={conn.connectionId}]";
             NetworkServer.AddPlayerForConnection(conn, player);
@@ -279,6 +303,7 @@ namespace Game.Connection
                 StopHost();
                 mapChange.MarkMapUnloaded();
                 await menuReturn.ReturnAsync();
+                events.RaiseReturnedToMenu();
             }
             finally
             {
