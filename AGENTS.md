@@ -110,8 +110,10 @@ types.
 - Module assemblies by layer (an assembly references only lower layers; module references in brackets):
   1. `Features.GameCoreModule.Contracts` (`IGameplaySession`, `SceneNames`),
      `Features.AddressablesConstantGeneratorModule` (`Address_g.cs`), `Features.MvpModule` (AssetLoader),
-     `Features.FloatingControllerModule`, `Features.PlayerProfileModule.Data` (NetworkModel; the generated
-     `PlayerProfile` model and `IPlayerProfileSource`); third-party `QuickOutline` and `MiniMapModular`
+     `Features.FloatingControllerModule`, `Features.MatrixModule` (no references: generic grid `IMatrix<T>` with
+     shape insert and A* path finding, copied from MuffinProject's `MatrixSubmodule`; keep its public API),
+     `Features.PlayerProfileModule.Data` (NetworkModel; the generated `PlayerProfile` model and
+     `IPlayerProfileSource`); third-party `QuickOutline` and `MiniMapModular`
      (`Mini Mapa(Radar)`) also have their own asmdef.
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader).
@@ -132,7 +134,8 @@ types.
   Tests: `Features.CharacterMovableModule.Editor.Tests`, `Features.PlayerLifeModule.Editor.Tests`,
   `Features.ShipModule.Editor.Tests`, `Features.ShopModule.Editor.Tests`, `Features.GameCoreModule.Editor.Tests`
   (configuration loading and module catalog guards), `Game.Connection.Editor.Tests`,
-  `Features.PlayerProfileModule.Editor.Tests`, `NetworkModelModule.Editor.Tests`.
+  `Features.PlayerProfileModule.Editor.Tests`, `NetworkModelModule.Editor.Tests`, `Features.MatrixModule.Editor.Tests`
+  (matrix creation, neighbours, full-shape insert, path finding incl. a 40x40 timing check).
 - Player identity and name come from Connection only through NetworkModel contracts: `IPlayerIdentityService`
   (`PlayerKey`) and `IPlayerNameSource` (the authenticated name), implemented in Connection. Other modules read a
   player's name through `IPlayerProfileSource` / `IReadOnlyPlayerProfileModel` (PlayerProfileModule.Data), not
