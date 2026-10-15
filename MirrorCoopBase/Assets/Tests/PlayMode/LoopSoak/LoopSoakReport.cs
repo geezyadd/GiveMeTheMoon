@@ -12,7 +12,7 @@ namespace Tests.PlayMode.LoopSoak {
         private const double BYTES_PER_MEGABYTE = 1024d * 1024d;
         private const int BASELINE_LOOP_INDEX = 1;
         private const string HEADER =
-            "loop | s    | managed MB | allocated MB | server | client | items (+new) | pads | other srv/cli | shifts | ship m from 0 | field placements | field pooled";
+            "loop | s    | managed MB | allocated MB | server | client | items (+new) | pads | other srv/cli | shifts | ship m from 0 | field placements | field objects | field pooled";
 
         private readonly List<LoopSoakSample> _samples = new List<LoopSoakSample>();
 
@@ -54,7 +54,7 @@ namespace Tests.PlayMode.LoopSoak {
             LoopSoakSpawnCensus census = sample.Census;
             return string.Format(
                 CultureInfo.InvariantCulture,
-                "{0,4} | {1,4:F1} | {2,10:F1} | {3,12:F1} | {4,6} | {5,6} | {6,5} ({7,3:+0;-0;0}) | {8,4} | {9,6}/{10,-6} | {11,6} | {12,13:F0} | {13,16} | {14,12}",
+                "{0,4} | {1,4:F1} | {2,10:F1} | {3,12:F1} | {4,6} | {5,6} | {6,5} ({7,3:+0;-0;0}) | {8,4} | {9,6}/{10,-6} | {11,6} | {12,13:F0} | {13,16} | {14,13} | {15,12}",
                 sample.Loop,
                 sample.Seconds,
                 sample.ManagedBytes / BYTES_PER_MEGABYTE,
@@ -68,12 +68,10 @@ namespace Tests.PlayMode.LoopSoak {
                 census.ClientOther,
                 sample.WorldShifts,
                 sample.ShipDistanceFromOrigin,
-                FormatCount(sample.FieldPlacements),
-                FormatCount(sample.FieldPooledObjects));
+                sample.FieldPlacements,
+                sample.FieldObjects,
+                sample.FieldPooledObjects);
         }
-
-        private static string FormatCount(int count) =>
-            count == LoopSoakFlightFieldCheck.UNKNOWN ? "n/a" : count.ToString(CultureInfo.InvariantCulture);
     }
 }
 #endif

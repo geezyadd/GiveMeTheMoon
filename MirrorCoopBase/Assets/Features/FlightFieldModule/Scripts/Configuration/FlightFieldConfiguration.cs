@@ -72,6 +72,10 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [Tooltip("Seeds tried before the route corridors are cleared by force.")]
         [SerializeField, Min(1)] private int _maxSeedAttempts = 3;
 
+        [Header("Building")]
+        [Tooltip("Local structures every peer builds per frame from the live field; the 9 s takeoff hides the whole field.")]
+        [SerializeField, Min(1)] private int _structuresBuiltPerFrame = 16;
+
         public float CellSize => _cellSize;
         public int MarginBehindACells => _marginBehindACells;
         public int MarginBehindBCells => _marginBehindBCells;
@@ -88,5 +92,6 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public int PassageClearanceCells => _passageClearanceCells;
         public int MaxRepairRounds => _maxRepairRounds;
         public int MaxSeedAttempts => _maxSeedAttempts;
+        public int StructuresBuiltPerFrame => _structuresBuiltPerFrame;
     }
 }

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using Features.GameCoreModule.Contracts;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
@@ -14,16 +16,19 @@ namespace Features.ShipModule.Scripts {
         private readonly IShipRunBindingModel _binding;
         private readonly IShipStationPads _pads;
         private readonly IShipRoute _route;
+        private readonly List<IWorldShiftFollower> _worldShiftFollowers;
 
         public ShipWorldShiftService(
             ShipRunConfig config,
             IShipRunBindingModel binding,
             IShipStationPads pads,
-            IShipRoute route) {
+            IShipRoute route,
+            List<IWorldShiftFollower> worldShiftFollowers) {
             _config = config;
             _binding = binding;
             _pads = pads;
             _route = route;
+            _worldShiftFollowers = worldShiftFollowers;
         }
 
         public void RecenterIfFar() {
@@ -60,6 +65,9 @@ namespace Features.ShipModule.Scripts {
             ship.ServerApplyWorldShift(delta);
             _pads.Shift(delta);
             _route.ShiftDestination(delta);
+            foreach (IWorldShiftFollower follower in _worldShiftFollowers)
+                follower.FollowWorldShift(delta);
+
             ShipRunDirector director = _binding.Director;
             if (director != null)
                 director.ServerShiftWorld(delta, _pads.CurrentIdentity, _pads.PreviousIdentity);

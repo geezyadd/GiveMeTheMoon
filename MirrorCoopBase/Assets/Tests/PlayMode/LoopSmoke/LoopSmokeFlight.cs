@@ -26,6 +26,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float KILL_DEPTH_BELOW_PAD = 2f;
         private const int REQUIRED_ENGINES = 2;
         private const string ROCKET_ENGINE_MODULE_ID = "rocket-engine";
+        private const float MILLISECONDS_PER_SECOND = 1000f;
 
         private static readonly ShipRunPhase[] _expectedLoopPhases = {
             ShipRunPhase.Build,
@@ -36,6 +37,8 @@ namespace Tests.PlayMode.LoopSmoke {
         };
 
         private readonly LoopSmokeSession _session;
+        private readonly LoopSmokeFieldCheck _fieldCheck;
+        private float _longestTakeoffFrame;
 
         private ShipBase Ship =>
             _session.Ship;
@@ -46,8 +49,10 @@ namespace Tests.PlayMode.LoopSmoke {
         private static NetworkIdentity LocalPlayer =>
             NetworkClient.localPlayer;
 
-        public LoopSmokeFlight(LoopSmokeSession session) =>
+        public LoopSmokeFlight(LoopSmokeSession session, LoopSmokeFieldCheck fieldCheck) {
             _session = session;
+            _fieldCheck = fieldCheck;
+        }
 
         public void InstallRequiredEngines() {
             int installed = 0;
@@ -80,16 +85,20 @@ namespace Tests.PlayMode.LoopSmoke {
         public IEnumerator FlyLoopCoroutine(int expectedLoopIndex, Func<IEnumerator> inCruise = null) {
             Assert.AreEqual(expectedLoopIndex - 1, Model.LoopIndex, $"Loop {expectedLoopIndex}: LoopIndex before launch.");
             _session.StartPhaseRecord();
+            _longestTakeoffFrame = 0f;
             PullLaunchLever(expectedLoopIndex);
 
-            yield return _session.WaitForCoroutine(IsCruising, FLIGHT_TIMEOUT_SECONDS, $"Cruise of loop {expectedLoopIndex}");
+            yield return _session.WaitForCoroutine(IsCruisingAfterTakeoffFrame, FLIGHT_TIMEOUT_SECONDS, $"Cruise of loop {expectedLoopIndex}");
+            Debug.Log($"[LoopSmoke] loop {expectedLoopIndex} takeoff: longest frame {_longestTakeoffFrame * MILLISECONDS_PER_SECOND:0.0} ms");
             Assert.IsTrue(LocalPlayer.GetComponent<ShipRider>().IsRiding, $"Loop {expectedLoopIndex}: the player is not riding the ship in cruise.");
+            yield return _fieldCheck.AssertNewFieldStandsCoroutine(expectedLoopIndex);
             if (inCruise != null)
                 yield return inCruise();
 
             yield return _session.WaitForCoroutine(IsBackInBuild, FLIGHT_TIMEOUT_SECONDS, $"Build after landing of loop {expectedLoopIndex}");
             CollectionAssert.AreEqual(_expectedLoopPhases, _session.Phases, $"Loop {expectedLoopIndex}: phase sequence {string.Join(" -> ", _session.Phases)}");
             Assert.AreEqual(expectedLoopIndex, Model.LoopIndex, $"Loop {expectedLoopIndex}: LoopIndex after landing.");
+            yield return _fieldCheck.AssertFieldClearedCoroutine(expectedLoopIndex);
         }
 
         public IEnumerator AssertLandedSafelyCoroutine(int loop, ShipLandingPad launchPad, ShipLandingPad landingPad) {
@@ -144,8 +153,10 @@ namespace Tests.PlayMode.LoopSmoke {
             lever.ServerUse(LocalPlayer, grab);
         }
 
-        private bool IsCruising() =>
-            Model.Phase == ShipRunPhase.Cruise;
+        private bool IsCruisingAfterTakeoffFrame() {
+            _longestTakeoffFrame = Mathf.Max(_longestTakeoffFrame, Time.unscaledDeltaTime);
+            return Model.Phase == ShipRunPhase.Cruise;
+        }
 
         private bool IsBackInBuild() =>
             _session.Phases.Count > 1 && Model.Phase == ShipRunPhase.Build;

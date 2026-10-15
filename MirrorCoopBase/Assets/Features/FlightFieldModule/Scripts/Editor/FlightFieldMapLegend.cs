@@ -13,5 +13,6 @@ namespace Features.FlightFieldModule.Scripts.Editor {
         public static readonly Color StationA = new(0.3f, 0.6f, 1f);
         public static readonly Color StationB = new(1f, 0.35f, 0.9f);
         public static readonly Color CruiseStart = Color.white;
+        public static readonly Color Ship = new(1f, 0.85f, 0.1f);
     }
 }

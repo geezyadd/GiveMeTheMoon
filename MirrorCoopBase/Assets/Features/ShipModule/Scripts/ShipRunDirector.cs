@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.GameCoreModule.Contracts;
 using Features.GrabModule.Scripts;
 using Features.ShipModule.Scripts.Generated;
 using Mirror;
@@ -18,6 +19,9 @@ namespace Features.ShipModule.Scripts {
 
         [Inject]
         private IShipRadarBinding _radar;
+
+        [Inject]
+        private List<IWorldShiftFollower> _worldShiftFollowers;
 
         private GameObject _localWreck;
         private GameObject _previousLocalWreck;
@@ -87,6 +91,9 @@ namespace Features.ShipModule.Scripts {
             ShiftClientPad(previousPad, delta);
             foreach (NetworkIdentity identity in NetworkClient.spawned.Values)
                 ShiftClientItem(identity, delta);
+
+            foreach (IWorldShiftFollower follower in _worldShiftFollowers)
+                follower.FollowWorldShift(delta);
         }
 
         private static void ShiftClientPad(NetworkIdentity pad, Vector3 delta) {

@@ -7,6 +7,7 @@ using Tests.PlayMode.LoopSmoke;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.TestTools;
+using Zenject;
 
 namespace Tests.PlayMode.LoopSoak {
     // Flies the loop many times in a row on a host and catches what only shows up over time: objects piling up,
@@ -17,29 +18,32 @@ namespace Tests.PlayMode.LoopSoak {
         private const int LOOPS = 15;
         // Menu, Host, lobby and the GameScene load; leaving to the menu.
         private const int SESSION_BUDGET_SECONDS = 150;
-        // A loop on fast timings takes about 20 s (takeoff, the cruise distance at cruise speed, landing, checks).
+        // A loop on fast timings takes about 10 s (takeoff, the cruise distance at cruise speed, landing, checks).
         private const int LOOP_BUDGET_SECONDS = 60;
         private const int TEST_TIMEOUT_MS = (SESSION_BUDGET_SECONDS + LOOPS * LOOP_BUDGET_SECONDS) * 1000;
 
         private LoopSmokeErrorLog _errorLog;
         private LoopSmokeSteamLobbySpy _steamLobby;
         private LoopSmokeShipRunConfigOverride _configOverride;
+        private LoopSmokeFieldCatalogOverride _fieldCatalogOverride;
         private LoopSmokeSession _session;
+        private LoopSmokeFieldCheck _fieldCheck;
         private LoopSmokeFlight _flight;
 
         [SetUp]
         public void SetUp() {
             _configOverride = new LoopSmokeShipRunConfigOverride(LoopSmokeShipRunConfigOverride.FAST_TIMINGS_JSON);
+            _fieldCatalogOverride = new LoopSmokeFieldCatalogOverride();
             _errorLog = new LoopSmokeErrorLog();
             _steamLobby = new LoopSmokeSteamLobbySpy();
             _steamLobby.BindIntoSceneContexts();
             _session = new LoopSmokeSession(_errorLog);
-            _flight = new LoopSmokeFlight(_session);
         }
 
         [TearDown]
         public void TearDown() {
             _configOverride.Dispose();
+            _fieldCatalogOverride.Dispose();
             _errorLog.Dispose();
             _steamLobby.Dispose();
         }
@@ -52,6 +56,8 @@ namespace Tests.PlayMode.LoopSoak {
             yield return _session.EnterLobbyAsHostCoroutine();
             yield return _session.StartGameCoroutine();
             _configOverride.AssertBound();
+            _fieldCheck = new LoopSmokeFieldCheck(ProjectContext.Instance.Container);
+            _flight = new LoopSmokeFlight(_session, _fieldCheck);
             _flight.InstallRequiredEngines();
             yield return _flight.BoardPlayerCoroutine();
 
@@ -63,6 +69,7 @@ namespace Tests.PlayMode.LoopSoak {
 
             Debug.Log(report.Describe(Time.realtimeSinceStartup - testStart));
             Assert.Greater(worldShift.Count, 0, $"No world shift happened in {LOOPS} loops: the checks after a shift proved nothing.");
+            _fieldCheck.AssertNetworkedPathWasChecked();
             report.AssertMemoryDoesNotGrow();
             yield return _session.LeaveToMenuCoroutine();
             Assert.AreEqual(0, _errorLog.Count, $"Errors were logged during the loops:\n{_errorLog.Describe()}");
@@ -70,12 +77,10 @@ namespace Tests.PlayMode.LoopSoak {
 
         private IEnumerator FlyCheckedLoopCoroutine(int loop, LoopSoakReport report, LoopSoakAccumulationCheck accumulation, LoopSoakWorldShiftCheck worldShift) {
             float loopStart = Time.realtimeSinceStartup;
-            LoopSoakFlightFieldCheck field = new LoopSoakFlightFieldCheck();
             ShipLandingPad launchPad = _flight.FindPadUnderShip();
-            yield return _flight.FlyLoopCoroutine(loop, () => field.CheckInCruiseCoroutine(loop));
+            yield return _flight.FlyLoopCoroutine(loop);
             yield return _flight.AssertLandedSafelyCoroutine(loop, launchPad, _flight.FindPadUnderShip());
             worldShift.AssertAfterLanding(loop, _session.Ship, _flight);
-            field.CheckAfterLanding(loop);
             LoopSoakSpawnCensus census = LoopSoakSpawnCensus.Take();
             accumulation.AssertNothingPiledUp(loop, census);
             report.Add(new LoopSoakSample(
@@ -86,7 +91,7 @@ namespace Tests.PlayMode.LoopSoak {
                 census,
                 worldShift.Count,
                 LoopSoakWorldShiftCheck.DistanceFromOrigin(_session.Ship),
-                field));
+                _fieldCheck));
             Debug.Log(report.DescribeLast());
         }
     }

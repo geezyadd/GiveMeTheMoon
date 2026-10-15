@@ -5,33 +5,41 @@ using Features.ShipModule.Scripts;
 using Mirror;
 using NUnit.Framework;
 using UnityEngine.TestTools;
+using Zenject;
 
 namespace Tests.PlayMode.LoopSmoke {
     public sealed class LoopSmokeTest {
         private const int TEST_TIMEOUT_MS = 180000;
+        // Five flights in a row in run 2: the field pool and the Mirror field objects must not grow.
+        private const int RUN_TWO_LOOPS = 5;
+        // The run 2 flight that shifts the world in cruise.
+        private const int WORLD_SHIFT_LOOP = 3;
 
         private readonly HashSet<uint> _firstRunObjects = new HashSet<uint>();
 
         private LoopSmokeErrorLog _errorLog;
         private LoopSmokeSteamLobbySpy _steamLobby;
         private LoopSmokeShipRunConfigOverride _configOverride;
+        private LoopSmokeFieldCatalogOverride _fieldCatalogOverride;
         private LoopSmokeSession _session;
+        private LoopSmokeFieldCheck _fieldCheck;
         private LoopSmokeFlight _flight;
         private int _lobbyRuntimeObjects;
 
         [SetUp]
         public void SetUp() {
             _configOverride = new LoopSmokeShipRunConfigOverride(LoopSmokeShipRunConfigOverride.FAST_TIMINGS_JSON);
+            _fieldCatalogOverride = new LoopSmokeFieldCatalogOverride();
             _errorLog = new LoopSmokeErrorLog();
             _steamLobby = new LoopSmokeSteamLobbySpy();
             _steamLobby.BindIntoSceneContexts();
             _session = new LoopSmokeSession(_errorLog);
-            _flight = new LoopSmokeFlight(_session);
         }
 
         [TearDown]
         public void TearDown() {
             _configOverride.Dispose();
+            _fieldCatalogOverride.Dispose();
             _errorLog.Dispose();
             _steamLobby.Dispose();
         }
@@ -79,6 +87,10 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return crewInvite.CheckAtStationCoroutine(_flight.FindPadUnderShip());
             LoopSmokeSpawnCounts.Log("run 2 after the first landing");
             Assert.AreEqual(firstLandingSpawns, LoopSmokeSpawnCounts.CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values), "Run 2 does not spawn the same pad and drops on landing as run 1.");
+            // The crew invite check left the player at the pad's terminal: back on the deck before the next flights.
+            yield return _flight.BoardPlayerCoroutine();
+            yield return FlyMoreLoopsCoroutine(2, RUN_TWO_LOOPS);
+            _fieldCheck.AssertNetworkedPathWasChecked();
             yield return new LoopSmokeShopCheck().BuyAtKioskAndWalkAwayCoroutine(_flight.FindPadUnderShip());
 
             yield return _session.LeaveToMenuCoroutine();
@@ -93,7 +105,20 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return new LoopSmokeCrewInviteCheck(_steamLobby).CheckInLobbyCoroutine();
             yield return _session.StartGameCoroutine();
             _configOverride.AssertBound();
+            _fieldCheck = new LoopSmokeFieldCheck(ProjectContext.Instance.Container);
+            _flight = new LoopSmokeFlight(_session, _fieldCheck);
         }
+
+        private IEnumerator FlyMoreLoopsCoroutine(int firstLoopIndex, int lastLoopIndex) {
+            for (int loopIndex = firstLoopIndex; loopIndex <= lastLoopIndex; loopIndex++) {
+                ShipLandingPad launchPad = _flight.FindPadUnderShip();
+                yield return _flight.FlyLoopCoroutine(loopIndex, loopIndex == WORLD_SHIFT_LOOP ? ShiftWorldInCruiseCoroutine : null);
+                yield return _flight.AssertLandedSafelyCoroutine(loopIndex, launchPad, _flight.FindPadUnderShip());
+            }
+        }
+
+        private IEnumerator ShiftWorldInCruiseCoroutine() =>
+            _fieldCheck.AssertFieldFollowsWorldShiftCoroutine(_session.Ship.transform, LoopSmokeShopCheck.Resolve<IShipWorldShiftDebug>());
 
         private void RememberFirstRunObjects() {
             _firstRunObjects.Clear();

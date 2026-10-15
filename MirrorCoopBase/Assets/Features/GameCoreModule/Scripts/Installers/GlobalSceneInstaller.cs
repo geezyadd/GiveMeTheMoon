@@ -32,6 +32,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             WindowsModuleInstaller.Install(Container);
             Container.BindInterfacesTo<GameplaySessionLifecycle>().AsSingle();
             Container.BindInterfacesTo<RejectedJoinMenuSystem>().AsSingle();
+            Container.BindInterfacesTo<FieldNetworkedPrefabSystem>().AsSingle();
         }
     }
 }

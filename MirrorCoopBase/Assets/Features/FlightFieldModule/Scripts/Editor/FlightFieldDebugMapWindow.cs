@@ -8,6 +8,7 @@ using UnityEngine;
 namespace Features.FlightFieldModule.Scripts.Editor {
     // Editor map of a generated field: pick a seed and a loop, generate with the game's configuration and look at
     // the cells, structures, station zones, takeoff corridor and routes from above. It does not need Play mode.
+    // "Live field" shows the field of the running game (host) instead, with the ship, refreshed twice a second.
     public sealed class FlightFieldDebugMapWindow : EditorWindow {
         private const string MENU_PATH = "Tools/Flight Field/Debug Map";
         private const string TITLE = "Flight Field Map";
@@ -16,11 +17,14 @@ namespace Features.FlightFieldModule.Scripts.Editor {
         private const int MAX_PIXELS_PER_CELL = 24;
         private const int MAX_LOOP = 30;
         private const float LEGEND_SWATCH_SIZE = 12f;
+        private const double LIVE_REFRESH_SECONDS = 0.5;
+        private const string NO_LIVE_FIELD = "No live field: enter Play mode as host and launch the ship.";
 
         [SerializeField] private int _seed = 1;
         [SerializeField] private int _loopIndex;
         [SerializeField] private int _pixelsPerCell = 12;
         [SerializeField] private FieldDebugScenario _scenario = new();
+        [SerializeField] private bool _isLive;
 
         private readonly List<string> _summaryLines = new();
 
@@ -28,6 +32,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
         private SerializedProperty _scenarioProperty;
         private Texture2D _map;
         private Vector2 _scroll;
+        private double _nextLiveRefresh;
 
         [MenuItem(MENU_PATH)]
         public static void Open() =>
@@ -41,6 +46,15 @@ namespace Features.FlightFieldModule.Scripts.Editor {
         private void OnDisable() {
             DestroyMap();
             _serializedWindow.Dispose();
+        }
+
+        private void OnInspectorUpdate() {
+            bool isLiveRefreshDue = _isLive && EditorApplication.isPlaying && EditorApplication.timeSinceStartup >= _nextLiveRefresh;
+            if (!isLiveRefreshDue)
+                return;
+
+            _nextLiveRefresh = EditorApplication.timeSinceStartup + LIVE_REFRESH_SECONDS;
+            ShowLiveField();
         }
 
         private void OnGUI() {
@@ -77,6 +91,8 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             _serializedWindow.ApplyModifiedProperties();
             if (GUILayout.Button("Generate"))
                 Generate();
+
+            _isLive = EditorGUILayout.Toggle("Live field (Play mode, host)", _isLive);
         }
 
         private void DrawSummary() {
@@ -95,6 +111,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             DrawLegendEntry(FlightFieldMapLegend.StationA, "A");
             DrawLegendEntry(FlightFieldMapLegend.StationB, "B");
             DrawLegendEntry(FlightFieldMapLegend.CruiseStart, "Cruise start");
+            DrawLegendEntry(FlightFieldMapLegend.Ship, "Ship");
             EditorGUILayout.EndHorizontal();
         }
 
@@ -113,6 +130,26 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             DestroyMap();
             _map = new FlightFieldMapPainter().Paint(field, _pixelsPerCell);
             FillSummary(field, generationMilliseconds);
+            Repaint();
+        }
+
+        private void ShowLiveField() {
+            DestroyMap();
+            _summaryLines.Clear();
+            if (!new FlightFieldLiveReader().TryRead(out FlightFieldLiveSnapshot snapshot)) {
+                _summaryLines.Add(NO_LIVE_FIELD);
+                Repaint();
+                return;
+            }
+
+            FlightFieldMapPainter painter = new();
+            _map = painter.Paint(snapshot.Field, _pixelsPerCell);
+            Vector2Int shipCell = snapshot.LiveFrame.WorldToCell(snapshot.ShipPosition);
+            if (snapshot.HasShip)
+                painter.PaintShip(_map, shipCell, _pixelsPerCell);
+
+            FillSummary(snapshot.Field, 0d);
+            _summaryLines.Insert(0, $"Live field {snapshot.Number}, origin {snapshot.LiveFrame.Origin}, ship cell {(snapshot.HasShip ? shipCell.ToString() : "-")}");
             Repaint();
         }
 
