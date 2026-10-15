@@ -1,6 +1,7 @@
 using Features.CameraModule.Scripts.Models;
 using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.CharacterMovableModule.Scripts.Models;
+using Features.CrewInviteModule.Data.Generated;
 using Features.GrabModule.Scripts;
 using Features.GrabModule.Scripts.Generated;
 using Features.MvpModule;
@@ -37,6 +38,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             ShipRunModelInstaller.Install(Container);
             ShipSocketsModelInstaller.Install(Container);
             ShipStatsModelInstaller.Install(Container);
+            CrewRosterModelInstaller.Install(Container);
         }
     }
 }

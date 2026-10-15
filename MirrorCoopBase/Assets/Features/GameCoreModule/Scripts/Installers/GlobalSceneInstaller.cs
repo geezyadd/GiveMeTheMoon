@@ -1,5 +1,6 @@
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts;
+using Features.CrewInviteModule.Scripts.Installers;
 using Features.FlightFieldModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.Installers;
 using Features.GrabModule.Scripts;
@@ -26,6 +27,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             PlayerProfileModuleInstaller.Install(Container);
             ShopModuleInstaller.Install(Container);
             TooltipModuleInstaller.Install(Container);
+            CrewInviteModuleInstaller.Install(Container);
             ConnectionModuleInstaller.Install(Container);
             WindowsModuleInstaller.Install(Container);
             Container.BindInterfacesTo<GameplaySessionLifecycle>().AsSingle();
