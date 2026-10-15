@@ -1,6 +1,7 @@
 using Features.CameraModule.Scripts.Services;
 using Features.CharacterMovableModule.Scripts;
 using Features.FloatingControllerModule;
+using Features.GameCoreModule.Contracts;
 using Mirror;
 using UnityEngine;
 using Zenject;
@@ -132,11 +133,10 @@ namespace Features.ShipModule.Scripts {
             _bound = true;
             _wasKinematic = _rb.isKinematic;
             _wasInterpolation = _rb.interpolation;
+            _rb.StopIfDynamic();
             _rb.isKinematic = true;
             _rb.detectCollisions = false;
             _rb.interpolation = RigidbodyInterpolation.None;
-            _rb.linearVelocity = Vector3.zero;
-            _rb.angularVelocity = Vector3.zero;
             if (transform.parent != null)
                 transform.SetParent(null, true);
 
@@ -318,12 +318,11 @@ namespace Features.ShipModule.Scripts {
             if (_rb == null)
                 return;
 
+            _rb.StopIfDynamic();
             _rb.isKinematic = true;
             _rb.interpolation = RigidbodyInterpolation.None;
             _rb.position = world;
             _rb.rotation = rotation;
-            _rb.linearVelocity = Vector3.zero;
-            _rb.angularVelocity = Vector3.zero;
         }
 
         private bool ConsumeJumpPress() {

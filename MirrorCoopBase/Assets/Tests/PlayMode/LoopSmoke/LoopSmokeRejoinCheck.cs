@@ -26,7 +26,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float SPAWN_TOLERANCE = 0.1f;
 
         private readonly IReadOnlyShipRunModel _shipRunModel;
-        private readonly IConnectionJoinPolicy _joinPolicy = LoopSmokeShopCheck.Resolve<IConnectionJoinPolicy>();
+        private readonly IConnectionJoinPolicy _joinPolicy = LoopSmokeSceneContexts.Resolve<IConnectionJoinPolicy>();
         private LoopSmokeBot _bot;
 
         public LoopSmokeRejoinCheck(IReadOnlyShipRunModel shipRunModel) =>
@@ -69,9 +69,9 @@ namespace Tests.PlayMode.LoopSmoke {
             AssertAtDeckSpawnPoint("A returning player");
             Assert.AreEqual(PlayerLifeState.Dead, _bot.Life.LifeState, "A player who left dead came back alive.");
 
-            DeadCrewModel deadCrew = LoopSmokeShopCheck.Resolve<DeadCrewModel>();
+            DeadCrewModel deadCrew = LoopSmokeSceneContexts.Resolve<DeadCrewModel>();
             yield return LoopSmokeShopCheck.WaitForCoroutine(() => deadCrew.Entries.Contains(_bot.Key), "the returning dead player in the Crew list");
-            Assert.IsTrue(LoopSmokeShopCheck.Resolve<IPlayerLifeReviver>().CanServerRevive(_bot.Key), "The returning dead player cannot be bought back.");
+            Assert.IsTrue(LoopSmokeSceneContexts.Resolve<IPlayerLifeReviver>().CanServerRevive(_bot.Key), "The returning dead player cannot be bought back.");
             PlayerProfile profile = _bot.Identity.GetComponent<PlayerProfile>();
             yield return LoopSmokeShopCheck.WaitForCoroutine(() => profile.Model.DisplayName == RETURN_NAME, $"the returning player's new name {RETURN_NAME}");
 

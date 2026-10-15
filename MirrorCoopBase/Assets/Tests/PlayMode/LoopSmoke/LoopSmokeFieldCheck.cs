@@ -39,6 +39,12 @@ namespace Tests.PlayMode.LoopSmoke {
         private int _lastFieldNumber;
         private int _networkedPlacementsSeen;
 
+        public int LastPlacements { get; private set; }
+        public int LastFieldObjects { get; private set; }
+
+        public int PooledObjects =>
+            _flightFieldSceneModel.HasRoot ? _flightFieldSceneModel.Root.childCount : 0;
+
         public LoopSmokeFieldCheck(DiContainer container) {
             _liveFieldModel = container.Resolve<IReadOnlyLiveFieldModel>();
             _flightFieldSceneModel = container.Resolve<IReadOnlyFlightFieldSceneModel>();
@@ -71,6 +77,8 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.AreEqual(localPlacements, CountActiveLocalObjects(), $"Loop {loopIndex}: local field objects differ from the local placements.");
             Assert.AreEqual(networkedPlacements, CountSpawnedNetworkedStructures(), $"Loop {loopIndex}: Mirror field objects differ from the networked placements.");
             _networkedPlacementsSeen += networkedPlacements;
+            LastPlacements = localPlacements + networkedPlacements;
+            LastFieldObjects = CountActiveLocalObjects() + CountSpawnedNetworkedStructures();
             RememberMostLocalObjects(localByStructure);
             Assert.LessOrEqual(_flightFieldSceneModel.Root.childCount, Sum(_mostLocalObjectsByStructure), "The pool holds more objects than any field needed.");
             Debug.Log($"[LoopSmoke] loop {loopIndex} field {_liveFieldModel.Number}: {_liveFieldModel.SideCells} x {_liveFieldModel.SideCells} cells, "

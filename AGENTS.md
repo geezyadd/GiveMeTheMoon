@@ -212,7 +212,7 @@ the Crew list, under its new name. After the second landing everyone dies, the c
 the lobby and the test checks that no object of the first run is left. Then it starts a second run, flies five loops (after the first one it checks the station's crew terminal and puts the
 player back on the deck)
 in a row and at the last station buys 5 items at the kiosk through the real aim and the window (`LoopSmokeShopCheck`: delivery
-point, window closes when walking away, a far purchase is refused), returns to the menu and checks that there are no
+point, window closes when walking away, the bought items come to rest within a timeout, a far purchase is refused), returns to the menu and checks that there are no
 errors in the log. Before that check `LoopSmokeRejectCheck` joins a silent loopback "host", hands the client an
 `InFlight` answer and checks the reason text in the menu. `LoopSmokeCrewInviteCheck`: one "Hire crew" terminal in the
 lobby and one per pad, inactive with "Steam is not running." under the real aim (no Steam in the test; E on it asks
@@ -224,7 +224,22 @@ after landing nothing of it is left (what a player joining at that station gets)
 in cruise keeps the field in place against the ship; the field pool never grows past what the fields needed. Every
 takeoff logs its longest frame (`[LoopSmoke] loop N takeoff`). The test shortens flight timings with its own copy of
 `ShipRunConfig` and adds the debug networked beacon to its own copy of `FieldStructureCatalog`; assets are not
-changed. The test timeout is 180 s (a run takes about 110 s).
+changed. The test timeout is 180 s (a run takes about 110 s). The shared steps live in helpers both loop tests use:
+`LoopSmokeSession` (menu, Host, lobby, Start, all dead -> lobby, Leave; waits record the run phases),
+`LoopSmokeFlight` (engines, boarding, the lever, the phases of a loop with the field checks and the checks after
+landing, messages start with "Loop N:"), `LoopSmokeShipRunConfigOverride` and `LoopSmokeFieldCatalogOverride` (the
+config copies) and `LoopSmokeSpawnCounts`.
+
+The soak test `LoopSoakTest` (`Assets/Tests/PlayMode/LoopSoak/`, `[Category("Soak")]`, about 3 minutes) flies 15
+loops in a row on the same fast timings and catches what only shows up over time. It does not repeat the station
+checks of `LoopSmokeTest`. Every loop: the smoke test's flight, field and landing checks; at most 2 landing pads, no
+wreckage, and runtime network objects other than items and pads exactly as after loop 1 (`LoopSoakAccumulationCheck`);
+the landed ship closer to the origin than `OriginRecenterDistance` and, after a world shift, the player on the deck
+(`LoopSoakWorldShiftCheck`). At least one world shift must happen (the default 800 m gives one every second loop) and
+at least one networked field placement. It logs a table per loop (`LoopSoakReport`: time, managed and allocated
+memory, spawned objects, items and their growth, pads, shifts, the ship's distance from the origin, field placements,
+field objects in cruise and pooled field objects) and fails when memory at the last loop is more than 1.5 times that
+of loop 2. Station drops are never removed, so items grow by about 10 per loop: reported, not failed.
 
 EditMode guard tests keep the data rules: `ConfigurationLoadingGuardTests` (no `Resources.Load`, every configuration
 address loads), `ModuleCatalogGuardTests` (module ids set and unique, shop and drops only use catalog modules, no code
@@ -234,7 +249,8 @@ with Mirror; no debug structure in the game catalog or the spawn prefabs).
 
 Run from the workspace root:
 `Invoke-AgentEditor.ps1 -AgentDir . -Command run-tests -Mode PlayMode -Filter LoopSmoke`
-(or Test Runner → PlayMode → `LoopSmokeTest`).
+(or Test Runner → PlayMode → `LoopSmokeTest`); the soak test with `-Filter LoopSoak` (or `LoopSoakTest`), its table
+is in the editor log under `[LoopSoak]`.
 
 **Run it before every merge that touches the ship, landing, shop or session.** The test lives in Assembly-CSharp
 under `#if UNITY_INCLUDE_TESTS`, so `playModeTestRunnerEnabled` is on in `ProjectSettings`. New allowed log errors go
