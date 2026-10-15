@@ -59,6 +59,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private readonly HashSet<uint> _firstRunObjects = new HashSet<uint>();
 
         private LoopSmokeErrorLog _errorLog;
+        private LoopSmokeSteamLobbySpy _steamLobby;
         private int _lobbyRuntimeObjects;
         private ShipRunConfig _fastConfig;
         private IReadOnlyShipRunModel _model;
@@ -68,6 +69,8 @@ namespace Tests.PlayMode.LoopSmoke {
         public void SetUp() {
             Assert.IsFalse(ProjectContext.HasInstance, "ProjectContext exists before the test: the config override cannot be bound.");
             _errorLog = new LoopSmokeErrorLog();
+            _steamLobby = new LoopSmokeSteamLobbySpy();
+            _steamLobby.BindIntoSceneContexts();
             ProjectContext.PostInstall += OnProjectContextPostInstall;
         }
 
@@ -75,6 +78,7 @@ namespace Tests.PlayMode.LoopSmoke {
         public void TearDown() {
             ProjectContext.PostInstall -= OnProjectContextPostInstall;
             _errorLog.Dispose();
+            _steamLobby.Dispose();
             if (_fastConfig != null)
                 Object.Destroy(_fastConfig);
         }
@@ -116,7 +120,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return BoardPlayerCoroutine();
             Assert.AreEqual(startStationItems, CountSceneObjects<ShipItem>(), "Run 2 does not start with the same station items as run 1.");
             ShipLandingPad secondRunStartPad = FindPadUnderShip();
-            LoopSmokeCrewInviteCheck crewInvite = new LoopSmokeCrewInviteCheck();
+            LoopSmokeCrewInviteCheck crewInvite = new LoopSmokeCrewInviteCheck(_steamLobby);
             yield return FlyLoopCoroutine(1, crewInvite.CheckClosedInFlightCoroutine);
             yield return AssertLandedSafelyCoroutine(secondRunStartPad, FindPadUnderShip());
             yield return crewInvite.CheckAtStationCoroutine(FindPadUnderShip());
@@ -138,7 +142,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return WaitForCoroutine(IsLobbyReady, LOBBY_TIMEOUT_SECONDS, "the lobby with an authenticated host client and a bound Start button");
             _lobbyRuntimeObjects = CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values);
             LogSpawnedCounts("lobby before run 1");
-            yield return new LoopSmokeCrewInviteCheck().CheckInLobbyCoroutine();
+            yield return new LoopSmokeCrewInviteCheck(_steamLobby).CheckInLobbyCoroutine();
             yield return StartGameCoroutine();
             Assert.AreSame(_fastConfig, ProjectContext.Instance.Container.Resolve<ShipRunConfig>(), "The test ShipRunConfig override is not bound.");
         }

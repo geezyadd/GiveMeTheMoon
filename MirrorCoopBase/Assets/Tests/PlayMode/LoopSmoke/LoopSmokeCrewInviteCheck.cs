@@ -3,8 +3,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Features.CameraModule.Scripts;
-using Features.CrewInviteModule.Scripts;
-using Features.CrewInviteModule.Scripts.Generated;
+using Features.CrewInviteModule.Data.Generated;
+using Features.CrewInviteModule.Scripts.Core;
+using Features.CrewInviteModule.Scripts.Network;
 using Features.GrabModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.TooltipModule.Scripts.UI;
@@ -27,10 +28,15 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float APPROACH_DISTANCE = 2.5f;
         private const float STAND_HEIGHT = 0.8f;
         private const float STAND_SETTLE_SECONDS = 1f;
+        private const int FRAMES_FOR_INTERACT_ROUND_TRIP = 10;
 
         private readonly IReadOnlyCrewRosterModel _crewRosterModel = LoopSmokeShopCheck.Resolve<IReadOnlyCrewRosterModel>();
         private readonly ICrewInviteStatusService _crewInviteStatusService = LoopSmokeShopCheck.Resolve<ICrewInviteStatusService>();
         private readonly int _playerSlots = LoopSmokeShopCheck.Resolve<ConnectionConfig>().MaxConnections;
+        private readonly LoopSmokeSteamLobbySpy _steamLobby;
+
+        public LoopSmokeCrewInviteCheck(LoopSmokeSteamLobbySpy steamLobby) =>
+            _steamLobby = steamLobby;
 
         private static NetworkIdentity Player => NetworkClient.localPlayer;
         private static LocalPlayerInteraction Interaction => Player.GetComponent<LocalPlayerInteraction>();
@@ -69,7 +75,9 @@ namespace Tests.PlayMode.LoopSmoke {
                 "Crew invite terminals do not match the pads one to one.");
 
         private IEnumerator AssertInactiveWithoutSteamCoroutine(CrewInviteInteractable terminal) {
+            Assert.IsTrue(_steamLobby.IsBound, "The Steam lobby spy did not replace the scene binding.");
             Assert.AreEqual(CrewInviteStatus.NoSteam, _crewInviteStatusService.EvaluateForLocalPlayer(), "The test session unexpectedly has a Steam lobby.");
+            int overlayRequests = _steamLobby.InviteOverlayRequests;
             try {
                 CameraLookDriver.DebugPitchOverride = true;
                 Vector3 front = terminal.transform.position - terminal.transform.forward * APPROACH_DISTANCE;
@@ -79,7 +87,10 @@ namespace Tests.PlayMode.LoopSmoke {
                 Assert.IsNull(Interaction.Target.Usable, "The crew invite terminal is usable without Steam.");
                 yield return LoopSmokeShopCheck.WaitForCoroutine(IsNoSteamTooltipShown, $"the tooltip \"{NO_STEAM_TEXT}\" on the terminal");
                 Interaction.Interact();
-                yield return null;
+                for (int i = 0; i < FRAMES_FOR_INTERACT_ROUND_TRIP; i++)
+                    yield return null;
+
+                Assert.AreEqual(overlayRequests, _steamLobby.InviteOverlayRequests, "Interact on the inactive terminal asked for the invite overlay.");
             } finally {
                 CameraLookDriver.DebugPitchOverride = false;
                 CameraLookDriver.DebugPitch = 0f;
