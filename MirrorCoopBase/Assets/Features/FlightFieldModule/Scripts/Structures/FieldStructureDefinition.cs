@@ -19,6 +19,10 @@ namespace Features.FlightFieldModule.Scripts.Structures {
         [SerializeField, Min(0f)] private float _weight = 1f;
         [Tooltip("May be turned by 90 degrees when placed.")]
         [SerializeField] private bool _isRotatable = true;
+        [Tooltip("Visual only: the built object turns by a random angle up to this many degrees either way; the footprint does not change.")]
+        [SerializeField, Range(0f, 180f)] private float _visualYawJitterDegrees;
+        [Tooltip("Visual only: the built object's scale differs by a random share up to this value either way; the footprint does not change.")]
+        [SerializeField, Range(0f, 0.5f)] private float _visualScaleJitter;
 
         public string Id => _id;
         public FieldStructureKind Kind => _kind;
@@ -27,6 +31,8 @@ namespace Features.FlightFieldModule.Scripts.Structures {
         public bool IsNetworked => _isNetworked;
         public float Weight => _weight;
         public bool IsRotatable => _isRotatable;
+        public float VisualYawJitterDegrees => _visualYawJitterDegrees;
+        public float VisualScaleJitter => _visualScaleJitter;
         public bool IsRandomObstacle => _kind == FieldStructureKind.Obstacle && _weight > 0f;
     }
 }

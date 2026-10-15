@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Mirror;
 using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Structures {
@@ -45,6 +46,9 @@ namespace Features.FlightFieldModule.Scripts.Structures {
 
             if (structure.Prefab == null)
                 throw new InvalidOperationException($"{_fieldStructureCatalog.name}: structure {structure.Id} has no prefab.");
+
+            if (structure.IsNetworked && !structure.Prefab.TryGetComponent(out NetworkIdentity _))
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: networked structure {structure.Id} has no NetworkIdentity on its prefab.");
 
             ValidateFootprint(structure);
         }
