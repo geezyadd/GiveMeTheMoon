@@ -7,12 +7,11 @@ using Features.MatrixModule.Scripts.Services.MatrixInsertShaper;
 using Features.MatrixModule.Scripts.Services.MatrixPathFinder;
 
 namespace Features.MatrixModule.Scripts.MatrixFactory {
-    public class MatrixFactory 
-    {
+    public class MatrixFactory : IMatrixFactory {
         public IMatrix<TMatrixEntity> Create<TMatrixEntity>(int width, int height, TMatrixEntity fillEntity) =>
-            new Matrix<TMatrixEntity>(width, height, new MatrixCropper(), new MatrixExpander(), new MatrixInsertShaper(), new MatrixEntityReplacer(), new MatrixPathFinder(),new MatrixEntitySorter(), fillEntity);
+            new Matrix<TMatrixEntity>(width, height, new MatrixCropper(), new MatrixExpander(this), new MatrixInsertShaper(), new MatrixEntityReplacer(), new MatrixPathFinder(), new MatrixEntitySorter(), fillEntity);
         
         public IMatrix<TMatrixEntity> Create<TMatrixEntity>(List<MatrixSavableContainer<TMatrixEntity>> savableContainers) =>
-            new Matrix<TMatrixEntity>(savableContainers, new MatrixCropper(), new MatrixExpander(), new MatrixInsertShaper(), new MatrixEntityReplacer(), new MatrixPathFinder(),new MatrixEntitySorter());
+            new Matrix<TMatrixEntity>(savableContainers, new MatrixCropper(), new MatrixExpander(this), new MatrixInsertShaper(), new MatrixEntityReplacer(), new MatrixPathFinder(), new MatrixEntitySorter());
     }
 }

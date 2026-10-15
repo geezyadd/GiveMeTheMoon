@@ -5,7 +5,13 @@ using UnityEngine;
 namespace Features.MatrixModule.Scripts.Services.ExpandMatrix {
     public class MatrixExpander : IMatrixExpander {
         private const string INVALID_DIRECTION = "Invalid direction";
-        
+        private const string CENTER_IS_NOT_EXPANDABLE = "A matrix expands only on one side: Left, Right, Top or Bottom.";
+
+        private readonly IMatrixFactory _matrixFactory;
+
+        public MatrixExpander(IMatrixFactory matrixFactory) =>
+            _matrixFactory = matrixFactory;
+
         public void ExpandMatrix<TMatrixEntity>(IMatrix<TMatrixEntity> matrix, MatrixOperationDirection matrixOperationDirection, int number, TMatrixEntity fillEntity) =>
             matrix.Rows = GetExpandMatrix(matrix, matrixOperationDirection, fillEntity, number).Rows;
         
@@ -29,7 +35,9 @@ namespace Features.MatrixModule.Scripts.Services.ExpandMatrix {
                 case MatrixOperationDirection.Bottom: 
                     newMatrixRowCount += number;
                     break;
-                default: throw new ArgumentException(INVALID_DIRECTION);
+                case MatrixOperationDirection.Center:
+                    throw new ArgumentOutOfRangeException(nameof(matrixOperationDirection), matrixOperationDirection, CENTER_IS_NOT_EXPANDABLE);
+                default: throw new ArgumentOutOfRangeException(nameof(matrixOperationDirection), matrixOperationDirection, INVALID_DIRECTION);
             }
 
             insertX = Mathf.Max(0, insertX);
@@ -37,7 +45,7 @@ namespace Features.MatrixModule.Scripts.Services.ExpandMatrix {
             newMatrixRowCount = Mathf.Max(matrix.GetRowCount(), newMatrixRowCount);
             newMatrixColumnCount = Mathf.Max(matrix.GetColumnCount(), newMatrixColumnCount);
             
-            IMatrix<TMatrixEntity> expandMatrix = new MatrixFactory.MatrixFactory().Create(newMatrixColumnCount, newMatrixRowCount, fillEntity);
+            IMatrix<TMatrixEntity> expandMatrix = _matrixFactory.Create(newMatrixColumnCount, newMatrixRowCount, fillEntity);
             expandMatrix.SilentInsertShapeMatrix(matrix, insertX, insertY);
             return expandMatrix;
         }

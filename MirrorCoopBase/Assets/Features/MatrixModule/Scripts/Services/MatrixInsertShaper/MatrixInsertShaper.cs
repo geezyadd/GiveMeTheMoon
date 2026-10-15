@@ -53,26 +53,22 @@ namespace Features.MatrixModule.Scripts.Services.MatrixInsertShaper {
             matrixEntities = new List<TMatrixEntity>();
             if (!ValidateShape(matrix, shape, x, y, matrixPredicate))
                 return false;
-            int ownY = y;
-            for (int shapeY = 0; shapeY < shape.GetRowCount(); shapeY++) {
-                List<TMatrixEntity> row = shape.GetRowById(shapeY);
-                int ownX = x;
-                foreach (TMatrixEntity entity in row) {
-                    if (ownX >= matrix.GetColumnCount())
-                        break;
 
-                    if (shapePredicate == null || shapePredicate(entity)) {
-                        matrix.SetValue(ownX, ownY, entity);
-                        matrixEntities.Add(entity);
-                    }
-
-                    ownX++;
-                }
-
-                ownY++;
-            }
+            for (int shapeY = 0; shapeY < shape.GetRowCount(); shapeY++)
+                InsertShapeRow(matrix, shape.GetRowById(shapeY), x, y + shapeY, shapePredicate, matrixEntities);
 
             return true;
+        }
+
+        private void InsertShapeRow<TMatrixEntity>(IMatrix<TMatrixEntity> matrix, List<TMatrixEntity> row, int x, int y, Predicate<TMatrixEntity> shapePredicate, List<TMatrixEntity> insertedMatrixEntities) {
+            for (int shapeX = 0; shapeX < row.Count; shapeX++) {
+                TMatrixEntity entity = row[shapeX];
+                if (shapePredicate != null && !shapePredicate(entity))
+                    continue;
+
+                matrix.SetValue(x + shapeX, y, entity);
+                insertedMatrixEntities.Add(entity);
+            }
         }
 
         private bool ValidateShape<TMatrixEntity>(IMatrix<TMatrixEntity> matrix, IMatrix<TMatrixEntity> shape, int x, int y, Predicate<TMatrixEntity> matrixPredicate = null) {
