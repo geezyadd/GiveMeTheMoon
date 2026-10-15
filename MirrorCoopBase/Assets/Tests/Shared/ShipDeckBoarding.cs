@@ -1,5 +1,6 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using Features.CharacterMovableModule.Scripts;
+using Features.GameCoreModule.Contracts;
 using Features.ShipModule.Scripts;
 using UnityEngine;
 
@@ -14,7 +15,7 @@ namespace Tests.Shared {
             Rigidbody body = player.Body;
             body.position = target;
             body.transform.position = target;
-            body.linearVelocity = Vector3.zero;
+            body.StopIfDynamic();
         }
     }
 }

@@ -19,10 +19,7 @@ namespace Tests.Coop.Shared {
     // flight field, the other player's nameplate, where the local player stands and whether it is alive.
     // The host and the client capture the same fields.
     public static class CoopObserver {
-        private const float DECK_EDGE_TOLERANCE = 0.5f;
-        private const float BELOW_DECK_TOLERANCE = 1f;
         private const string SOCKET_FORMAT = "{0}={1}";
-        private const string NAME_SEPARATOR = ", ";
 
         public static CoopObservation CaptureStep(string step) =>
             new CoopObservation { Step = step, RealTime = Time.realtimeSinceStartup };
@@ -41,11 +38,6 @@ namespace Tests.Coop.Shared {
             observation.LifeState = SessionQueries.Resolve<IPlayerLifeQuery>().LocalState.ToString();
             observation.IsSpectating = SessionQueries.Resolve<SpectatorModel>().IsSpectating;
             return observation;
-        }
-
-        public static bool IsOnDeck(ShipBase ship, Vector3 position) {
-            Bounds deck = ship.DeckGeometry.Bounds;
-            return SessionQueries.ContainsXZ(deck, position, DECK_EDGE_TOLERANCE) && position.y > deck.min.y - BELOW_DECK_TOLERANCE;
         }
 
         private static string[] CaptureSockets(IReadOnlyShipSocketsModel sockets) {
@@ -81,14 +73,14 @@ namespace Tests.Coop.Shared {
                     names.Add(nameplate.GetComponentInChildren<TextMeshPro>(true).text);
             }
 
-            return string.Join(NAME_SEPARATOR, names);
+            return string.Join(CoopObservation.LIST_SEPARATOR, names);
         }
 
         private static void CaptureLocalPlayer(CoopObservation observation) {
             ShipBase ship = Object.FindAnyObjectByType<ShipBase>();
             Vector3 position = SessionQueries.LocalPlayer.transform.position;
             observation.Position = position;
-            observation.IsOnDeck = IsOnDeck(ship, position);
+            observation.IsOnDeck = SessionQueries.IsOnDeck(ship, position);
         }
     }
 }

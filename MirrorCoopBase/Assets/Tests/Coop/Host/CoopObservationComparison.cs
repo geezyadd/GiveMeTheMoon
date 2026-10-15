@@ -9,14 +9,13 @@ namespace Tests.Coop.Host {
     public static class CoopObservationComparison {
         // Stats travel as floats over the network; a thousandth is far below any modifier step.
         private const float STAT_PRECISION = 1000f;
-        private const string LIST_SEPARATOR = ", ";
 
         // A client that leaves right after its report is gone from the host's view, so its nameplate is not compared then.
         public static List<string> FindMismatches(CoopObservation host, CoopObservation client, bool isInFlight, bool isClientStaying) {
             List<string> mismatches = new List<string>();
             AddIfDifferent(mismatches, "phase", host.Phase, client.Phase);
             AddIfDifferent(mismatches, "loop index", host.LoopIndex.ToString(), client.LoopIndex.ToString());
-            AddIfDifferent(mismatches, "sockets", string.Join(LIST_SEPARATOR, host.Sockets), string.Join(LIST_SEPARATOR, client.Sockets));
+            AddIfDifferent(mismatches, "sockets", string.Join(CoopObservation.LIST_SEPARATOR, host.Sockets), string.Join(CoopObservation.LIST_SEPARATOR, client.Sockets));
             AddIfDifferent(mismatches, "stats", DescribeStats(host), DescribeStats(client));
             AddIfDifferent(mismatches, "crew balance", host.Balance.ToString(), client.Balance.ToString());
             AddIfDifferent(mismatches, "client's nameplate over the host", CoopTestPlayers.HOST_NAME, client.OtherNameplate);

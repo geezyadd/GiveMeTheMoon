@@ -7,6 +7,8 @@ namespace Tests.Coop.Shared {
     // with. Public fields for JsonUtility.
     [Serializable]
     public sealed class CoopObservation {
+        public const string LIST_SEPARATOR = ", ";
+
         public string Step;
         public float RealTime;
         public string Phase;
@@ -34,7 +36,7 @@ namespace Tests.Coop.Shared {
         public string Describe() =>
             $"{Step} at {RealTime:0.0} s: phase {Phase}, loop {LoopIndex}, {LifeState}, spectating {IsSpectating}, on deck {IsOnDeck} at {Position}, "
             + $"field #{FieldNumber} seed {FieldSeed} placements {FieldPlacements}, nameplate '{OtherNameplate}', "
-            + $"sockets [{string.Join(", ", Sockets ?? Array.Empty<string>())}], "
+            + $"sockets [{string.Join(LIST_SEPARATOR, Sockets ?? Array.Empty<string>())}], "
             + $"stats thrust {Thrust} dodge {DodgeRange} handling {Handling} armor {Armor} speed {FlightSpeed}, balance {Balance}"
             + (string.IsNullOrEmpty(Message) ? string.Empty : $", message: {Message}");
     }

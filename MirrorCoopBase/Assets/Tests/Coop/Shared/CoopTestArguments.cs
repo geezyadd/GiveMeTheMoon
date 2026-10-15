@@ -5,7 +5,7 @@ using System.Globalization;
 namespace Tests.Coop.Shared {
     // The coop test client's command line: the host test writes it, the client build reads it.
     public sealed class CoopTestArguments {
-        public const string CLIENT_FLAG = "-coopTestClient";
+        private const string CLIENT_FLAG = "-coopTestClient";
         private const string CONNECT_FLAG = "-connect";
         private const string PORT_FLAG = "-port";
         private const string SCENARIO_FLAG = "-scenario";
@@ -14,17 +14,17 @@ namespace Tests.Coop.Shared {
         // A small window: the client must not cover the editor that hosts the test.
         private const string WINDOW_FLAGS = "-screen-fullscreen 0 -screen-width 640 -screen-height 360";
 
+        public string Address { get; }
+        public ushort Port { get; }
+        public string Scenario { get; }
+        public string ExchangeDirectory { get; }
+
         public CoopTestArguments(string address, ushort port, string scenario, string exchangeDirectory) {
             Address = address;
             Port = port;
             Scenario = scenario;
             ExchangeDirectory = exchangeDirectory;
         }
-
-        public string Address { get; }
-        public ushort Port { get; }
-        public string Scenario { get; }
-        public string ExchangeDirectory { get; }
 
         public static bool TryRead(string[] commandLine, out CoopTestArguments arguments) {
             arguments = null;

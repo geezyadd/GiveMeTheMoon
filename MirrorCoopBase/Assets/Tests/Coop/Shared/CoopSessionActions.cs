@@ -41,8 +41,8 @@ namespace Tests.Coop.Shared {
 
         public static bool IsRejectTextShown(ConnectionRejectReason reason) {
             string expected = SessionQueries.Resolve<IConnectionRejectMessages>().Describe(reason);
-            foreach (Text text in Object.FindAnyObjectByType<MenuSessionViewBase>().GetComponentsInChildren<Text>(true)) {
-                if (text.text == expected)
+            foreach (Text text in Object.FindAnyObjectByType<MenuSessionViewBase>().GetComponentsInChildren<Text>()) {
+                if (text.isActiveAndEnabled && text.text == expected)
                     return true;
             }
 

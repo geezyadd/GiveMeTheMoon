@@ -34,7 +34,6 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float SPECTATOR_SETTLE_SECONDS = 0.5f;
         private const float REVIVE_SETTLE_SECONDS = 1.5f;
         private const float SPAWN_TOLERANCE = 0.1f;
-        private const float DECK_TOLERANCE = 0.5f;
         private const float MAX_FRAME_STEP = 0.3f;
         private const float MIN_SPAWN_SPACING = 1f;
         private const string SCREENSHOT_FOLDER = "Temp/LoopSmoke";
@@ -135,7 +134,7 @@ namespace Tests.PlayMode.LoopSmoke {
             float largestStep = 0f;
             yield return TrackLargestStepCoroutine(step => largestStep = Mathf.Max(largestStep, step));
             Assert.Less(largestStep, MAX_FRAME_STEP, $"The revived host jumped {largestStep} m in one frame.");
-            Assert.IsTrue(IsOnDeck(Player.transform.position), $"The revived host at {Player.transform.position} is not on the deck {_ship.DeckGeometry.Bounds}.");
+            Assert.IsTrue(SessionQueries.IsOnDeck(_ship, Player.transform.position), $"The revived host at {Player.transform.position} is not on the deck {_ship.DeckGeometry.Bounds}.");
             Assert.IsFalse(spectator.IsSpectating, "The revived host still spectates.");
             Assert.IsFalse(SessionQueries.Resolve<PlayerControlBlockModel>().IsBlocked, "The revived host cannot move.");
             yield return CaptureScreenshotCoroutine(DECK_SCREENSHOT);
@@ -150,13 +149,6 @@ namespace Tests.PlayMode.LoopSmoke {
                 onStep(Vector3.Distance(previous, current));
                 previous = current;
             }
-        }
-
-        private bool IsOnDeck(Vector3 position) {
-            Bounds deck = _ship.DeckGeometry.Bounds;
-            return position.x >= deck.min.x - DECK_TOLERANCE && position.x <= deck.max.x + DECK_TOLERANCE
-                && position.z >= deck.min.z - DECK_TOLERANCE && position.z <= deck.max.z + DECK_TOLERANCE
-                && position.y > deck.max.y;
         }
 
         private static float DistanceToNearestSpawnPoint(Vector3 position) {

@@ -15,13 +15,13 @@ namespace Tests.Coop.Host {
         private readonly Process _process;
         private readonly string _logFile;
 
+        public bool HasExited =>
+            _process.HasExited;
+
         private CoopClientProcess(Process process, string logFile) {
             _process = process;
             _logFile = logFile;
         }
-
-        public bool HasExited =>
-            _process.HasExited;
 
         public static CoopClientProcess Start(CoopTestArguments arguments, string logFile) {
             string executable = CoopClientBuildPaths.Executable;

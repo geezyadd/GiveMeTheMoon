@@ -75,8 +75,7 @@ namespace Game.Connection
             {
                 rigidbody.position = position;
                 rigidbody.rotation = rotation;
-                rigidbody.linearVelocity = Vector3.zero;
-                rigidbody.angularVelocity = Vector3.zero;
+                rigidbody.StopIfDynamic();
             }
 
             target.SetPositionAndRotation(position, rotation);

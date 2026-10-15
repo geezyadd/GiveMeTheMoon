@@ -73,7 +73,7 @@ namespace Tests.PlayMode.LoopSmoke {
             ShipDeckBoarding.PutAboveDeck(LocalPlayer.GetComponent<CharacterMovableBase>(), Ship);
 
             yield return new WaitForSeconds(BOARD_SETTLE_SECONDS);
-            Assert.IsTrue(SessionQueries.ContainsXZ(Ship.DeckGeometry.Bounds, LocalPlayer.transform.position, PLAYER_ON_SURFACE_TOLERANCE), "The player did not stay on the deck before launch.");
+            Assert.IsTrue(SessionQueries.IsOnDeck(Ship, LocalPlayer.transform.position), "The player did not stay on the deck before launch.");
         }
 
         public IEnumerator FlyLoopCoroutine(int expectedLoopIndex, Func<IEnumerator> inCruise = null) {
@@ -111,7 +111,7 @@ namespace Tests.PlayMode.LoopSmoke {
             float startY = LocalPlayer.transform.position.y;
             yield return new WaitForSeconds(FALL_SAMPLE_SECONDS);
             Vector3 player = LocalPlayer.transform.position;
-            bool isOnDeck = SessionQueries.ContainsXZ(deck, player, PLAYER_ON_SURFACE_TOLERANCE);
+            bool isOnDeck = SessionQueries.IsOnDeck(Ship, player);
             bool isOnPad = SessionQueries.ContainsXZ(padBounds, player, PLAYER_ON_SURFACE_TOLERANCE);
             Assert.IsTrue(isOnDeck || isOnPad, $"Loop {loop}: the player at {player} is neither on the deck {deck} nor on the pad {padBounds}.");
             Assert.Greater(player.y, padBounds.max.y - KILL_DEPTH_BELOW_PAD, $"Loop {loop}: the player is below the kill depth.");
@@ -121,7 +121,7 @@ namespace Tests.PlayMode.LoopSmoke {
         public void AssertPlayerOnDeck(int loop) {
             Bounds deck = Ship.DeckGeometry.Bounds;
             Vector3 player = LocalPlayer.transform.position;
-            Assert.IsTrue(SessionQueries.ContainsXZ(deck, player, PLAYER_ON_SURFACE_TOLERANCE), $"Loop {loop}: the player at {player} is not on the deck {deck}.");
+            Assert.IsTrue(SessionQueries.IsOnDeck(Ship, player), $"Loop {loop}: the player at {player} is not on the deck {deck}.");
         }
 
         public ShipLandingPad FindPadUnderShip() {

@@ -95,7 +95,7 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         // Start sends a scene change to every client; the host's own client drops it until it is authenticated.
-        public static bool IsLobbyReady() {
+        private static bool IsLobbyReady() {
             StartGameViewBase start = Object.FindAnyObjectByType<StartGameViewBase>();
             bool isHostClientReady = NetworkServer.active && NetworkClient.ready && NetworkClient.connection.isAuthenticated;
             return isHostClientReady && start != null && start.OnStartClicked != null;

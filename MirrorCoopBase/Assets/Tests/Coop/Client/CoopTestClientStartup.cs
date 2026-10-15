@@ -14,9 +14,9 @@ namespace Tests.Coop.Client {
             if (CoopTestArguments.TryRead(Environment.GetCommandLineArgs(), out CoopTestArguments arguments) == false)
                 return;
 
-            GameObject host = new GameObject(OBJECT_NAME);
-            Object.DontDestroyOnLoad(host);
-            host.AddComponent<CoopTestClient>().Run(arguments);
+            GameObject clientObject = new GameObject(OBJECT_NAME);
+            Object.DontDestroyOnLoad(clientObject);
+            clientObject.AddComponent<CoopTestClient>().Run(arguments);
         }
     }
 }

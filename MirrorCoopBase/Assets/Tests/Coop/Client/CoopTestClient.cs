@@ -24,8 +24,11 @@ namespace Tests.Coop.Client {
         private const int LEAVE_LOOP = 2;
         private const int LAST_LOOP = 3;
         private const int FAILURE_EXIT_CODE = 1;
+        // The host writes each command once; reading its file every frame would only cost.
+        private const float EXCHANGE_POLL_SECONDS = 0.2f;
 
         private readonly WaitForSeconds _settle = new WaitForSeconds(SETTLE_SECONDS);
+        private readonly WaitForSeconds _exchangePoll = new WaitForSeconds(EXCHANGE_POLL_SECONDS);
 
         private CoopTestArguments _arguments;
         private CoopTestExchange _exchange;
@@ -83,7 +86,7 @@ namespace Tests.Coop.Client {
 
         private IEnumerator RideLoopCoroutine(int loopIndex) {
             yield return WaitForCruiseCoroutine(loopIndex);
-            yield return WaitForCoroutine(() => IsAtStationAfterLoop(loopIndex), $"Build after loop {loopIndex}");
+            yield return WaitForCoroutine(() => SessionQueries.IsAtStationAfterLoop(loopIndex), $"Build after loop {loopIndex}");
             yield return _settle;
             Report(CoopObserver.CaptureGame(CoopTestSteps.LANDED));
         }
@@ -106,7 +109,7 @@ namespace Tests.Coop.Client {
         }
 
         private IEnumerator RejoinAtStationCoroutine() {
-            yield return WaitForCoroutine(() => _exchange.HasCommand(CoopTestSteps.COMMAND_REJOIN), "the host's rejoin command");
+            yield return WaitForCoroutine(() => _exchange.HasCommand(CoopTestSteps.COMMAND_REJOIN), "the host's rejoin command", _exchangePoll);
             JoinThroughMenu();
             yield return WaitForCoroutine(SessionQueries.IsGameAtStation, "GameScene after rejoining at a station");
             yield return _settle;
@@ -127,7 +130,7 @@ namespace Tests.Coop.Client {
         }
 
         private IEnumerator FinishCoroutine() {
-            yield return WaitForCoroutine(() => _exchange.HasCommand(CoopTestSteps.COMMAND_FINISH), "the host's finish command");
+            yield return WaitForCoroutine(() => _exchange.HasCommand(CoopTestSteps.COMMAND_FINISH), "the host's finish command", _exchangePoll);
             CoopSessionActions.LeaveThroughHud();
             yield return WaitForCoroutine(SessionQueries.IsBackInMenu, "the menu after the last loop");
             CoopObservation observation = CoopObserver.CaptureStep(CoopTestSteps.FINISHED);
@@ -150,9 +153,6 @@ namespace Tests.Coop.Client {
         private static bool IsInCruiseOfLoop(int loopIndex) =>
             SessionQueries.LocalPlayer != null && RunModel().Phase == ShipRunPhase.Cruise && RunModel().LoopIndex == loopIndex - 1;
 
-        private static bool IsAtStationAfterLoop(int loopIndex) =>
-            RunModel().Phase == ShipRunPhase.Build && RunModel().LoopIndex == loopIndex;
-
         private static bool IsDeadAndSpectating() =>
             LocalLifeState() == PlayerLifeState.Dead && SessionQueries.Resolve<SpectatorModel>().IsSpectating;
 
@@ -162,13 +162,14 @@ namespace Tests.Coop.Client {
         private static IReadOnlyShipRunModel RunModel() =>
             SessionQueries.Resolve<IReadOnlyShipRunModel>();
 
-        private IEnumerator WaitForCoroutine(Func<bool> condition, string target) {
+        // pause: what to wait between checks; null checks every frame.
+        private IEnumerator WaitForCoroutine(Func<bool> condition, string target, YieldInstruction pause = null) {
             float deadline = Time.realtimeSinceStartup + STEP_TIMEOUT_SECONDS;
             while (condition() == false) {
                 if (Time.realtimeSinceStartup > deadline)
                     yield return FailCoroutine($"Timed out after {STEP_TIMEOUT_SECONDS} s waiting for {target}.");
 
-                yield return null;
+                yield return pause;
             }
         }
 

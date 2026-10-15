@@ -26,10 +26,12 @@ namespace Tests.Coop.Shared {
         public void AppendCommand(string command) =>
             File.AppendAllText(_commandsPath, command + LINE_END, Encoding.UTF8);
 
-        public List<CoopObservation> ReadReports() {
+        // Parses only the reports after the first firstIndex ones, which the reader has already taken.
+        public List<CoopObservation> ReadReportsFrom(int firstIndex) {
             List<CoopObservation> reports = new List<CoopObservation>();
-            foreach (string line in ReadCompleteLines(_reportsPath))
-                reports.Add(JsonUtility.FromJson<CoopObservation>(line));
+            List<string> lines = ReadCompleteLines(_reportsPath);
+            for (int i = firstIndex; i < lines.Count; i++)
+                reports.Add(JsonUtility.FromJson<CoopObservation>(lines[i]));
 
             return reports;
         }

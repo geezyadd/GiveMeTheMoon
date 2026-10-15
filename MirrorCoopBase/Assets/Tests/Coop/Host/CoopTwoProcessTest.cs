@@ -38,10 +38,14 @@ namespace Tests.Coop.Host {
         private const float STEP_TIMEOUT_SECONDS = 90f;
         private const float CLIENT_EXIT_TIMEOUT_SECONDS = 30f;
         private const string LOOPBACK_ADDRESS = "127.0.0.1";
+        // The client writes a report every few seconds at most: reading its file every frame would only cost.
+        private const float EXCHANGE_POLL_SECONDS = 0.2f;
         private const string CLIENT_LOG_FILE = "client.log";
         private const string RUN_FOLDER_FORMAT = "yyyyMMdd-HHmmss";
         private const int LEAVE_LOOP = 2;
         private const int LAST_LOOP = 3;
+
+        private readonly WaitForSeconds _exchangePoll = new WaitForSeconds(EXCHANGE_POLL_SECONDS);
 
         private LoopSmokeErrorLog _errorLog;
         private LoopSmokeShipRunConfigOverride _configOverride;
@@ -121,7 +125,7 @@ namespace Tests.Coop.Host {
         private IEnumerator RideLoopTogetherCoroutine(int loopIndex) {
             yield return LaunchAndCompareCruiseCoroutine(loopIndex);
             BeginStep($"loop {loopIndex} landing");
-            yield return WaitForCoroutine(() => IsAtStationAfterLoop(loopIndex), $"Build after loop {loopIndex}");
+            yield return WaitForCoroutine(() => SessionQueries.IsAtStationAfterLoop(loopIndex), $"Build after loop {loopIndex}");
             AssertLanded();
             yield return WaitForReportCoroutine(CoopTestSteps.LANDED);
             Assert.IsTrue(IsClientOnDeckOnServer(), $"The client is not on the deck by its server position after loop {loopIndex}: {ClientServerPosition()}.");
@@ -142,7 +146,7 @@ namespace Tests.Coop.Host {
             Assert.IsTrue(IsClientGone(), "The server kept a player who was turned away in flight.");
 
             BeginStep($"loop {LEAVE_LOOP} landing without the client");
-            yield return WaitForCoroutine(() => IsAtStationAfterLoop(LEAVE_LOOP), $"Build after loop {LEAVE_LOOP}");
+            yield return WaitForCoroutine(() => SessionQueries.IsAtStationAfterLoop(LEAVE_LOOP), $"Build after loop {LEAVE_LOOP}");
             AssertLanded();
         }
 
@@ -168,7 +172,7 @@ namespace Tests.Coop.Host {
             long balance = wallet.Balance;
             try {
                 CameraLookDriver.DebugPitchOverride = true;
-                yield return LoopSmokeShopCheck.OpenAtKioskCoroutine(FindKioskNearestToShip(), shop);
+                yield return LoopSmokeShopCheck.OpenAtKioskCoroutine(FindStationKiosk(), shop);
                 yield return WaitForCoroutine(() => LoopSmokeReviveCheck.FindCrewRows().Count == 1, "the client in the shop's Crew section");
                 CrewReviveRow row = LoopSmokeReviveCheck.FindCrewRows()[0];
                 Assert.IsTrue(LoopSmokeReviveCheck.HasLabel(row, CoopTestPlayers.CLIENT_NAME), $"The Crew row does not show {CoopTestPlayers.CLIENT_NAME}.");
@@ -225,7 +229,7 @@ namespace Tests.Coop.Host {
         private void AssertLanded() {
             Assert.AreEqual(ShipRunAbortReason.None, Model.LastAbortReason, "The flight ended as a wreck.");
             Assert.AreEqual(LoopSmokeFlight.REQUIRED_ENGINES, _flight.CountInstalledEngines(), "Engines were lost on landing.");
-            Assert.IsTrue(CoopObserver.IsOnDeck(Ship, SessionQueries.LocalPlayer.transform.position), "The host is not on the deck after landing.");
+            Assert.IsTrue(SessionQueries.IsOnDeck(Ship, SessionQueries.LocalPlayer.transform.position), "The host is not on the deck after landing.");
         }
 
         private void AssertSameView(bool isInFlight, bool isClientStaying) {
@@ -244,16 +248,16 @@ namespace Tests.Coop.Host {
         // Takes the client's next report and fails at once when the client failed, quit or went silent.
         private IEnumerator WaitForReportCoroutine(string step) {
             _lastReport = null;
-            yield return WaitForCoroutine(() => TryTakeReport(step), $"the client's '{step}' report");
+            yield return WaitForCoroutine(() => TryTakeReport(step), $"the client's '{step}' report", _exchangePoll);
             Debug.Log($"[CoopTest] client: {_lastReport.Describe()}");
         }
 
         private bool TryTakeReport(string step) {
-            List<CoopObservation> reports = _exchange.ReadReports();
-            if (reports.Count <= _readReports)
+            List<CoopObservation> reports = _exchange.ReadReportsFrom(_readReports);
+            if (reports.Count == 0)
                 return false;
 
-            CoopObservation report = reports[_readReports];
+            CoopObservation report = reports[0];
             _readReports++;
             if (report.Step == CoopTestSteps.FAILED)
                 Assert.Fail($"The client failed: {report.Message}\n{string.Join("\n", report.Errors)}\n{_client.DescribeLogTail()}");
@@ -263,7 +267,8 @@ namespace Tests.Coop.Host {
             return true;
         }
 
-        private IEnumerator WaitForCoroutine(Func<bool> condition, string target) {
+        // pause: what to wait between checks; null checks every frame.
+        private IEnumerator WaitForCoroutine(Func<bool> condition, string target, YieldInstruction pause = null) {
             float deadline = Time.realtimeSinceStartup + STEP_TIMEOUT_SECONDS;
             while (condition() == false) {
                 if (Time.realtimeSinceStartup > deadline)
@@ -272,30 +277,17 @@ namespace Tests.Coop.Host {
                 if (_client != null && _client.HasExited)
                     Assert.Fail($"The client quit while the host waited for {target}.\n{_client.DescribeLogTail()}");
 
-                yield return null;
+                yield return pause;
             }
         }
 
         private string DescribeClient() =>
             _client == null ? "(no client started)" : _client.DescribeLogTail();
 
-        private bool IsAtStationAfterLoop(int loopIndex) =>
-            Model.Phase == ShipRunPhase.Build && Model.LoopIndex == loopIndex;
-
-        private ShopKioskInteractable FindKioskNearestToShip() {
-            ShopKioskInteractable nearest = null;
-            float best = float.MaxValue;
-            foreach (ShopKioskInteractable kiosk in Object.FindObjectsByType<ShopKioskInteractable>(FindObjectsSortMode.None)) {
-                float distance = (kiosk.transform.position - Ship.transform.position).sqrMagnitude;
-                if (distance >= best)
-                    continue;
-
-                best = distance;
-                nearest = kiosk;
-            }
-
-            Assert.IsNotNull(nearest, "No shop kiosk in the scene.");
-            return nearest;
+        private ShopKioskInteractable FindStationKiosk() {
+            ShopKioskInteractable kiosk = _flight.FindPadUnderShip().GetComponentInChildren<ShopKioskInteractable>();
+            Assert.IsNotNull(kiosk, "The station has no shop kiosk.");
+            return kiosk;
         }
 
         private static PlayerLifeState ClientLifeState() {
@@ -310,7 +302,7 @@ namespace Tests.Coop.Host {
             TryGetClientConnection(out NetworkConnectionToClient _) == false;
 
         private bool IsClientOnDeckOnServer() =>
-            IsClientPlayerSpawned() && CoopObserver.IsOnDeck(Ship, ClientServerPosition());
+            IsClientPlayerSpawned() && SessionQueries.IsOnDeck(Ship, ClientServerPosition());
 
         private static Vector3 ClientServerPosition() =>
             TryGetClientConnection(out NetworkConnectionToClient connection) && connection.identity != null
