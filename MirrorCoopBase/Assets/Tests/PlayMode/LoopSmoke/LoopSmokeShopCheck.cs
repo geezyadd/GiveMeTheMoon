@@ -12,6 +12,7 @@ using Features.ShopModule.Scripts.Network;
 using Features.ShopModule.Scripts.UI;
 using Mirror;
 using NUnit.Framework;
+using Tests.Shared;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -42,8 +43,8 @@ namespace Tests.PlayMode.LoopSmoke {
         public IEnumerator BuyAtKioskAndWalkAwayCoroutine(ShipLandingPad pad) {
             ShopKioskInteractable kiosk = pad.GetComponentInChildren<ShopKioskInteractable>();
             Assert.IsNotNull(kiosk, $"The pad {pad.name} has no shop kiosk.");
-            ShopModel shop = LoopSmokeSceneContexts.Resolve<ShopModel>();
-            IReadOnlyWalletModel wallet = LoopSmokeSceneContexts.Resolve<IReadOnlyWalletModel>();
+            ShopModel shop = SessionQueries.Resolve<ShopModel>();
+            IReadOnlyWalletModel wallet = SessionQueries.Resolve<IReadOnlyWalletModel>();
             List<ShipItem> itemsBefore = FindAllItems();
             try {
                 CameraLookDriver.DebugPitchOverride = true;
@@ -140,7 +141,7 @@ namespace Tests.PlayMode.LoopSmoke {
 
         private static IEnumerator AssertFarPurchaseRefusedCoroutine(IReadOnlyWalletModel wallet) {
             long balance = wallet.Balance;
-            LoopSmokeSceneContexts.Resolve<ShopPurchaseRequestEventClass>().InvokePurchaseRequested(BOUGHT_ENTRY);
+            SessionQueries.Resolve<ShopPurchaseRequestEventClass>().InvokePurchaseRequested(BOUGHT_ENTRY);
             yield return new WaitForSeconds(REJECTED_COMMAND_WAIT_SECONDS);
             Assert.AreEqual(balance, wallet.Balance, "The server took money for a purchase far from the kiosk.");
         }

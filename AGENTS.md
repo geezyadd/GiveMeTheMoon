@@ -61,9 +61,10 @@ The loop runs from start to end, but it does not match the design yet:
   the players: their colliders are triggers on the built-in `Ignore Raycast` layer (see "Flight field" in Key places).
   Damage, armor and a mandatory helm are separate tasks.
 - The field has no "left the field" event and the rocks are not on the radar yet.
-- A host and a real second client (ParrelSync) seeing the same field, also after a world shift in flight, is covered
-  by the design (one placement list, the origin in the model, pads-like shift of Mirror objects) and by the host
-  checks of `LoopSmokeTest`, not by a two-editor run.
+- A host and a real second client seeing the same field number, seed and placement count is checked by
+  `CoopTwoProcessTest` (see "Two-player test"); the same field after a world shift in flight is covered only by the
+  design (one placement list, the origin in the model, pads-like shift of Mirror objects) and by the host checks of
+  `LoopSmokeTest`.
 
 Known issue: on the first landing of a `DeckFeelHarness` run the player jumps about 136 m in one frame, dies and the
 crew returns to the lobby. Seen on 2026-10-06, also on the base commit; not fixed and not investigated.
@@ -255,6 +256,40 @@ is in the editor log under `[LoopSoak]`.
 **Run it before every merge that touches the ship, landing, shop or session.** The test lives in Assembly-CSharp
 under `#if UNITY_INCLUDE_TESTS`, so `playModeTestRunnerEnabled` is on in `ProjectSettings`. New allowed log errors go
 only into the `LoopSmokeErrorLog` allow-list, with a reason.
+
+### Two-player test
+`CoopTwoProcessTest` (`Assets/Tests/Coop/`) plays the loop with a **real second client process**: the PlayMode test in
+the editor is the host, a Windows development build of the game is the client. One command from the workspace root:
+`Invoke-AgentEditor.ps1 -AgentDir . -Command run-tests -Mode PlayMode -Filter CoopTwoProcess`
+(or Test Runner → PlayMode → `CoopTwoProcessTest`). It takes about 70 s, plus about 30-80 s when the client is rebuilt.
+
+- **The client build.** Before Play mode the test's `PrebuildSetup` (`CoopClientBuild`, editor) builds Addressables
+  content and a Win64 development player of the Build Settings scenes into `MirrorCoopBase/Builds/CoopClient/`
+  (git-ignored). It skips the build when the content of `Assets`, `Packages` and `ProjectSettings` is the same as
+  after the last build (a file hash list in `Builds/CoopClient/build.stamp`; the build's own outputs, the Test
+  Runner's scene and render textures are left out). By hand: **Tools → Coop Test → Build Client**. The build re-saves
+  a few settings assets with LF line endings (no content change); do not commit them.
+- **The client bot** (`Assets/Tests/Coop/Client/`, only under `UNITY_EDITOR || DEVELOPMENT_BUILD`, not in a release
+  build) starts when the player is launched with `-coopTestClient -connect <ip> -port <port> -scenario
+  leave-and-rejoin -coopDir <folder> -logFile <file>`. It joins through the menu's address field and Join (Telepathy,
+  a free port the test picks, not Steam), boards, rides the loops the host flies, leaves in flight, is turned away in
+  flight, rejoins at the next station on the deck, dies (the dev kill command, like F9), waits to be bought back, rides
+  one more loop and quits.
+- **Exchange.** The client appends a JSON line per step to `<coopDir>/client-reports.jsonl` (phase, `LoopIndex`,
+  installed sockets, ship stats, crew balance, flight field number / seed / placement count, the nameplate it sees
+  over the host, its own position on the deck, life state, spectating, reject reason, its logged errors); the host
+  answers with commands in `<coopDir>/host-commands.txt` (`rejoin`, `finish`). The host captures the same fields
+  (`CoopObserver`) and compares them at every step (`CoopObservationComparison`), and checks the client's server
+  position on the deck, the `InFlight` refusal text in the client's menu, the buy-back at the kiosk through the shop
+  window and that neither side logged an error.
+- The test always kills the client process (also on failure or timeout). A passed run deletes its folder
+  `Builds/CoopRuns/<time>/`; a failed one keeps the client's log and the exchange files there, and the failure message
+  ends with the tail of the client's log.
+- Shared code, one copy each: `Tests.Shared` (`SessionQueries`: menu / game-at-station / back-in-menu checks, the
+  network manager, `Resolve<T>` from the project or a scene context, `ContainsXZ`; `ShipDeckBoarding`) is used by the
+  loop tests, the coop host test and the client build (no NUnit there); the host side reuses `LoopSmokeSession`,
+  `LoopSmokeFlight` and `LoopSmokeShipRunConfigOverride`.
+- `Docs/COOP-CHECKLIST.md` is the manual two-player pass; its "Auto" column says what this test already covers.
 
 ## Synced models
 

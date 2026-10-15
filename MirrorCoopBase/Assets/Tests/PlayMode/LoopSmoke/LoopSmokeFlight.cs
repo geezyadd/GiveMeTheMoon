@@ -8,6 +8,7 @@ using Features.ShipModule.Scripts.Generated;
 using Features.ShopModule.Scripts.Network;
 using Mirror;
 using NUnit.Framework;
+using Tests.Shared;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -16,7 +17,6 @@ namespace Tests.PlayMode.LoopSmoke {
     // the checks after landing. Failure messages start with the loop number.
     public sealed class LoopSmokeFlight {
         private const float FLIGHT_TIMEOUT_SECONDS = 30f;
-        private const float BOARD_DROP_HEIGHT = 1f;
         private const float BOARD_SETTLE_SECONDS = 1.5f;
         private const float FALL_SAMPLE_SECONDS = 1f;
         private const float MAX_FALL_DROP = 0.25f;
@@ -24,7 +24,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float PLAYER_ON_SURFACE_TOLERANCE = 0.5f;
         // GameCore has no kill volume yet: a player this far below the pad top counts as lost.
         private const float KILL_DEPTH_BELOW_PAD = 2f;
-        private const int REQUIRED_ENGINES = 2;
+        public const int REQUIRED_ENGINES = 2;
         private const string ROCKET_ENGINE_MODULE_ID = "rocket-engine";
         private const float MILLISECONDS_PER_SECOND = 1000f;
 
@@ -47,7 +47,7 @@ namespace Tests.PlayMode.LoopSmoke {
             _session.Model;
 
         private static NetworkIdentity LocalPlayer =>
-            NetworkClient.localPlayer;
+            SessionQueries.LocalPlayer;
 
         public LoopSmokeFlight(LoopSmokeSession session, LoopSmokeFieldCheck fieldCheck) {
             _session = session;
@@ -69,17 +69,11 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.IsTrue(Ship.CanLaunch, "The ship cannot launch with both engines installed.");
         }
 
-        // Stands in for walking aboard: the player is put above the deck and lands on it under physics.
         public IEnumerator BoardPlayerCoroutine() {
-            Bounds deck = Ship.DeckGeometry.Bounds;
-            Vector3 target = new Vector3(deck.center.x, deck.max.y + BOARD_DROP_HEIGHT, deck.center.z);
-            Rigidbody body = LocalPlayer.GetComponent<CharacterMovableBase>().Body;
-            body.position = target;
-            body.transform.position = target;
-            body.linearVelocity = Vector3.zero;
+            ShipDeckBoarding.PutAboveDeck(LocalPlayer.GetComponent<CharacterMovableBase>(), Ship);
 
             yield return new WaitForSeconds(BOARD_SETTLE_SECONDS);
-            Assert.IsTrue(ContainsXZ(Ship.DeckGeometry.Bounds, LocalPlayer.transform.position, PLAYER_ON_SURFACE_TOLERANCE), "The player did not stay on the deck before launch.");
+            Assert.IsTrue(SessionQueries.IsOnDeck(Ship, LocalPlayer.transform.position), "The player did not stay on the deck before launch.");
         }
 
         public IEnumerator FlyLoopCoroutine(int expectedLoopIndex, Func<IEnumerator> inCruise = null) {
@@ -111,14 +105,14 @@ namespace Tests.PlayMode.LoopSmoke {
 
             Bounds padBounds = PadBounds(landingPad);
             Bounds deck = Ship.DeckGeometry.Bounds;
-            Assert.IsTrue(ContainsXZ(padBounds, deck.min, DECK_ON_PAD_TOLERANCE) && ContainsXZ(padBounds, deck.max, DECK_ON_PAD_TOLERANCE),
+            Assert.IsTrue(SessionQueries.ContainsXZ(padBounds, deck.min, DECK_ON_PAD_TOLERANCE) && SessionQueries.ContainsXZ(padBounds, deck.max, DECK_ON_PAD_TOLERANCE),
                 $"Loop {loop}: the deck {deck} is not inside the pad {padBounds}.");
 
             float startY = LocalPlayer.transform.position.y;
             yield return new WaitForSeconds(FALL_SAMPLE_SECONDS);
             Vector3 player = LocalPlayer.transform.position;
-            bool isOnDeck = ContainsXZ(deck, player, PLAYER_ON_SURFACE_TOLERANCE);
-            bool isOnPad = ContainsXZ(padBounds, player, PLAYER_ON_SURFACE_TOLERANCE);
+            bool isOnDeck = SessionQueries.IsOnDeck(Ship, player);
+            bool isOnPad = SessionQueries.ContainsXZ(padBounds, player, PLAYER_ON_SURFACE_TOLERANCE);
             Assert.IsTrue(isOnDeck || isOnPad, $"Loop {loop}: the player at {player} is neither on the deck {deck} nor on the pad {padBounds}.");
             Assert.Greater(player.y, padBounds.max.y - KILL_DEPTH_BELOW_PAD, $"Loop {loop}: the player is below the kill depth.");
             Assert.Less(startY - player.y, MAX_FALL_DROP, $"Loop {loop}: the player is falling: {startY} -> {player.y}.");
@@ -127,7 +121,7 @@ namespace Tests.PlayMode.LoopSmoke {
         public void AssertPlayerOnDeck(int loop) {
             Bounds deck = Ship.DeckGeometry.Bounds;
             Vector3 player = LocalPlayer.transform.position;
-            Assert.IsTrue(ContainsXZ(deck, player, PLAYER_ON_SURFACE_TOLERANCE), $"Loop {loop}: the player at {player} is not on the deck {deck}.");
+            Assert.IsTrue(SessionQueries.IsOnDeck(Ship, player), $"Loop {loop}: the player at {player} is not on the deck {deck}.");
         }
 
         public ShipLandingPad FindPadUnderShip() {
@@ -146,7 +140,7 @@ namespace Tests.PlayMode.LoopSmoke {
             return closest;
         }
 
-        private void PullLaunchLever(int loop) {
+        public void PullLaunchLever(int loop) {
             ShipLaunchInteractable lever = Object.FindAnyObjectByType<ShipLaunchInteractable>();
             GrabController grab = LocalPlayer.GetComponentInChildren<GrabController>();
             Assert.IsTrue(lever.CanUse(LocalPlayer, grab), $"Loop {loop}: the launch lever cannot be used.");
@@ -161,7 +155,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private bool IsBackInBuild() =>
             _session.Phases.Count > 1 && Model.Phase == ShipRunPhase.Build;
 
-        private int CountInstalledEngines() {
+        public int CountInstalledEngines() {
             int count = 0;
             foreach (ShipSocket socket in Ship.Sockets) {
                 if (socket.RequiredForLaunch && socket.InstalledModuleId == ROCKET_ENGINE_MODULE_ID)
@@ -180,10 +174,6 @@ namespace Tests.PlayMode.LoopSmoke {
 
             return bounds;
         }
-
-        private static bool ContainsXZ(Bounds bounds, Vector3 point, float tolerance) =>
-            point.x >= bounds.min.x - tolerance && point.x <= bounds.max.x + tolerance
-            && point.z >= bounds.min.z - tolerance && point.z <= bounds.max.z + tolerance;
     }
 }
 #endif

@@ -1,9 +1,10 @@
-#if UNITY_INCLUDE_TESTS
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Tests.PlayMode.LoopSmoke {
+    // Also used by the coop test client in a development build.
     public sealed class LoopSmokeErrorLog : IDisposable {
         // Steamworks is not initialised in the editor without a running Steam client; direct hosting does not need it.
         private static readonly string[] _allowedMessageParts = {

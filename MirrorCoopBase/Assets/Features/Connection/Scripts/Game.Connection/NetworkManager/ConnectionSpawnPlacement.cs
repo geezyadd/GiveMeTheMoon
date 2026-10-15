@@ -64,7 +64,7 @@ namespace Game.Connection
             ApplyTeleport(identity.transform, msg.position, msg.rotation);
         }
 
-        static void ApplyTeleport(Transform target, Vector3 position, Quaternion rotation)
+        private static void ApplyTeleport(Transform target, Vector3 position, Quaternion rotation)
         {
             CharacterController controller = target.GetComponent<CharacterController>();
             if (controller != null)
@@ -75,8 +75,7 @@ namespace Game.Connection
             {
                 rigidbody.position = position;
                 rigidbody.rotation = rotation;
-                rigidbody.linearVelocity = Vector3.zero;
-                rigidbody.angularVelocity = Vector3.zero;
+                rigidbody.StopIfDynamic();
             }
 
             target.SetPositionAndRotation(position, rotation);

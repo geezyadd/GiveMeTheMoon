@@ -6,11 +6,11 @@ using System.Net;
 using System.Net.Sockets;
 using Features.GameFlowStateMachineModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.States;
-using Features.MenuModule.Scripts;
 using Game.Connection;
 using Mirror;
+using Tests.Coop.Shared;
+using Tests.Shared;
 using UnityEngine;
-using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace Tests.PlayMode.LoopSmoke {
@@ -24,22 +24,20 @@ namespace Tests.PlayMode.LoopSmoke {
         private const string REJECT_SCREENSHOT = "join-rejected-in-flight.png";
 
         public IEnumerator JoinRejectedInFlightCoroutine() {
-            string expected = LoopSmokeSceneContexts.Resolve<IConnectionRejectMessages>().Describe(ConnectionRejectReason.InFlight);
             TelepathyTransport telepathy = Object.FindAnyObjectByType<TelepathyTransport>(FindObjectsInactive.Include);
             ushort shippedPort = telepathy.port;
             TcpListener silentHost = new TcpListener(IPAddress.Loopback, 0);
             silentHost.Start();
             try {
                 telepathy.port = (ushort)((IPEndPoint)silentHost.LocalEndpoint).Port;
-                Object.FindAnyObjectByType<InputField>().text = LOOPBACK_ADDRESS;
-                Object.FindAnyObjectByType<MenuSessionViewBase>().OnJoinClicked.Invoke();
+                CoopSessionActions.JoinThroughMenu(LOOPBACK_ADDRESS);
                 yield return LoopSmokeShopCheck.WaitForCoroutine(IsWaitingForHost, "the client connected and waiting for the host's answer");
 
                 LoopSmokeTransportInput.Deliver(
                     new ConnectionAuthenticator.AuthResponseMessage { rejection = (byte)ConnectionRejectReason.InFlight },
                     Transport.active.OnClientDataReceived);
                 yield return LoopSmokeShopCheck.WaitForCoroutine(IsBackInMenu, "the menu after the host turned the player away");
-                yield return LoopSmokeShopCheck.WaitForCoroutine(() => IsShown(expected), $"the menu text \"{expected}\"");
+                yield return LoopSmokeShopCheck.WaitForCoroutine(() => CoopSessionActions.IsRejectTextShown(ConnectionRejectReason.InFlight), "the in-flight reason in the menu");
                 yield return CaptureScreenshotCoroutine();
             } finally {
                 telepathy.port = shippedPort;
@@ -55,17 +53,8 @@ namespace Tests.PlayMode.LoopSmoke {
             NetworkClient.active == false && IsFlowSettledIn(typeof(MenuGameFlowState));
 
         private static bool IsFlowSettledIn(Type stateType) {
-            IGameFlowStateMachineService flow = LoopSmokeSceneContexts.Resolve<IGameFlowStateMachineService>();
+            IGameFlowStateMachineService flow = SessionQueries.Resolve<IGameFlowStateMachineService>();
             return flow.IsTransitioning == false && flow.CurrentStateType == stateType;
-        }
-
-        private static bool IsShown(string message) {
-            foreach (Text text in Object.FindObjectsByType<Text>(FindObjectsSortMode.None)) {
-                if (text.isActiveAndEnabled && text.text == message)
-                    return true;
-            }
-
-            return false;
         }
 
         // Kept in the project's Temp folder for a human to look at; the test does not compare images.

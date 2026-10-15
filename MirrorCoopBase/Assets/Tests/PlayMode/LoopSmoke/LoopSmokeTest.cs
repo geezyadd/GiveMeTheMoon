@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Features.ShipModule.Scripts;
 using Mirror;
 using NUnit.Framework;
+using Tests.Shared;
 using UnityEngine.TestTools;
 using Zenject;
 
@@ -118,7 +119,7 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         private IEnumerator ShiftWorldInCruiseCoroutine() =>
-            _fieldCheck.AssertFieldFollowsWorldShiftCoroutine(_session.Ship.transform, LoopSmokeSceneContexts.Resolve<IShipWorldShiftDebug>());
+            _fieldCheck.AssertFieldFollowsWorldShiftCoroutine(_session.Ship.transform, SessionQueries.Resolve<IShipWorldShiftDebug>());
 
         private void RememberFirstRunObjects() {
             _firstRunObjects.Clear();

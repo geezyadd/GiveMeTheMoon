@@ -3,8 +3,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Features.GameCoreModule.Contracts;
-using Features.GameFlowStateMachineModule.Scripts;
-using Features.GameFlowStateMachineModule.Scripts.States;
 using Features.LobbyModule.Scripts;
 using Features.MenuModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
@@ -13,9 +11,9 @@ using Features.ShipModule.Scripts.Generated;
 using Game.Connection;
 using Mirror;
 using NUnit.Framework;
+using Tests.Shared;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Zenject;
 using Object = UnityEngine.Object;
 
 namespace Tests.PlayMode.LoopSmoke {
@@ -40,10 +38,12 @@ namespace Tests.PlayMode.LoopSmoke {
         public LoopSmokeSession(LoopSmokeErrorLog errorLog) =>
             _errorLog = errorLog;
 
-        public IEnumerator EnterLobbyAsHostCoroutine() {
+        // prepareHost runs in the menu right before Host is clicked: the coop test sets its port and player name there.
+        public IEnumerator EnterLobbyAsHostCoroutine(Action prepareHost = null) {
             SceneManager.LoadScene(SceneNames.Bootstrap);
 
-            yield return WaitForCoroutine(IsMenuReady, MENU_TIMEOUT_SECONDS, "the menu with a bound Host button");
+            yield return WaitForCoroutine(SessionQueries.IsMenuReady, MENU_TIMEOUT_SECONDS, "the menu with a bound Host button");
+            prepareHost?.Invoke();
             Object.FindAnyObjectByType<MenuSessionViewBase>().OnHostClicked.Invoke();
 
             yield return WaitForCoroutine(IsLobbyReady, LOBBY_TIMEOUT_SECONDS, "the lobby with an authenticated host client and a bound Start button");
@@ -56,7 +56,7 @@ namespace Tests.PlayMode.LoopSmoke {
 
         // The real way back: PlayerLifeSystem's all-dead rule sends everyone to the lobby.
         public IEnumerator ReturnToLobbyByAllDeadCoroutine() {
-            NetworkClient.localPlayer.GetComponent<IDamageable>().ServerKill(DamageType.Generic);
+            SessionQueries.LocalPlayer.GetComponent<IDamageable>().ServerKill(DamageType.Generic);
             yield return WaitForCoroutine(IsBackInLobby, RETURN_TO_LOBBY_TIMEOUT_SECONDS, "the lobby after everyone died, with GameScene unloaded");
             Ship = null;
             Model = null;
@@ -64,7 +64,7 @@ namespace Tests.PlayMode.LoopSmoke {
 
         public IEnumerator LeaveToMenuCoroutine() {
             Object.FindAnyObjectByType<LeaveSessionViewBase>().OnLeaveClicked.Invoke();
-            yield return WaitForCoroutine(IsBackInMenu, LEAVE_TIMEOUT_SECONDS, "the menu after Leave");
+            yield return WaitForCoroutine(SessionQueries.IsBackInMenu, LEAVE_TIMEOUT_SECONDS, "the menu after Leave");
         }
 
         public IEnumerator WaitForCoroutine(Func<bool> condition, float timeoutSeconds, string target) {
@@ -94,11 +94,6 @@ namespace Tests.PlayMode.LoopSmoke {
                 _phases.Add(Model.Phase);
         }
 
-        private static bool IsMenuReady() {
-            MenuSessionViewBase menu = Object.FindAnyObjectByType<MenuSessionViewBase>();
-            return menu != null && menu.OnHostClicked != null;
-        }
-
         // Start sends a scene change to every client; the host's own client drops it until it is authenticated.
         private static bool IsLobbyReady() {
             StartGameViewBase start = Object.FindAnyObjectByType<StartGameViewBase>();
@@ -107,38 +102,23 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         private bool IsGameReady() {
-            if (NetworkClient.localPlayer == null || Object.FindAnyObjectByType<ShipRunDirector>() == null)
-                return false;
-
-            ConnectionNetworkManager manager = ResolveNetworkManager();
-            if (manager != null && manager.IsMapLoaded == false)
+            if (SessionQueries.IsGameAtStation() == false)
                 return false;
 
             Ship = Object.FindAnyObjectByType<ShipBase>();
-            Model = ProjectContext.Instance.Container.Resolve<IReadOnlyShipRunModel>();
-            return Ship != null && Model.Phase == ShipRunPhase.Build;
+            Model = SessionQueries.Resolve<IReadOnlyShipRunModel>();
+            return true;
         }
 
         private static bool IsBackInLobby() {
-            ConnectionNetworkManager manager = ResolveNetworkManager();
-            if (manager == null || manager.IsMapLoaded == false || manager.IsChangingMap)
+            ConnectionNetworkManager manager = SessionQueries.NetworkManager;
+            if (manager.IsMapLoaded == false || manager.IsChangingMap)
                 return false;
 
             Scene game = SceneManager.GetSceneByName(manager.GameSceneName);
             bool isGameUnloaded = game.IsValid() == false || game.isLoaded == false;
-            return isGameUnloaded && SceneManager.GetActiveScene().name == manager.LobbySceneName && NetworkClient.localPlayer != null;
+            return isGameUnloaded && SceneManager.GetActiveScene().name == manager.LobbySceneName && SessionQueries.LocalPlayer != null;
         }
-
-        private static bool IsBackInMenu() {
-            if (NetworkServer.active || NetworkClient.active || IsMenuReady() == false)
-                return false;
-
-            IGameFlowStateMachineService flow = LoopSmokeSceneContexts.Resolve<IGameFlowStateMachineService>();
-            return flow.IsTransitioning == false && flow.CurrentStateType == typeof(MenuGameFlowState);
-        }
-
-        private static ConnectionNetworkManager ResolveNetworkManager() =>
-            ProjectContext.Instance.Container.Resolve<ConnectionSessionModel>().NetworkManager;
     }
 }
 #endif
