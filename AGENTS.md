@@ -29,7 +29,8 @@ is not final yet and needs evaluation. **How the code works now** (`ShipFlightSe
 - on landing the ship eases onto the pad's landing point (`LandingSeconds` = 9 s) and the phase becomes `Build`;
 - after a landing farther than 800 m from the world origin the world is shifted back to it
   (`ShipWorldShiftService.RecenterIfFar`, `WorldShift`; clients get it through `ShipRunDirector`);
-- nothing flies past the ship: rocks are removed and there is no scenery yet;
+- nothing flies past the ship: rocks are removed and there is no scenery yet. The flight field of rocks between
+  the stations is generated as data (`FlightFieldModule`) but not hooked into the flight and not spawned yet;
 - the old mode `HoverInPlace` is still in the code: the ship hangs at the hover point, progress is the `ShipTransit`
   timer and the next pad spawns at landing. It is chosen in the config asset or, in editor / development builds,
   through `IShipRouteDebug.DebugUseFlightMode`.
@@ -119,7 +120,9 @@ types.
      third-party `QuickOutline` and `MiniMapModular`
      (`Mini Mapa(Radar)`) also have their own asmdef.
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
-     `Features.GameFlowStateMachineModule` (Contracts, SceneLoader).
+     `Features.GameFlowStateMachineModule` (Contracts, SceneLoader),
+     `Features.FlightFieldModule` (Matrix, Zenject: the flight field model and its generation, pure C#; its editor
+     tools are `Features.FlightFieldModule.Editor`).
   3. `Features.CameraModule` (CharacterMovable, Contracts, Input) → `Features.GrabModule` (Camera, CharacterMovable,
      Contracts, NetworkModel).
   4. `Features.ShipModule` (Camera, Grab, CharacterMovable, FloatingController, GameFlow, Stats, Connection, MiniMap,
@@ -139,7 +142,10 @@ types.
   `Features.ShipModule.Editor.Tests`, `Features.ShopModule.Editor.Tests`, `Features.GameCoreModule.Editor.Tests`
   (configuration loading and module catalog guards), `Game.Connection.Editor.Tests`,
   `Features.PlayerProfileModule.Editor.Tests`, `Features.CrewInviteModule.Editor.Tests`, `NetworkModelModule.Editor.Tests`, `Features.MatrixModule.Editor.Tests`
-  (matrix creation, neighbours, full-shape insert, path finding incl. a 40x40 timing check).
+  (matrix creation, neighbours, full-shape insert incl. L-shaped shapes, path finding incl. a 40x40 timing check),
+  `Features.FlightFieldModule.Editor.Tests` (generation on 200 seeds at loops 0, 3 and 10: passage with clearance,
+  empty station zones and takeoff corridor, no overlaps, wall without holes, determinism; difficulty -> corridor width,
+  two routes, the forced passage, 40x40 timing; structure catalog guards).
 - Player identity and name come from Connection only through NetworkModel contracts: `IPlayerIdentityService`
   (`PlayerKey`) and `IPlayerNameSource` (the authenticated name), implemented in Connection. Other modules read a
   player's name through `IPlayerProfileSource` / `IReadOnlyPlayerProfileModel` (PlayerProfileModule.Data), not
@@ -158,6 +164,7 @@ types.
 | Modules and slots | a module is one `ModuleDefinition` asset (`ShipModule/GameResources/Modules/`: id, slot type, item prefab, slot view, name, price, stat modifiers); `ModuleCatalog` lists them all and resolves a module id (`ModuleCatalogValidator` checks it at startup); `ShipItem`, `ShipSocket` (+ `ShipSocketRule`, state in the `ShipSockets` model), `Ship*Interactable`; catalogs in `ShipModule/GameResources/Configurations/` (Addressables) |
 | Stats | `Assets/Features/StatsModule/`, `ShipStatType`, `ShipStatEntity`, `ShipStatSheet` (server: base values from `ShipAccumulativeStatsConfiguration` plus module modifiers), synced `ShipStats` model; player movement stats are `PlayerStatType` / `PlayerStatsConfiguration` in `CharacterMovableModule/Scripts/PlayerStats/` |
 | World shift | `WorldShift` (count and total of the shifts), `ShipWorldShiftService`, `ShipPoseSync` |
+| Flight field (data only, nothing spawned yet) | `Assets/Features/FlightFieldModule/`: model (`FieldFrame` cell <-> world, `FieldCell`, `FieldPlacement`, `FieldRoute`, `FieldRequest`, `FlightField`); a structure is one `FieldStructureDefinition` (id, kind, footprint rows, prefab, `IsNetworked`, weight) in `FieldStructureCatalog`; tuning in `FlightFieldConfiguration` (both in the `Configurations` group); `IFlightFieldGenerator` runs the `IFieldGenerationStep`s in the order of their bindings in `FlightFieldModuleInstaller`; `IFieldRouteShaper` turns route difficulty into corridor parameters; debug map **Tools → Flight Field → Debug Map** (editor) |
 | Cargo on the deck | `ShipDeckCargo`: items lying on the deck are attached to the ship and travel with it |
 | Radar | `ShipRadarService`, `ShipRadarScreen`, `ShipRadarCatalog` |
 | Deck debugging | `ShipModule/Scripts/Debug/` (editor / development builds only): `DeckFeelHarness` (deck feel measurements), `ShipStatsDebugOverlay` |

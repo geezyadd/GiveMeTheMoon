@@ -1,6 +1,7 @@
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts;
 using Features.CrewInviteModule.Scripts.Installers;
+using Features.FlightFieldModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.Installers;
 using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts;
@@ -21,6 +22,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             CameraModuleInstaller.Install(Container);
             GrabModuleInstaller.Install(Container);
             ShipModuleInstaller.Install(Container);
+            FlightFieldModuleInstaller.Install(Container);
             PlayerLifeModuleInstaller.Install(Container);
             PlayerProfileModuleInstaller.Install(Container);
             ShopModuleInstaller.Install(Container);

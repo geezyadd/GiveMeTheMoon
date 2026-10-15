@@ -103,6 +103,32 @@ namespace Features.MatrixModule.Scripts.Editor.Tests {
             Assert.AreEqual(BLOCKED, _matrix.GetValue(2, 2));
         }
 
+        [Test]
+        public void WhenShapePredicateSkipsCellOverBlockedCell_ThenLShapeIsInserted() {
+            _shape.SetValue(1, 0, FREE);
+            _matrix.SetValue(2, 1, BLOCKED);
+
+            bool isInserted = _matrix.TryInsertFullShapeMatrix(_shape, 1, 1, out List<int> insertedCells, IsFree, IsShapeCell);
+
+            Assert.IsTrue(isInserted);
+            Assert.AreEqual(3, insertedCells.Count);
+            Assert.AreEqual(BLOCKED, _matrix.GetValue(2, 1));
+            Assert.AreEqual(SHAPE, _matrix.GetValue(1, 1));
+            Assert.AreEqual(SHAPE, _matrix.GetValue(2, 2));
+        }
+
+        [Test]
+        public void WhenInsertedCellOfLShapeIsBlocked_ThenNothingIsInserted() {
+            _shape.SetValue(1, 0, FREE);
+            _matrix.SetValue(1, 2, BLOCKED);
+
+            bool isInserted = _matrix.TryInsertFullShapeMatrix(_shape, 1, 1, out List<int> insertedCells, IsFree, IsShapeCell);
+
+            Assert.IsFalse(isInserted);
+            Assert.IsEmpty(insertedCells);
+            Assert.AreEqual(FREE, _matrix.GetValue(1, 1));
+        }
+
         private static bool IsFree(int cell) =>
             cell == FREE;
 
