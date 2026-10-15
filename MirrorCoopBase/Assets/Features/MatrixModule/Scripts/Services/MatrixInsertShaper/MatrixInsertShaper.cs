@@ -76,25 +76,17 @@ namespace Features.MatrixModule.Scripts.Services.MatrixInsertShaper {
         }
 
         private bool ValidateShape<TMatrixEntity>(IMatrix<TMatrixEntity> matrix, IMatrix<TMatrixEntity> shape, int x, int y, Predicate<TMatrixEntity> matrixPredicate = null) {
-            int ownY = y;
-            for (int shapeY = 0; shapeY < shape.GetRowCount(); shapeY++) {
-                if (shapeY == matrix.GetRowCount())
+            for (int shapeY = 0; shapeY < shape.GetRowCount(); shapeY++)
+                if (!ValidateShapeRow(matrix, shape.GetRowById(shapeY).Count, x, y + shapeY, matrixPredicate))
                     return false;
 
-                List<TMatrixEntity> row = shape.GetRowById(shapeY);
-                int ownX = x;
-                foreach (TMatrixEntity unused in row) {
-                    if (ownX >= matrix.GetColumnCount())
-                        break;
+            return true;
+        }
 
-                    if (!(matrix.ValidateIndex(new Vector2Int(ownX, ownY)) && (matrixPredicate == null || matrixPredicate(matrix.GetValue(ownX, ownY)))))
-                        return false;
-
-                    ownX++;
-                }
-
-                ownY++;
-                if (ownY == matrix.GetRowCount())
+        private bool ValidateShapeRow<TMatrixEntity>(IMatrix<TMatrixEntity> matrix, int rowLength, int x, int y, Predicate<TMatrixEntity> matrixPredicate) {
+            for (int ownX = x; ownX < x + rowLength; ownX++) {
+                Vector2Int position = new(ownX, y);
+                if (!matrix.ValidateIndex(position) || !matrix.ValidatePredicate(position, matrixPredicate))
                     return false;
             }
 
