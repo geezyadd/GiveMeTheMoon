@@ -28,7 +28,9 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float WALK_AWAY_DISTANCE = 8f;
         private const float STAND_HEIGHT = 0.8f;
         private const float STAND_SETTLE_SECONDS = 1f;
-        private const float ITEMS_SETTLE_SECONDS = 2.5f;
+        private const float ITEMS_REST_TIMEOUT_SECONDS = 8f;
+        // A toppling stack passes through slow moments: the items rest only once they stay slow this long.
+        private const float ITEMS_REST_HOLD_SECONDS = 0.5f;
         private const float COMMAND_TIMEOUT_SECONDS = 3f;
         private const float REJECTED_COMMAND_WAIT_SECONDS = 0.5f;
         private const float DELIVERY_AREA_RADIUS = 2.5f;
@@ -43,7 +45,7 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.IsNotNull(kiosk, $"The pad {pad.name} has no shop kiosk.");
             ShopModel shop = Resolve<ShopModel>();
             IReadOnlyWalletModel wallet = Resolve<IReadOnlyWalletModel>();
-            List<ShipItem> itemsBefore = FindItemsAt(kiosk.DeliveryPoint);
+            List<ShipItem> itemsBefore = FindAllItems();
             try {
                 CameraLookDriver.DebugPitchOverride = true;
                 yield return OpenAtKioskCoroutine(kiosk, shop);
@@ -85,18 +87,49 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         private static IEnumerator AssertDeliveredCoroutine(ShopKioskInteractable kiosk, List<ShipItem> itemsBefore) {
-            yield return new WaitForSeconds(ITEMS_SETTLE_SECONDS);
-            List<ShipItem> delivered = FindItemsAt(kiosk.DeliveryPoint);
-            delivered.RemoveAll(itemsBefore.Contains);
-            Assert.AreEqual(PURCHASES, delivered.Count, "Not every bought item lies at the kiosk's delivery point.");
+            List<ShipItem> bought = FindAllItems();
+            bought.RemoveAll(itemsBefore.Contains);
+            Assert.AreEqual(PURCHASES, bought.Count, "Not every purchase spawned an item.");
+            yield return WaitForItemsToRestCoroutine(bought);
 
             float floor = kiosk.transform.position.y - BELOW_DELIVERY_TOLERANCE;
-            foreach (ShipItem item in delivered) {
-                Rigidbody body = item.GetComponent<Rigidbody>();
+            foreach (ShipItem item in bought) {
+                Assert.IsTrue(IsAtDeliveryPoint(item, kiosk.DeliveryPoint), $"{item.name} at {item.transform.position} does not lie at the kiosk's delivery point.");
                 Assert.Greater(item.transform.position.y, floor, $"{item.name} fell through the pad.");
-                Assert.Less(body.linearVelocity.magnitude, SETTLED_SPEED, $"{item.name} does not rest: stuck in another item?");
                 Assert.IsTrue(item.GetComponent<Grabbable>().CanBeGrabbed, $"{item.name} cannot be picked up.");
             }
+        }
+
+        // The delivered stack topples onto the counter and slides for a few seconds, longer on a slow frame rate: a
+        // fixed wait caught it still sliding. Items stuck in each other never come to rest, so the timeout still fails.
+        private static IEnumerator WaitForItemsToRestCoroutine(List<ShipItem> items) {
+            float start = Time.time;
+            float restingSince = start;
+            while (Time.time - restingSince < ITEMS_REST_HOLD_SECONDS) {
+                if (TryFindMovingItem(items, out Rigidbody moving)) {
+                    restingSince = Time.time;
+                    if (restingSince - start > ITEMS_REST_TIMEOUT_SECONDS)
+                        Assert.Fail($"{moving.name} does not rest after {ITEMS_REST_TIMEOUT_SECONDS} s ({moving.linearVelocity.magnitude:F2} m/s): stuck in another item?");
+                }
+
+                yield return null;
+            }
+
+            Debug.Log($"[LoopSmoke] the bought items came to rest {restingSince - start:F2} s after the player walked away.");
+        }
+
+        private static bool TryFindMovingItem(List<ShipItem> items, out Rigidbody moving) {
+            moving = null;
+            foreach (ShipItem item in items) {
+                Rigidbody body = item.GetComponent<Rigidbody>();
+                if (body.linearVelocity.magnitude < SETTLED_SPEED)
+                    continue;
+
+                moving = body;
+                return true;
+            }
+
+            return false;
         }
 
         private static IEnumerator AssertFarPurchaseRefusedCoroutine(IReadOnlyWalletModel wallet) {
@@ -127,16 +160,13 @@ namespace Tests.PlayMode.LoopSmoke {
             return active[entry].GetComponentInChildren<Button>();
         }
 
-        private static List<ShipItem> FindItemsAt(Transform deliveryPoint) {
-            List<ShipItem> items = new List<ShipItem>();
-            foreach (ShipItem item in Object.FindObjectsByType<ShipItem>(FindObjectsSortMode.None)) {
-                Vector3 offset = item.transform.position - deliveryPoint.position;
-                offset.y = 0f;
-                if (offset.magnitude <= DELIVERY_AREA_RADIUS)
-                    items.Add(item);
-            }
+        private static List<ShipItem> FindAllItems() =>
+            new List<ShipItem>(Object.FindObjectsByType<ShipItem>(FindObjectsSortMode.None));
 
-            return items;
+        private static bool IsAtDeliveryPoint(ShipItem item, Transform deliveryPoint) {
+            Vector3 offset = item.transform.position - deliveryPoint.position;
+            offset.y = 0f;
+            return offset.magnitude <= DELIVERY_AREA_RADIUS;
         }
 
         private static Vector3 FlatForward() =>
