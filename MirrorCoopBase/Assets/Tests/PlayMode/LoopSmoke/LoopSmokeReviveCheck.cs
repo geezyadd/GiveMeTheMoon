@@ -181,7 +181,7 @@ namespace Tests.PlayMode.LoopSmoke {
             body.transform.position = position;
         }
 
-        private static List<CrewReviveRow> FindCrewRows() {
+        internal static List<CrewReviveRow> FindCrewRows() {
             List<CrewReviveRow> active = new List<CrewReviveRow>();
             foreach (CrewReviveRow row in Object.FindObjectsByType<CrewReviveRow>(FindObjectsSortMode.None)) {
                 if (row.isActiveAndEnabled)
@@ -191,7 +191,7 @@ namespace Tests.PlayMode.LoopSmoke {
             return active;
         }
 
-        private static bool HasLabel(CrewReviveRow row, string text) {
+        internal static bool HasLabel(CrewReviveRow row, string text) {
             foreach (Text label in row.GetComponentsInChildren<Text>()) {
                 if (label.text == text)
                     return true;
