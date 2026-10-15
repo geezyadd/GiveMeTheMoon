@@ -1,5 +1,4 @@
 using System;
-using Features.GameCoreModule.Contracts;
 using Mirror;
 using Zenject;
 
@@ -10,36 +9,18 @@ namespace Game.Connection
     {
         private readonly ISteamLobbyService _steamLobbyService;
         private readonly IConnectionJoinPolicy _connectionJoinPolicy;
-        private readonly ISessionJoinGate _sessionJoinGate;
-        private readonly ConnectionNetworkEvents _connectionNetworkEvents;
 
-        public SteamLobbyJoinableSystem(
-            ISteamLobbyService steamLobbyService,
-            IConnectionJoinPolicy connectionJoinPolicy,
-            ISessionJoinGate sessionJoinGate,
-            ConnectionNetworkEvents connectionNetworkEvents)
+        public SteamLobbyJoinableSystem(ISteamLobbyService steamLobbyService, IConnectionJoinPolicy connectionJoinPolicy)
         {
             _steamLobbyService = steamLobbyService;
             _connectionJoinPolicy = connectionJoinPolicy;
-            _sessionJoinGate = sessionJoinGate;
-            _connectionNetworkEvents = connectionNetworkEvents;
         }
 
-        public void Initialize()
-        {
-            _sessionJoinGate.OnWindowChanged += OnJoinStateChanged;
-            _connectionNetworkEvents.MapLoadStarted += OnJoinStateChanged;
-            _connectionNetworkEvents.MapReady += OnJoinStateChanged;
-            _connectionNetworkEvents.ServerPlayersChanged += OnJoinStateChanged;
-        }
+        public void Initialize() =>
+            _connectionJoinPolicy.OnJoinStateChanged += OnJoinStateChanged;
 
-        public void Dispose()
-        {
-            _sessionJoinGate.OnWindowChanged -= OnJoinStateChanged;
-            _connectionNetworkEvents.MapLoadStarted -= OnJoinStateChanged;
-            _connectionNetworkEvents.MapReady -= OnJoinStateChanged;
-            _connectionNetworkEvents.ServerPlayersChanged -= OnJoinStateChanged;
-        }
+        public void Dispose() =>
+            _connectionJoinPolicy.OnJoinStateChanged -= OnJoinStateChanged;
 
         private void OnJoinStateChanged()
         {

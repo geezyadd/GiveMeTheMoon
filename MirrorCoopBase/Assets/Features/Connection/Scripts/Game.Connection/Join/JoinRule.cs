@@ -18,8 +18,7 @@ namespace Game.Connection
             if (request.IsChangingMap)
                 return ConnectionRejectReason.MapChanging;
 
-            bool isJoinWindowOpen = request.IsInLobby || request.RunWindow == RunJoinWindow.AtStation;
-            if (isJoinWindowOpen == false)
+            if (IsJoinWindowOpen(request) == false)
                 return ClosedWindowReason(request.RunWindow);
 
             if (request.PlayerCount >= request.PlayerSlots)
@@ -27,6 +26,9 @@ namespace Game.Connection
 
             return ConnectionRejectReason.Accepted;
         }
+
+        public bool IsJoinWindowOpen(JoinRequest request) =>
+            request.IsChangingMap == false && (request.IsInLobby || request.RunWindow == RunJoinWindow.AtStation);
 
         private static ConnectionRejectReason ClosedWindowReason(RunJoinWindow window) =>
             window switch

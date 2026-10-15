@@ -1,6 +1,7 @@
 using Features.CameraModule.Scripts.Models;
 using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.CharacterMovableModule.Scripts.Models;
+using Features.CrewInviteModule.Data.Generated;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
 using Features.FlightFieldModule.Scripts.Scene;
@@ -41,6 +42,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             ShipRunModelInstaller.Install(Container);
             ShipSocketsModelInstaller.Install(Container);
             ShipStatsModelInstaller.Install(Container);
+            CrewRosterModelInstaller.Install(Container);
             LiveFieldModelInstaller.Install(Container);
             Container.Bind<IFlightFieldSyncBindingModel>().To<FlightFieldSyncBindingModel>().AsSingle();
             Container.BindInterfacesAndSelfTo<FlightFieldServerModel>().AsSingle();
