@@ -97,10 +97,13 @@ namespace Tests.PlayMode.LoopSmoke {
             int firstLandingSpawns = CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values);
             LogSpawnedCounts("run 1 after the first landing");
             Assert.Greater(firstLandingSpawns, 0, "Run 1 spawned no pad or drops on landing.");
-            yield return new LoopSmokeReviveCheck(_ship).BuyBackCrewCoroutine(firstPad, ResolveNetworkManager());
+            yield return new LoopSmokeReviveCheck(_ship).BuyBackCrewCoroutine(firstPad);
 
-            yield return FlyLoopCoroutine(2);
+            LoopSmokeRejoinCheck rejoin = new LoopSmokeRejoinCheck(_model);
+            yield return rejoin.JoinAtStationAndDieCoroutine();
+            yield return FlyLoopCoroutine(2, rejoin.LeaveAndKnockInFlightCoroutine);
             yield return AssertLandedSafelyCoroutine(firstPad, FindPadUnderShip());
+            yield return rejoin.ComeBackAtStationCoroutine();
 
             RememberFirstRunObjects();
             LogSpawnedCounts("run 1 before returning to the lobby");
@@ -120,6 +123,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return new LoopSmokeShopCheck().BuyAtKioskAndWalkAwayCoroutine(FindPadUnderShip());
 
             yield return LeaveToMenuCoroutine();
+            yield return new LoopSmokeRejectCheck().JoinRejectedInFlightCoroutine();
             Assert.AreEqual(0, _errorLog.Count, $"Errors were logged during the loop:\n{_errorLog.Describe()}");
         }
 
@@ -227,7 +231,7 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.IsTrue(ContainsXZ(_ship.DeckGeometry.Bounds, LocalPlayer().transform.position, PLAYER_ON_SURFACE_TOLERANCE), "The player did not stay on the deck before launch.");
         }
 
-        private IEnumerator FlyLoopCoroutine(int expectedLoopIndex) {
+        private IEnumerator FlyLoopCoroutine(int expectedLoopIndex, Func<IEnumerator> inCruise = null) {
             Assert.AreEqual(expectedLoopIndex - 1, _model.LoopIndex, "LoopIndex before launch.");
             _phases.Clear();
             RecordPhase();
@@ -235,6 +239,9 @@ namespace Tests.PlayMode.LoopSmoke {
 
             yield return WaitForCoroutine(IsCruising, FLIGHT_TIMEOUT_SECONDS, $"Cruise of loop {expectedLoopIndex}");
             Assert.IsTrue(LocalPlayer().GetComponent<ShipRider>().IsRiding, "The player is not riding the ship in cruise.");
+            if (inCruise != null)
+                yield return inCruise();
+
 
             yield return WaitForCoroutine(IsBackInBuild, FLIGHT_TIMEOUT_SECONDS, $"Build after landing of loop {expectedLoopIndex}");
             CollectionAssert.AreEqual(_expectedLoopPhases, _phases, $"Phase sequence of loop {expectedLoopIndex}: {string.Join(" -> ", _phases)}");

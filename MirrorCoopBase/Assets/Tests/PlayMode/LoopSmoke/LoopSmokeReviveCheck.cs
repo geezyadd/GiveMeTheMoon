@@ -15,7 +15,6 @@ using Features.ShopModule.Scripts.Data;
 using Features.ShopModule.Scripts.Generated;
 using Features.ShopModule.Scripts.Network;
 using Features.ShopModule.Scripts.UI;
-using Game.Connection;
 using Mirror;
 using NUnit.Framework;
 using UnityEngine;
@@ -52,10 +51,10 @@ namespace Tests.PlayMode.LoopSmoke {
         private static NetworkIdentity Player => NetworkClient.localPlayer;
         private static CrewWallet Wallet => Object.FindAnyObjectByType<CrewWallet>();
 
-        public IEnumerator BuyBackCrewCoroutine(ShipLandingPad pad, ConnectionNetworkManager manager) {
+        public IEnumerator BuyBackCrewCoroutine(ShipLandingPad pad) {
             ShopKioskInteractable kiosk = pad.GetComponentInChildren<ShopKioskInteractable>();
             ShopModel shop = LoopSmokeShopCheck.Resolve<ShopModel>();
-            LoopSmokeBot bot = LoopSmokeBot.Join(manager);
+            LoopSmokeBot bot = LoopSmokeBot.Join();
             try {
                 CameraLookDriver.DebugPitchOverride = true;
                 yield return LoopSmokeShopCheck.WaitForCoroutine(() => bot.Identity != null && bot.Identity.isClient, "the bot player spawned on the host client");
