@@ -1,3 +1,4 @@
+using Features.GameCoreModule.Contracts;
 using Features.ShipModule.Scripts.Generated;
 using Mirror;
 using UnityEngine;
@@ -298,12 +299,7 @@ namespace Features.ShipModule.Scripts {
 
             _body.position = position;
             _body.rotation = rotation;
-            // Only a dynamic body keeps a velocity: writing one to a kinematic body logs a warning every frame.
-            if (_body.isKinematic)
-                return;
-
-            _body.linearVelocity = Vector3.zero;
-            _body.angularVelocity = Vector3.zero;
+            _body.StopIfDynamic();
         }
 
         // The injected settings are read on use, so the parts do not depend on injection before Awake.

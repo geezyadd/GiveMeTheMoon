@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.GameCoreModule.Contracts;
 using Features.GrabModule.Scripts;
 using Mirror;
 using UnityEngine;
@@ -230,10 +231,7 @@ namespace Features.ShipModule.Scripts {
             if (item.Rigidbody != null) {
                 item.Rigidbody.isKinematic = item.WasKinematic;
                 item.Rigidbody.interpolation = item.Interpolation;
-                if (item.WasKinematic == false) {
-                    item.Rigidbody.linearVelocity = Vector3.zero;
-                    item.Rigidbody.angularVelocity = Vector3.zero;
-                }
+                item.Rigidbody.StopIfDynamic();
             }
 
             if (item.NetworkBody != null)
@@ -264,12 +262,7 @@ namespace Features.ShipModule.Scripts {
 
             item.Body.SetPositionAndRotation(world, rotation);
             if (item.Rigidbody != null) {
-                // Only a dynamic body keeps a velocity: writing one to a kinematic body logs a warning every frame.
-                if (item.Rigidbody.isKinematic == false) {
-                    item.Rigidbody.linearVelocity = Vector3.zero;
-                    item.Rigidbody.angularVelocity = Vector3.zero;
-                }
-
+                item.Rigidbody.StopIfDynamic();
                 item.Rigidbody.isKinematic = true;
                 item.Rigidbody.interpolation = RigidbodyInterpolation.None;
                 item.Rigidbody.position = world;

@@ -1,4 +1,5 @@
 using System;
+using Features.GameCoreModule.Contracts;
 using Mirror;
 using UnityEngine;
 
@@ -38,12 +39,7 @@ namespace Features.GrabModule.Scripts {
                 _networkBody.enabled = false;
 
             if (_rb != null) {
-                // Velocity can only be cleared while the body is still dynamic.
-                if (_rb.isKinematic == false) {
-                    _rb.linearVelocity = Vector3.zero;
-                    _rb.angularVelocity = Vector3.zero;
-                }
-
+                _rb.StopIfDynamic();
                 _rb.isKinematic = true;
                 _rb.detectCollisions = false;
             }
