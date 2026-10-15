@@ -5,6 +5,12 @@ namespace Game.Connection
     {
         public bool IsOpenForNewPlayers { get; }
 
+        public bool IsJoinWindowOpen { get; }
+
+        public int PlayerCount { get; }
+
+        public int PlayerSlots { get; }
+
         public ConnectionRejectReason EvaluateJoin(string version, ulong steamId);
     }
 }

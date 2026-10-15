@@ -58,6 +58,22 @@ namespace Game.Connection.Editor.Tests {
         public void WhenSteamIdIsInvalid_ThenPlayerIsRejectedForSteamId() =>
             Assert.That(_rule.Evaluate(Request(hasValidSteamId: false)), Is.EqualTo(ConnectionRejectReason.InvalidSteamId));
 
+        [Test]
+        public void WhenCrewIsFullAtStation_ThenJoinWindowIsStillOpen() =>
+            Assert.That(_rule.IsJoinWindowOpen(Request(playerCount: PLAYER_SLOTS)), Is.True);
+
+        [Test]
+        public void WhenSessionIsInLobby_ThenJoinWindowIsOpen() =>
+            Assert.That(_rule.IsJoinWindowOpen(Request(isInLobby: true, runWindow: RunJoinWindow.None)), Is.True);
+
+        [Test]
+        public void WhenShipIsInFlight_ThenJoinWindowIsClosed() =>
+            Assert.That(_rule.IsJoinWindowOpen(Request(runWindow: RunJoinWindow.InFlight)), Is.False);
+
+        [Test]
+        public void WhenMapIsChangingFromLobby_ThenJoinWindowIsClosed() =>
+            Assert.That(_rule.IsJoinWindowOpen(Request(isInLobby: true, isChangingMap: true)), Is.False);
+
         private static JoinRequest Request(
             bool versionMatches = true,
             bool hasValidSteamId = true,

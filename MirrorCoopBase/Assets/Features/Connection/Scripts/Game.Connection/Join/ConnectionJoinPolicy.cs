@@ -28,6 +28,15 @@ namespace Game.Connection
             NetworkServer.active
             && _joinRule.Evaluate(CreateRequest(versionMatches: true, hasValidSteamId: true)) == ConnectionRejectReason.Accepted;
 
+        public bool IsJoinWindowOpen =>
+            NetworkServer.active && _joinRule.IsJoinWindowOpen(CreateRequest(versionMatches: true, hasValidSteamId: true));
+
+        public int PlayerCount =>
+            CountPlayers();
+
+        public int PlayerSlots =>
+            _connectionConfig.MaxConnections;
+
         public ConnectionRejectReason EvaluateJoin(string version, ulong steamId)
         {
             bool hasValidSteamId = _connectionSessionModel.NetworkManager.UsesSteamTransport == false

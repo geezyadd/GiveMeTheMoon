@@ -63,6 +63,9 @@ namespace Game.Connection
             }
         }
 
+        public bool IsOverlayEnabled =>
+            IsAvailable && SteamUtils.IsOverlayEnabled();
+
         public void Initialize()
         {
             _networkEvents.ServerStopped += OnNetworkStopped;
@@ -141,6 +144,15 @@ namespace Game.Connection
                 return;
 
             SteamMatchmaking.SetLobbyJoinable(_model.CurrentLobby.Value, joinable);
+        }
+
+        // The invite terminal checks the lobby and the overlay first; a call without them changes nothing.
+        public void OpenInviteOverlay()
+        {
+            if (_model.HasLobby == false || IsOverlayEnabled == false)
+                return;
+
+            SteamFriends.ActivateGameOverlayInviteDialog(_model.CurrentLobby.Value);
         }
 
         void EnsureCallbacks()

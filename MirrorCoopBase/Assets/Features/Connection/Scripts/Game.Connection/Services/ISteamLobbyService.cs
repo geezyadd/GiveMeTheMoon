@@ -8,6 +8,7 @@ namespace Game.Connection
         bool IsAvailable { get; }
         ulong? CurrentLobbyId { get; }
         ulong HostSteamId { get; }
+        bool IsOverlayEnabled { get; }
 
         event Action<ulong> JoinRequested;
 
@@ -15,5 +16,6 @@ namespace Game.Connection
         Task JoinLobbyAsync(ulong lobbyId);
         void LeaveLobby();
         void SetLobbyJoinable(bool joinable);
+        void OpenInviteOverlay();
     }
 }

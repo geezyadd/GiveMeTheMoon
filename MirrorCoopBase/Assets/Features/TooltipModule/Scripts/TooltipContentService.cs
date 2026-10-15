@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Features.InputModule.Realization.Scripts.Generated;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Core;
@@ -12,16 +13,35 @@ namespace Features.TooltipModule.Scripts {
 
         private readonly IShopItemStatsService _shopItemStatsService;
         private readonly InputActions _inputActions;
+        private readonly List<ITooltipStateProvider> _tooltipStateProviders;
         private string _useKey;
 
-        public TooltipContentService(IShopItemStatsService shopItemStatsService, InputActions inputActions) {
+        public TooltipContentService(
+            IShopItemStatsService shopItemStatsService,
+            InputActions inputActions,
+            List<ITooltipStateProvider> tooltipStateProviders) {
             _shopItemStatsService = shopItemStatsService;
             _inputActions = inputActions;
+            _tooltipStateProviders = tooltipStateProviders;
         }
 
         public TooltipContent Build(InteractionTooltip tooltip, bool isReady) {
+            if (TrySelectByState(tooltip, out TooltipData stateData, out string stateDescription))
+                return new TooltipContent(stateData.Title, stateDescription, BuildActionHint(stateData));
+
             TooltipData data = tooltip.Select(isReady);
             return new TooltipContent(data.Title, BuildDescription(data, tooltip), BuildActionHint(data));
+        }
+
+        private bool TrySelectByState(InteractionTooltip tooltip, out TooltipData data, out string description) {
+            data = null;
+            description = null;
+            for (int i = 0; i < _tooltipStateProviders.Count; i++) {
+                if (_tooltipStateProviders[i].TrySelect(tooltip, out data, out description))
+                    return true;
+            }
+
+            return false;
         }
 
         private string BuildDescription(TooltipData data, InteractionTooltip tooltip) {
