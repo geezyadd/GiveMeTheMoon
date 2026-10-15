@@ -17,6 +17,7 @@ using Features.ShopModule.Scripts.Network;
 using Features.ShopModule.Scripts.UI;
 using Mirror;
 using NUnit.Framework;
+using Tests.Shared;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -41,9 +42,9 @@ namespace Tests.PlayMode.LoopSmoke {
         private const string DECK_SCREENSHOT = "revive-host-on-deck.png";
 
         private readonly ShipBase _ship;
-        private readonly IReadOnlyWalletModel _wallet = LoopSmokeShopCheck.Resolve<IReadOnlyWalletModel>();
-        private readonly IPlayerLifeQuery _lifeQuery = LoopSmokeShopCheck.Resolve<IPlayerLifeQuery>();
-        private readonly long _price = LoopSmokeShopCheck.Resolve<ReviveConfiguration>().RevivePrice;
+        private readonly IReadOnlyWalletModel _wallet = SessionQueries.Resolve<IReadOnlyWalletModel>();
+        private readonly IPlayerLifeQuery _lifeQuery = SessionQueries.Resolve<IPlayerLifeQuery>();
+        private readonly long _price = SessionQueries.Resolve<ReviveConfiguration>().RevivePrice;
 
         public LoopSmokeReviveCheck(ShipBase ship) =>
             _ship = ship;
@@ -53,7 +54,7 @@ namespace Tests.PlayMode.LoopSmoke {
 
         public IEnumerator BuyBackCrewCoroutine(ShipLandingPad pad) {
             ShopKioskInteractable kiosk = pad.GetComponentInChildren<ShopKioskInteractable>();
-            ShopModel shop = LoopSmokeShopCheck.Resolve<ShopModel>();
+            ShopModel shop = SessionQueries.Resolve<ShopModel>();
             LoopSmokeBot bot = LoopSmokeBot.Join();
             try {
                 CameraLookDriver.DebugPitchOverride = true;
@@ -117,7 +118,7 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         private IEnumerator BuyBackHostAsBotCoroutine(LoopSmokeBot bot, ShopKioskInteractable kiosk) {
-            SpectatorModel spectator = LoopSmokeShopCheck.Resolve<SpectatorModel>();
+            SpectatorModel spectator = SessionQueries.Resolve<SpectatorModel>();
             PlayerLifeBody host = Player.GetComponent<PlayerLifeBody>();
             host.CmdDebugKill();
             yield return LoopSmokeShopCheck.WaitForCoroutine(() => _lifeQuery.LocalState == PlayerLifeState.Dead, "the host dead");
@@ -127,7 +128,7 @@ namespace Tests.PlayMode.LoopSmoke {
             PlaceBeside(bot, kiosk);
             bot.Customer.ServerOpenShop(kiosk);
             long balance = _wallet.Balance;
-            LoopSmokeShopCheck.Resolve<IReviveShopSystem>().ServerRevive(Wallet, host.Key, bot.Customer);
+            SessionQueries.Resolve<IReviveShopSystem>().ServerRevive(Wallet, host.Key, bot.Customer);
             yield return LoopSmokeShopCheck.WaitForCoroutine(() => _lifeQuery.LocalState == PlayerLifeState.Alive, "the host bought back by the bot");
             Assert.AreEqual(balance - _price, _wallet.Balance, "Buying back the host did not take the price.");
 
@@ -136,7 +137,7 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.Less(largestStep, MAX_FRAME_STEP, $"The revived host jumped {largestStep} m in one frame.");
             Assert.IsTrue(IsOnDeck(Player.transform.position), $"The revived host at {Player.transform.position} is not on the deck {_ship.DeckGeometry.Bounds}.");
             Assert.IsFalse(spectator.IsSpectating, "The revived host still spectates.");
-            Assert.IsFalse(LoopSmokeShopCheck.Resolve<PlayerControlBlockModel>().IsBlocked, "The revived host cannot move.");
+            Assert.IsFalse(SessionQueries.Resolve<PlayerControlBlockModel>().IsBlocked, "The revived host cannot move.");
             yield return CaptureScreenshotCoroutine(DECK_SCREENSHOT);
         }
 

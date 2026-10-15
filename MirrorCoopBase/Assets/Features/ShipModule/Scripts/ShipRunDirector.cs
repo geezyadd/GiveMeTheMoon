@@ -27,6 +27,10 @@ namespace Features.ShipModule.Scripts {
         private GameObject _previousLocalWreck;
         private bool _clientStarted;
 
+        // Wreckage this peer placed and still keeps: the last two flights that ended as a wreck.
+        public bool HasWreck =>
+            _localWreck != null || _previousLocalWreck != null;
+
         private void LateUpdate() {
             if (isServer && _run != null && (_ship == null || _ship.IsFlying == false))
                 _run.ServerTick();

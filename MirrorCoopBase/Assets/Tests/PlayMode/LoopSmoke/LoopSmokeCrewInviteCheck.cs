@@ -12,6 +12,7 @@ using Features.TooltipModule.Scripts.UI;
 using Game.Connection;
 using Mirror;
 using NUnit.Framework;
+using Tests.Shared;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -30,9 +31,9 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float STAND_SETTLE_SECONDS = 1f;
         private const int FRAMES_FOR_INTERACT_ROUND_TRIP = 10;
 
-        private readonly IReadOnlyCrewRosterModel _crewRosterModel = LoopSmokeShopCheck.Resolve<IReadOnlyCrewRosterModel>();
-        private readonly ICrewInviteStatusService _crewInviteStatusService = LoopSmokeShopCheck.Resolve<ICrewInviteStatusService>();
-        private readonly int _playerSlots = LoopSmokeShopCheck.Resolve<ConnectionConfig>().MaxConnections;
+        private readonly IReadOnlyCrewRosterModel _crewRosterModel = SessionQueries.Resolve<IReadOnlyCrewRosterModel>();
+        private readonly ICrewInviteStatusService _crewInviteStatusService = SessionQueries.Resolve<ICrewInviteStatusService>();
+        private readonly int _playerSlots = SessionQueries.Resolve<ConnectionConfig>().MaxConnections;
         private readonly LoopSmokeSteamLobbySpy _steamLobby;
 
         public LoopSmokeCrewInviteCheck(LoopSmokeSteamLobbySpy steamLobby) =>

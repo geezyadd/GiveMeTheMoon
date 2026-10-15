@@ -6,8 +6,6 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using Features.CameraModule.Scripts;
-using Features.CharacterMovableModule.Scripts;
-using Features.GameCoreModule.Contracts;
 using Features.PlayerLifeModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Generated;
@@ -24,7 +22,6 @@ using Tests.Coop.Shared;
 using Tests.PlayMode.LoopSmoke;
 using Tests.Shared;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 using Zenject;
@@ -40,17 +37,16 @@ namespace Tests.Coop.Host {
         private const int TEST_TIMEOUT_MS = 420000;
         private const float STEP_TIMEOUT_SECONDS = 90f;
         private const float CLIENT_EXIT_TIMEOUT_SECONDS = 30f;
-        private const float SETTLE_SECONDS = 1.5f;
         private const string LOOPBACK_ADDRESS = "127.0.0.1";
         private const string CLIENT_LOG_FILE = "client.log";
         private const string RUN_FOLDER_FORMAT = "yyyyMMdd-HHmmss";
         private const int LEAVE_LOOP = 2;
         private const int LAST_LOOP = 3;
 
-        private readonly WaitForSeconds _settle = new WaitForSeconds(SETTLE_SECONDS);
-
         private LoopSmokeErrorLog _errorLog;
-        private ShipRunConfig _fastConfig;
+        private LoopSmokeShipRunConfigOverride _configOverride;
+        private LoopSmokeSession _session;
+        private LoopSmokeFlight _flight;
         private string _runDirectory;
         private CoopTestExchange _exchange;
         private CoopClientProcess _client;
@@ -58,24 +54,26 @@ namespace Tests.Coop.Host {
         private int _readReports;
         private float _testStarted;
         private float _stepStarted;
-        private ShipBase _ship;
-        private IReadOnlyShipRunModel _model;
+
+        private ShipBase Ship =>
+            _session.Ship;
+
+        private IReadOnlyShipRunModel Model =>
+            _session.Model;
 
         [SetUp]
         public void SetUp() {
-            Assert.IsFalse(ProjectContext.HasInstance, "ProjectContext exists before the test: the config override cannot be bound.");
+            _configOverride = new LoopSmokeShipRunConfigOverride(LoopSmokeShipRunConfigOverride.FAST_TIMINGS_JSON);
             _errorLog = new LoopSmokeErrorLog();
-            ProjectContext.PostInstall += OnProjectContextPostInstall;
+            _session = new LoopSmokeSession(_errorLog);
         }
 
         [TearDown]
         public void TearDown() {
-            ProjectContext.PostInstall -= OnProjectContextPostInstall;
             _client?.Dispose();
             _errorLog.Dispose();
             DeletePassedRunDirectory();
-            if (_fastConfig != null)
-                Object.Destroy(_fastConfig);
+            _configOverride.Dispose();
         }
 
         [UnityTest, Timeout(TEST_TIMEOUT_MS)]
@@ -96,11 +94,7 @@ namespace Tests.Coop.Host {
         private IEnumerator HostAndLetClientInCoroutine() {
             BeginStep("host the lobby");
             ushort port = FindFreePort();
-            SceneManager.LoadScene(SceneNames.Bootstrap);
-            yield return WaitForCoroutine(SessionQueries.IsMenuReady, "the menu");
-            CoopSessionActions.PrepareDirect(port, CoopTestPlayers.HOST_NAME);
-            CoopSessionActions.HostThroughMenu();
-            yield return WaitForCoroutine(LoopSmokeHostSteps.IsLobbyReady, "the host's lobby");
+            yield return _session.EnterLobbyAsHostCoroutine(() => CoopSessionActions.PrepareDirect(port, CoopTestPlayers.HOST_NAME));
 
             BeginStep("client joins the lobby");
             _runDirectory = Path.Combine(CoopClientBuildPaths.RunsDirectory, DateTime.Now.ToString(RUN_FOLDER_FORMAT));
@@ -114,14 +108,11 @@ namespace Tests.Coop.Host {
 
         private IEnumerator StartAndBoardCoroutine() {
             BeginStep("start the game and board");
-            LoopSmokeHostSteps.ClickStart();
-            yield return WaitForCoroutine(SessionQueries.IsGameAtStation, "GameScene at the start station");
-            _ship = Object.FindAnyObjectByType<ShipBase>();
-            _model = SessionQueries.Resolve<IReadOnlyShipRunModel>();
-            LoopSmokeHostSteps.InstallRequiredEngines(_ship);
-            ShipDeckBoarding.PutAboveDeck(SessionQueries.LocalPlayer.GetComponent<CharacterMovableBase>(), _ship);
-            yield return _settle;
-            Assert.IsTrue(CoopObserver.IsOnDeck(_ship, SessionQueries.LocalPlayer.transform.position), "The host did not stay on the deck.");
+            yield return _session.StartGameCoroutine();
+            _configOverride.AssertBound();
+            _flight = new LoopSmokeFlight(_session, new LoopSmokeFieldCheck(ProjectContext.Instance.Container));
+            _flight.InstallRequiredEngines();
+            yield return _flight.BoardPlayerCoroutine();
             yield return WaitForReportCoroutine(CoopTestSteps.BOARDED);
             yield return WaitForCoroutine(IsClientOnDeckOnServer, "the client on the deck by its server position");
             AssertSameView(false, true);
@@ -142,7 +133,7 @@ namespace Tests.Coop.Host {
             BeginStep("client leaves in flight");
             yield return WaitForReportCoroutine(CoopTestSteps.LEFT_IN_FLIGHT);
             yield return WaitForCoroutine(IsClientGone, "the client's connection gone on the server");
-            Assert.AreNotEqual(ShipRunPhase.Build, _model.Phase, "The client left after the landing: the scenario cannot check a join in flight.");
+            Assert.AreNotEqual(ShipRunPhase.Build, Model.Phase, "The client left after the landing: the scenario cannot check a join in flight.");
 
             BeginStep("client knocks in flight");
             yield return WaitForReportCoroutine(CoopTestSteps.REJECTED_IN_FLIGHT);
@@ -196,8 +187,7 @@ namespace Tests.Coop.Host {
             AssertSameView(false, true);
 
             BeginStep("host walks back to the deck");
-            ShipDeckBoarding.PutAboveDeck(SessionQueries.LocalPlayer.GetComponent<CharacterMovableBase>(), _ship);
-            yield return _settle;
+            yield return _flight.BoardPlayerCoroutine();
             Assert.IsFalse(shop.IsOpen, "The shop window stayed open after the host walked back to the deck.");
         }
 
@@ -216,27 +206,26 @@ namespace Tests.Coop.Host {
             yield return WaitForCoroutine(IsClientGone, "the client's connection gone on the server");
 
             BeginStep("host leaves to the menu");
-            CoopSessionActions.LeaveThroughHud();
-            yield return WaitForCoroutine(SessionQueries.IsBackInMenu, "the menu after Leave");
+            yield return _session.LeaveToMenuCoroutine();
             Debug.Log($"[CoopTest] the whole scenario took {Time.realtimeSinceStartup - _testStarted:0.0} s");
             Assert.AreEqual(0, _errorLog.Count, $"The host logged errors:\n{_errorLog.Describe()}");
         }
 
         private IEnumerator LaunchAndCompareCruiseCoroutine(int loopIndex) {
             BeginStep($"loop {loopIndex} takeoff");
-            Assert.AreEqual(loopIndex - 1, _model.LoopIndex, "LoopIndex before launch.");
-            LoopSmokeHostSteps.PullLaunchLever();
-            yield return WaitForCoroutine(() => _model.Phase == ShipRunPhase.Cruise, $"Cruise of loop {loopIndex}");
+            Assert.AreEqual(loopIndex - 1, Model.LoopIndex, "LoopIndex before launch.");
+            _flight.PullLaunchLever(loopIndex);
+            yield return WaitForCoroutine(() => Model.Phase == ShipRunPhase.Cruise, $"Cruise of loop {loopIndex}");
             BeginStep($"loop {loopIndex} cruise");
             yield return WaitForReportCoroutine(CoopTestSteps.IN_CRUISE);
-            Assert.AreEqual(ShipRunPhase.Cruise, _model.Phase, $"The client's cruise report of loop {loopIndex} came after the cruise.");
+            Assert.AreEqual(ShipRunPhase.Cruise, Model.Phase, $"The client's cruise report of loop {loopIndex} came after the cruise.");
             AssertSameView(true, loopIndex != LEAVE_LOOP);
         }
 
         private void AssertLanded() {
-            Assert.AreEqual(ShipRunAbortReason.None, _model.LastAbortReason, "The flight ended as a wreck.");
-            Assert.AreEqual(LoopSmokeHostSteps.REQUIRED_ENGINES, LoopSmokeHostSteps.CountInstalledEngines(_ship), "Engines were lost on landing.");
-            Assert.IsTrue(CoopObserver.IsOnDeck(_ship, SessionQueries.LocalPlayer.transform.position), "The host is not on the deck after landing.");
+            Assert.AreEqual(ShipRunAbortReason.None, Model.LastAbortReason, "The flight ended as a wreck.");
+            Assert.AreEqual(LoopSmokeFlight.REQUIRED_ENGINES, _flight.CountInstalledEngines(), "Engines were lost on landing.");
+            Assert.IsTrue(CoopObserver.IsOnDeck(Ship, SessionQueries.LocalPlayer.transform.position), "The host is not on the deck after landing.");
         }
 
         private void AssertSameView(bool isInFlight, bool isClientStaying) {
@@ -291,13 +280,13 @@ namespace Tests.Coop.Host {
             _client == null ? "(no client started)" : _client.DescribeLogTail();
 
         private bool IsAtStationAfterLoop(int loopIndex) =>
-            _model.Phase == ShipRunPhase.Build && _model.LoopIndex == loopIndex;
+            Model.Phase == ShipRunPhase.Build && Model.LoopIndex == loopIndex;
 
         private ShopKioskInteractable FindKioskNearestToShip() {
             ShopKioskInteractable nearest = null;
             float best = float.MaxValue;
             foreach (ShopKioskInteractable kiosk in Object.FindObjectsByType<ShopKioskInteractable>(FindObjectsSortMode.None)) {
-                float distance = (kiosk.transform.position - _ship.transform.position).sqrMagnitude;
+                float distance = (kiosk.transform.position - Ship.transform.position).sqrMagnitude;
                 if (distance >= best)
                     continue;
 
@@ -321,7 +310,7 @@ namespace Tests.Coop.Host {
             TryGetClientConnection(out NetworkConnectionToClient _) == false;
 
         private bool IsClientOnDeckOnServer() =>
-            IsClientPlayerSpawned() && CoopObserver.IsOnDeck(_ship, ClientServerPosition());
+            IsClientPlayerSpawned() && CoopObserver.IsOnDeck(Ship, ClientServerPosition());
 
         private static Vector3 ClientServerPosition() =>
             TryGetClientConnection(out NetworkConnectionToClient connection) && connection.identity != null
@@ -354,9 +343,6 @@ namespace Tests.Coop.Host {
             listener.Stop();
             return port;
         }
-
-        private void OnProjectContextPostInstall() =>
-            _fastConfig = LoopSmokeHostSteps.BindFastTimings(ProjectContext.Instance.Container);
     }
 }
 #endif
