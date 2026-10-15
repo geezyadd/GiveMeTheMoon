@@ -298,6 +298,10 @@ namespace Features.ShipModule.Scripts {
 
             _body.position = position;
             _body.rotation = rotation;
+            // Only a dynamic body keeps a velocity: writing one to a kinematic body logs a warning every frame.
+            if (_body.isKinematic)
+                return;
+
             _body.linearVelocity = Vector3.zero;
             _body.angularVelocity = Vector3.zero;
         }

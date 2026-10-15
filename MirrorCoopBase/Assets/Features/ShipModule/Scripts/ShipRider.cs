@@ -132,11 +132,10 @@ namespace Features.ShipModule.Scripts {
             _bound = true;
             _wasKinematic = _rb.isKinematic;
             _wasInterpolation = _rb.interpolation;
+            StopUnlessKinematic();
             _rb.isKinematic = true;
             _rb.detectCollisions = false;
             _rb.interpolation = RigidbodyInterpolation.None;
-            _rb.linearVelocity = Vector3.zero;
-            _rb.angularVelocity = Vector3.zero;
             if (transform.parent != null)
                 transform.SetParent(null, true);
 
@@ -318,10 +317,18 @@ namespace Features.ShipModule.Scripts {
             if (_rb == null)
                 return;
 
+            StopUnlessKinematic();
             _rb.isKinematic = true;
             _rb.interpolation = RigidbodyInterpolation.None;
             _rb.position = world;
             _rb.rotation = rotation;
+        }
+
+        // Only a dynamic body keeps a velocity: writing one to a kinematic body logs a warning every frame.
+        private void StopUnlessKinematic() {
+            if (_rb.isKinematic)
+                return;
+
             _rb.linearVelocity = Vector3.zero;
             _rb.angularVelocity = Vector3.zero;
         }

@@ -264,12 +264,16 @@ namespace Features.ShipModule.Scripts {
 
             item.Body.SetPositionAndRotation(world, rotation);
             if (item.Rigidbody != null) {
+                // Only a dynamic body keeps a velocity: writing one to a kinematic body logs a warning every frame.
+                if (item.Rigidbody.isKinematic == false) {
+                    item.Rigidbody.linearVelocity = Vector3.zero;
+                    item.Rigidbody.angularVelocity = Vector3.zero;
+                }
+
                 item.Rigidbody.isKinematic = true;
                 item.Rigidbody.interpolation = RigidbodyInterpolation.None;
                 item.Rigidbody.position = world;
                 item.Rigidbody.rotation = rotation;
-                item.Rigidbody.linearVelocity = Vector3.zero;
-                item.Rigidbody.angularVelocity = Vector3.zero;
             }
 
             if (item.NetworkBody != null)
