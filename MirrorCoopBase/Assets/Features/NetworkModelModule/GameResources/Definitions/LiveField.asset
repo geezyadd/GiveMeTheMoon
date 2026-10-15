@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f8a2c1e9b7d4a6e8c0f1a2b3c4d5e6f, type: 3}
+  m_Name: LiveField
+  m_EditorClassIdentifier: 
+  _modelName: LiveField
+  _namespace: Features.FlightFieldModule.Scripts.Network.Generated
+  _folder: Assets/Features/FlightFieldModule/Scripts/Network/Generated
+  _atomic: 1
+  _scope: 0
+  _fields:
+  - _name: Number
+    _typeName: int
+    _defaultValue: 
+  - _name: Seed
+    _typeName: int
+    _defaultValue: 
+  - _name: Origin
+    _typeName: Vector3
+    _defaultValue: 
+  - _name: Forward
+    _typeName: Vector3
+    _defaultValue: 
+  - _name: CellSize
+    _typeName: float
+    _defaultValue: 
+  - _name: SideCells
+    _typeName: int
+    _defaultValue: 
+  - _name: Placements
+    _typeName: List<FieldPlacementEntry>
+    _defaultValue: 
+  - _name: Routes
+    _typeName: List<FieldRouteEntry>
+    _defaultValue: 
+  - _name: RouteCells
+    _typeName: List<FieldRouteCellEntry>
+    _defaultValue: 

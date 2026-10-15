@@ -21,3 +21,5 @@ MonoBehaviour:
   _isNetworked: 0
   _weight: 3
   _isRotatable: 1
+  _visualYawJitterDegrees: 180
+  _visualScaleJitter: 0.12

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Structures;
 using Features.MatrixModule.Scripts;
@@ -31,9 +30,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Placement {
 
         public void Remove(FieldGenerationContext context, int placementId) {
             FieldPlacement placement = context.RemovePlacement(placementId);
-            if (!_fieldStructureCatalog.TryGet(placement.StructureId, out FieldStructureDefinition structure))
-                throw new KeyNotFoundException($"No structure '{placement.StructureId}' in {_fieldStructureCatalog.name}.");
-
+            FieldStructureDefinition structure = _fieldStructureCatalog.GetRequired(placement.StructureId);
             foreach (Vector2Int cell in _fieldFootprintReader.Read(structure, placement.Rotation).Cells) {
                 Vector2Int position = placement.Anchor + cell;
                 context.Cells[position] = context.Cells[position].WithoutPlacement();

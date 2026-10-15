@@ -111,3 +111,4 @@ MonoBehaviour:
   _passageClearanceCells: 1
   _maxRepairRounds: 2
   _maxSeedAttempts: 3
+  _structuresBuiltPerFrame: 16

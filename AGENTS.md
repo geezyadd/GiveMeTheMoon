@@ -29,8 +29,10 @@ is not final yet and needs evaluation. **How the code works now** (`ShipFlightSe
 - on landing the ship eases onto the pad's landing point (`LandingSeconds` = 9 s) and the phase becomes `Build`;
 - after a landing farther than 800 m from the world origin the world is shifted back to it
   (`ShipWorldShiftService.RecenterIfFar`, `WorldShift`; clients get it through `ShipRunDirector`);
-- nothing flies past the ship: rocks are removed and there is no scenery yet. The flight field of rocks between
-  the stations is generated as data (`FlightFieldModule`) but not hooked into the flight and not spawned yet;
+- at every launch (`TravelInSpace` only) the server generates a **flight field** of rocks between the stations
+  (`FlightFieldModule`) and publishes it in the `LiveField` model; every peer builds the rocks from the placement list
+  during the takeoff. The field follows world shifts and is cleared on landing, wreck / abort and the end of the run.
+  The rocks do nothing to the ship yet (see "Known limits");
 - the old mode `HoverInPlace` is still in the code: the ship hangs at the hover point, progress is the `ShipTransit`
   timer and the next pad spawns at landing. It is chosen in the config asset or, in editor / development builds,
   through `IShipRouteDebug.DebugUseFlightMode`.
@@ -53,6 +55,15 @@ The loop runs from start to end, but it does not match the design yet:
   while the map changes and with a full crew they are turned away with a reason the menu shows (see "Player data and
   rejoin");
 - there is no sound or VFX.
+
+### Known limits
+- **The ship flies through the flight field's rocks.** Rocks have no damage, no bounce and no effect on the ship or
+  the players: their colliders are triggers on the built-in `Ignore Raycast` layer (see "Flight field" in Key places).
+  Damage, armor and a mandatory helm are separate tasks.
+- The field has no "left the field" event and the rocks are not on the radar yet.
+- A host and a real second client (ParrelSync) seeing the same field, also after a world shift in flight, is covered
+  by the design (one placement list, the origin in the model, pads-like shift of Mirror objects) and by the host
+  checks of `LoopSmokeTest`, not by a two-editor run.
 
 Known issue: on the first landing of a `DeckFeelHarness` run the player jumps about 136 m in one frame, dies and the
 crew returns to the lobby. Seen on 2026-10-06, also on the base commit; not fixed and not investigated.
@@ -111,7 +122,8 @@ types.
 - `GameCoreModule` is the composition root (installers); nothing references it. Types shared by everyone
   (`IGameplaySession`, `SceneNames`) must live in a separate lower assembly, not in GameCore.
 - Module assemblies by layer (an assembly references only lower layers; module references in brackets):
-  1. `Features.GameCoreModule.Contracts` (`IGameplaySession`, `SceneNames`),
+  1. `Features.GameCoreModule.Contracts` (`IGameplaySession`, `SceneNames`; the run's contracts for the flight field:
+     `IFlightRouteListener` + `FlightLaunch`, `IWorldShiftFollower`, `IShipPositionSource`),
      `Features.AddressablesConstantGeneratorModule` (`Address_g.cs`), `Features.MvpModule` (AssetLoader),
      `Features.FloatingControllerModule`, `Features.MatrixModule` (no references: generic grid `IMatrix<T>` with
      shape insert and A* path finding, copied from MuffinProject's `MatrixSubmodule`; keep its public API),
@@ -121,8 +133,10 @@ types.
      (`Mini Mapa(Radar)`) also have their own asmdef.
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader),
-     `Features.FlightFieldModule` (Matrix, Zenject: the flight field model and its generation, pure C#; its editor
-     tools are `Features.FlightFieldModule.Editor`).
+     `Features.FlightFieldModule` (Matrix, Zenject, Contracts, NetworkModel, Mirror: the flight field model and its
+     generation in pure C#, the `LiveField` model, the server service and the local building; it does not reference
+     the ship module, the run talks to it through the Contracts; its editor tools are
+     `Features.FlightFieldModule.Editor`).
   3. `Features.CameraModule` (CharacterMovable, Contracts, Input) → `Features.GrabModule` (Camera, CharacterMovable,
      Contracts, NetworkModel).
   4. `Features.ShipModule` (Camera, Grab, CharacterMovable, FloatingController, GameFlow, Stats, Connection, MiniMap,
@@ -145,7 +159,8 @@ types.
   (matrix creation, neighbours, full-shape insert incl. L-shaped shapes, path finding incl. a 40x40 timing check),
   `Features.FlightFieldModule.Editor.Tests` (generation on 200 seeds at loops 0, 3 and 10: passage with clearance,
   empty station zones and takeoff corridor, no overlaps, wall without holes, determinism; difficulty -> corridor width,
-  two routes, the forced passage, 40x40 timing; structure catalog guards).
+  two routes, the forced passage, 40x40 timing; structure catalog guards; networked structures registered with
+  Mirror; structure layout).
 - Player identity and name come from Connection only through NetworkModel contracts: `IPlayerIdentityService`
   (`PlayerKey`) and `IPlayerNameSource` (the authenticated name), implemented in Connection. Other modules read a
   player's name through `IPlayerProfileSource` / `IReadOnlyPlayerProfileModel` (PlayerProfileModule.Data), not
@@ -163,8 +178,8 @@ types.
 | Flight and landing settings | `ShipFlightSettings` (+ `ShipFlightConfig_Default.asset`), `ShipRunConfig` |
 | Modules and slots | a module is one `ModuleDefinition` asset (`ShipModule/GameResources/Modules/`: id, slot type, item prefab, slot view, name, price, stat modifiers); `ModuleCatalog` lists them all and resolves a module id (`ModuleCatalogValidator` checks it at startup); `ShipItem`, `ShipSocket` (+ `ShipSocketRule`, state in the `ShipSockets` model), `Ship*Interactable`; catalogs in `ShipModule/GameResources/Configurations/` (Addressables) |
 | Stats | `Assets/Features/StatsModule/`, `ShipStatType`, `ShipStatEntity`, `ShipStatSheet` (server: base values from `ShipAccumulativeStatsConfiguration` plus module modifiers), synced `ShipStats` model; player movement stats are `PlayerStatType` / `PlayerStatsConfiguration` in `CharacterMovableModule/Scripts/PlayerStats/` |
-| World shift | `WorldShift` (count and total of the shifts), `ShipWorldShiftService`, `ShipPoseSync` |
-| Flight field (data only, nothing spawned yet) | `Assets/Features/FlightFieldModule/`: model (`FieldFrame` cell <-> world, `FieldCell`, `FieldPlacement`, `FieldRoute`, `FieldRequest`, `FlightField`); a structure is one `FieldStructureDefinition` (id, kind, footprint rows, prefab, `IsNetworked`, weight) in `FieldStructureCatalog`; tuning in `FlightFieldConfiguration` (both in the `Configurations` group); `IFlightFieldGenerator` runs the `IFieldGenerationStep`s in the order of their bindings in `FlightFieldModuleInstaller`; `IFieldRouteShaper` turns route difficulty into corridor parameters; debug map **Tools → Flight Field → Debug Map** (editor) |
+| World shift | `WorldShift` (count and total of the shifts), `ShipWorldShiftService`, `ShipPoseSync`; content outside the ship module follows a shift through `IWorldShiftFollower` (server: `ShipWorldShiftService.ApplyWorldShift`, remote clients: `ShipRunDirector.RpcShiftWorld`) |
+| Flight field | `Assets/Features/FlightFieldModule/`: model (`FieldFrame` cell <-> world, `FieldCell`, `FieldPlacement`, `FieldRoute`, `FieldRequest`, `FlightField`); a structure is one `FieldStructureDefinition` (id, kind, footprint rows, prefab, `IsNetworked`, weight, visual yaw / scale jitter) in `FieldStructureCatalog`; tuning in `FlightFieldConfiguration` (both in the `Configurations` group); `IFlightFieldGenerator` runs the `IFieldGenerationStep`s in the order of their bindings in `FlightFieldModuleInstaller`; `IFieldRouteShaper` turns route difficulty into corridor parameters. In the world: `FlightFieldService` (server, `IFlightRouteListener` + `IWorldShiftFollower`) generates at launch, keeps the field in `FlightFieldServerModel` and publishes it through `FlightFieldPublisher` into the `LiveField` model (`FlightFieldSync` on the `ShipRunDirector` object); `LiveFieldBuildSystem` builds the local structures on every peer through `FieldStructureSceneBuilder` + `FieldStructurePool` under one `FlightField` root (`FlightFieldSceneModel`); `FieldStructureSpawnRule` decides local or Mirror (`FieldNetworkedStructures`, prefab marked with `FieldNetworkedStructure`; a client registers the networked prefabs of the catalog with Mirror on every client start, `FieldNetworkedPrefabRegistration` called by `FieldNetworkedPrefabSystem` in GameCore, so they are not in the network manager's spawn prefabs). Rocks: trigger colliders on the built-in `Ignore Raycast` layer, the collision matrix is unchanged (triggers push nothing; the aim ignores triggers and that layer is not in `InteractableMask`). Debug: **Tools → Flight Field → Debug Map** (editor; "Live field" shows the running host's field and the ship), `GameResources/Debug/Debug_NetworkBeacon` (networked test structure, not in the catalog) |
 | Cargo on the deck | `ShipDeckCargo`: items lying on the deck are attached to the ship and travel with it |
 | Radar | `ShipRadarService`, `ShipRadarScreen`, `ShipRadarCatalog` |
 | Deck debugging | `ShipModule/Scripts/Debug/` (editor / development builds only): `DeckFeelHarness` (deck feel measurements), `ShipStatsDebugOverlay` |
@@ -194,19 +209,28 @@ point; then the host dies and the bot buys them back). The bot joins through the
 (`LoopSmokeBot`, `LoopSmokeTransportInput`). `LoopSmokeRejoinCheck`: a new player joins at that station on a deck spawn
 point, dies, leaves in flight, a join in flight is turned away with `InFlight`, and after landing it comes back dead, in
 the Crew list, under its new name. After the second landing everyone dies, the crew returns to
-the lobby and the test checks that no object of the first run is left. Then it starts a second run, flies one loop
-and at that station buys 5 items at the kiosk through the real aim and the window (`LoopSmokeShopCheck`: delivery
+the lobby and the test checks that no object of the first run is left. Then it starts a second run, flies five loops (after the first one it checks the station's crew terminal and puts the
+player back on the deck)
+in a row and at the last station buys 5 items at the kiosk through the real aim and the window (`LoopSmokeShopCheck`: delivery
 point, window closes when walking away, a far purchase is refused), returns to the menu and checks that there are no
 errors in the log. Before that check `LoopSmokeRejectCheck` joins a silent loopback "host", hands the client an
 `InFlight` answer and checks the reason text in the menu. `LoopSmokeCrewInviteCheck`: one "Hire crew" terminal in the
 lobby and one per pad, inactive with "Steam is not running." under the real aim (no Steam in the test; E on it asks
 `LoopSmokeSteamLobbySpy`, which stands in for `ISteamLobbyService`, for no overlay), the
-`CrewRoster` counts filler bots up to the slot limit (crew full) and back, and closes the join window in flight. The test shortens flight timings with its own copy of `ShipRunConfig`; assets are not changed. The
-test timeout is 180 s.
+`CrewRoster` counts filler bots up to the slot limit (crew full) and back, and closes the join window in flight. Every
+flight runs `LoopSmokeFieldCheck`: in cruise a new
+flight field stands with one active local object per local placement and one Mirror object per networked placement;
+after landing nothing of it is left (what a player joining at that station gets); in run 2 loop 3 a forced world shift
+in cruise keeps the field in place against the ship; the field pool never grows past what the fields needed. Every
+takeoff logs its longest frame (`[LoopSmoke] loop N takeoff`). The test shortens flight timings with its own copy of
+`ShipRunConfig` and adds the debug networked beacon to its own copy of `FieldStructureCatalog`; assets are not
+changed. The test timeout is 180 s (a run takes about 110 s).
 
 EditMode guard tests keep the data rules: `ConfigurationLoadingGuardTests` (no `Resources.Load`, every configuration
 address loads), `ModuleCatalogGuardTests` (module ids set and unique, shop and drops only use catalog modules, no code
-checks a concrete module), `ShipSocketIdTests` (every ship socket has a unique id).
+checks a concrete module), `ShipSocketIdTests` (every ship socket has a unique id), `FieldStructureCatalogGuardTests`
+and `FieldNetworkedStructureGuardTests` (field structure ids, prefabs and footprints; networked structures are Mirror prefabs registered
+with Mirror; no debug structure in the game catalog or the spawn prefabs).
 
 Run from the workspace root:
 `Invoke-AgentEditor.ps1 -AgentDir . -Command run-tests -Mode PlayMode -Filter LoopSmoke`

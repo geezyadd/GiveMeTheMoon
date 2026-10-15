@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Features.CharacterMovableModule.Scripts;
+using Features.FlightFieldModule.Scripts.Structures;
 using Features.GameCoreModule.Contracts;
 using Features.GameFlowStateMachineModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.States;
@@ -43,6 +44,11 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float KILL_DEPTH_BELOW_PAD = 2f;
         private const int REQUIRED_ENGINES = 2;
         private const string ROCKET_ENGINE_MODULE_ID = "rocket-engine";
+        // Five flights in a row in run 2: the field pool and the Mirror field objects must not grow.
+        private const int RUN_TWO_LOOPS = 5;
+        // The run 2 flight that shifts the world in cruise.
+        private const int WORLD_SHIFT_LOOP = 3;
+        private const float MILLISECONDS_PER_SECOND = 1000f;
         // Only timings are shortened; distances, heights and pads stay as shipped.
         private const string FAST_TIMINGS_JSON =
             "{\"_takeoffSeconds\":1.5,\"_cruiseSeconds\":2,\"_landingSeconds\":1.5,\"_perLoopCruiseSeconds\":0}";
@@ -62,8 +68,11 @@ namespace Tests.PlayMode.LoopSmoke {
         private LoopSmokeSteamLobbySpy _steamLobby;
         private int _lobbyRuntimeObjects;
         private ShipRunConfig _fastConfig;
+        private FieldStructureCatalog _fieldCatalog;
         private IReadOnlyShipRunModel _model;
         private ShipBase _ship;
+        private LoopSmokeFieldCheck _fieldCheck;
+        private float _longestTakeoffFrame;
 
         [SetUp]
         public void SetUp() {
@@ -81,6 +90,9 @@ namespace Tests.PlayMode.LoopSmoke {
             _steamLobby.Dispose();
             if (_fastConfig != null)
                 Object.Destroy(_fastConfig);
+
+            if (_fieldCatalog != null)
+                Object.Destroy(_fieldCatalog);
         }
 
         [UnityTest, Timeout(TEST_TIMEOUT_MS)]
@@ -126,6 +138,10 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return crewInvite.CheckAtStationCoroutine(FindPadUnderShip());
             LogSpawnedCounts("run 2 after the first landing");
             Assert.AreEqual(firstLandingSpawns, CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values), "Run 2 does not spawn the same pad and drops on landing as run 1.");
+            // The crew invite check left the player at the pad's terminal: back on the deck before the next flights.
+            yield return BoardPlayerCoroutine();
+            yield return FlyMoreLoopsCoroutine(2, RUN_TWO_LOOPS);
+            _fieldCheck.AssertNetworkedPathWasChecked();
             yield return new LoopSmokeShopCheck().BuyAtKioskAndWalkAwayCoroutine(FindPadUnderShip());
 
             yield return LeaveToMenuCoroutine();
@@ -145,6 +161,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return new LoopSmokeCrewInviteCheck(_steamLobby).CheckInLobbyCoroutine();
             yield return StartGameCoroutine();
             Assert.AreSame(_fastConfig, ProjectContext.Instance.Container.Resolve<ShipRunConfig>(), "The test ShipRunConfig override is not bound.");
+            _fieldCheck = new LoopSmokeFieldCheck(ProjectContext.Instance.Container);
         }
 
         private IEnumerator StartGameCoroutine() {
@@ -242,10 +259,13 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.AreEqual(expectedLoopIndex - 1, _model.LoopIndex, "LoopIndex before launch.");
             _phases.Clear();
             RecordPhase();
+            _longestTakeoffFrame = 0f;
             PullLaunchLever();
 
-            yield return WaitForCoroutine(IsCruising, FLIGHT_TIMEOUT_SECONDS, $"Cruise of loop {expectedLoopIndex}");
+            yield return WaitForCoroutine(IsCruisingAfterTakeoffFrame, FLIGHT_TIMEOUT_SECONDS, $"Cruise of loop {expectedLoopIndex}");
+            Debug.Log($"[LoopSmoke] loop {expectedLoopIndex} takeoff: longest frame {_longestTakeoffFrame * MILLISECONDS_PER_SECOND:0.0} ms");
             Assert.IsTrue(LocalPlayer().GetComponent<ShipRider>().IsRiding, "The player is not riding the ship in cruise.");
+            yield return _fieldCheck.AssertNewFieldStandsCoroutine(expectedLoopIndex);
             if (inCruise != null)
                 yield return inCruise();
 
@@ -253,7 +273,19 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return WaitForCoroutine(IsBackInBuild, FLIGHT_TIMEOUT_SECONDS, $"Build after landing of loop {expectedLoopIndex}");
             CollectionAssert.AreEqual(_expectedLoopPhases, _phases, $"Phase sequence of loop {expectedLoopIndex}: {string.Join(" -> ", _phases)}");
             Assert.AreEqual(expectedLoopIndex, _model.LoopIndex, "LoopIndex after landing.");
+            yield return _fieldCheck.AssertFieldClearedCoroutine(expectedLoopIndex);
         }
+
+        private IEnumerator FlyMoreLoopsCoroutine(int firstLoopIndex, int lastLoopIndex) {
+            for (int loopIndex = firstLoopIndex; loopIndex <= lastLoopIndex; loopIndex++) {
+                ShipLandingPad launchPad = FindPadUnderShip();
+                yield return FlyLoopCoroutine(loopIndex, loopIndex == WORLD_SHIFT_LOOP ? ShiftWorldInCruiseCoroutine : null);
+                yield return AssertLandedSafelyCoroutine(launchPad, FindPadUnderShip());
+            }
+        }
+
+        private IEnumerator ShiftWorldInCruiseCoroutine() =>
+            _fieldCheck.AssertFieldFollowsWorldShiftCoroutine(_ship.transform, ResolveFromSceneContexts<IShipWorldShiftDebug>());
 
         private void PullLaunchLever() {
             ShipLaunchInteractable lever = Object.FindAnyObjectByType<ShipLaunchInteractable>();
@@ -351,6 +383,11 @@ namespace Tests.PlayMode.LoopSmoke {
         private bool IsCruising() =>
             _model.Phase == ShipRunPhase.Cruise;
 
+        private bool IsCruisingAfterTakeoffFrame() {
+            _longestTakeoffFrame = Mathf.Max(_longestTakeoffFrame, Time.unscaledDeltaTime);
+            return IsCruising();
+        }
+
         private bool IsBackInBuild() =>
             _phases.Count > 1 && _model.Phase == ShipRunPhase.Build;
 
@@ -358,7 +395,7 @@ namespace Tests.PlayMode.LoopSmoke {
             if (NetworkServer.active || NetworkClient.active || IsMenuReady() == false)
                 return false;
 
-            IGameFlowStateMachineService flow = FindGameFlow();
+            IGameFlowStateMachineService flow = ResolveFromSceneContexts<IGameFlowStateMachineService>();
             return flow.IsTransitioning == false && flow.CurrentStateType == typeof(MenuGameFlowState);
         }
 
@@ -408,21 +445,25 @@ namespace Tests.PlayMode.LoopSmoke {
         private static ConnectionNetworkManager ResolveNetworkManager() =>
             ProjectContext.Instance.Container.Resolve<ConnectionSessionModel>().NetworkManager;
 
-        private static IGameFlowStateMachineService FindGameFlow() {
+        private static T ResolveFromSceneContexts<T>() {
             foreach (SceneContext context in Object.FindObjectsByType<SceneContext>(FindObjectsSortMode.None)) {
-                if (context.Container.HasBinding<IGameFlowStateMachineService>())
-                    return context.Container.Resolve<IGameFlowStateMachineService>();
+                if (context.Container.HasBinding<T>())
+                    return context.Container.Resolve<T>();
             }
 
-            throw new InvalidOperationException("No scene context binds IGameFlowStateMachineService.");
+            throw new InvalidOperationException($"No scene context binds {typeof(T).Name}.");
         }
 
+        // The field catalog gets the debug networked beacon, so every flight also spawns Mirror field objects.
         private void OnProjectContextPostInstall() {
             DiContainer container = ProjectContext.Instance.Container;
             _fastConfig = Object.Instantiate(container.Resolve<ShipRunConfig>());
             JsonUtility.FromJsonOverwrite(FAST_TIMINGS_JSON, _fastConfig);
             container.Unbind<ShipRunConfig>();
             container.Bind<ShipRunConfig>().FromInstance(_fastConfig);
+            _fieldCatalog = LoopSmokeFieldCheck.CreateCatalogWithNetworkedStructure(container.Resolve<FieldStructureCatalog>());
+            container.Unbind<FieldStructureCatalog>();
+            container.Bind<FieldStructureCatalog>().FromInstance(_fieldCatalog);
         }
     }
 }

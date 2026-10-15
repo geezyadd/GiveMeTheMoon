@@ -16,6 +16,9 @@ namespace Features.FlightFieldModule.Scripts.Generation {
         private ulong _state;
 
         public FieldRandom(int seed) =>
+            Reseed(seed);
+
+        public void Reseed(int seed) =>
             _state = (uint)seed;
 
         public int Range(int minInclusive, int maxExclusive) {
