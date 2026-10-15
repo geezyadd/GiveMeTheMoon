@@ -1,27 +1,50 @@
+using System;
 using Features.GameCoreModule.Contracts;
 using Mirror;
 using Steamworks;
 using UnityEngine;
+using Zenject;
 
 namespace Game.Connection
 {
-    public sealed class ConnectionJoinPolicy : IConnectionJoinPolicy
+    public sealed class ConnectionJoinPolicy : IConnectionJoinPolicy, IInitializable, IDisposable
     {
         private readonly ConnectionSessionModel _connectionSessionModel;
         private readonly ISessionJoinGate _sessionJoinGate;
         private readonly IJoinRule _joinRule;
         private readonly ConnectionConfig _connectionConfig;
+        private readonly ConnectionNetworkEvents _connectionNetworkEvents;
+
+        public event Action OnJoinStateChanged;
 
         public ConnectionJoinPolicy(
             ConnectionSessionModel connectionSessionModel,
             ISessionJoinGate sessionJoinGate,
             IJoinRule joinRule,
-            ConnectionConfig connectionConfig)
+            ConnectionConfig connectionConfig,
+            ConnectionNetworkEvents connectionNetworkEvents)
         {
             _connectionSessionModel = connectionSessionModel;
             _sessionJoinGate = sessionJoinGate;
             _joinRule = joinRule;
             _connectionConfig = connectionConfig;
+            _connectionNetworkEvents = connectionNetworkEvents;
+        }
+
+        public void Initialize()
+        {
+            _sessionJoinGate.OnWindowChanged += OnSessionChanged;
+            _connectionNetworkEvents.MapLoadStarted += OnSessionChanged;
+            _connectionNetworkEvents.MapReady += OnSessionChanged;
+            _connectionNetworkEvents.ServerPlayersChanged += OnSessionChanged;
+        }
+
+        public void Dispose()
+        {
+            _sessionJoinGate.OnWindowChanged -= OnSessionChanged;
+            _connectionNetworkEvents.MapLoadStarted -= OnSessionChanged;
+            _connectionNetworkEvents.MapReady -= OnSessionChanged;
+            _connectionNetworkEvents.ServerPlayersChanged -= OnSessionChanged;
         }
 
         public bool IsOpenForNewPlayers =>
@@ -70,5 +93,8 @@ namespace Game.Connection
 
             return count;
         }
+
+        private void OnSessionChanged() =>
+            OnJoinStateChanged?.Invoke();
     }
 }

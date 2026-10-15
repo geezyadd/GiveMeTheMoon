@@ -17,6 +17,7 @@ namespace Game.Connection
         private TaskCompletionSource<bool> _joinTcs;
         private bool _callbacksReady;
         private bool _steamApiMissing;
+        private bool _isOverlayEnabled;
 
         public SteamLobbyService(SteamLobbyModel model, ConnectionNetworkEvents networkEvents)
         {
@@ -25,6 +26,7 @@ namespace Game.Connection
         }
 
         public event Action<ulong> JoinRequested;
+        public event Action InviteStateChanged;
 
         public bool IsAvailable
         {
@@ -75,10 +77,10 @@ namespace Game.Connection
 
         public void Tick()
         {
-            if (_callbacksReady)
-                return;
+            if (_callbacksReady == false)
+                EnsureCallbacks();
 
-            EnsureCallbacks();
+            TrackOverlay();
         }
 
         public void Dispose()
@@ -135,7 +137,7 @@ namespace Game.Connection
                 }
             }
 
-            _model.CurrentLobby = null;
+            SetLobby(null);
         }
 
         public void SetLobbyJoinable(bool joinable)
@@ -175,7 +177,7 @@ namespace Game.Connection
             }
 
             CSteamID lobbyId = (CSteamID)callback.m_ulSteamIDLobby;
-            _model.CurrentLobby = lobbyId;
+            SetLobby(lobbyId);
             string lobbyName = SteamFriends.GetPersonaName() + "'s room";
             SteamMatchmaking.SetLobbyData(lobbyId, "name", lobbyName);
             Debug.Log($"Steam lobby created: {lobbyId.m_SteamID}");
@@ -190,8 +192,32 @@ namespace Game.Connection
                 return;
             }
 
-            _model.CurrentLobby = (CSteamID)callback.m_ulSteamIDLobby;
+            SetLobby((CSteamID)callback.m_ulSteamIDLobby);
             _joinTcs?.TrySetResult(true);
+        }
+
+        void SetLobby(CSteamID? lobby)
+        {
+            if (_model.CurrentLobby == lobby)
+                return;
+
+            _model.CurrentLobby = lobby;
+            _isOverlayEnabled = _model.HasLobby && SteamUtils.IsOverlayEnabled();
+            InviteStateChanged?.Invoke();
+        }
+
+        // Steam has no callback for the overlay being turned on or off: it is watched while a lobby exists.
+        void TrackOverlay()
+        {
+            if (_model.HasLobby == false)
+                return;
+
+            bool isOverlayEnabled = SteamUtils.IsOverlayEnabled();
+            if (isOverlayEnabled == _isOverlayEnabled)
+                return;
+
+            _isOverlayEnabled = isOverlayEnabled;
+            InviteStateChanged?.Invoke();
         }
 
         void OnJoinRequested(GameLobbyJoinRequested_t callback)

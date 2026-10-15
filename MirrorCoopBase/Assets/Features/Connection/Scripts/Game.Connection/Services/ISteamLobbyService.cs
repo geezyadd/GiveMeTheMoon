@@ -5,17 +5,20 @@ namespace Game.Connection
 {
     public interface ISteamLobbyService
     {
-        bool IsAvailable { get; }
-        ulong? CurrentLobbyId { get; }
-        ulong HostSteamId { get; }
-        bool IsOverlayEnabled { get; }
+        public bool IsAvailable { get; }
+        public ulong? CurrentLobbyId { get; }
+        public ulong HostSteamId { get; }
+        public bool IsOverlayEnabled { get; }
 
-        event Action<ulong> JoinRequested;
+        public event Action<ulong> JoinRequested;
 
-        Task CreateFriendsLobbyAsync(int maxPlayers);
-        Task JoinLobbyAsync(ulong lobbyId);
-        void LeaveLobby();
-        void SetLobbyJoinable(bool joinable);
-        void OpenInviteOverlay();
+        // The lobby was entered or left, or the Steam overlay was turned on or off while in a lobby.
+        public event Action InviteStateChanged;
+
+        public Task CreateFriendsLobbyAsync(int maxPlayers);
+        public Task JoinLobbyAsync(ulong lobbyId);
+        public void LeaveLobby();
+        public void SetLobbyJoinable(bool joinable);
+        public void OpenInviteOverlay();
     }
 }

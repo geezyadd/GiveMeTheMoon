@@ -12,7 +12,7 @@ namespace Game.Connection
             Container.BindInterfacesTo<SteamLobbyService>().AsSingle();
             Container.BindInterfacesTo<SteamLobbyJoinableSystem>().AsSingle();
             Container.Bind<IJoinRule>().To<JoinRule>().AsSingle();
-            Container.Bind<IConnectionJoinPolicy>().To<ConnectionJoinPolicy>().AsSingle();
+            Container.BindInterfacesTo<ConnectionJoinPolicy>().AsSingle();
             Container.Bind<IConnectionRejectMessages>().To<ConnectionRejectMessages>().AsSingle();
             Container.Bind<IPlayerIdentityService>().To<ConnectionPlayerIdentityService>().AsSingle();
             Container.Bind<IPlayerNameSource>().To<ConnectionPlayerNameSource>().AsSingle();
