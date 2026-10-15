@@ -12,6 +12,8 @@ namespace Game.Connection
         public event Action MapLoadStarted;
         public event Action MapReady;
         public event Action<string> MapUnloading;
+        public event Action ServerPlayersChanged;
+        public event Action ReturnedToMenu;
 
         internal void RaiseServerStarted() => ServerStarted?.Invoke();
         internal void RaiseClientStarted() => ClientStarted?.Invoke();
@@ -20,5 +22,7 @@ namespace Game.Connection
         internal void RaiseMapLoadStarted() => MapLoadStarted?.Invoke();
         internal void RaiseMapReady() => MapReady?.Invoke();
         internal void RaiseMapUnloading(string sceneName) => MapUnloading?.Invoke(sceneName);
+        internal void RaiseServerPlayersChanged() => ServerPlayersChanged?.Invoke();
+        internal void RaiseReturnedToMenu() => ReturnedToMenu?.Invoke();
     }
 }

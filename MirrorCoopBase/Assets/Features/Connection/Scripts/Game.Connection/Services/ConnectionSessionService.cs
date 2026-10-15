@@ -9,17 +9,20 @@ namespace Game.Connection
         private readonly ConnectionSessionModel _model;
         private readonly ISteamLobbyService _steamLobby;
         private readonly ConnectionNetworkEvents _networkEvents;
+        private readonly ConnectionRejectModel _rejectModel;
 
         public bool CanStartGame => RequireNetworkManager().CanStartGame();
 
         public ConnectionSessionService(
             ConnectionSessionModel model,
             ISteamLobbyService steamLobby,
-            ConnectionNetworkEvents networkEvents)
+            ConnectionNetworkEvents networkEvents,
+            ConnectionRejectModel rejectModel)
         {
             _model = model ?? throw new ArgumentNullException(nameof(model));
             _steamLobby = steamLobby ?? throw new ArgumentNullException(nameof(steamLobby));
             _networkEvents = networkEvents ?? throw new ArgumentNullException(nameof(networkEvents));
+            _rejectModel = rejectModel;
         }
 
         public bool IsInLobby =>
@@ -53,6 +56,7 @@ namespace Game.Connection
         public async Task HostSteamAsync()
         {
             ConnectionNetworkManager networkManager = RequireNetworkManager();
+            _rejectModel.Clear();
             try
             {
                 await _steamLobby.CreateFriendsLobbyAsync(networkManager.maxConnections);
@@ -72,6 +76,7 @@ namespace Game.Connection
         public async Task JoinSteamAsync(ulong lobbyId)
         {
             ConnectionNetworkManager networkManager = RequireNetworkManager();
+            _rejectModel.Clear();
             try
             {
                 await _steamLobby.JoinLobbyAsync(lobbyId);
@@ -107,6 +112,7 @@ namespace Game.Connection
 
         void PrepareDirect(ConnectionNetworkManager networkManager)
         {
+            _rejectModel.Clear();
             ResetSteam(networkManager);
         }
 

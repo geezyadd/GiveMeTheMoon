@@ -20,6 +20,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<ConnectionSpawnModel>().AsSingle();
             Container.Bind<ConnectionNetworkEvents>().AsSingle();
             Container.Bind<SteamLobbyModel>().AsSingle();
+            Container.Bind<ConnectionRejectModel>().AsSingle();
             Container.Bind<PreloadedWindowsModel>().AsSingle();
             Container.Bind<CharacterMovableModel>().AsSingle();
             Container.Bind<PlayerControlBlockModel>().AsSingle();

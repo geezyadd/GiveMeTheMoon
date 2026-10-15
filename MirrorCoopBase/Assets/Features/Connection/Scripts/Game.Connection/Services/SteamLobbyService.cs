@@ -65,7 +65,6 @@ namespace Game.Connection
 
         public void Initialize()
         {
-            _networkEvents.MapLoadStarted += OnMapLoadStarted;
             _networkEvents.ServerStopped += OnNetworkStopped;
             _networkEvents.ClientStopped += OnNetworkStopped;
             EnsureCallbacks();
@@ -81,7 +80,6 @@ namespace Game.Connection
 
         public void Dispose()
         {
-            _networkEvents.MapLoadStarted -= OnMapLoadStarted;
             _networkEvents.ServerStopped -= OnNetworkStopped;
             _networkEvents.ClientStopped -= OnNetworkStopped;
             _lobbyCreated?.Dispose();
@@ -187,11 +185,6 @@ namespace Game.Connection
         void OnJoinRequested(GameLobbyJoinRequested_t callback)
         {
             JoinRequested?.Invoke(callback.m_steamIDLobby.m_SteamID);
-        }
-
-        void OnMapLoadStarted()
-        {
-            SetLobbyJoinable(false);
         }
 
         void OnNetworkStopped()

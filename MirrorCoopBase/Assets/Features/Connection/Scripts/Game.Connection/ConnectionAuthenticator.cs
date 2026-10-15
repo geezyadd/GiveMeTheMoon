@@ -29,6 +29,8 @@ namespace Game.Connection
         readonly HashSet<NetworkConnection> pendingDisconnects = new HashSet<NetworkConnection>();
 
         ConnectionSessionModel sessionModel;
+        IConnectionJoinPolicy joinPolicy;
+        ConnectionRejectModel rejectModel;
 
         public string PlayerName
         {
@@ -46,9 +48,14 @@ namespace Game.Connection
         }
 
         [Inject]
-        void Construct(ConnectionSessionModel connectionSessionModel)
+        void Construct(
+            ConnectionSessionModel connectionSessionModel,
+            IConnectionJoinPolicy connectionJoinPolicy,
+            ConnectionRejectModel connectionRejectModel)
         {
             sessionModel = connectionSessionModel;
+            joinPolicy = connectionJoinPolicy;
+            rejectModel = connectionRejectModel;
         }
 
         public override void OnStartServer()
@@ -66,22 +73,11 @@ namespace Game.Connection
             if (pendingDisconnects.Contains(conn))
                 return;
 
-            if (Application.version != msg.version)
+            // Decided here, once: a player accepted at a station finishes joining even if the ship takes off meanwhile.
+            ConnectionRejectReason rejection = joinPolicy.EvaluateJoin(msg.version, msg.steamId);
+            if (rejection != ConnectionRejectReason.Accepted)
             {
-                Reject(conn, ConnectionRejectReason.VersionMismatch);
-                return;
-            }
-
-            ConnectionNetworkManager networkManager = sessionModel?.NetworkManager;
-            if (networkManager != null && networkManager.UsesSteamTransport && ((CSteamID)msg.steamId).IsValid() == false)
-            {
-                Reject(conn, ConnectionRejectReason.InvalidSteamId);
-                return;
-            }
-
-            if (networkManager != null && !networkManager.IsJoinable)
-            {
-                Reject(conn, ConnectionRejectReason.MapAlreadyStarted);
+                Reject(conn, rejection);
                 return;
             }
 
@@ -155,7 +151,8 @@ namespace Game.Connection
             }
 
             Debug.LogWarning($"Connection rejected: {reason}");
-            sessionModel?.NetworkManager?.StopSessionAndReturnToMenu();
+            rejectModel.Set(reason);
+            sessionModel.NetworkManager.StopSessionAndReturnToMenu();
             if (NetworkClient.connection != null)
                 ClientReject();
         }

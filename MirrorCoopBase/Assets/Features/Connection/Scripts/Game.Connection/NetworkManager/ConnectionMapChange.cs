@@ -21,6 +21,7 @@ namespace Game.Connection
         private readonly float _everyoneReadyDelay;
         private readonly Action _clientSceneChanged;
         private readonly Action _loadFailed;
+        private readonly Action<NetworkConnectionToClient> _clientMapLoaded;
 
         private Dictionary<NetworkConnectionToClient, bool> _mapLoadedByConnection;
         private string _sceneToUnload;
@@ -35,7 +36,8 @@ namespace Game.Connection
             ConnectionNetworkEvents events,
             float everyoneReadyDelay,
             Action clientSceneChanged,
-            Action loadFailed)
+            Action loadFailed,
+            Action<NetworkConnectionToClient> clientMapLoaded)
         {
             _coroutineHost = coroutineHost;
             _sceneNames = sceneNames;
@@ -46,6 +48,7 @@ namespace Game.Connection
             _everyoneReadyDelay = everyoneReadyDelay;
             _clientSceneChanged = clientSceneChanged;
             _loadFailed = loadFailed;
+            _clientMapLoaded = clientMapLoaded;
         }
 
         public bool IsMapLoaded { get; private set; }
@@ -120,6 +123,10 @@ namespace Game.Connection
         // Server only; the caller has already set NetworkManager.networkSceneName.
         public void Begin(string newSceneName)
         {
+            // A joiner reports its own load outside a map change; that report must not count for this one.
+            foreach (NetworkConnectionToClient conn in _mapLoadedByConnection.Keys.ToArray())
+                _mapLoadedByConnection[conn] = false;
+
             _lookForReadyPlayers = true;
             IsChangingMap = true;
             _events.RaiseMapLoadStarted();
@@ -135,7 +142,9 @@ namespace Game.Connection
             _coroutineHost.StartCoroutine(HandleMirrorSceneMessage(msg));
         }
 
-        // Mirror's own scene message reaches a client that joins after the map change; load the scene through Addressables.
+        // Mirror's own scene message reaches a client that joins after the map change (the lobby, or a run at a
+        // station); load the scene through Addressables. The server's spawn messages wait in the inbox until the
+        // scene objects have their ids, and the server makes the player only after the MapLoadedMessage.
         IEnumerator HandleMirrorSceneMessage(SceneMessage msg)
         {
             if (NetworkServer.active)
@@ -148,25 +157,28 @@ namespace Game.Connection
                 yield break;
             }
 
-            Scene existing = SceneManager.GetSceneByName(msg.sceneName);
-            if (existing.IsValid() && existing.isLoaded)
+            NetworkClient.isLoadingScene = true;
+            Scene scene = SceneManager.GetSceneByName(msg.sceneName);
+            if (scene.IsValid() == false || scene.isLoaded == false)
             {
-                SceneManager.SetActiveScene(existing);
-                NetworkClient.isLoadingScene = false;
-                _clientSceneChanged();
-                yield break;
+                yield return _sceneLoading.Load(msg.sceneName);
+                scene = SceneManager.GetSceneByName(msg.sceneName);
             }
 
-            NetworkClient.isLoadingScene = true;
-            yield return _sceneLoading.Load(msg.sceneName);
+            if (scene.IsValid())
+                SceneManager.SetActiveScene(scene);
 
-            Scene loaded = SceneManager.GetSceneByName(msg.sceneName);
-            if (loaded.IsValid())
-                SceneManager.SetActiveScene(loaded);
-
+            ConnectionSceneObjectIds.Assign(scene);
+            // Join loads the lobby before connecting; a player joining a run leaves it behind like everyone did.
+            yield return _sceneLoading.UnloadIfLoaded(OtherSessionScene(msg.sceneName));
             NetworkClient.isLoadingScene = false;
+            IsMapLoaded = true;
             _clientSceneChanged();
+            NetworkClient.Send(new MapLoadedMessage());
         }
+
+        string OtherSessionScene(string sceneName) =>
+            sceneName == _sceneNames.Game ? _sceneNames.Lobby : _sceneNames.Game;
 
         void OnSceneChangeMessage(SceneChangeMessage msg)
         {
@@ -250,6 +262,8 @@ namespace Game.Connection
             if (_mapLoadedByConnection == null)
                 return;
 
+            // First: making a waiting joiner's player marks its map as not loaded for the next change.
+            _clientMapLoaded(conn);
             _mapLoadedByConnection[conn] = true;
             if (_lookForReadyPlayers)
                 CheckIfEverybodyIsReady();
