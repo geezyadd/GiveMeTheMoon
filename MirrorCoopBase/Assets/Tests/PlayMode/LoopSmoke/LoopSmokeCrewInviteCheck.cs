@@ -30,9 +30,9 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float STAND_SETTLE_SECONDS = 1f;
         private const int FRAMES_FOR_INTERACT_ROUND_TRIP = 10;
 
-        private readonly IReadOnlyCrewRosterModel _crewRosterModel = LoopSmokeShopCheck.Resolve<IReadOnlyCrewRosterModel>();
-        private readonly ICrewInviteStatusService _crewInviteStatusService = LoopSmokeShopCheck.Resolve<ICrewInviteStatusService>();
-        private readonly int _playerSlots = LoopSmokeShopCheck.Resolve<ConnectionConfig>().MaxConnections;
+        private readonly IReadOnlyCrewRosterModel _crewRosterModel = LoopSmokeSceneContexts.Resolve<IReadOnlyCrewRosterModel>();
+        private readonly ICrewInviteStatusService _crewInviteStatusService = LoopSmokeSceneContexts.Resolve<ICrewInviteStatusService>();
+        private readonly int _playerSlots = LoopSmokeSceneContexts.Resolve<ConnectionConfig>().MaxConnections;
         private readonly LoopSmokeSteamLobbySpy _steamLobby;
 
         public LoopSmokeCrewInviteCheck(LoopSmokeSteamLobbySpy steamLobby) =>

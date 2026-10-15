@@ -8,7 +8,7 @@ namespace Tests.PlayMode.LoopSoak {
     // The floating origin over many loops: a landed ship never stays beyond the recenter distance (no drift to large
     // coordinates), and after a shift the player still stands on the deck.
     public sealed class LoopSoakWorldShiftCheck {
-        private readonly IShipWorldShiftDebug _worldShift = LoopSmokeShopCheck.Resolve<IShipWorldShiftDebug>();
+        private readonly IShipWorldShiftDebug _worldShift = LoopSmokeSceneContexts.Resolve<IShipWorldShiftDebug>();
         private readonly float _recenterDistance;
         private int _checkedShifts;
 

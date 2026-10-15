@@ -24,7 +24,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private const string REJECT_SCREENSHOT = "join-rejected-in-flight.png";
 
         public IEnumerator JoinRejectedInFlightCoroutine() {
-            string expected = LoopSmokeShopCheck.Resolve<IConnectionRejectMessages>().Describe(ConnectionRejectReason.InFlight);
+            string expected = LoopSmokeSceneContexts.Resolve<IConnectionRejectMessages>().Describe(ConnectionRejectReason.InFlight);
             TelepathyTransport telepathy = Object.FindAnyObjectByType<TelepathyTransport>(FindObjectsInactive.Include);
             ushort shippedPort = telepathy.port;
             TcpListener silentHost = new TcpListener(IPAddress.Loopback, 0);
@@ -55,7 +55,7 @@ namespace Tests.PlayMode.LoopSmoke {
             NetworkClient.active == false && IsFlowSettledIn(typeof(MenuGameFlowState));
 
         private static bool IsFlowSettledIn(Type stateType) {
-            IGameFlowStateMachineService flow = LoopSmokeShopCheck.Resolve<IGameFlowStateMachineService>();
+            IGameFlowStateMachineService flow = LoopSmokeSceneContexts.Resolve<IGameFlowStateMachineService>();
             return flow.IsTransitioning == false && flow.CurrentStateType == stateType;
         }
 

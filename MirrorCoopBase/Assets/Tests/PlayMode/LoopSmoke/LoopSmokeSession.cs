@@ -133,21 +133,12 @@ namespace Tests.PlayMode.LoopSmoke {
             if (NetworkServer.active || NetworkClient.active || IsMenuReady() == false)
                 return false;
 
-            IGameFlowStateMachineService flow = FindGameFlow();
+            IGameFlowStateMachineService flow = LoopSmokeSceneContexts.Resolve<IGameFlowStateMachineService>();
             return flow.IsTransitioning == false && flow.CurrentStateType == typeof(MenuGameFlowState);
         }
 
         private static ConnectionNetworkManager ResolveNetworkManager() =>
             ProjectContext.Instance.Container.Resolve<ConnectionSessionModel>().NetworkManager;
-
-        private static IGameFlowStateMachineService FindGameFlow() {
-            foreach (SceneContext context in Object.FindObjectsByType<SceneContext>(FindObjectsSortMode.None)) {
-                if (context.Container.HasBinding<IGameFlowStateMachineService>())
-                    return context.Container.Resolve<IGameFlowStateMachineService>();
-            }
-
-            throw new InvalidOperationException("No scene context binds IGameFlowStateMachineService.");
-        }
     }
 }
 #endif

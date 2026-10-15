@@ -14,7 +14,6 @@ using Mirror;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UI;
-using Zenject;
 using Object = UnityEngine.Object;
 
 namespace Tests.PlayMode.LoopSmoke {
@@ -43,8 +42,8 @@ namespace Tests.PlayMode.LoopSmoke {
         public IEnumerator BuyAtKioskAndWalkAwayCoroutine(ShipLandingPad pad) {
             ShopKioskInteractable kiosk = pad.GetComponentInChildren<ShopKioskInteractable>();
             Assert.IsNotNull(kiosk, $"The pad {pad.name} has no shop kiosk.");
-            ShopModel shop = Resolve<ShopModel>();
-            IReadOnlyWalletModel wallet = Resolve<IReadOnlyWalletModel>();
+            ShopModel shop = LoopSmokeSceneContexts.Resolve<ShopModel>();
+            IReadOnlyWalletModel wallet = LoopSmokeSceneContexts.Resolve<IReadOnlyWalletModel>();
             List<ShipItem> itemsBefore = FindAllItems();
             try {
                 CameraLookDriver.DebugPitchOverride = true;
@@ -90,7 +89,7 @@ namespace Tests.PlayMode.LoopSmoke {
             List<ShipItem> bought = FindAllItems();
             bought.RemoveAll(itemsBefore.Contains);
             Assert.AreEqual(PURCHASES, bought.Count, "Not every purchase spawned an item.");
-            yield return WaitForItemsToRestCoroutine(bought);
+            yield return WaitForItemsToRestCoroutine(CollectBodies(bought));
 
             float floor = kiosk.transform.position.y - BELOW_DELIVERY_TOLERANCE;
             foreach (ShipItem item in bought) {
@@ -102,11 +101,11 @@ namespace Tests.PlayMode.LoopSmoke {
 
         // The delivered stack topples onto the counter and slides for a few seconds, longer on a slow frame rate: a
         // fixed wait caught it still sliding. Items stuck in each other never come to rest, so the timeout still fails.
-        private static IEnumerator WaitForItemsToRestCoroutine(List<ShipItem> items) {
+        private static IEnumerator WaitForItemsToRestCoroutine(List<Rigidbody> bodies) {
             float start = Time.time;
             float restingSince = start;
             while (Time.time - restingSince < ITEMS_REST_HOLD_SECONDS) {
-                if (TryFindMovingItem(items, out Rigidbody moving)) {
+                if (TryFindMovingBody(bodies, out Rigidbody moving)) {
                     restingSince = Time.time;
                     if (restingSince - start > ITEMS_REST_TIMEOUT_SECONDS)
                         Assert.Fail($"{moving.name} does not rest after {ITEMS_REST_TIMEOUT_SECONDS} s ({moving.linearVelocity.magnitude:F2} m/s): stuck in another item?");
@@ -118,10 +117,17 @@ namespace Tests.PlayMode.LoopSmoke {
             Debug.Log($"[LoopSmoke] the bought items came to rest {restingSince - start:F2} s after the player walked away.");
         }
 
-        private static bool TryFindMovingItem(List<ShipItem> items, out Rigidbody moving) {
+        private static List<Rigidbody> CollectBodies(List<ShipItem> items) {
+            List<Rigidbody> bodies = new List<Rigidbody>(items.Count);
+            foreach (ShipItem item in items)
+                bodies.Add(item.GetComponent<Rigidbody>());
+
+            return bodies;
+        }
+
+        private static bool TryFindMovingBody(List<Rigidbody> bodies, out Rigidbody moving) {
             moving = null;
-            foreach (ShipItem item in items) {
-                Rigidbody body = item.GetComponent<Rigidbody>();
+            foreach (Rigidbody body in bodies) {
                 if (body.linearVelocity.magnitude < SETTLED_SPEED)
                     continue;
 
@@ -134,7 +140,7 @@ namespace Tests.PlayMode.LoopSmoke {
 
         private static IEnumerator AssertFarPurchaseRefusedCoroutine(IReadOnlyWalletModel wallet) {
             long balance = wallet.Balance;
-            Resolve<ShopPurchaseRequestEventClass>().InvokePurchaseRequested(BOUGHT_ENTRY);
+            LoopSmokeSceneContexts.Resolve<ShopPurchaseRequestEventClass>().InvokePurchaseRequested(BOUGHT_ENTRY);
             yield return new WaitForSeconds(REJECTED_COMMAND_WAIT_SECONDS);
             Assert.AreEqual(balance, wallet.Balance, "The server took money for a purchase far from the kiosk.");
         }
@@ -179,15 +185,6 @@ namespace Tests.PlayMode.LoopSmoke {
             }
 
             throw new InvalidOperationException("The shop kiosk has no solid counter.");
-        }
-
-        internal static T Resolve<T>() {
-            foreach (SceneContext context in Object.FindObjectsByType<SceneContext>(FindObjectsSortMode.None)) {
-                if (context.Container.HasBinding<T>())
-                    return context.Container.Resolve<T>();
-            }
-
-            throw new InvalidOperationException($"No scene context binds {typeof(T).Name}.");
         }
 
         internal static IEnumerator WaitForCoroutine(Func<bool> condition, string target) {

@@ -118,7 +118,7 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         private IEnumerator ShiftWorldInCruiseCoroutine() =>
-            _fieldCheck.AssertFieldFollowsWorldShiftCoroutine(_session.Ship.transform, LoopSmokeShopCheck.Resolve<IShipWorldShiftDebug>());
+            _fieldCheck.AssertFieldFollowsWorldShiftCoroutine(_session.Ship.transform, LoopSmokeSceneContexts.Resolve<IShipWorldShiftDebug>());
 
         private void RememberFirstRunObjects() {
             _firstRunObjects.Clear();

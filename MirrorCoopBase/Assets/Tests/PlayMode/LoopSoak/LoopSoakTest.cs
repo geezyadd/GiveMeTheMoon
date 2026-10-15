@@ -81,7 +81,7 @@ namespace Tests.PlayMode.LoopSoak {
             yield return _flight.FlyLoopCoroutine(loop);
             yield return _flight.AssertLandedSafelyCoroutine(loop, launchPad, _flight.FindPadUnderShip());
             worldShift.AssertAfterLanding(loop, _session.Ship, _flight);
-            LoopSoakSpawnCensus census = LoopSoakSpawnCensus.Take();
+            LoopSoakSpawnCensus census = LoopSoakSpawnCensus.Create();
             accumulation.AssertNothingPiledUp(loop, census);
             report.Add(new LoopSoakSample(
                 loop,
@@ -91,7 +91,9 @@ namespace Tests.PlayMode.LoopSoak {
                 census,
                 worldShift.Count,
                 LoopSoakWorldShiftCheck.DistanceFromOrigin(_session.Ship),
-                _fieldCheck));
+                _fieldCheck.LastPlacements,
+                _fieldCheck.LastFieldObjects,
+                _fieldCheck.PooledObjects));
             Debug.Log(report.DescribeLast());
         }
     }

@@ -24,7 +24,7 @@ namespace Tests.PlayMode.LoopSoak {
             ClientOther = clientOther;
         }
 
-        public static LoopSoakSpawnCensus Take() {
+        public static LoopSoakSpawnCensus Create() {
             int items = CountRuntime<ShipItem>(NetworkServer.spawned.Values);
             int pads = CountRuntime<ShipLandingPad>(NetworkServer.spawned.Values);
             int serverRuntime = LoopSmokeSpawnCounts.CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values);
