@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Network;
@@ -16,14 +15,11 @@ namespace Features.FlightFieldModule.Scripts.Server {
         public int Number { get; private set; }
         public IReadOnlyList<NetworkIdentity> NetworkedStructures => _networkedStructures;
 
-        public event Action OnFieldChanged;
-
         public void SetField(FlightField field) {
             _networkedStructures.Clear();
             _publishedFields++;
             Field = field;
             Number = _publishedFields;
-            OnFieldChanged?.Invoke();
         }
 
         public void AddNetworkedStructure(NetworkIdentity structure) =>
@@ -33,7 +29,6 @@ namespace Features.FlightFieldModule.Scripts.Server {
             _networkedStructures.Clear();
             Field = null;
             Number = LiveFieldNumbers.NO_FIELD;
-            OnFieldChanged?.Invoke();
         }
     }
 }

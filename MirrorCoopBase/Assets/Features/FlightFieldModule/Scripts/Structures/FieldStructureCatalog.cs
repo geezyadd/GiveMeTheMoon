@@ -10,6 +10,14 @@ namespace Features.FlightFieldModule.Scripts.Structures {
 
         public IReadOnlyList<FieldStructureDefinition> Structures => _structures;
 
+        // For ids that come from a field: a placement of a structure the catalog does not know is a broken field.
+        public FieldStructureDefinition GetRequired(string id) {
+            if (!TryGet(id, out FieldStructureDefinition structure))
+                throw new KeyNotFoundException($"No structure '{id}' in {name}.");
+
+            return structure;
+        }
+
         public bool TryGet(string id, out FieldStructureDefinition structure) {
             structure = null;
             if (string.IsNullOrEmpty(id))

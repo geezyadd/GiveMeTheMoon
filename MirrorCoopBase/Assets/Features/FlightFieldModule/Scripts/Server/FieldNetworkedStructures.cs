@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Structures;
@@ -23,7 +22,7 @@ namespace Features.FlightFieldModule.Scripts.Server {
         public void ServerSpawn(FlightFieldServerModel flightFieldServerModel) {
             FieldFrame frame = flightFieldServerModel.Field.Frame;
             foreach (FieldPlacement placement in flightFieldServerModel.Field.Placements) {
-                FieldStructureDefinition structure = GetStructure(placement.StructureId);
+                FieldStructureDefinition structure = _fieldStructureCatalog.GetRequired(placement.StructureId);
                 if (_fieldStructureSpawnRule.IsBuiltLocally(structure))
                     continue;
 
@@ -55,13 +54,6 @@ namespace Features.FlightFieldModule.Scripts.Server {
                 if (identity != null && identity.TryGetComponent(out FieldNetworkedStructure _))
                     identity.transform.position += delta;
             }
-        }
-
-        private FieldStructureDefinition GetStructure(string structureId) {
-            if (!_fieldStructureCatalog.TryGet(structureId, out FieldStructureDefinition structure))
-                throw new KeyNotFoundException($"No structure '{structureId}' in {_fieldStructureCatalog.name}.");
-
-            return structure;
         }
     }
 }

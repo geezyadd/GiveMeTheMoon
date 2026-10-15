@@ -9,8 +9,6 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         private readonly List<GameObject> _activeInstances = new();
         private readonly List<GameObject> _activePrefabs = new();
 
-        public int ActiveCount => _activeInstances.Count;
-
         public GameObject Take(GameObject prefab, Transform parent) {
             GameObject instance = TakeFree(prefab);
             if (instance == null)

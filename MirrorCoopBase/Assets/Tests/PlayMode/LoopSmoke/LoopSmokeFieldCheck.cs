@@ -156,7 +156,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private static int CountSpawnedNetworkedStructures() {
             int count = 0;
             foreach (NetworkIdentity identity in NetworkServer.spawned.Values) {
-                if (identity != null && identity.GetComponent<FieldNetworkedStructure>() != null)
+                if (identity != null && identity.TryGetComponent(out FieldNetworkedStructure _))
                     count++;
             }
 
@@ -166,7 +166,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private static bool TryFindSpawnedNetworkedStructure(out Transform structure) {
             structure = null;
             foreach (NetworkIdentity identity in NetworkServer.spawned.Values) {
-                if (identity == null || identity.GetComponent<FieldNetworkedStructure>() == null)
+                if (identity == null || !identity.TryGetComponent(out FieldNetworkedStructure _))
                     continue;
 
                 structure = identity.transform;

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Generation;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
@@ -18,7 +17,8 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         private readonly IFieldStructureSpawnRule _fieldStructureSpawnRule;
         private readonly IFieldStructureLayout _fieldStructureLayout;
         private readonly IFieldStructurePool _fieldStructurePool;
-        private readonly IFieldRandomFactory _fieldRandomFactory;
+        // One sequence reseeded per placement: building runs every frame of the takeoff and allocates nothing.
+        private readonly IFieldRandom _visualRandom;
 
         public FieldStructureSceneBuilder(FieldStructureCatalog fieldStructureCatalog, IFieldStructureSpawnRule fieldStructureSpawnRule, IFieldStructureLayout fieldStructureLayout,
                                           IFieldStructurePool fieldStructurePool, IFieldRandomFactory fieldRandomFactory) {
@@ -26,7 +26,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             _fieldStructureSpawnRule = fieldStructureSpawnRule;
             _fieldStructureLayout = fieldStructureLayout;
             _fieldStructurePool = fieldStructurePool;
-            _fieldRandomFactory = fieldRandomFactory;
+            _visualRandom = fieldRandomFactory.Create(0);
         }
 
         // Kept across scene loads with its pooled objects; it is empty whenever no field stands.
@@ -39,31 +39,24 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         public void PlaceRoot(Transform root, IReadOnlyLiveFieldModel liveFieldModel) =>
             root.SetPositionAndRotation(liveFieldModel.Origin, Quaternion.LookRotation(liveFieldModel.Forward, Vector3.up));
 
-        public bool TryBuild(Transform root, IReadOnlyLiveFieldModel liveFieldModel, int placementIndex) {
+        // A networked placement is skipped: the server spawns it through Mirror.
+        public void BuildLocalStructure(Transform root, IReadOnlyLiveFieldModel liveFieldModel, int placementIndex) {
             FieldPlacementEntry placement = liveFieldModel.Placements[placementIndex];
-            FieldStructureDefinition structure = GetStructure(placement.StructureId);
+            FieldStructureDefinition structure = _fieldStructureCatalog.GetRequired(placement.StructureId);
             if (!_fieldStructureSpawnRule.IsBuiltLocally(structure))
-                return false;
+                return;
 
             Pose pose = _fieldStructureLayout.GetFieldPose(structure, placement.Anchor, placement.Rotation, liveFieldModel.CellSize);
-            IFieldRandom visualRandom = _fieldRandomFactory.Create(unchecked(liveFieldModel.Seed + placementIndex * VISUAL_SEED_STEP));
-            float yaw = Mathf.Lerp(-structure.VisualYawJitterDegrees, structure.VisualYawJitterDegrees, visualRandom.Value());
-            float scale = 1f + Mathf.Lerp(-structure.VisualScaleJitter, structure.VisualScaleJitter, visualRandom.Value());
+            _visualRandom.Reseed(unchecked(liveFieldModel.Seed + placementIndex * VISUAL_SEED_STEP));
+            float yaw = Mathf.Lerp(-structure.VisualYawJitterDegrees, structure.VisualYawJitterDegrees, _visualRandom.Value());
+            float scale = 1f + Mathf.Lerp(-structure.VisualScaleJitter, structure.VisualScaleJitter, _visualRandom.Value());
             Transform instance = _fieldStructurePool.Take(structure.Prefab, root).transform;
             instance.SetLocalPositionAndRotation(pose.position, pose.rotation * Quaternion.Euler(0f, yaw, 0f));
             instance.localScale = structure.Prefab.transform.localScale * scale;
             instance.gameObject.SetActive(true);
-            return true;
         }
 
         public void ReleaseAll() =>
             _fieldStructurePool.ReturnAll();
-
-        private FieldStructureDefinition GetStructure(string structureId) {
-            if (!_fieldStructureCatalog.TryGet(structureId, out FieldStructureDefinition structure))
-                throw new KeyNotFoundException($"No structure '{structureId}' in {_fieldStructureCatalog.name}.");
-
-            return structure;
-        }
     }
 }

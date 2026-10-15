@@ -69,10 +69,8 @@ namespace Features.FlightFieldModule.Scripts.Scene {
 
             int placementCount = _liveFieldModel.Placements.Count;
             int end = Mathf.Min(_nextPlacementIndex + _flightFieldConfiguration.StructuresBuiltPerFrame, placementCount);
-            for (; _nextPlacementIndex < end; _nextPlacementIndex++) {
-                if (_fieldStructureSceneBuilder.TryBuild(_flightFieldSceneModel.Root, _liveFieldModel, _nextPlacementIndex))
-                    _flightFieldSceneModel.AddBuiltStructure();
-            }
+            for (; _nextPlacementIndex < end; _nextPlacementIndex++)
+                _fieldStructureSceneBuilder.BuildLocalStructure(_flightFieldSceneModel.Root, _liveFieldModel, _nextPlacementIndex);
 
             if (_nextPlacementIndex >= placementCount)
                 _flightFieldSceneModel.CompleteBuild();

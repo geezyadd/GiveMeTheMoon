@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Model;
 using Mirror;
@@ -10,7 +9,5 @@ namespace Features.FlightFieldModule.Scripts.Server {
         public FlightField Field { get; }
         public int Number { get; }
         public IReadOnlyList<NetworkIdentity> NetworkedStructures { get; }
-
-        public event Action OnFieldChanged;
     }
 }
