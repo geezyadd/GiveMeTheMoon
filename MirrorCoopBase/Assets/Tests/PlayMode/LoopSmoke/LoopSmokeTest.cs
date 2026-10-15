@@ -116,8 +116,10 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return BoardPlayerCoroutine();
             Assert.AreEqual(startStationItems, CountSceneObjects<ShipItem>(), "Run 2 does not start with the same station items as run 1.");
             ShipLandingPad secondRunStartPad = FindPadUnderShip();
-            yield return FlyLoopCoroutine(1);
+            LoopSmokeCrewInviteCheck crewInvite = new LoopSmokeCrewInviteCheck();
+            yield return FlyLoopCoroutine(1, crewInvite.CheckClosedInFlightCoroutine);
             yield return AssertLandedSafelyCoroutine(secondRunStartPad, FindPadUnderShip());
+            yield return crewInvite.CheckAtStationCoroutine(FindPadUnderShip());
             LogSpawnedCounts("run 2 after the first landing");
             Assert.AreEqual(firstLandingSpawns, CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values), "Run 2 does not spawn the same pad and drops on landing as run 1.");
             yield return new LoopSmokeShopCheck().BuyAtKioskAndWalkAwayCoroutine(FindPadUnderShip());
@@ -136,6 +138,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return WaitForCoroutine(IsLobbyReady, LOBBY_TIMEOUT_SECONDS, "the lobby with an authenticated host client and a bound Start button");
             _lobbyRuntimeObjects = CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values);
             LogSpawnedCounts("lobby before run 1");
+            yield return new LoopSmokeCrewInviteCheck().CheckInLobbyCoroutine();
             yield return StartGameCoroutine();
             Assert.AreSame(_fastConfig, ProjectContext.Instance.Container.Resolve<ShipRunConfig>(), "The test ShipRunConfig override is not bound.");
         }
@@ -262,6 +265,7 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.AreEqual(ShipRunAbortReason.None, _model.LastAbortReason, "The flight ended as a wreck.");
             Assert.IsNotNull(landingPad.GetComponentInChildren<ShopKioskInteractable>(), "The new station has no shop kiosk.");
             Assert.AreEqual(CountSceneObjects<ShipLandingPad>(), CountSceneObjects<ShopKioskInteractable>(), "Shop kiosks do not match the pads one to one.");
+            LoopSmokeCrewInviteCheck.AssertOneTerminalPerPad();
 
             Bounds padBounds = PadBounds(landingPad);
             Bounds deck = _ship.DeckGeometry.Bounds;
