@@ -27,5 +27,6 @@ namespace Features.FlightFieldModule.Scripts.Structures {
         public bool IsNetworked => _isNetworked;
         public float Weight => _weight;
         public bool IsRotatable => _isRotatable;
+        public bool IsRandomObstacle => _kind == FieldStructureKind.Obstacle && _weight > 0f;
     }
 }

@@ -16,10 +16,8 @@ namespace Features.FlightFieldModule.Scripts.Generation.Passage {
             _flightFieldConfiguration = flightFieldConfiguration;
         }
 
-        public bool HasPassage(IMatrix<FieldCell> cells, FieldRoute route) {
-            IMatrix<bool> passable = CreatePassableMatrix(cells);
-            return passable.PathFinding(route.Start, route.End, true, IsPassable).Count > 0;
-        }
+        public bool HasPassage(IMatrix<FieldCell> cells, FieldRoute route) =>
+            CreatePassableMatrix(cells).PathFinding(route.Start, route.End, isDiagonalMove: true, predicate: IsPassable).Count > 0;
 
         private IMatrix<bool> CreatePassableMatrix(IMatrix<FieldCell> cells) {
             int side = cells.GetRowCount();
@@ -35,14 +33,25 @@ namespace Features.FlightFieldModule.Scripts.Generation.Passage {
 
         private static bool HasClearance(IMatrix<FieldCell> cells, int x, int y, int clearance) {
             for (int nearY = y - clearance; nearY <= y + clearance; nearY++) {
-                for (int nearX = x - clearance; nearX <= x + clearance; nearX++) {
-                    if (!cells.ValidateIndex(nearX, nearY) || cells.GetValue(nearX, nearY).IsOccupied)
-                        return false;
-                }
+                if (!IsRowClear(cells, x, nearY, clearance))
+                    return false;
             }
 
             return true;
         }
+
+        private static bool IsRowClear(IMatrix<FieldCell> cells, int x, int y, int clearance) {
+            for (int nearX = x - clearance; nearX <= x + clearance; nearX++) {
+                if (IsBlocked(cells, nearX, y))
+                    return false;
+            }
+
+            return true;
+        }
+
+        // Outside the field counts as blocked: the ship must not leave it.
+        private static bool IsBlocked(IMatrix<FieldCell> cells, int x, int y) =>
+            !cells.ValidateIndex(x, y) || cells.GetValue(x, y).IsOccupied;
 
         private static bool IsPassable(bool cell) =>
             cell;

@@ -1,9 +1,12 @@
+using System;
 using System.IO;
 using System.Linq;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Structures;
 using NUnit.Framework;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // Guards field structures as data: every structure is one definition in the catalog with an id, a prefab and a
@@ -35,6 +38,20 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 Assert.IsNotNull(structure.Prefab, $"{structure.name} has no prefab.");
                 Assert.AreNotEqual(FieldStructureKind.None, structure.Kind, $"{structure.name} has no kind.");
                 Assert.IsNotEmpty(_composition.FootprintReader.Read(structure, FieldRotation.None).Cells, $"{structure.name} has an empty footprint.");
+            }
+        }
+
+        [Test]
+        public void WhenCatalogIsRead_ThenTheRandomFillHasAnObstacleToPick() =>
+            Assert.IsTrue(_composition.Catalog.Structures.Any(structure => structure.IsRandomObstacle), $"{_composition.Catalog.name} has no obstacle with a positive weight.");
+
+        [Test]
+        public void WhenCatalogHasNoObstacle_ThenTheStartupValidatorFails() {
+            FieldStructureCatalog emptyCatalog = ScriptableObject.CreateInstance<FieldStructureCatalog>();
+            try {
+                Assert.Throws<InvalidOperationException>(new FieldStructureCatalogValidator(emptyCatalog).Initialize);
+            } finally {
+                Object.DestroyImmediate(emptyCatalog);
             }
         }
 

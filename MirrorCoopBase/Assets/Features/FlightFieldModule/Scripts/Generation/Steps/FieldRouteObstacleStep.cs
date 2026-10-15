@@ -28,9 +28,13 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
                 return;
 
             List<Vector2Int> corridorCells = _fieldCorridorMapper.Map(context.Frame.SideCells, route.Centerline, route.CorridorHalfWidthCells);
-            corridorCells.RemoveAll(cell => context.Cells[cell].Reserve != FieldReserveKind.RouteCorridor || context.Cells[cell].IsOccupied);
+            corridorCells.RemoveAll(cell => !IsFreeCorridorCell(context.Cells[cell]));
             int targetCells = Mathf.RoundToInt(corridorCells.Count * obstacleShare);
             _fieldObstacleScatterer.Scatter(context, corridorCells, targetCells, FieldReserveKind.RouteCorridor);
         }
+
+        // Station zones and the takeoff corridor inside a route corridor stay empty: only route corridor cells take obstacles.
+        private static bool IsFreeCorridorCell(FieldCell cell) =>
+            cell.Reserve == FieldReserveKind.RouteCorridor && !cell.IsOccupied;
     }
 }

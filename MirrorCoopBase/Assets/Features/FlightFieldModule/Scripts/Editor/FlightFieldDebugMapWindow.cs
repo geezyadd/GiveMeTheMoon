@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Features.FlightFieldModule.Scripts.Model;
@@ -10,6 +11,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
     public sealed class FlightFieldDebugMapWindow : EditorWindow {
         private const string MENU_PATH = "Tools/Flight Field/Debug Map";
         private const string TITLE = "Flight Field Map";
+        private const string PASSAGE_FORCED_NOTE = ", PASSAGE FORCED";
         private const int MIN_PIXELS_PER_CELL = 2;
         private const int MAX_PIXELS_PER_CELL = 24;
         private const int MAX_LOOP = 30;
@@ -20,27 +22,30 @@ namespace Features.FlightFieldModule.Scripts.Editor {
         [SerializeField] private int _pixelsPerCell = 12;
         [SerializeField] private FieldDebugScenario _scenario = new();
 
-        private FlightField _field;
+        private readonly List<string> _summaryLines = new();
+
+        private SerializedObject _serializedWindow;
+        private SerializedProperty _scenarioProperty;
         private Texture2D _map;
-        private double _generationMilliseconds;
         private Vector2 _scroll;
 
         [MenuItem(MENU_PATH)]
         public static void Open() =>
             GetWindow<FlightFieldDebugMapWindow>(TITLE);
 
-        public void ShowSeed(int seed, int loopIndex) {
-            _seed = seed;
-            _loopIndex = loopIndex;
-            Generate();
+        private void OnEnable() {
+            _serializedWindow = new SerializedObject(this);
+            _scenarioProperty = _serializedWindow.FindProperty(nameof(_scenario));
         }
 
-        private void OnDisable() =>
+        private void OnDisable() {
             DestroyMap();
+            _serializedWindow.Dispose();
+        }
 
         private void OnGUI() {
             DrawControls();
-            if (_field == null)
+            if (_map == null)
                 return;
 
             DrawSummary();
@@ -50,33 +55,33 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             EditorGUILayout.EndScrollView();
         }
 
+        private void ShowSeed(int seed) {
+            _seed = seed;
+            Generate();
+        }
+
         private void DrawControls() {
             EditorGUILayout.BeginHorizontal();
             _seed = EditorGUILayout.IntField("Seed", _seed);
             if (GUILayout.Button("<"))
-                ShowSeed(_seed - 1, _loopIndex);
+                ShowSeed(_seed - 1);
 
             if (GUILayout.Button(">"))
-                ShowSeed(_seed + 1, _loopIndex);
+                ShowSeed(_seed + 1);
 
             EditorGUILayout.EndHorizontal();
             _loopIndex = EditorGUILayout.IntSlider("Loop", _loopIndex, 0, MAX_LOOP);
             _pixelsPerCell = EditorGUILayout.IntSlider("Pixels per cell", _pixelsPerCell, MIN_PIXELS_PER_CELL, MAX_PIXELS_PER_CELL);
-            SerializedObject serializedWindow = new(this);
-            EditorGUILayout.PropertyField(serializedWindow.FindProperty(nameof(_scenario)), true);
-            serializedWindow.ApplyModifiedProperties();
+            _serializedWindow.Update();
+            EditorGUILayout.PropertyField(_scenarioProperty, true);
+            _serializedWindow.ApplyModifiedProperties();
             if (GUILayout.Button("Generate"))
                 Generate();
         }
 
         private void DrawSummary() {
-            EditorGUILayout.LabelField($"Field {_field.Frame.SideCells} x {_field.Frame.SideCells} cells of {_field.Frame.CellSize} m, seed used {_field.Seed}, generated in {_generationMilliseconds:0.0} ms"
-                + (_field.IsPassageForced ? ", PASSAGE FORCED" : string.Empty));
-            string structures = string.Join(", ", _field.Placements.GroupBy(placement => placement.StructureId).OrderBy(group => group.Key)
-                .Select(group => $"{group.Key}: {group.Count()}"));
-            EditorGUILayout.LabelField($"Placements {_field.Placements.Count} ({structures})");
-            foreach (FieldRoute route in _field.Routes)
-                EditorGUILayout.LabelField($"Route {route.Id}: difficulty {route.Difficulty:0.00}, corridor {route.CorridorWidthCells} cells, centerline {route.Centerline.Count} cells");
+            foreach (string line in _summaryLines)
+                EditorGUILayout.LabelField(line);
 
             DrawLegend();
         }
@@ -103,11 +108,23 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             FlightFieldEditorComposition composition = new FlightFieldEditorCompositionFactory().Create();
             FieldRequest request = _scenario.CreateRequest(composition.RequestFactory, _seed, _loopIndex);
             Stopwatch stopwatch = Stopwatch.StartNew();
-            _field = composition.Generator.Generate(request);
-            _generationMilliseconds = stopwatch.Elapsed.TotalMilliseconds;
+            FlightField field = composition.Generator.Generate(request);
+            double generationMilliseconds = stopwatch.Elapsed.TotalMilliseconds;
             DestroyMap();
-            _map = new FlightFieldMapPainter().Paint(_field, _pixelsPerCell);
+            _map = new FlightFieldMapPainter().Paint(field, _pixelsPerCell);
+            FillSummary(field, generationMilliseconds);
             Repaint();
+        }
+
+        private void FillSummary(FlightField field, double generationMilliseconds) {
+            _summaryLines.Clear();
+            _summaryLines.Add($"Field {field.Frame.SideCells} x {field.Frame.SideCells} cells of {field.Frame.CellSize} m, seed used {field.Seed}, generated in {generationMilliseconds:0.0} ms"
+                + (field.IsPassageForced ? PASSAGE_FORCED_NOTE : string.Empty));
+            string structures = string.Join(", ", field.Placements.GroupBy(placement => placement.StructureId).OrderBy(group => group.Key)
+                .Select(group => $"{group.Key}: {group.Count()}"));
+            _summaryLines.Add($"Placements {field.Placements.Count} ({structures})");
+            foreach (FieldRoute route in field.Routes)
+                _summaryLines.Add($"Route {route.Id}: difficulty {route.Difficulty:0.00}, corridor {route.CorridorWidthCells} cells, centerline {route.Centerline.Count} cells");
         }
 
         private void DestroyMap() {

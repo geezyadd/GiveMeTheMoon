@@ -18,35 +18,31 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
 
         public void Execute(FieldGenerationContext context) {
             for (int round = 0; round < _flightFieldConfiguration.MaxRepairRounds; round++) {
-                if (!TryClearBlockedRoutes(context)) {
+                if (AreAllRoutesPassable(context)) {
                     context.HasPassage = true;
                     return;
                 }
+
+                ClearBlockedRoutes(context);
             }
 
-            context.HasPassage = !HasBlockedRoute(context);
+            context.HasPassage = AreAllRoutesPassable(context);
         }
 
-        private bool TryClearBlockedRoutes(FieldGenerationContext context) {
-            bool hasBlockedRoute = false;
-            foreach (FieldRoute route in context.Routes) {
-                if (_fieldPassageChecker.HasPassage(context.Cells, route))
-                    continue;
-
-                hasBlockedRoute = true;
-                _fieldCorridorClearer.Clear(context, route, _flightFieldConfiguration.PassageClearanceCells);
-            }
-
-            return hasBlockedRoute;
-        }
-
-        private bool HasBlockedRoute(FieldGenerationContext context) {
+        private bool AreAllRoutesPassable(FieldGenerationContext context) {
             foreach (FieldRoute route in context.Routes) {
                 if (!_fieldPassageChecker.HasPassage(context.Cells, route))
-                    return true;
+                    return false;
             }
 
-            return false;
+            return true;
+        }
+
+        private void ClearBlockedRoutes(FieldGenerationContext context) {
+            foreach (FieldRoute route in context.Routes) {
+                if (!_fieldPassageChecker.HasPassage(context.Cells, route))
+                    _fieldCorridorClearer.Clear(context, route, _flightFieldConfiguration.PassageClearanceCells);
+            }
         }
     }
 }

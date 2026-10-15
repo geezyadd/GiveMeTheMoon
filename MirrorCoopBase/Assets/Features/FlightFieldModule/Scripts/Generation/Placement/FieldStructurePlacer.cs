@@ -22,7 +22,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Placement {
             FieldFootprint footprint = _fieldFootprintReader.Read(structure, rotation);
             int placementId = context.NextPlacementId;
             IMatrix<FieldCell> shape = CreateShape(footprint, new FieldCell(reserve, placementId));
-            bool isPlaced = context.Cells.TryInsertFullShapeMatrix(shape, anchor.x, anchor.y, out _, cell => cell.Reserve == reserve && !cell.IsOccupied, IsStructureCell);
+            bool isPlaced = context.Cells.TryInsertFullShapeMatrix(shape, anchor.x, anchor.y, out _, cell => IsOpenFor(cell, reserve), IsStructureCell);
             if (isPlaced)
                 context.AddPlacement(new FieldPlacement(placementId, structure.Id, anchor, rotation));
 
@@ -30,11 +30,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Placement {
         }
 
         public void Remove(FieldGenerationContext context, int placementId) {
-            int index = context.Placements.FindIndex(placement => placement.Id == placementId);
-            if (index < 0)
-                throw new KeyNotFoundException($"No placement {placementId} in the field.");
-
-            FieldPlacement placement = context.Placements[index];
+            FieldPlacement placement = context.RemovePlacement(placementId);
             if (!_fieldStructureCatalog.TryGet(placement.StructureId, out FieldStructureDefinition structure))
                 throw new KeyNotFoundException($"No structure '{placement.StructureId}' in {_fieldStructureCatalog.name}.");
 
@@ -42,8 +38,6 @@ namespace Features.FlightFieldModule.Scripts.Generation.Placement {
                 Vector2Int position = placement.Anchor + cell;
                 context.Cells[position] = context.Cells[position].WithoutPlacement();
             }
-
-            context.Placements.RemoveAt(index);
         }
 
         private IMatrix<FieldCell> CreateShape(FieldFootprint footprint, FieldCell structureCell) {
@@ -53,6 +47,10 @@ namespace Features.FlightFieldModule.Scripts.Generation.Placement {
 
             return shape;
         }
+
+        // A structure stands only on cells of the reserve it is placed for and never on another structure.
+        private static bool IsOpenFor(FieldCell cell, FieldReserveKind reserve) =>
+            cell.Reserve == reserve && !cell.IsOccupied;
 
         private static bool IsStructureCell(FieldCell cell) =>
             cell.IsOccupied;

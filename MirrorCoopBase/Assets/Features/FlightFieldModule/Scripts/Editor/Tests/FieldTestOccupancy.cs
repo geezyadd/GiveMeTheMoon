@@ -8,6 +8,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // The occupied cells of a field rebuilt from its placement list only (not from the generator's grid), so the
     // tests check what a client building the field from placements would get.
     public sealed class FieldTestOccupancy {
+        private static readonly Vector2Int[] _sideSteps = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
+
         private readonly int[,] _placementIds;
 
         public int Side { get; }
@@ -28,11 +30,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         // A cell the ship fits through: it and every cell within the clearance (diagonals included) are inside and free.
         public bool HasClearance(Vector2Int cell, int clearance) {
             for (int y = cell.y - clearance; y <= cell.y + clearance; y++) {
-                for (int x = cell.x - clearance; x <= cell.x + clearance; x++) {
-                    Vector2Int near = new(x, y);
-                    if (!IsInside(near) || IsOccupied(near))
-                        return false;
-                }
+                if (!IsRowClear(cell.x, y, clearance))
+                    return false;
             }
 
             return true;
@@ -51,15 +50,34 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 if (cell == end)
                     return true;
 
-                foreach (Vector2Int step in new[] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right }) {
-                    Vector2Int next = cell + step;
-                    if (IsInside(next) && !seen.Contains(next) && HasClearance(next, clearance) && seen.Add(next))
-                        open.Enqueue(next);
-                }
+                OpenSideNeighbors(cell, clearance, seen, open);
             }
 
             return false;
         }
+
+        private void OpenSideNeighbors(Vector2Int cell, int clearance, HashSet<Vector2Int> seen, Queue<Vector2Int> open) {
+            foreach (Vector2Int step in _sideSteps) {
+                Vector2Int next = cell + step;
+                if (IsUnseenPassable(next, clearance, seen) && seen.Add(next))
+                    open.Enqueue(next);
+            }
+        }
+
+        private bool IsUnseenPassable(Vector2Int cell, int clearance, HashSet<Vector2Int> seen) =>
+            IsInside(cell) && !seen.Contains(cell) && HasClearance(cell, clearance);
+
+        private bool IsRowClear(int x, int y, int clearance) {
+            for (int nearX = x - clearance; nearX <= x + clearance; nearX++) {
+                if (IsBlocked(new Vector2Int(nearX, y)))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private bool IsBlocked(Vector2Int cell) =>
+            !IsInside(cell) || IsOccupied(cell);
 
         private void Occupy(FieldPlacement placement, FieldStructureCatalog catalog, IFieldFootprintReader footprintReader) {
             Assert.IsTrue(catalog.TryGet(placement.StructureId, out FieldStructureDefinition structure), $"Placement of unknown structure '{placement.StructureId}'.");

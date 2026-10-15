@@ -21,13 +21,15 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
 
         public void Execute(FieldGenerationContext context) {
             foreach (Vector2Int cell in GetBorderCells(context.Frame.SideCells)) {
-                if (!context.Cells[cell].IsFree)
-                    continue;
+                if (context.Cells[cell].IsFree)
+                    CloseWithFirstFitting(context, cell);
+            }
+        }
 
-                foreach (FieldStructureDefinition structure in _flightFieldConfiguration.WallStructures) {
-                    if (TryClose(context, structure, cell))
-                        break;
-                }
+        private void CloseWithFirstFitting(FieldGenerationContext context, Vector2Int cell) {
+            foreach (FieldStructureDefinition structure in _flightFieldConfiguration.WallStructures) {
+                if (TryClose(context, structure, cell))
+                    return;
             }
         }
 

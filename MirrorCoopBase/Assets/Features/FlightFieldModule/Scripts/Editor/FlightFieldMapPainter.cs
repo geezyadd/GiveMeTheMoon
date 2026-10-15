@@ -76,8 +76,11 @@ namespace Features.FlightFieldModule.Scripts.Editor {
         }
 
         private static void SetPixelInside(Texture2D texture, int x, int y, Color color) {
-            if (x >= 0 && x < texture.width && y >= 0 && y < texture.height)
+            if (IsInsideTexture(texture, x, y))
                 texture.SetPixel(x, y, color);
         }
+
+        private static bool IsInsideTexture(Texture2D texture, int x, int y) =>
+            x >= 0 && x < texture.width && y >= 0 && y < texture.height;
     }
 }

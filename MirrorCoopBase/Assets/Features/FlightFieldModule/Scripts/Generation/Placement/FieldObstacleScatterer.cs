@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Features.FlightFieldModule.Scripts.Configuration;
@@ -27,9 +28,12 @@ namespace Features.FlightFieldModule.Scripts.Generation.Placement {
         }
 
         public void Scatter(FieldGenerationContext context, IReadOnlyList<Vector2Int> anchorCells, int targetCells, FieldReserveKind reserve) {
-            List<FieldStructureDefinition> obstacles = _fieldStructureCatalog.Structures.Where(IsRandomObstacle).ToList();
-            if (targetCells <= 0 || anchorCells.Count == 0 || obstacles.Count == 0)
+            if (targetCells <= 0 || anchorCells.Count == 0)
                 return;
+
+            List<FieldStructureDefinition> obstacles = _fieldStructureCatalog.Structures.Where(IsRandomObstacle).ToList();
+            if (obstacles.Count == 0)
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name} has no obstacle with a positive weight to fill the field with.");
 
             foreach (FieldStructureDefinition obstacle in Draw(obstacles, targetCells, context.Random).OrderByDescending(CountCells))
                 TryPlaceAnywhere(context, obstacle, anchorCells, reserve);
@@ -59,6 +63,6 @@ namespace Features.FlightFieldModule.Scripts.Generation.Placement {
             _fieldFootprintReader.Read(structure, FieldRotation.None).Cells.Count;
 
         private static bool IsRandomObstacle(FieldStructureDefinition structure) =>
-            structure.Kind == FieldStructureKind.Obstacle && structure.Weight > 0f;
+            structure.IsRandomObstacle;
     }
 }

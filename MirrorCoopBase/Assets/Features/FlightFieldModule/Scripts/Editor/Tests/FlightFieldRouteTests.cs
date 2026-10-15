@@ -23,6 +23,10 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const float TAKEOFF_FORWARD = 350f;
         private const float TAKEOFF_HEIGHT = 100f;
         private const string FORCED_PASSAGE_LOG = "no passage after";
+        private const string OBSTACLE_DENSITY_FIELD = "_obstacleDensity";
+        private const string MAX_REPAIR_ROUNDS_FIELD = "_maxRepairRounds";
+        private const string MAX_SEED_ATTEMPTS_FIELD = "_maxSeedAttempts";
+        private const string CORRIDOR_OBSTACLE_SHARE_FIELD = "_routeShape._corridorObstacleShare";
 
         private FlightFieldEditorComposition _composition;
 
@@ -113,10 +117,10 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private FlightFieldConfiguration CreateBlockingConfiguration() {
             FlightFieldConfiguration configuration = Object.Instantiate(_composition.Configuration);
             SerializedObject serializedConfiguration = new(configuration);
-            serializedConfiguration.FindProperty("_obstacleDensity").floatValue = 1f;
-            serializedConfiguration.FindProperty("_maxRepairRounds").intValue = 0;
-            serializedConfiguration.FindProperty("_maxSeedAttempts").intValue = 1;
-            serializedConfiguration.FindProperty("_routeShape._corridorObstacleShare").animationCurveValue = AnimationCurve.Constant(0f, 1f, 1f);
+            serializedConfiguration.FindProperty(OBSTACLE_DENSITY_FIELD).floatValue = 1f;
+            serializedConfiguration.FindProperty(MAX_REPAIR_ROUNDS_FIELD).intValue = 0;
+            serializedConfiguration.FindProperty(MAX_SEED_ATTEMPTS_FIELD).intValue = 1;
+            serializedConfiguration.FindProperty(CORRIDOR_OBSTACLE_SHARE_FIELD).animationCurveValue = AnimationCurve.Constant(0f, 1f, 1f);
             serializedConfiguration.ApplyModifiedPropertiesWithoutUndo();
             return configuration;
         }

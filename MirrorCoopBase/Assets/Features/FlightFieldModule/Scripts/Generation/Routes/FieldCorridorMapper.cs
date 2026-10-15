@@ -10,14 +10,17 @@ namespace Features.FlightFieldModule.Scripts.Generation.Routes {
                 MarkSquare(isInCorridor, cell, halfWidthCells, sideCells);
 
             List<Vector2Int> corridor = new();
-            for (int y = 0; y < sideCells; y++) {
-                for (int x = 0; x < sideCells; x++) {
-                    if (isInCorridor[x, y])
-                        corridor.Add(new Vector2Int(x, y));
-                }
-            }
+            for (int y = 0; y < sideCells; y++)
+                CollectRow(isInCorridor, y, sideCells, corridor);
 
             return corridor;
+        }
+
+        private static void CollectRow(bool[,] isInCorridor, int y, int sideCells, List<Vector2Int> corridor) {
+            for (int x = 0; x < sideCells; x++) {
+                if (isInCorridor[x, y])
+                    corridor.Add(new Vector2Int(x, y));
+            }
         }
 
         private static void MarkSquare(bool[,] isInCorridor, Vector2Int center, int halfWidthCells, int sideCells) {

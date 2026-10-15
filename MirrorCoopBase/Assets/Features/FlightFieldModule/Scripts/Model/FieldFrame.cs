@@ -29,9 +29,6 @@ namespace Features.FlightFieldModule.Scripts.Model {
             return new Vector2Int(Mathf.FloorToInt(Vector3.Dot(offset, Forward) / CellSize), Mathf.FloorToInt(Vector3.Dot(offset, Right) / CellSize));
         }
 
-        public bool ContainsCell(Vector2Int cell) =>
-            cell.x >= 0 && cell.x < SideCells && cell.y >= 0 && cell.y < SideCells;
-
         public FieldFrame Shift(Vector3 offset) =>
             new(Origin + offset, Forward, CellSize, SideCells);
     }

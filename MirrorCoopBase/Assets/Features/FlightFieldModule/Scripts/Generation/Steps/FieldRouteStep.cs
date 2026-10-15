@@ -19,7 +19,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
         public void Execute(FieldGenerationContext context) {
             IReadOnlyList<FieldRouteRequest> routeRequests = context.Request.RouteRequests;
             for (int routeId = 0; routeId < routeRequests.Count; routeId++)
-                context.Routes.Add(CreateRoute(context, routeId, routeRequests[routeId].Difficulty));
+                context.AddRoute(CreateRoute(context, routeId, routeRequests[routeId].Difficulty));
         }
 
         private FieldRoute CreateRoute(FieldGenerationContext context, int routeId, float difficulty) {

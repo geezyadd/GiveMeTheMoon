@@ -4,7 +4,8 @@ using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Structures {
     // The one startup check of the structure catalog: every entry set, ids present and unique, a footprint of 'X' and
-    // '.' rows of one length with at least one occupied cell, a kind and a prefab.
+    // '.' rows of one length with at least one occupied cell, a kind and a prefab; at least one obstacle the random
+    // fill can pick.
     public sealed class FieldStructureCatalogValidator : IInitializable {
         private readonly FieldStructureCatalog _fieldStructureCatalog;
 
@@ -15,6 +16,18 @@ namespace Features.FlightFieldModule.Scripts.Structures {
             HashSet<string> ids = new(StringComparer.Ordinal);
             for (int i = 0; i < _fieldStructureCatalog.Structures.Count; i++)
                 ValidateStructure(_fieldStructureCatalog.Structures[i], i, ids);
+
+            if (!HasRandomObstacle())
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: no obstacle with a positive weight, the field would have no fill.");
+        }
+
+        private bool HasRandomObstacle() {
+            foreach (FieldStructureDefinition structure in _fieldStructureCatalog.Structures) {
+                if (structure.IsRandomObstacle)
+                    return true;
+            }
+
+            return false;
         }
 
         private void ValidateStructure(FieldStructureDefinition structure, int index, HashSet<string> ids) {

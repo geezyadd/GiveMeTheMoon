@@ -28,14 +28,17 @@ namespace Features.FlightFieldModule.Scripts.Structures {
 
         private static List<Vector2Int> ReadCells(IReadOnlyList<string> rows) {
             List<Vector2Int> cells = new();
-            for (int y = 0; y < rows.Count; y++) {
-                for (int x = 0; x < rows[y].Length; x++) {
-                    if (rows[y][x] == FieldFootprintSymbols.OCCUPIED_CELL)
-                        cells.Add(new Vector2Int(x, y));
-                }
-            }
+            for (int y = 0; y < rows.Count; y++)
+                ReadRow(rows[y], y, cells);
 
             return cells;
+        }
+
+        private static void ReadRow(string row, int y, List<Vector2Int> cells) {
+            for (int x = 0; x < row.Length; x++) {
+                if (row[x] == FieldFootprintSymbols.OCCUPIED_CELL)
+                    cells.Add(new Vector2Int(x, y));
+            }
         }
 
         // (x, y) in a box of the given height goes to (height - 1 - y, x): the box turns by 90 degrees clockwise.
