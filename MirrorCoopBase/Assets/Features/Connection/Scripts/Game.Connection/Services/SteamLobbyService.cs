@@ -26,7 +26,7 @@ namespace Game.Connection
         }
 
         public event Action<ulong> JoinRequested;
-        public event Action InviteStateChanged;
+        public event Action OnInviteStateChanged;
 
         public bool IsAvailable
         {
@@ -196,18 +196,18 @@ namespace Game.Connection
             _joinTcs?.TrySetResult(true);
         }
 
-        void SetLobby(CSteamID? lobby)
+        private void SetLobby(CSteamID? lobby)
         {
             if (_model.CurrentLobby == lobby)
                 return;
 
             _model.CurrentLobby = lobby;
             _isOverlayEnabled = _model.HasLobby && SteamUtils.IsOverlayEnabled();
-            InviteStateChanged?.Invoke();
+            OnInviteStateChanged?.Invoke();
         }
 
         // Steam has no callback for the overlay being turned on or off: it is watched while a lobby exists.
-        void TrackOverlay()
+        private void TrackOverlay()
         {
             if (_model.HasLobby == false)
                 return;
@@ -217,7 +217,7 @@ namespace Game.Connection
                 return;
 
             _isOverlayEnabled = isOverlayEnabled;
-            InviteStateChanged?.Invoke();
+            OnInviteStateChanged?.Invoke();
         }
 
         void OnJoinRequested(GameLobbyJoinRequested_t callback)

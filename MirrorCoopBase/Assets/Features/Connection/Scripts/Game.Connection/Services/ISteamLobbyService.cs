@@ -13,7 +13,7 @@ namespace Game.Connection
         public event Action<ulong> JoinRequested;
 
         // The lobby was entered or left, or the Steam overlay was turned on or off while in a lobby.
-        public event Action InviteStateChanged;
+        public event Action OnInviteStateChanged;
 
         public Task CreateFriendsLobbyAsync(int maxPlayers);
         public Task JoinLobbyAsync(ulong lobbyId);

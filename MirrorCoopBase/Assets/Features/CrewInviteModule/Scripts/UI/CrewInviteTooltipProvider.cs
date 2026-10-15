@@ -24,12 +24,12 @@ namespace Features.CrewInviteModule.Scripts.UI {
 
         public void Initialize() {
             _crewRosterModel.OnChanged += OnInviteInputChanged;
-            _steamLobbyService.InviteStateChanged += OnInviteInputChanged;
+            _steamLobbyService.OnInviteStateChanged += OnInviteInputChanged;
         }
 
         public void Dispose() {
             _crewRosterModel.OnChanged -= OnInviteInputChanged;
-            _steamLobbyService.InviteStateChanged -= OnInviteInputChanged;
+            _steamLobbyService.OnInviteStateChanged -= OnInviteInputChanged;
         }
 
         public bool TrySelect(InteractionTooltip tooltip, out TooltipData data, out string description) {

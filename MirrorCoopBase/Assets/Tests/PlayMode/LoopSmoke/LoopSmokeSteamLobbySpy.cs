@@ -23,7 +23,7 @@ namespace Tests.PlayMode.LoopSmoke {
             remove { }
         }
 
-        public event Action InviteStateChanged {
+        public event Action OnInviteStateChanged {
             add { }
             remove { }
         }
