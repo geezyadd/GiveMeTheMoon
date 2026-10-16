@@ -249,7 +249,7 @@ namespace Features.ShipModule.Scripts {
 
             if (isOwned) {
                 bool jumped = ConsumeJumpPress();
-                _vertical.ReadInput(_input != null && _input.JumpHeld, dt);
+                _vertical.ReadInput(_input.JumpHeld, dt);
                 if (_seated) {
                     // The press that stands the rider up must not jump right after.
                     _vertical.DropQueuedJump();
@@ -367,7 +367,7 @@ namespace Features.ShipModule.Scripts {
             _vertical.Reset(
                 _localOffset.y,
                 velocity,
-                _input != null && _input.JumpHeld,
+                _input.JumpHeld,
                 JumpTuning.Read(_stats).ExtraAirJumps);
 
         private void SendOffsetIfNeeded() {

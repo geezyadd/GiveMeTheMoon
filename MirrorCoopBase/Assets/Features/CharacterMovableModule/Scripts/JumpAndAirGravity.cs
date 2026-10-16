@@ -7,16 +7,15 @@ namespace Features.CharacterMovableModule.Scripts {
         private const float RISING_SPEED = 0.15f;
         private const float FALLING_SPEED = -0.15f;
         private const float LANDED_SPEED = 0.05f;
+        private const float NEVER_SECONDS = 999f;
 
         private bool _jumpHeld;
         private bool _jumpQueued;
         private float _jumpReadyIn;
-        private float _jumpPressedAgo = 999f;
-        private float _airTime = 999f;
+        private float _jumpPressedAgo = NEVER_SECONDS;
+        private float _airTime = NEVER_SECONDS;
         private bool _jumpedThisAir;
         private int _airJumpsLeft;
-
-        public bool JumpHeld => _jumpHeld;
 
         public void RefillAirJumps(int extraAirJumps) =>
             _airJumpsLeft = extraAirJumps;
@@ -46,7 +45,9 @@ namespace Features.CharacterMovableModule.Scripts {
             bool buffered = _jumpPressedAgo <= tuning.JumpBuffer;
             bool canGroundJump = (supported || fromLedge) && _jumpReadyIn <= 0f;
             bool canAirJump = _airJumpsLeft > 0 && _jumpReadyIn <= 0f;
-            if (_jumpQueued == false || buffered == false || (canGroundJump || canAirJump) == false)
+            bool canJump = canGroundJump || canAirJump;
+            bool takeoff = _jumpQueued && buffered && canJump;
+            if (takeoff == false)
                 return false;
 
             bool groundedTakeoff = supported || fromLedge;
@@ -57,8 +58,8 @@ namespace Features.CharacterMovableModule.Scripts {
             _jumpQueued = false;
             _jumpPressedAgo = tuning.JumpBuffer;
             _jumpReadyIn = tuning.JumpCooldown;
-            float takeoff = Mathf.Sqrt(2f * tuning.JumpHeight * -gravity);
-            speedChange = groundedTakeoff ? takeoff - verticalSpeed : takeoff;
+            float takeoffSpeed = Mathf.Sqrt(2f * tuning.JumpHeight * -gravity);
+            speedChange = groundedTakeoff ? takeoffSpeed - verticalSpeed : takeoffSpeed;
             return true;
         }
 

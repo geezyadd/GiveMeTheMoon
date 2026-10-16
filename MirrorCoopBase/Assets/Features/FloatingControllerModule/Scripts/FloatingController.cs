@@ -20,6 +20,7 @@ namespace Features.FloatingControllerModule {
         [SerializeField] private float _maxHoverForce = 50f;
         [SerializeField] private float _skipHoverIfFallingFasterThan = -5f;
         [SerializeField] private float _supportPause = 0.1f;
+        [SerializeField] private float _supportReachFactor = 1.3f;
 
         [Header("Body")]
         [SerializeField] private Rigidbody _rb;
@@ -37,12 +38,11 @@ namespace Features.FloatingControllerModule {
         public float StandHeight =>
             _hoverClearance - (ProbeStart().y - transform.position.y);
         public HoverSpringSettings Spring => new HoverSpringSettings(
-            _hoverClearance, _stiffness, _damping, _maxHoverForce, _skipHoverIfFallingFasterThan, _supportPause);
+            _hoverClearance, _stiffness, _damping, _maxHoverForce, _skipHoverIfFallingFasterThan, _supportPause,
+            _supportReachFactor);
         // Height of the pivot above the bottom of the collider: the lowest the pivot gets over a support it lands on.
-        public float ContactHeight => _capsuleCollider != null
-            ? -transform.InverseTransformPoint(_capsuleCollider.transform.TransformPoint(
-                _capsuleCollider.center + Vector3.down * (_capsuleCollider.height * 0.5f))).y
-            : 0f;
+        public float ContactHeight => -transform.InverseTransformPoint(_capsuleCollider.transform.TransformPoint(
+            _capsuleCollider.center + Vector3.down * (_capsuleCollider.height * 0.5f))).y;
 
         private void FixedUpdate() {
             if (isOwned == false)

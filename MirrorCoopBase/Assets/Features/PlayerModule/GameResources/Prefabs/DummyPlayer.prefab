@@ -254,6 +254,7 @@ MonoBehaviour:
   _maxHoverForce: 50
   _skipHoverIfFallingFasterThan: -5
   _supportPause: 0.1
+  _supportReachFactor: 1.3
   _rb: {fileID: 7148192738405830123}
   _pushSupportBody: 1
 --- !u!114 &337762568883164761

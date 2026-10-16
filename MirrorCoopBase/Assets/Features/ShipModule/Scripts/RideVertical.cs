@@ -17,9 +17,6 @@ namespace Features.ShipModule.Scripts {
         private float _supportPauseLeft;
         private bool _supported;
 
-        public float Velocity => _velocity;
-        public bool Supported => _supported;
-
         // Starts from a height set from outside (bind, seat, debug), with the given vertical speed.
         public void Reset(float height, float velocity, bool jumpHeld, int extraAirJumps) {
             _previousHeight = height;

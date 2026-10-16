@@ -56,7 +56,7 @@ namespace Features.CharacterMovableModule.Scripts {
             if (ControlsSelf == false)
                 return;
 
-            _jump.ReadInput(_input != null && _input.JumpHeld, HasSupport(), Time.deltaTime);
+            _jump.ReadInput(_input.JumpHeld, HasSupport(), Time.deltaTime);
         }
 
         private void LateUpdate() {

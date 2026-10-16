@@ -29,8 +29,9 @@ namespace Features.ShipModule.Scripts.Debug {
         private const float StrafeSeconds = 2f;
         private const float SprintSeconds = 2f;
         // Long enough for the hover spring to settle after a landing: the landing metrics need the whole settle.
-        private const float JumpGapSeconds = 2f;
-        private const float SettleMeters = 0.02f;
+        private const float JUMP_GAP_SECONDS = 2f;
+        private const float SETTLE_METERS = 0.02f;
+        private const float AIRBORNE_METERS = 0.05f;
 
         public static int Done;
         public static string Status = "idle";
@@ -564,7 +565,7 @@ namespace Features.ShipModule.Scripts.Debug {
             if (step == 4 || step == 6)
                 return 0.08f;
 
-            return JumpGapSeconds;
+            return JUMP_GAP_SECONDS;
         }
 
         private void RecordSample() {
@@ -638,8 +639,8 @@ namespace Features.ShipModule.Scripts.Debug {
             float sprint = PlanarSpeed(3);
             float apex = MaxY(4, 7) - restY;
             float air = AirTime(restY);
-            Landing firstLanding = LandingAfterJump(4, restY);
-            Landing secondLanding = LandingAfterJump(6, restY);
+            DeckLandingMetrics firstLanding = LandingAfterJump(4, restY);
+            DeckLandingMetrics secondLanding = LandingAfterJump(6, restY);
             float yawMin = float.MaxValue;
             float yawMax = float.MinValue;
             for (int i = 0; i < _cameraRot.Count; i++) {
@@ -945,36 +946,26 @@ namespace Features.ShipModule.Scripts.Debug {
         }
 
         // The landing of the jump pressed in jumpStep, until the next jump: sag below the stand height, overshoot above
-        // it after the touchdown, and the time from the touchdown until the player stays within SettleMeters of it.
-        private Landing LandingAfterJump(int jumpStep, float restY) {
-            Landing landing = new Landing { Sag = float.NaN, Overshoot = float.NaN, SettleSeconds = float.NaN };
-            bool airborne = false;
-            int touchdown = -1;
-            int lastUnsettled = -1;
+        // it after the touchdown, and the time from the touchdown until the player stays within SETTLE_METERS of it.
+        private DeckLandingMetrics LandingAfterJump(int jumpStep, float restY) {
+            DeckLandingMetrics landing = new DeckLandingMetrics { Sag = float.NaN, Overshoot = float.NaN, SettleSeconds = float.NaN };
+            int touchdown = FindTouchdown(jumpStep, restY);
+            if (touchdown < 0)
+                return landing;
+
+            int lastUnsettled = touchdown;
             float lowest = float.MaxValue;
             float highest = float.MinValue;
-            for (int i = 0; i < _player.Count; i++) {
-                if (_steps[i] != jumpStep && _steps[i] != jumpStep + 1)
+            for (int i = touchdown; i < _player.Count; i++) {
+                if (InJumpWindow(i, jumpStep) == false)
                     continue;
 
                 float y = _player[i].y;
-                if (touchdown < 0) {
-                    airborne |= y > restY + 0.05f;
-                    if (airborne && y <= restY)
-                        touchdown = i;
-
-                    if (touchdown < 0)
-                        continue;
-                }
-
                 lowest = Mathf.Min(lowest, y);
                 highest = Mathf.Max(highest, y);
-                if (Mathf.Abs(y - restY) > SettleMeters)
+                if (Mathf.Abs(y - restY) > SETTLE_METERS)
                     lastUnsettled = i;
             }
-
-            if (touchdown < 0)
-                return landing;
 
             float settle = 0f;
             for (int i = touchdown + 1; i <= lastUnsettled; i++)
@@ -986,13 +977,32 @@ namespace Features.ShipModule.Scripts.Debug {
             return landing;
         }
 
+        // The first sample back at the stand height after the player left the deck in this jump, or -1.
+        private int FindTouchdown(int jumpStep, float restY) {
+            bool airborne = false;
+            for (int i = 0; i < _player.Count; i++) {
+                if (InJumpWindow(i, jumpStep) == false)
+                    continue;
+
+                float y = _player[i].y;
+                airborne |= y > restY + AIRBORNE_METERS;
+                if (airborne && y <= restY)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private bool InJumpWindow(int sample, int jumpStep) =>
+            _steps[sample] == jumpStep || _steps[sample] == jumpStep + 1;
+
         private float AirTime(float restY) {
             float time = 0f;
             for (int i = 0; i < _player.Count; i++) {
                 if (_steps[i] < 4)
                     continue;
 
-                if (_player[i].y > restY + 0.05f)
+                if (_player[i].y > restY + AIRBORNE_METERS)
                     time += _dts[i];
             }
 
@@ -1361,16 +1371,6 @@ namespace Features.ShipModule.Scripts.Debug {
 
         private static string RequestPath() {
             return Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Temp", "deck-feel.request"));
-        }
-
-
-        private struct Landing {
-            public float Sag;
-            public float Overshoot;
-            public float SettleSeconds;
-
-            public string Text() =>
-                Sag.ToString("0.000") + " / " + Overshoot.ToString("0.000") + " / " + SettleSeconds.ToString("0.00");
         }
 
         private readonly struct FrameEvents {
