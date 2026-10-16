@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: 2753504a942a4e19973d092223ccc604
+timeCreated: 1765282347
+AssetOrigin:
+  serializedVersion: 1
+  productId: 296362
+  packageName: Procedural Planet Generation - Lite Sample Pack
+  packageVersion: 3.0.1
+  assetPath: Assets/ParallelCascades/ProceduralPlanetGenerationCommon/Runtime/RuntimeGenerationSample/SimulationSpeedManager.cs
+  uploadId: 835338

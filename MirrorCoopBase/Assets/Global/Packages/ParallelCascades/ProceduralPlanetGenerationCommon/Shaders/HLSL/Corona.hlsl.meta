@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: 29ecc1eac3321dc4994dda5ec7608546
+timeCreated: 1729242635
+AssetOrigin:
+  serializedVersion: 1
+  productId: 296362
+  packageName: Procedural Planet Generation - Lite Sample Pack
+  packageVersion: 3.0.1
+  assetPath: Assets/ParallelCascades/ProceduralPlanetGenerationCommon/Shaders/HLSL/Corona.hlsl
+  uploadId: 835338

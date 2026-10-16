@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: c9e5275b6e324ef3aa0128c00005595a
+timeCreated: 1733145961
+AssetOrigin:
+  serializedVersion: 1
+  productId: 296362
+  packageName: Procedural Planet Generation - Lite Sample Pack
+  packageVersion: 3.0.1
+  assetPath: Assets/ParallelCascades/ProceduralShaders/Editor/ParallelCascades.ProceduralShaders.Editor.asmdef
+  uploadId: 835338

@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: 2af2008550ec8ce4bbb0bda41615d0f8
+timeCreated: 1734689838
+AssetOrigin:
+  serializedVersion: 1
+  productId: 339842
+  packageName: Procedural Planet Generation
+  packageVersion: 1.0.0
+  assetPath: Assets/ParallelCascades/ProceduralPlanetGeneration/Shaders/HLSL/GasGiantGlow.hlsl
+  uploadId: 832076

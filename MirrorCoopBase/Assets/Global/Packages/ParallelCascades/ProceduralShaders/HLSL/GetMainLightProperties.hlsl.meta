@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: c76311703b77481090b7f43aef8a2d9b
+timeCreated: 1755528884
+AssetOrigin:
+  serializedVersion: 1
+  productId: 296362
+  packageName: Procedural Planet Generation - Lite Sample Pack
+  packageVersion: 3.0.1
+  assetPath: Assets/ParallelCascades/ProceduralShaders/HLSL/GetMainLightProperties.hlsl
+  uploadId: 835338

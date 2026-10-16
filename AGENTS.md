@@ -335,6 +335,12 @@ The shop wallet is the `Wallet` model (`long Balance`). The start value comes fr
   concern into a separate service or component with its own interface instead of adding a `#region`.
   Don't build a new feature into an existing big class; put it next to it and connect it through DI or an interface.
   Names say what the class or method does; no abbreviations and no generic words like `Manager`, `Helper`, `Utils`.
+- **Third-party asset packs (Asset Store `.unitypackage`) go into `Assets/Global/Packages/<Publisher>/`**, not into
+  the `Assets/` root (older packs such as `SpaceSkies Free`, `Mini Mapa(Radar)`, `QuickOutline`, `StarSparrow` are still
+  there and are not moved yet). Import only what the game uses: leave out demo scenes, sample skyboxes, sample URP
+  assets and unused heavy textures. Do not edit pack files; the one allowed exception is fixing a hard-coded
+  `Assets/<Pack>/...` path (e.g. a shader `#include`) after the move. Our own prefabs and materials built from a pack
+  live in the feature module, not in the pack folder.
 - New tuning numbers go into configs (ScriptableObject), not into `const`.
 - **All configurations (ScriptableObject configs and catalogs that code receives through DI) are loaded only through
   Addressables and bound only in `ConfigurationInstaller`** (`Container.BindConfigurationFromAddressables<T>(...)`).

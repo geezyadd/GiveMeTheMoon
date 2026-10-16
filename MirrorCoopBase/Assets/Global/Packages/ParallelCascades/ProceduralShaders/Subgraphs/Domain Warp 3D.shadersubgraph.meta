@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: f3c939f25645ca741866de9fa7446606
+timeCreated: 1719323832
+AssetOrigin:
+  serializedVersion: 1
+  productId: 296362
+  packageName: Procedural Planet Generation - Lite Sample Pack
+  packageVersion: 3.0.1
+  assetPath: Assets/ParallelCascades/ProceduralShaders/Subgraphs/Domain Warp 3D.shadersubgraph
+  uploadId: 835338

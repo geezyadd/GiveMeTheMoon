@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: d7c1018b76ce0d44eae4739b96f1fcac
+timeCreated: 1719323832
+AssetOrigin:
+  serializedVersion: 1
+  productId: 296362
+  packageName: Procedural Planet Generation - Lite Sample Pack
+  packageVersion: 3.0.1
+  assetPath: Assets/ParallelCascades/ProceduralShaders/Subgraphs/Sample Palette.shadersubgraph
+  uploadId: 835338

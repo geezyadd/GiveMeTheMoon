@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: a8e3de0dd2404ac98b0015f5b5e63335
+timeCreated: 1753275226
+AssetOrigin:
+  serializedVersion: 1
+  productId: 296362
+  packageName: Procedural Planet Generation - Lite Sample Pack
+  packageVersion: 3.0.1
+  assetPath: Assets/ParallelCascades/Common/Runtime/ColorUtilities.cs
+  uploadId: 835338

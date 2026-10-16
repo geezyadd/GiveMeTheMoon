@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: 4b02cde3830aa4c44a1ff959fa4204ed
+timeCreated: 1719323809
+AssetOrigin:
+  serializedVersion: 1
+  productId: 296362
+  packageName: Procedural Planet Generation - Lite Sample Pack
+  packageVersion: 3.0.1
+  assetPath: Assets/ParallelCascades/ProceduralShaders/HLSL/SimplexNoise.hlsl
+  uploadId: 835338

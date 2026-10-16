@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: 4eaa3fce05ac88d478fa4eaafd426180
+timeCreated: 1758022540
+AssetOrigin:
+  serializedVersion: 1
+  productId: 339842
+  packageName: Procedural Planet Generation
+  packageVersion: 1.0.2
+  assetPath: Assets/ParallelCascades/ProceduralPlanetGeneration/Runtime/ProceduralComponents/WhorlsProceduralComponent.cs
+  uploadId: 835068
