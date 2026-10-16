@@ -28,9 +28,13 @@ namespace Features.ShipModule.Scripts.Debug {
         private const float WalkSeconds = 3f;
         private const float StrafeSeconds = 2f;
         private const float SprintSeconds = 2f;
-        private const float JumpGapSeconds = 1.15f;
-        // The flight length the harness was tuned on (the old 20 s cruise); real flights are minutes long.
-        private const float FlightSeconds = 20f;
+        // Long enough for the hover spring to settle after a landing: the landing metrics need the whole settle.
+        private const float JUMP_GAP_SECONDS = 2f;
+        private const float SETTLE_METERS = 0.02f;
+        private const float AIRBORNE_METERS = 0.05f;
+        // Long enough for both cruise measurements (with the 2 s jump gaps) to end before the landing; real flights are
+        // minutes long.
+        private const float FLIGHT_SECONDS = 45f;
 
         public static int Done;
         public static string Status = "idle";
@@ -277,15 +281,9 @@ namespace Features.ShipModule.Scripts.Debug {
             Status = "prepare";
             InstallRequiredModules();
             SpawnDeckItem();
-            if (_rider.IsRiding == false) {
+            // The dock stage stands on the deck with the real station physics (not bound): the reference for the ride.
+            if (_rider.IsRiding == false)
                 PlaceRiderOnDeck();
-                _ship.RidersDebug.DebugBindRider(_rider);
-                if (_rider.IsRiding == false) {
-                    Vector3 local = _ship.transform.InverseTransformPoint(_rider.transform.position);
-                    Fail("local player did not bind to the deck at " + local.ToString("0.00"));
-                    return;
-                }
-            }
 
             _input.BeginScripted();
             _cameras.BlendTo(CameraIds.FPCamera, 0f);
@@ -319,7 +317,7 @@ namespace Features.ShipModule.Scripts.Debug {
                 }
             }
 
-            _flightLength.DebugUseFlightSeconds(FlightSeconds);
+            _flightLength.DebugUseFlightSeconds(FLIGHT_SECONDS);
             if (hover)
                 _route.DebugUseFlightMode(ShipFlightMode.HoverInPlace);
             else
@@ -368,7 +366,7 @@ namespace Features.ShipModule.Scripts.Debug {
             Status = "measure-" + label;
             if (_measureReady == false) {
                 if (_warmup <= 0) {
-                    StandOnDeck();
+                    StandOnDeck(cruise);
                     _input.BeginScripted();
                     _input.SetScripted(Vector2.zero, false, false);
                     if (_cameras.ActiveId != cameraId)
@@ -554,6 +552,11 @@ namespace Features.ShipModule.Scripts.Debug {
 
             _measureTime = 0f;
             _measureStep += 1;
+            // Back to the stand point before each walk and the jumps: the deck is shorter than a sprint, and an unbound
+            // player or a rider in flight walks off its edge.
+            if (_measureStep <= 4)
+                StandOnDeck(_model.Phase != ShipRunPhase.Build);
+
             return _measureStep > 7;
         }
 
@@ -569,7 +572,7 @@ namespace Features.ShipModule.Scripts.Debug {
             if (step == 4 || step == 6)
                 return 0.08f;
 
-            return JumpGapSeconds;
+            return JUMP_GAP_SECONDS;
         }
 
         private void RecordSample() {
@@ -615,7 +618,8 @@ namespace Features.ShipModule.Scripts.Debug {
         }
 
         private void AppendMetrics(string label) {
-            Vector3 rest = AveragePlayerY(0);
+            // The settled end of the gap after the first jump: the player stands on the deck there in every stage.
+            Vector3 rest = AveragePlayerY(5);
             float restY = rest.y;
             int count = _player.Count;
             float[] raw = SecondDiffs(_player, false);
@@ -642,6 +646,8 @@ namespace Features.ShipModule.Scripts.Debug {
             float sprint = PlanarSpeed(3);
             float apex = MaxY(4, 7) - restY;
             float air = AirTime(restY);
+            DeckLandingMetrics firstLanding = LandingAfterJump(4, restY);
+            DeckLandingMetrics secondLanding = LandingAfterJump(6, restY);
             float yawMin = float.MaxValue;
             float yawMax = float.MinValue;
             for (int i = 0; i < _cameraRot.Count; i++) {
@@ -684,6 +690,7 @@ namespace Features.ShipModule.Scripts.Debug {
                 + "\n  ship world tc rms/max=" + ship.Text("0.0000")
                 + "\n  walk=" + walk.ToString("0.00") + " sprint=" + sprint.ToString("0.00")
                 + " jumpApex=" + apex.ToString("0.00") + " airTime=" + air.ToString("0.00")
+                + "\n  landing sag / overshoot / settle s: jump 1 = " + firstLanding.Text() + ", jump 2 = " + secondLanding.Text()
                 + (dockRms > 0f ? " rawRmsVsDock=" + (playerRaw.Rms / dockRms).ToString("0.00") + "x" : "")
                 + traceLine);
             _table.Append("| ").Append(label).Append(" | ").Append(Role()).Append(" | ").Append(_mode)
@@ -695,6 +702,8 @@ namespace Features.ShipModule.Scripts.Debug {
                 .Append(" | ").Append(ship.Text("0.0000"))
                 .Append(" | ").Append(walk.ToString("0.00")).Append(" / ").Append(sprint.ToString("0.00"))
                 .Append(" | ").Append(apex.ToString("0.00")).Append(" / ").Append(air.ToString("0.00"))
+                .Append(" | ").Append(firstLanding.Text())
+                .Append(" | ").Append(secondLanding.Text())
                 .AppendLine(" |");
             NoteSpikes(raw, tc, steady);
             WriteFrames(label, raw, tc, dt2, camRaw, shipTc, steady);
@@ -917,11 +926,23 @@ namespace Features.ShipModule.Scripts.Debug {
             return max == float.MinValue ? 0f : max;
         }
 
+        // Averaged over the second half of the step only: an unbound player placed on the deck settles on its spring first.
         private Vector3 AveragePlayerY(int step) {
+            int total = 0;
+            for (int i = 0; i < _player.Count; i++) {
+                if (_steps[i] == step)
+                    total += 1;
+            }
+
             Vector3 sum = Vector3.zero;
+            int seen = 0;
             int count = 0;
             for (int i = 0; i < _player.Count; i++) {
                 if (_steps[i] != step)
+                    continue;
+
+                seen += 1;
+                if (seen <= total / 2)
                     continue;
 
                 sum += _player[i];
@@ -931,13 +952,64 @@ namespace Features.ShipModule.Scripts.Debug {
             return count > 0 ? sum / count : Vector3.zero;
         }
 
+        // The landing of the jump pressed in jumpStep, until the next jump: sag below the stand height, overshoot above
+        // it after the touchdown, and the time from the touchdown until the player stays within SETTLE_METERS of it.
+        private DeckLandingMetrics LandingAfterJump(int jumpStep, float restY) {
+            DeckLandingMetrics landing = new DeckLandingMetrics { Sag = float.NaN, Overshoot = float.NaN, SettleSeconds = float.NaN };
+            int touchdown = FindTouchdown(jumpStep, restY);
+            if (touchdown < 0)
+                return landing;
+
+            int lastUnsettled = touchdown;
+            float lowest = float.MaxValue;
+            float highest = float.MinValue;
+            for (int i = touchdown; i < _player.Count; i++) {
+                if (InJumpWindow(i, jumpStep) == false)
+                    continue;
+
+                float y = _player[i].y;
+                lowest = Mathf.Min(lowest, y);
+                highest = Mathf.Max(highest, y);
+                if (Mathf.Abs(y - restY) > SETTLE_METERS)
+                    lastUnsettled = i;
+            }
+
+            float settle = 0f;
+            for (int i = touchdown + 1; i <= lastUnsettled; i++)
+                settle += _dts[i];
+
+            landing.Sag = restY - lowest;
+            landing.Overshoot = highest - restY;
+            landing.SettleSeconds = settle;
+            return landing;
+        }
+
+        // The first sample back at the stand height after the player left the deck in this jump, or -1.
+        private int FindTouchdown(int jumpStep, float restY) {
+            bool airborne = false;
+            for (int i = 0; i < _player.Count; i++) {
+                if (InJumpWindow(i, jumpStep) == false)
+                    continue;
+
+                float y = _player[i].y;
+                airborne |= y > restY + AIRBORNE_METERS;
+                if (airborne && y <= restY)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private bool InJumpWindow(int sample, int jumpStep) =>
+            _steps[sample] == jumpStep || _steps[sample] == jumpStep + 1;
+
         private float AirTime(float restY) {
             float time = 0f;
             for (int i = 0; i < _player.Count; i++) {
                 if (_steps[i] < 4)
                     continue;
 
-                if (_player[i].y > restY + 0.05f)
+                if (_player[i].y > restY + AIRBORNE_METERS)
                     time += _dts[i];
             }
 
@@ -1106,9 +1178,21 @@ namespace Features.ShipModule.Scripts.Debug {
             }
 
             _rider.transform.position = _ship.transform.TransformPoint(local);
+            if (_rider.TryGetComponent(out Rigidbody body) == false || body.isKinematic)
+                return;
+
+            body.position = _rider.transform.position;
+            body.linearVelocity = Vector3.zero;
         }
 
-        private void StandOnDeck() {
+        private void StandOnDeck(bool ride) {
+            if (ride == false) {
+                if (_rider.IsRiding == false)
+                    PlaceRiderOnDeck();
+
+                return;
+            }
+
             if (_rider.IsRiding == false) {
                 PlaceRiderOnDeck();
                 _ship.RidersDebug.DebugBindRider(_rider);
@@ -1246,8 +1330,8 @@ namespace Features.ShipModule.Scripts.Debug {
             }
 
             if (_table.Length > 0) {
-                Note("| case | role | dt | player raw rms / max | player tc rms / max | steady raw max | camera raw rms / max | cam rot max deg | ship world tc rms / max | walk / sprint | apex / air |");
-                Note("|---|---|---|---|---|---|---|---|---|---|---|");
+                Note("| case | role | dt | player raw rms / max | player tc rms / max | steady raw max | camera raw rms / max | cam rot max deg | ship world tc rms / max | walk / sprint | apex / air | landing 1 sag / overshoot / settle s | landing 2 sag / overshoot / settle s |");
+                Note("|---|---|---|---|---|---|---|---|---|---|---|---|---|");
                 Note(_table.ToString().TrimEnd());
             }
 

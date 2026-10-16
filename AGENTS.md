@@ -73,6 +73,12 @@ its own player; the others follow the owner's synced offset. When and how a play
   compiled only under `UNITY_EDITOR || DEVELOPMENT_BUILD` together with its call sites):
   who, where on the deck (ship-local, height above the deck), which check refused, flying on this peer, host / client;
   a refusal only when its reason changes, at most once a second per player.
+- the ride's vertical motion (`RideVertical`) is the station one: the same hover spring formula as
+  `FloatingController` (`HoverSpring`, values from the player's own `FloatingController.Spring`), so a landing sags and
+  springs back as on the station, and the same jump, coyote time, jump buffer and air gravity (`JumpAndAirGravity` with
+  `JumpTuning` from `PlayerStatsConfiguration`, shared with `CharacterMovableBase`). It runs in fixed physics steps
+  (`Time.fixedDeltaTime`) inside the frame and is shown interpolated, so it feels the same at any frame rate and never
+  sinks below the deck; the others see it through the synced offset (`CmdSetRideOffset` / `RideOffset`).
 
 ## Loop status (2026-10-11)
 The loop runs from start to end, but it does not match the design yet:

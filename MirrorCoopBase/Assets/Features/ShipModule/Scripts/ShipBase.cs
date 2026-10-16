@@ -41,7 +41,6 @@ namespace Features.ShipModule.Scripts {
         public Transform Destination => _destination;
         public bool IsFlying => _flying;
         internal BoxCollider RideVolume => _rideVolume;
-        internal float StandUpSpeed => _flightSettings.StandUpSpeed;
         internal bool ConfinesRidersToDeck => _flightSettings.ConfineRidersToDeck;
         internal float ReboardDelaySeconds => _flightSettings.ReboardDelaySeconds;
         internal NetworkIdentity NetIdentity => _poseSync.netIdentity;
