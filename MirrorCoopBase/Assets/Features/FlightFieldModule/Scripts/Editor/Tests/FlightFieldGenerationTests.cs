@@ -201,7 +201,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
             FieldReserveKind reserve = field.Cells[cell].Reserve;
             bool isKeptEmpty = reserve is FieldReserveKind.StationZone or FieldReserveKind.TakeoffCorridor or FieldReserveKind.RouteCorridor or FieldReserveKind.DeadEndCorridor;
-            Assert.IsFalse(isKeptEmpty, $"{Name(field)}: structure at {cell} in a {reserve} cell.");
+            if (isKeptEmpty)
+                Assert.Fail($"{Name(field)}: structure at {cell} in a {reserve} cell.");
         }
 
         private static void AssertWallCellClosed(FlightField field, FieldTestOccupancy occupancy, Vector2Int cell, int thickness) {
@@ -211,7 +212,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 return;
 
             bool isClosed = occupancy.IsOccupied(cell) || field.Cells[cell].IsReserved;
-            Assert.IsTrue(isClosed, $"{Name(field)}: hole in the wall at {cell}.");
+            if (!isClosed)
+                Assert.Fail($"{Name(field)}: hole in the wall at {cell}.");
         }
 
         private static List<(Vector2Int cell, float density, string id)> DebrisCells(FlightField field) {

@@ -5,10 +5,10 @@ using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Generation.Placement {
-    // Merges neighbouring closed cells into as few giant rocks as it can: the footprints of the options are tried
-    // from the largest to the smallest, every anchor in row order, and a footprint is placed wherever all its cells
-    // have the class, no placement and one reserve. Among options of the same footprint the weight decides. With a
-    // single-cell option every cell of the class ends up closed.
+    // Merges neighbouring closed cells into as few giant rocks as it can: the footprints of the options (a long one
+    // along and across the field) are tried from the largest to the smallest, every anchor in row order, and a
+    // footprint is placed wherever all its cells have the class, no placement and one reserve. Among options of the
+    // same footprint the weight decides. With a single-cell option every cell of the class ends up closed.
     public sealed class FieldGiantPacker : IFieldGiantPacker {
         private readonly IFieldStructurePlacer _fieldStructurePlacer;
         private readonly IFieldFootprintReader _fieldFootprintReader;
@@ -19,14 +19,14 @@ namespace Features.FlightFieldModule.Scripts.Generation.Placement {
         }
 
         public void Pack(FieldGenerationContext context, FieldCellClass cellClass, IReadOnlyList<FieldObstacleOption> options) {
-            foreach (List<FieldObstacleOption> group in GroupByFootprintLargestFirst(options))
+            foreach (List<FieldPackingChoice> group in GroupByFootprintLargestFirst(options))
                 PackGroup(context, cellClass, group);
         }
 
         // A table of open cells per group skips most anchors at once; an anchor it lets through is still checked
         // cell by cell, because the placements of this group are not in the table.
-        private void PackGroup(FieldGenerationContext context, FieldCellClass cellClass, List<FieldObstacleOption> group) {
-            FieldFootprint footprint = _fieldFootprintReader.Read(group[0].Structure, FieldRotation.None);
+        private void PackGroup(FieldGenerationContext context, FieldCellClass cellClass, List<FieldPackingChoice> group) {
+            FieldFootprint footprint = Read(group[0]);
             Vector2Int size = context.Frame.Size;
             int[,] openSums = SumOpenCells(context, cellClass, size);
             for (int y = 0; y + footprint.Height <= size.y; y++) {
@@ -58,12 +58,13 @@ namespace Features.FlightFieldModule.Scripts.Generation.Placement {
             return sums[right, top] - sums[anchor.x, top] - sums[right, anchor.y] + sums[anchor.x, anchor.y];
         }
 
-        private void TryPackAt(FieldGenerationContext context, FieldCellClass cellClass, List<FieldObstacleOption> group, FieldFootprint footprint, Vector2Int anchor) {
+        private void TryPackAt(FieldGenerationContext context, FieldCellClass cellClass, List<FieldPackingChoice> group, FieldFootprint footprint, Vector2Int anchor) {
             FieldReserveKind reserve = context.Cells[anchor + footprint.Cells[0]].Reserve;
             if (!Fits(context, cellClass, footprint, anchor, reserve))
                 return;
 
-            _fieldStructurePlacer.TryPlace(context, PickByWeight(group, context.Random), anchor, FieldRotation.None, reserve, cellClass);
+            FieldPackingChoice choice = PickByWeight(group, context.Random);
+            _fieldStructurePlacer.TryPlace(context, choice.Option.Structure, anchor, choice.Rotation, reserve, cellClass);
         }
 
         private static bool Fits(FieldGenerationContext context, FieldCellClass cellClass, FieldFootprint footprint, Vector2Int anchor, FieldReserveKind reserve) {
@@ -77,56 +78,59 @@ namespace Features.FlightFieldModule.Scripts.Generation.Placement {
             return true;
         }
 
-        private List<List<FieldObstacleOption>> GroupByFootprintLargestFirst(IReadOnlyList<FieldObstacleOption> options) {
-            List<List<FieldObstacleOption>> groups = new();
+        // A footprint that is longer one way is tried along and across the field.
+        private List<List<FieldPackingChoice>> GroupByFootprintLargestFirst(IReadOnlyList<FieldObstacleOption> options) {
+            List<List<FieldPackingChoice>> groups = new();
             foreach (FieldObstacleOption option in options) {
-                if (option.Weight > 0f)
-                    AddToGroup(groups, option);
+                if (option.Weight <= 0f)
+                    continue;
+
+                AddToGroup(groups, new FieldPackingChoice(option, FieldRotation.None));
+                FieldFootprint footprint = _fieldFootprintReader.Read(option.Structure, FieldRotation.None);
+                if (option.Structure.IsRotatable && footprint.Width != footprint.Height)
+                    AddToGroup(groups, new FieldPackingChoice(option, FieldRotation.Quarter));
             }
 
             groups.Sort(CompareLargestFirst);
             return groups;
         }
 
-        private void AddToGroup(List<List<FieldObstacleOption>> groups, FieldObstacleOption option) {
-            foreach (List<FieldObstacleOption> group in groups) {
-                if (IsSameFootprint(group[0].Structure, option.Structure)) {
-                    group.Add(option);
+        private void AddToGroup(List<List<FieldPackingChoice>> groups, FieldPackingChoice choice) {
+            foreach (List<FieldPackingChoice> group in groups) {
+                if (IsSameFootprint(Read(group[0]), Read(choice))) {
+                    group.Add(choice);
                     return;
                 }
             }
 
-            groups.Add(new List<FieldObstacleOption> { option });
+            groups.Add(new List<FieldPackingChoice> { choice });
         }
 
-        private bool IsSameFootprint(FieldStructureDefinition first, FieldStructureDefinition second) {
-            FieldFootprint firstFootprint = _fieldFootprintReader.Read(first, FieldRotation.None);
-            FieldFootprint secondFootprint = _fieldFootprintReader.Read(second, FieldRotation.None);
-            return firstFootprint.Width == secondFootprint.Width && firstFootprint.Height == secondFootprint.Height && firstFootprint.Cells.Count == secondFootprint.Cells.Count;
-        }
+        private static bool IsSameFootprint(FieldFootprint first, FieldFootprint second) =>
+            first.Width == second.Width && first.Height == second.Height && first.Cells.Count == second.Cells.Count;
 
-        private int CompareLargestFirst(List<FieldObstacleOption> first, List<FieldObstacleOption> second) =>
-            CountCells(second).CompareTo(CountCells(first));
+        private int CompareLargestFirst(List<FieldPackingChoice> first, List<FieldPackingChoice> second) =>
+            Read(second[0]).Cells.Count.CompareTo(Read(first[0]).Cells.Count);
 
-        private int CountCells(List<FieldObstacleOption> group) =>
-            _fieldFootprintReader.Read(group[0].Structure, FieldRotation.None).Cells.Count;
+        private FieldFootprint Read(FieldPackingChoice choice) =>
+            _fieldFootprintReader.Read(choice.Option.Structure, choice.Rotation);
 
-        private static FieldStructureDefinition PickByWeight(List<FieldObstacleOption> group, IFieldRandom random) {
+        private static FieldPackingChoice PickByWeight(List<FieldPackingChoice> group, IFieldRandom random) {
             if (group.Count == 1)
-                return group[0].Structure;
+                return group[0];
 
             float total = 0f;
-            foreach (FieldObstacleOption option in group)
-                total += option.Weight;
+            foreach (FieldPackingChoice choice in group)
+                total += choice.Option.Weight;
 
             float roll = random.Value() * total;
-            foreach (FieldObstacleOption option in group) {
-                roll -= option.Weight;
+            foreach (FieldPackingChoice choice in group) {
+                roll -= choice.Option.Weight;
                 if (roll < 0f)
-                    return option.Structure;
+                    return choice;
             }
 
-            return group[group.Count - 1].Structure;
+            return group[group.Count - 1];
         }
     }
 }

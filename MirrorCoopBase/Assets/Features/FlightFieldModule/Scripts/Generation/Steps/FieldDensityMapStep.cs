@@ -9,18 +9,18 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
     // corridor (the shoulder of rocks that makes a corridor readable), plus the glade layer (noise below the glade
     // threshold) and a few large voids. The cell classes are decided from it later.
     public sealed class FieldDensityMapStep : IFieldGenerationStep {
-        private const int DENSITY_SALT = 0x68E31DA4;
         private const int GLADE_SALT = 0x3C6EF372;
-        private const float MIN_CONTRAST = 0.01f;
-        private const float HALF = 0.5f;
         private static readonly Vector2Int[] _neighbourSteps = {
             new(1, 0), new(-1, 0), new(0, 1), new(0, -1), new(1, 1), new(1, -1), new(-1, 1), new(-1, -1),
         };
 
         private readonly IFieldNoise _fieldNoise;
+        private readonly IFieldRidgeNoise _fieldRidgeNoise;
 
-        public FieldDensityMapStep(IFieldNoise fieldNoise) =>
+        public FieldDensityMapStep(IFieldNoise fieldNoise, IFieldRidgeNoise fieldRidgeNoise) {
             _fieldNoise = fieldNoise;
+            _fieldRidgeNoise = fieldRidgeNoise;
+        }
 
         public void Execute(FieldGenerationContext context) {
             Vector2Int size = context.Frame.Size;
@@ -38,9 +38,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
         private void FillCell(FieldGenerationContext context, FieldDensityMap map, Vector2Int cell, int corridorDistance) {
             FieldDifficultyProfile profile = context.Profile;
             float difficulty = context.Difficulty;
-            float scale = profile.NoiseScaleCells.Evaluate(difficulty);
-            float noise = _fieldNoise.Sample(unchecked(context.Seed + DENSITY_SALT), cell.x / scale, cell.y / (scale * profile.NoiseStretchAcross));
-            float density = Sharpen(noise, profile.Contrast.Evaluate(difficulty)) + Shoulder(profile, difficulty, corridorDistance);
+            float density = _fieldRidgeNoise.Sample(profile, difficulty, context.Seed, cell) + Shoulder(profile, difficulty, corridorDistance);
             map.SetDensity(cell, Mathf.Clamp01(density));
             float glade = _fieldNoise.Sample(unchecked(context.Seed + GLADE_SALT), cell.x / profile.GladeNoiseScaleCells, cell.y / profile.GladeNoiseScaleCells);
             if (glade < profile.GladeThreshold.Evaluate(difficulty))
@@ -52,13 +50,6 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             float width = profile.ShoulderWidthCells.Evaluate(difficulty);
             bool isBeside = corridorDistance > 0 && corridorDistance <= width;
             return isBeside ? profile.ShoulderStrength.Evaluate(difficulty) * (1f - (corridorDistance - 1) / Mathf.Max(1f, width)) : 0f;
-        }
-
-        // Pushes the noise away from its middle: a contrast of 1 keeps it, a higher one hardens ridges and gaps.
-        private static float Sharpen(float value, float contrast) {
-            float centered = value * 2f - 1f;
-            float sharpened = Mathf.Sign(centered) * Mathf.Pow(Mathf.Abs(centered), 1f / Mathf.Max(MIN_CONTRAST, contrast));
-            return (sharpened + 1f) * HALF;
         }
 
         private static void AddVoids(FieldGenerationContext context, FieldDensityMap map) {

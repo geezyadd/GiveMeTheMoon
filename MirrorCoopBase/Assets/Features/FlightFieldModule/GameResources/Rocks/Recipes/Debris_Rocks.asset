@@ -39,8 +39,7 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 6c0c82f39238a074daee4db9a5babb0a, type: 2}
   - {fileID: 2100000, guid: e996aa373ca5ee54e8c3410147ba1add, type: 2}
   - {fileID: 2100000, guid: d0893f6cec687c34f976ceef3786efaf, type: 2}
-  _diameterMeters: {x: 5, y: 20}
-  _maxRocksPerCell: 3
-  _placementTries: 8
-  _heightJitterMeters: 3
+  _diameterMeters: {x: 10, y: 30}
+  _spacingMeters: 52
+  _heightJitterMeters: 15
   _axisScale: {x: 0.8, y: 1.2}

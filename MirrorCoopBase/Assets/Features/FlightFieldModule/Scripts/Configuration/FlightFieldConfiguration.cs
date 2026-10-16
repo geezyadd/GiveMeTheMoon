@@ -56,6 +56,8 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [SerializeField] private LoopRoutes[] _routesByLoop = { new() };
         [Tooltip("Every difficulty profile a field may get; a peer resolves the profile id of a field here.")]
         [SerializeField] private FieldDifficultyProfile[] _difficultyProfiles = Array.Empty<FieldDifficultyProfile>();
+        [Tooltip("The visual-only volume of big rocks above and below the flight plane.")]
+        [SerializeField] private FieldVolumeConfiguration _volume;
 
         [Header("Ship gaps")]
         [Tooltip("Width of the ship, meters (the ship is about 10 x 19 m).")]
@@ -110,6 +112,7 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public float TakeoffRunOutLength => _takeoffRunOutLength;
         public IReadOnlyList<LoopRoutes> RoutesByLoop => _routesByLoop;
         public IReadOnlyList<FieldDifficultyProfile> DifficultyProfiles => _difficultyProfiles;
+        public FieldVolumeConfiguration Volume => _volume;
         public float ShipWidthMeters => _shipWidthMeters;
         public float DebrisGapMarginMeters => _debrisGapMarginMeters;
         public float DebrisMinGapMeters => _shipWidthMeters + _debrisGapMarginMeters;

@@ -22,6 +22,7 @@ namespace Features.FlightFieldModule.Scripts {
             Container.BindInterfacesTo<FlightFieldConfigurationValidator>().AsSingle();
             Container.BindInterfacesTo<FieldDifficultyProfileValidator>().AsSingle();
             Container.BindInterfacesTo<FlightFieldDecorConfigurationValidator>().AsSingle();
+            Container.BindInterfacesTo<FieldVolumeConfigurationValidator>().AsSingle();
             Container.Bind<IMatrixFactory>().To<MatrixFactory>().AsSingle();
             Container.Bind<IFieldRandomFactory>().To<FieldRandomFactory>().AsSingle();
             Container.Bind<IFieldFootprintReader>().To<FieldFootprintReader>().AsSingle();
@@ -30,6 +31,7 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldDebrisPicker>().To<FieldDebrisPicker>().AsSingle();
             Container.Bind<IFieldAreaReserver>().To<FieldAreaReserver>().AsSingle();
             Container.Bind<IFieldNoise>().To<FieldValueNoise>().AsSingle();
+            Container.Bind<IFieldRidgeNoise>().To<FieldRidgeNoise>().AsSingle();
             Container.Bind<IFieldRouteShaper>().To<ProfileFieldRouteShaper>().AsSingle();
             Container.Bind<IFieldPathRasterizer>().To<FieldPathRasterizer>().AsSingle();
             Container.Bind<IFieldCenterlinePlanner>().To<FieldMeanderPlanner>().AsSingle();
@@ -51,6 +53,8 @@ namespace Features.FlightFieldModule.Scripts {
         // The visual-only decor every peer builds around its ship; its own pool, because the field's pool is emptied
         // whenever the field changes.
         private void InstallDecor() {
+            Container.Bind<IFieldVolumeSourceReader>().To<LiveFieldVolumeSourceReader>().AsSingle();
+            Container.Bind<IFieldVolumeCandidates>().To<FieldVolumeCandidates>().AsSingle();
             Container.Bind<IFieldDecorChunkLayout>().To<FieldDecorChunkLayout>().AsSingle();
             Container.Bind<IFieldDecorPlanetPicker>().To<FieldDecorPlanetPicker>().AsSingle();
             Container.Bind<IFieldDecorLightSource>().To<SceneSunLightSource>().AsSingle();

@@ -13,6 +13,8 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
         private const float SECONDS_PER_MINUTE = 60f;
         private const float HALF = 0.5f;
         private const float CELL_CENTER = 0.5f;
+        // Rocks up to 30 m across stand anywhere in their cell: pairs up to two cells apart can be the closest.
+        private const int GAP_REACH_CELLS = 2;
 
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
         private readonly FieldStructureCatalog _fieldStructureCatalog;
@@ -74,12 +76,12 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             return spots;
         }
 
-        // Every pair of rocks in one cell or two touching cells; rocks farther apart are more than a cell apart.
+        // Every pair of rocks in cells up to two apart; rocks in cells farther apart are farther than any gap that matters.
         private static float MeasureMinGap(Dictionary<Vector2Int, List<FieldDebrisSpot>> spotsByCell, float cellSize) {
             float minGap = float.PositiveInfinity;
             foreach (KeyValuePair<Vector2Int, List<FieldDebrisSpot>> entry in spotsByCell) {
-                for (int y = -1; y <= 1; y++) {
-                    for (int x = -1; x <= 1; x++)
+                for (int y = -GAP_REACH_CELLS; y <= GAP_REACH_CELLS; y++) {
+                    for (int x = -GAP_REACH_CELLS; x <= GAP_REACH_CELLS; x++)
                         minGap = Mathf.Min(minGap, MinGapBetween(entry.Key, entry.Value, entry.Key + new Vector2Int(x, y), spotsByCell, cellSize));
                 }
             }

@@ -55,8 +55,8 @@ MonoBehaviour:
     _hard: 16
   _meanderFadeCells: 8
   _corridorDebrisDensity:
-    _easy: 0.08
-    _hard: 0.12
+    _easy: 0.5
+    _hard: 0.65
   _shoulderWidthCells:
     _easy: 3
     _hard: 3
@@ -117,6 +117,18 @@ MonoBehaviour:
   - _structure: {fileID: 11400000, guid: 6546e913a2520cf43b2eb21137491769, type: 2}
     _weight: 1
   - _structure: {fileID: 11400000, guid: aeb9a4e8232f418409d2aee5c1591cce, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: bab395562d0a7d243805a07c5f17bb60, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: e62bc129d2dcdb9418d35dbef15de73a, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: ce3cf10d077df2f46bc841a9775e9081, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: 52fd2bf6425672747b2d27fba551dfd3, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: a7a60006a622deb4da025cc951de04fc, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: 62dc337730b4a634fbcdfa7a0db29c4a, type: 2}
     _weight: 1
   _debrisTypes:
   - _debris: {fileID: 11400000, guid: be6f2da1c4ef1bc4ebcf3d43690ae629, type: 2}

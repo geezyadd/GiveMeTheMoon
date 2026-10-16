@@ -3,61 +3,27 @@ using Features.AddressablesConstantsGenerator.Generated;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Decor;
 using Features.FlightFieldModule.Scripts.Generation;
-using Features.FlightFieldModule.Scripts.Scene;
 using NUnit.Framework;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
-    // The decor comes only from the field seed (every peer and a rejoining player see the same picture): a chunk gives
-    // the same rocks whatever was built before it, its rocks stay inside the chunk and the layers, and the planet
-    // choice depends on the seed alone.
+    // The planet of the decor comes only from the field seed (every peer and a rejoining player see the same picture)
+    // and stands along the light. The volume rocks of the decor chunks: FieldVolumeLayoutTests.
     public sealed class FieldDecorLayoutTests {
         private const int SEEDS = 200;
         private const int FIRST_SEED = 1;
-        private const int CHUNK_REACH = 3;
         private const float TOLERANCE = 0.001f;
         // The light in the test points 17 degrees below the plane and planets stand 15-55 degrees off it, so the
         // elevation adds up to this much to the azimuth spread.
         private const float PLANET_ANGLE_TOLERANCE_DEGREES = 15f;
 
         private FlightFieldDecorConfiguration _configuration;
-        private FieldDecorChunkLayout _chunkLayout;
         private FieldRandomFactory _randomFactory;
 
         [OneTimeSetUp]
         public void OneTimeSetUp() {
             _configuration = FlightFieldEditorCompositionFactory.LoadConfiguration<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default);
-            _chunkLayout = new FieldDecorChunkLayout(_configuration);
             _randomFactory = new FieldRandomFactory();
-        }
-
-        [Test]
-        public void WhenAChunkIsLaidOutAfterOtherChunks_ThenItsRocksAreTheSameAsWhenLaidOutAlone() {
-            IFieldRandom sharedRandom = _randomFactory.Create(0);
-            for (int seed = FIRST_SEED; seed <= SEEDS; seed++) {
-                Vector2Int chunk = new(seed % CHUNK_REACH - 1, seed / CHUNK_REACH);
-                List<FieldClusterRockPose> alone = LayChunk(_randomFactory.Create(0), seed, chunk);
-                LayChunk(sharedRandom, seed, chunk + Vector2Int.one);
-                List<FieldClusterRockPose> afterOthers = LayChunk(sharedRandom, seed, chunk);
-                Assert.AreEqual(alone.Count, afterOthers.Count, $"Seed {seed}, chunk {chunk}: rock count differs.");
-                for (int i = 0; i < alone.Count; i++)
-                    AssertSameRock(alone[i], afterOthers[i], seed);
-            }
-        }
-
-        [Test]
-        public void WhenChunksAreLaidOut_ThenEveryRockStaysInsideItsChunkAndItsLayer() {
-            IFieldRandom random = _randomFactory.Create(0);
-            float chunkSize = _configuration.ChunkSize;
-            for (int seed = FIRST_SEED; seed <= SEEDS; seed++) {
-                Vector2Int chunk = new(seed % CHUNK_REACH - 1, -seed % CHUNK_REACH);
-                foreach (FieldClusterRockPose rock in LayChunk(random, seed, chunk)) {
-                    Assert.That(rock.Offset.x, Is.InRange(chunk.x * chunkSize, (chunk.x + 1) * chunkSize), $"Seed {seed}: rock outside its chunk across the field.");
-                    Assert.That(rock.Offset.z, Is.InRange(chunk.y * chunkSize, (chunk.y + 1) * chunkSize), $"Seed {seed}: rock outside its chunk along the field.");
-                    Assert.That(Mathf.Abs(rock.Offset.y), Is.InRange(_configuration.LayerHeight.x - TOLERANCE, _configuration.LayerHeight.y + TOLERANCE),
-                        $"Seed {seed}: rock outside the decor layers.");
-                }
-            }
         }
 
         [Test]
@@ -103,20 +69,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             Assert.LessOrEqual((planet.Position - alongRoute).magnitude, _configuration.PlanetDistance.y + TOLERANCE, $"Seed {seed}: the planet is too far.");
             Assert.LessOrEqual(Vector3.Angle(planet.Position - alongRoute, lightTravel), _configuration.PlanetMaxAngleFromLight + PLANET_ANGLE_TOLERANCE_DEGREES,
                 $"Seed {seed}: the planet is too far from the light's direction, a player would see its night side.");
-        }
-
-        private List<FieldClusterRockPose> LayChunk(IFieldRandom random, int seed, Vector2Int chunk) {
-            List<FieldClusterRockPose> rocks = new();
-            _chunkLayout.Fill(seed, chunk, random, rocks);
-            return rocks;
-        }
-
-        private static void AssertSameRock(FieldClusterRockPose expected, FieldClusterRockPose actual, int seed) {
-            Assert.AreSame(expected.Prefab, actual.Prefab, $"Seed {seed}: rock prefab differs.");
-            Assert.AreSame(expected.Material, actual.Material, $"Seed {seed}: rock material differs.");
-            Assert.Less(Vector3.Distance(expected.Offset, actual.Offset), TOLERANCE, $"Seed {seed}: rock position differs.");
-            Assert.Less(Quaternion.Angle(expected.Rotation, actual.Rotation), TOLERANCE, $"Seed {seed}: rock turn differs.");
-            Assert.Less(Vector3.Distance(expected.Scale, actual.Scale), TOLERANCE, $"Seed {seed}: rock scale differs.");
         }
     }
 }

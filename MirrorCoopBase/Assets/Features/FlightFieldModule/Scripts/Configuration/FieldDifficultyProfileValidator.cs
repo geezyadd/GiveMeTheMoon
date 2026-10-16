@@ -7,7 +7,8 @@ using Zenject;
 namespace Features.FlightFieldModule.Scripts.Configuration {
     // The one startup check of the difficulty profiles: ids set and unique; shares and thresholds in 0..1 with room
     // left for empty cells; corridors at least as wide as the ship's passage; a wall; wall and ridge options of the
-    // catalog with a single-cell option each (so every closed cell gets a rock); debris kinds of the catalog.
+    // catalog with a single-cell option each (so every closed cell gets a rock) and plane gaps below the configured one;
+    // debris kinds of the catalog whose grid keeps the ship gap.
     public sealed class FieldDifficultyProfileValidator : IInitializable {
         private const int SINGLE_CELL = 1;
 
@@ -75,10 +76,18 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
                     throw new InvalidOperationException($"{profile.name}: a {zone} obstacle is empty or missing from {_fieldStructureCatalog.name}.");
 
                 hasSingleCell |= option.Weight > 0f && _fieldFootprintReader.Read(option.Structure, FieldRotation.None).Cells.Count == SINGLE_CELL;
+                ValidatePlaneGap(option.Structure);
             }
 
             if (!hasSingleCell)
                 throw new InvalidOperationException($"{profile.name}: no {zone} obstacle with a positive weight takes a single cell: the {zone} would get holes.");
+        }
+
+        private void ValidatePlaneGap(FieldStructureDefinition structure) {
+            bool isGapTooWide = structure.HasClusterRecipe && structure.ClusterRecipe.HasPlaneCover
+                && structure.ClusterRecipe.PlaneGapMeters.y > _flightFieldConfiguration.MaxPlaneGapMeters;
+            if (isGapTooWide)
+                throw new InvalidOperationException($"{structure.ClusterRecipe.name}: the plane gap is wider than {_flightFieldConfiguration.MaxPlaneGapMeters} m: the ridge would let the ship through.");
         }
 
         private void ValidateDebris(FieldDifficultyProfile profile) {
@@ -86,6 +95,10 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
             foreach (FieldDebrisOption option in profile.DebrisTypes) {
                 if (option.Debris == null || option.Debris.Recipe == null || !IsInCatalog(option.Debris))
                     throw new InvalidOperationException($"{profile.name}: a debris kind is empty, has no recipe or is missing from {_fieldStructureCatalog.name}.");
+
+                FieldDebrisRecipe recipe = option.Debris.Recipe;
+                if (recipe.SpacingMeters < _flightFieldConfiguration.DebrisMinGapMeters + recipe.DiameterMeters.y)
+                    throw new InvalidOperationException($"{recipe.name}: the grid spacing is below the ship gap plus the largest diameter: two rocks could close the way.");
 
                 totalWeight += option.Weight;
             }

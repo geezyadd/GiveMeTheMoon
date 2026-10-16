@@ -57,9 +57,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 161a9e51794c3214fbe3ecf1216c7a14, type: 2}
   - {fileID: 11400000, guid: bf2d44d4f5473394fb8047bd7b3ce734, type: 2}
   - {fileID: 11400000, guid: 2c2fc55148917af4c82cd89af7946de1, type: 2}
+  _volume: {fileID: 11400000, guid: 0c6065115c5c09742ab403520b4e8ebf, type: 2}
   _shipWidthMeters: 10
   _debrisGapMarginMeters: 6
-  _maxPlaneGapMeters: 4
+  _maxPlaneGapMeters: 6
   _planeHalfThicknessMeters: 8
   _metricCruiseSpeed: 14
   _zoneShareTolerance: 0.08

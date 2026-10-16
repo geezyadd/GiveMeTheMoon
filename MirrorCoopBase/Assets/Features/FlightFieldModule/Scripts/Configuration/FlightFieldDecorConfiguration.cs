@@ -1,30 +1,20 @@
 using System;
 using System.Collections.Generic;
-using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Configuration {
-    // Tuning of the visual-only decor of the flight field: the sparse rock layers above and below the flight plane and
-    // the distant planet. Every peer builds it locally from the field seed; nothing here has a collider or is synced.
+    // Tuning of the visual-only decor of the flight field: the chunks the volume of rocks above and below the flight
+    // plane is built in (the rocks themselves: FieldVolumeConfiguration) and the distant planet. Every peer builds it
+    // locally from the field seed; nothing here has a collider or is synced.
     [CreateAssetMenu(menuName = "Game/Flight Field/Decor Configuration", fileName = "FlightFieldDecorConfiguration_Default")]
     public sealed class FlightFieldDecorConfiguration : ScriptableObject {
-        [Header("Rock layers")]
-        [Tooltip("Height of the upper layer above the flight plane, meters, min and max. The lower layer mirrors it below the plane.")]
-        [SerializeField] private Vector2 _layerHeight = new(150f, 600f);
-        [Tooltip("Rocks per square kilometer in each layer.")]
-        [SerializeField, Min(0f)] private float _rocksPerSquareKilometer = 40f;
-        [Tooltip("Rock size, meters, min and max.")]
-        [SerializeField] private Vector2 _rockSize = new(8f, 40f);
+        [Header("Volume chunks")]
         [Tooltip("Side of one decor chunk, meters.")]
         [SerializeField, Min(10f)] private float _chunkSize = 250f;
         [Tooltip("Chunks whose middle is within this distance of the ship (along the flight plane), meters, stand; farther ones are released.")]
         [SerializeField, Min(10f)] private float _viewDistance = 1200f;
         [Tooltip("Chunks built per frame.")]
         [SerializeField, Min(1)] private int _chunksBuiltPerFrame = 2;
-        [Tooltip("Which rock prefabs a decor rock uses and their weights (the recipe's sizes and materials are not used).")]
-        [SerializeField] private FieldClusterRecipe _rockRecipe;
-        [Tooltip("Rock materials from the nearest height of a layer to the farthest one: the darkening with distance.")]
-        [SerializeField] private Material[] _materialsByDistance = Array.Empty<Material>();
 
         [Header("Planet")]
         [Tooltip("Chance that a flight shows a planet.")]
@@ -46,14 +36,9 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [Tooltip("Planet prefabs picked with equal chance.")]
         [SerializeField] private GameObject[] _planetPrefabs = Array.Empty<GameObject>();
 
-        public Vector2 LayerHeight => _layerHeight;
-        public float RocksPerSquareKilometer => _rocksPerSquareKilometer;
-        public Vector2 RockSize => _rockSize;
         public float ChunkSize => _chunkSize;
         public float ViewDistance => _viewDistance;
         public int ChunksBuiltPerFrame => _chunksBuiltPerFrame;
-        public FieldClusterRecipe RockRecipe => _rockRecipe;
-        public IReadOnlyList<Material> MaterialsByDistance => _materialsByDistance;
         public float PlanetChance => _planetChance;
         public int MaxPlanetsPerFlight => _maxPlanetsPerFlight;
         public Vector2 PlanetDistance => _planetDistance;

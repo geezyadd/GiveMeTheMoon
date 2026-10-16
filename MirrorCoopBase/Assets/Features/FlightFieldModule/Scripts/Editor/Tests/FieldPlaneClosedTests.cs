@@ -17,12 +17,11 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const int SEEDS = 2;
         private const int LOOP = 0;
         private const float TOLERANCE = 0.001f;
-        private const int FULL_TURN_DEGREES = 360;
         private const float CELL_CENTER = 0.5f;
         // A large prime keeps the visual sequences of neighbouring placements apart (like the scene builder).
         private const int VISUAL_SEED_STEP = 486187739;
 
-        private readonly Dictionary<FieldRockVisual, Vector3[]> _verticesByPrefab = new();
+        private readonly FieldRockMeshBounds _meshBounds = new();
         private readonly FieldDebugScenario _scenario = new();
 
         private FlightFieldEditorComposition _composition;
@@ -65,7 +64,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 FieldRockBoundsIndex rocks = LayOutRocks(field);
                 foreach (Vector2Int cell in field.Routes[0].Centerline) {
                     Vector3 center = CellPoint(cell, CELL_CENTER, CELL_CENTER, 0f, field.Frame.CellSize);
-                    Assert.IsFalse(rocks.Contains(center) || rocks.Contains(center + Vector3.right * halfShip) || rocks.Contains(center + Vector3.left * halfShip),
+                    Assert.IsFalse(rocks.IsWithin(center, 0f) || rocks.IsWithin(center + Vector3.right * halfShip, 0f) || rocks.IsWithin(center + Vector3.left * halfShip, 0f),
                         $"{profile.Id} seed {field.Seed}: a rock stands on the main centerline at {cell}.");
                 }
             }
@@ -74,24 +73,26 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private FlightField Generate(FieldDifficultyProfile profile, int seed) =>
             _composition.Generator.Generate(FieldTestRequests.WithProfile(_scenario.CreateRequest(_composition.RequestFactory, seed, LOOP), profile));
 
-        // The yaw-only plane rock covers its cells by its smallest horizontal reach from the pivot over every turn, and the
-        // plane slab by its vertical one.
+        // A plane rock turned by quarter turns covers its block by its one-sided extents along its own x and z, swings at
+        // most its reach into the other axis, and closes the plane slab by its one-sided vertical extent at the lowest
+        // giant the recipe can make.
         private void AssertPlaneRockFits(FieldClusterRecipe recipe, FieldRockVisual prefab) {
-            float horizontalHalf = float.PositiveInfinity;
-            for (int degrees = 0; degrees < FULL_TURN_DEGREES; degrees++) {
-                Bounds turned = MeshBounds(prefab, Quaternion.Euler(0f, degrees, 0f), Vector3.one);
-                horizontalHalf = Mathf.Min(horizontalHalf, Mathf.Min(Mathf.Min(-turned.min.x, turned.max.x), Mathf.Min(-turned.min.z, turned.max.z)));
-            }
-
-            Assert.GreaterOrEqual(horizontalHalf + TOLERANCE, recipe.PlaneHalfExtentShare, $"{recipe.name}: {prefab.name} is narrower than the plane half-extent share.");
-            Bounds bounds = MeshBounds(prefab, Quaternion.identity, Vector3.one);
-            float smallestSize = (_composition.Configuration.CellSize / 2f + recipe.PlaneOverlapMeters + recipe.PlaneJitterMeters) / (recipe.PlaneHalfExtentShare * recipe.PlaneAxisScale.x);
-            float halfHeight = Mathf.Min(-bounds.min.y, bounds.max.y) * smallestSize * recipe.PlaneAxisScale.x;
-            Assert.GreaterOrEqual(halfHeight, _composition.Configuration.PlaneHalfThicknessMeters, $"{recipe.name}: {prefab.name} is too thin to close the flight plane slab.");
+            Bounds bounds = _meshBounds.Get(prefab, Quaternion.identity, Vector3.one);
+            float halfExtent = Mathf.Min(Mathf.Min(-bounds.min.x, bounds.max.x), Mathf.Min(-bounds.min.z, bounds.max.z));
+            float reach = Mathf.Max(Mathf.Max(-bounds.min.x, bounds.max.x), Mathf.Max(-bounds.min.z, bounds.max.z));
+            float halfHeight = Mathf.Min(-bounds.min.y, bounds.max.y);
+            Assert.GreaterOrEqual(halfExtent + TOLERANCE, recipe.PlaneHalfExtentShare, $"{recipe.name}: {prefab.name} is narrower than the plane half-extent share.");
+            Assert.LessOrEqual(reach, recipe.PlaneReachShare + TOLERANCE, $"{recipe.name}: {prefab.name} reaches farther than the plane reach share.");
+            Assert.GreaterOrEqual(halfHeight + TOLERANCE, recipe.PlaneHalfHeightShare, $"{recipe.name}: {prefab.name} is flatter than the plane half-height share.");
+            float cellSize = _composition.Configuration.CellSize;
+            float lowestGiant = Mathf.Min(recipe.PlaneHalfHeightMeters.x, cellSize * recipe.PlaneMaxHeightToWidth) * (1f - recipe.PlaneHeightVariation);
+            float lowestEdge = lowestGiant - Mathf.Min(recipe.PlaneHeightJitterMeters, lowestGiant / 2f);
+            Assert.GreaterOrEqual(lowestEdge, _composition.Configuration.PlaneHalfThicknessMeters, $"{recipe.name}: the lowest giant does not close the plane slab.");
+            Assert.LessOrEqual(recipe.PlaneGapMeters.y, _composition.Configuration.MaxPlaneGapMeters, $"{recipe.name}: the plane gap is wider than the configured one.");
         }
 
         private FieldRockBoundsIndex LayOutRocks(FlightField field) {
-            FieldRockBoundsIndex index = new(field.Frame.CellSize);
+            FieldRockBoundsIndex index = new(field.Frame.CellSize, _composition.Configuration.MaxPlaneGapMeters);
             List<FieldClusterRockPose> rocks = new();
             for (int i = 0; i < field.Placements.Count; i++) {
                 FieldPlacement placement = field.Placements[i];
@@ -100,7 +101,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 Pose pose = _structureLayout.GetFieldPose(footprint, placement.Anchor, placement.Rotation, field.Frame.CellSize);
                 _clusterLayout.Fill(structure.ClusterRecipe, footprint, field.Frame.CellSize, new FieldRandom(unchecked(field.Seed + i * VISUAL_SEED_STEP)), rocks);
                 foreach (FieldClusterRockPose rock in rocks) {
-                    Bounds bounds = MeshBounds(rock.Prefab, rock.Rotation, rock.Scale);
+                    Bounds bounds = _meshBounds.Get(rock.Prefab, rock.Rotation, rock.Scale);
                     bounds.center += pose.position + rock.Offset;
                     index.Add(bounds);
                 }
@@ -113,22 +114,26 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             float cellSize = field.Frame.CellSize;
             int steps = Mathf.CeilToInt(cellSize / _composition.Configuration.MaxPlaneGapMeters);
             float halfThickness = _composition.Configuration.PlaneHalfThicknessMeters;
+            // A point within half the allowed gap of a rock's bounds is closed: any open gap is narrower than the ship.
+            float gapReach = _composition.Configuration.MaxPlaneGapMeters / 2f;
             foreach (Vector2Int cell in field.Cells.GetIndexes(IsOccupied)) {
                 for (int u = 0; u <= steps; u++) {
                     for (int v = 0; v <= steps; v++)
-                        AssertColumnClosed(field, rocks, cell, new Vector2(u / (float)steps, v / (float)steps), halfThickness);
+                        AssertColumnClosed(field, rocks, cell, new Vector2(u / (float)steps, v / (float)steps), new Vector2(halfThickness, gapReach));
                 }
             }
         }
 
         // An edge point is checked only when the cell beyond the edge is occupied too: a free neighbour may stay open.
-        private static void AssertColumnClosed(FlightField field, FieldRockBoundsIndex rocks, Vector2Int cell, Vector2 share, float halfThickness) {
+        // Slab: x = half thickness of the plane slab, y = how far from a rock's bounds a point still counts as closed.
+        private static void AssertColumnClosed(FlightField field, FieldRockBoundsIndex rocks, Vector2Int cell, Vector2 share, Vector2 slab) {
             if (!IsBetweenOccupiedCells(field, cell, share))
                 return;
 
-            foreach (float height in new[] { -halfThickness, 0f, halfThickness }) {
+            foreach (float height in new[] { -slab.x, 0f, slab.x }) {
                 Vector3 point = CellPoint(cell, share.x, share.y, height, field.Frame.CellSize);
-                Assert.IsTrue(rocks.Contains(point), $"{field.ProfileId} seed {field.Seed}: the flight plane is open in cell {cell} at {share} height {height}.");
+                if (!rocks.IsWithin(point, slab.y))
+                    Assert.Fail($"{field.ProfileId} seed {field.Seed}: the flight plane is open in cell {cell} at {share} height {height}.");
             }
         }
 
@@ -146,33 +151,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         // Field space: x across (matrix y), z along (matrix x); shares inside the cell, x across and y along.
         private static Vector3 CellPoint(Vector2Int cell, float acrossShare, float alongShare, float height, float cellSize) =>
             new((cell.y + acrossShare) * cellSize, height, (cell.x + alongShare) * cellSize);
-
-        // The bounds of the rock's mesh turned and stretched as built, around its pivot.
-        private Bounds MeshBounds(FieldRockVisual prefab, Quaternion rotation, Vector3 scale) {
-            Vector3[] vertices = GetVertices(prefab);
-            Matrix4x4 transform = Matrix4x4.TRS(Vector3.zero, rotation, scale);
-            Bounds bounds = new(transform.MultiplyPoint3x4(vertices[0]), Vector3.zero);
-            foreach (Vector3 vertex in vertices)
-                bounds.Encapsulate(transform.MultiplyPoint3x4(vertex));
-
-            return bounds;
-        }
-
-        private Vector3[] GetVertices(FieldRockVisual prefab) {
-            if (_verticesByPrefab.TryGetValue(prefab, out Vector3[] cached))
-                return cached;
-
-            List<Vector3> vertices = new();
-            foreach (MeshFilter meshFilter in prefab.GetComponentsInChildren<MeshFilter>(true)) {
-                Matrix4x4 toRoot = prefab.transform.worldToLocalMatrix * meshFilter.transform.localToWorldMatrix;
-                foreach (Vector3 vertex in meshFilter.sharedMesh.vertices)
-                    vertices.Add(toRoot.MultiplyPoint3x4(vertex));
-            }
-
-            Vector3[] result = vertices.ToArray();
-            _verticesByPrefab.Add(prefab, result);
-            return result;
-        }
 
         private static bool IsOccupied(FieldCell cell) =>
             cell.IsOccupied;
