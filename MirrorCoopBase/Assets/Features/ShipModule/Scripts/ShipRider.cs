@@ -2,6 +2,9 @@ using Features.CameraModule.Scripts.Services;
 using Features.CharacterMovableModule.Scripts;
 using Features.FloatingControllerModule;
 using Features.GameCoreModule.Contracts;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using Features.ShipModule.Scripts.Debug;
+#endif
 using Mirror;
 using UnityEngine;
 using Zenject;
@@ -65,6 +68,9 @@ namespace Features.ShipModule.Scripts {
 
         internal Vector3 DebugLocalOffset => _localOffset;
         public bool IsRiding => _bound;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        internal ShipRideDiagnostics RideDiagnostics { get; } = new ShipRideDiagnostics();
+#endif
         public bool IsSeated => _seated;
         internal bool IsHelmSeat => _helmSeat;
         internal float CurrentSteer => _input != null ? _input.MoveStick.x : 0f;
@@ -74,31 +80,20 @@ namespace Features.ShipModule.Scripts {
                 _ship.ServerRemoveRider(this);
         }
 
-        internal bool WantsLand(ShipBase ship) {
-            if (isOwned == false || _bound || _rb == null || ship == null)
-                return false;
-
+        internal ShipRideRefusal CheckLanding(ShipBase ship) {
             // Right after a drop the interpolated body still trails the moving deck by a frame; without this it lands
             // back on the deck it just left.
             if (Time.time < _reboardAt)
-                return false;
+                return ShipRideRefusal.ReboardDelay;
 
-            Transform platform = ship.transform;
-            Vector3 local = Quaternion.Inverse(platform.rotation) * (transform.position - platform.position);
-            if (ship.DeckGeometry.ContainsDeckWalk(local, _deckInset) == false)
-                return false;
-
-            if (_rb.linearVelocity.y > 0.15f)
-                return false;
-
-            return local.y <= 1.75f && local.y >= 0.25f;
+            return ship.RideRule.CheckCatch(ship.ToShipLocal(transform.position), _rb.linearVelocity.y, _deckInset);
         }
 
         internal void BindToPlatform(ShipBase ship) {
             if (_rb == null || ship == null || _bound)
                 return;
 
-            Vector3 standingOffset = Quaternion.Inverse(ship.transform.rotation) * (transform.position - ship.transform.position);
+            Vector3 standingOffset = ship.ToShipLocal(transform.position);
             ship.DeckGeometry.ClampDeckWalk(ref standingOffset, _deckInset);
             // A seated rider keeps the server's seat offset; its own standing spot would overwrite it on the server.
             Bind(ship, _seated ? _syncedLocalOffset : standingOffset);
@@ -115,6 +110,9 @@ namespace Features.ShipModule.Scripts {
             if (_rb != null && ship != null) {
                 Bind(ship, seatOffset);
                 _rideJumpVel = 0f;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                RideDiagnostics.LogBound(this, ship, ShipRideDiagnostics.CAUSE_SEAT);
+#endif
             }
         }
 
@@ -157,6 +155,9 @@ namespace Features.ShipModule.Scripts {
             ship.Riders.TrackRider(this);
             if (_bound == false) {
                 Bind(ship, _syncedLocalOffset);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                RideDiagnostics.LogBound(this, ship, ShipRideDiagnostics.CAUSE_OWNER_RIDE);
+#endif
                 return;
             }
 
@@ -180,6 +181,9 @@ namespace Features.ShipModule.Scripts {
             if (_bound == false && _syncedRideShip == null)
                 return;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            RideDiagnostics.LogReleased(this, _ship, ShipRideDiagnostics.CAUSE_SERVER_RELEASE);
+#endif
             _seated = false;
             _helmSeat = false;
             _syncedRideShip = null;
@@ -297,10 +301,15 @@ namespace Features.ShipModule.Scripts {
         // The server decides; an owning client releases at once so it does not walk on air for a round trip, and the
         // server's own check covers a lost or late end-ride command.
         private void DropOffDeck() {
-            if (isServer)
+            if (isServer) {
                 ServerRelease();
-            else
-                ReleaseFromPlatform();
+                return;
+            }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            RideDiagnostics.LogReleased(this, _ship, ShipRideDiagnostics.CAUSE_DECK_EDGE);
+#endif
+            ReleaseFromPlatform();
         }
 
         private void SnapToSyncedOffset() {
@@ -441,6 +450,9 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             if (current == null) {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                RideDiagnostics.LogReleased(this, _ship, ShipRideDiagnostics.CAUSE_RIDE_ENDED);
+#endif
                 ReleaseFromPlatform();
                 return;
             }
@@ -513,6 +525,9 @@ namespace Features.ShipModule.Scripts {
             if (isServer)
                 return;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            RideDiagnostics.LogReleased(this, _ship, ShipRideDiagnostics.CAUSE_SERVER_RELEASE);
+#endif
             ReleaseFromPlatform();
         }
 

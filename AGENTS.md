@@ -51,6 +51,29 @@ is not final yet and needs evaluation. **How the code works now** (`ShipFlightSe
   timer and the next pad spawns at landing. It is chosen in the config asset or, in editor / development builds,
   through `IShipRouteDebug.DebugUseFlightMode`.
 
+**Riding the ship.** In flight a player on the deck is not moved by physics: `ShipRider` binds it to the ship
+(kinematic, collisions off) at a ship-local offset, and the owner walks and jumps in that offset. Each peer binds only
+its own player; the others follow the owner's synced offset. When and how a player gets bound:
+- at takeoff (`ShipBase.BeginTakeoff` on the server, `ShipBase.OnClientFlightChanged(true)` on a client)
+  `ShipRiders.BoardRidersOverDeck` boards every player over the deck, from the nose to the stern: at most
+  `BoardingEdgeTolerance` (0.5 m) outside the walk boxes and `BoardingMinHeight`..`BoardingMaxHeight` (-0.5..6 m) above the
+  deck surface under it, so a player in a jump at the lever rides too;
+- the safety net: every frame in flight `ShipRiders.CatchDeckRiders` checks the local player (from
+  `CharacterMovableModel.LocalMovable`, not only on the ride volume's trigger enter) and binds it within a frame when it
+  stands or comes down over the walk boxes, `CatchMinHeight`..`CatchMaxHeight` (-0.5..1.5 m) above the deck surface under
+  it and not rising faster than `CatchMaxRiseSpeed` (0.15 m/s). A standing player's position is 1 m above the deck surface;
+- all heights come from `ShipDeckRideRule`, measured from the deck surface under the player, not from the ship's pivot;
+- a client that spawns the ship while it flies gets the flight state through the `ShipPoseSync._flying` hook: Mirror's
+  generated SyncVar deserialization calls the hook on the first spawn too, whenever the value differs from the default;
+  the same holds for `ShipRider._syncedRideShip` of a player already riding;
+- walking or jumping past the deck edge in flight still drops the player off the ship (`DropOffDeck`, with
+  `_confineRidersToDeck` off) and it cannot be caught again for `ReboardDelaySeconds` (0.5 s); the safety net then catches
+  it only if it is over the deck again;
+- in editor and development builds every bind, release and refusal is logged with `[ShipRide]` (`Debug/ShipRideDiagnostics`,
+  compiled only under `UNITY_EDITOR || DEVELOPMENT_BUILD` together with its call sites):
+  who, where on the deck (ship-local, height above the deck), which check refused, flying on this peer, host / client;
+  a refusal only when its reason changes, at most once a second per player.
+
 ## Loop status (2026-10-11)
 The loop runs from start to end, but it does not match the design yet:
 - modules stay on the ship after a normal landing. `ServerResetForBuild` resets every socket to its starting module
@@ -77,6 +100,10 @@ The loop runs from start to end, but it does not match the design yet:
   the players: their colliders are triggers on the built-in `Ignore Raycast` layer (see "Flight field" in Key places).
   Damage and armor are separate tasks.
 - The field has no "left the field" event and the rocks are not on the radar yet.
+- A client that spawns the ship while it flies is not tested: a join in flight is turned away, so no test reaches it;
+  it relies on the SyncVar hooks above firing on the first spawn. The server kills a fallen player by its server
+  position (`FallKillSystem`); between the owner binding itself and its `CmdBeginRide` arriving (one round trip at the
+  start of a takeoff) the server still sees it standing where it was, which is far above the 30 m kill depth.
 - **No world shift in flight.** On loop 4 the ship is ~8-9 km from the origin before the landing recenter (float
   step there is ~1 mm); deck and camera jitter at that distance is not checked yet.
 - A host and a real second client seeing the same field number, seed and placement count is checked by
@@ -84,8 +111,11 @@ The loop runs from start to end, but it does not match the design yet:
   design (one placement list, the origin in the model, pads-like shift of Mirror objects) and by the host checks of
   `LoopSmokeTest`.
 
-Known issue: on the first landing of a `DeckFeelHarness` run the player jumps about 136 m in one frame, dies and the
-crew returns to the lobby. Seen on 2026-10-06, also on the base commit; not fixed and not investigated.
+Known issue: in the first cruise of a `DeckFeelHarness` run the player jumps about 136 m in one frame, dies and the
+crew returns to the lobby, so the harness ends with "FAIL ship cannot launch". Seen on 2026-10-06 and again on
+2026-10-16, also on the base commit. The `[ShipRide]` log shows the cause: the harness's walk legs in cruise were written
+for a confined deck and walk the player off the narrow nose of the deck, which drops it off the ship by design
+(`_confineRidersToDeck` off). It is not the rider binding bug; the harness is not fixed yet.
 
 M1 priorities are in `Docs/ROADMAP.md`.
 
@@ -193,7 +223,7 @@ types.
 ### Key places
 | What | Where |
 |---|---|
-| Ship, flight, riders | `Assets/Features/ShipModule/Scripts/`: `ShipBase` (ties its parts: `ShipDeckGeometry`, `ShipModules`, `ShipRiders`, `ShipSeats`, `ShipFlightControl`, `ShipDeckCargo`), `ShipFlight`, `ShipPoseSync`, `ShipRider`, `ShipRunDirector`, `ShipRunService` (phase machine) with `ShipStationPads`, `ShipStationDropService`, `ShipRoute`, `ShipFlightStatService`, `ShipWorldShiftService`, `ShipRunRiderService`, `ShipRunBindingModel` |
+| Ship, flight, riders | `Assets/Features/ShipModule/Scripts/`: `ShipBase` (ties its parts: `ShipDeckGeometry`, `ShipModules`, `ShipRiders`, `ShipSeats`, `ShipFlightControl`, `ShipDeckCargo`), `ShipFlight`, `ShipPoseSync`, `ShipRider` (+ `ShipDeckRideRule`, `ShipRideDiagnostics`, see "Riding the ship"), `ShipRunDirector`, `ShipRunService` (phase machine) with `ShipStationPads`, `ShipStationDropService`, `ShipRoute`, `ShipFlightStatService`, `ShipWorldShiftService`, `ShipRunRiderService`, `ShipRunBindingModel` |
 | Flight and landing settings | `ShipFlightSettings` (+ `ShipFlightConfig_Default.asset`), `ShipRunConfig` |
 | Modules and slots | a module is one `ModuleDefinition` asset (`ShipModule/GameResources/Modules/`: id, slot type, item prefab, slot view, name, price, stat modifiers); `ModuleCatalog` lists them all and resolves a module id (`ModuleCatalogValidator` checks it at startup); `ShipItem`, `ShipSocket` (+ `ShipSocketRule`, state in the `ShipSockets` model), `Ship*Interactable`; catalogs in `ShipModule/GameResources/Configurations/` (Addressables) |
 | Stats | `Assets/Features/StatsModule/`, `ShipStatType`, `ShipStatEntity`, `ShipStatSheet` (server: base values from `ShipAccumulativeStatsConfiguration` plus module modifiers), synced `ShipStats` model; player movement stats are `PlayerStatType` / `PlayerStatsConfiguration` in `CharacterMovableModule/Scripts/PlayerStats/` |
@@ -250,6 +280,12 @@ landing, messages start with "Loop N:"; at the cruise start its pilot faces the 
 `ShipBase.FlightControlDebug`, because the autopilot keeps the takeoff heading), `LoopSmokeShipRunConfigOverride` and `LoopSmokeFieldCatalogOverride` (the
 config copies) and `LoopSmokeSpawnCounts`.
 
+The ride test `ShipRideTest` (`Assets/Tests/PlayMode/ShipRide/`, about 75 s, `-Filter ShipRide`) flies six loops on a host on the
+same fast timings, one per spot of the deck found from its geometry (`ShipRideDeckSpots`): the nose, the stern, both
+side edges, the centre and the stern in a jump at the lever (the lever is pulled at the top of a real jump through
+`CharacterInputBuffer`). After takeoff and in cruise the player must ride, be alive and stay on the deck; in cruise it
+jumps (from the centre with a sideways hop) and must land back on the deck still riding.
+
 The soak test `LoopSoakTest` (`Assets/Tests/PlayMode/LoopSoak/`, `[Category("Soak")]`, about 3 minutes) flies 15
 loops in a row on the same fast timings and catches what only shows up over time. It does not repeat the station
 checks of `LoopSmokeTest`. Every loop: the smoke test's flight, field and landing checks; at most 2 landing pads, no
@@ -291,7 +327,7 @@ the editor is the host, a Windows development build of the game is the client. O
 - **The client bot** (`Assets/Tests/Coop/Client/`, only under `UNITY_EDITOR || DEVELOPMENT_BUILD`, not in a release
   build) starts when the player is launched with `-coopTestClient -connect <ip> -port <port> -scenario
   leave-and-rejoin -coopDir <folder> -logFile <file>`. It joins through the menu's address field and Join (Telepathy,
-  a free port the test picks, not Steam), boards, rides the loops the host flies, leaves in flight, is turned away in
+  a free port the test picks, not Steam), boards at the stern (`ShipDeckBoarding.PutAboveStern`), rides the loops the host flies, leaves in flight, is turned away in
   flight, rejoins at the next station on the deck, dies (the dev kill command, like F9), waits to be bought back, rides
   one more loop and quits.
 - **Exchange.** The client appends a JSON line per step to `<coopDir>/client-reports.jsonl` (phase, `LoopIndex`,

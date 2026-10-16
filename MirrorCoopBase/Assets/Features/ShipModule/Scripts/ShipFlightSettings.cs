@@ -20,6 +20,12 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private bool _confineRidersToDeck;
         [Tooltip("After dropping off the deck in flight, the rider cannot land back on it for this long (s).")]
         [SerializeField] private float _reboardDelaySeconds = 0.5f;
+        [Tooltip("In flight a rider who comes down on the deck is bound to it from this height above the deck surface under it (m).")]
+        [SerializeField] private float _catchMinHeight = -0.5f;
+        [Tooltip("In flight a rider who comes down on the deck is bound to it up to this height above the deck surface under it (m).")]
+        [SerializeField] private float _catchMaxHeight = 1.5f;
+        [Tooltip("In flight a rider rising faster than this (m/s) is not bound to the deck yet: it is still on its way up.")]
+        [SerializeField] private float _catchMaxRiseSpeed = 0.15f;
 
         public ShipFlightMode FlightMode =>
             _flightMode == ShipFlightMode.None ? ShipFlightMode.TravelInSpace : _flightMode;
@@ -38,5 +44,8 @@ namespace Features.ShipModule.Scripts {
         public float StandUpSpeed => _standUpSpeed;
         public bool ConfineRidersToDeck => _confineRidersToDeck;
         public float ReboardDelaySeconds => Mathf.Max(0f, _reboardDelaySeconds);
+        public float CatchMinHeight => _catchMinHeight;
+        public float CatchMaxHeight => _catchMaxHeight;
+        public float CatchMaxRiseSpeed => _catchMaxRiseSpeed;
     }
 }
