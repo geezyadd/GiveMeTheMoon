@@ -40,11 +40,11 @@ MonoBehaviour:
   - {fileID: 2100000, guid: e996aa373ca5ee54e8c3410147ba1add, type: 2}
   - {fileID: 2100000, guid: d0893f6cec687c34f976ceef3786efaf, type: 2}
   _mainSize: 1
-  _mainHeightJitter: 0.05
+  _mainHeightJitter: 0.08
   _axisScale: {x: 0.8, y: 1.2}
   _satelliteCount: {x: 3, y: 4}
   _satelliteSize: {x: 0.3, y: 0.5}
-  _heightSpreadCells: 0.75
+  _heightSpreadCells: 2
   _debrisChance: 0.7
   _debrisCount: {x: 4, y: 8}
   _debrisSize: {x: 0.03, y: 0.08}

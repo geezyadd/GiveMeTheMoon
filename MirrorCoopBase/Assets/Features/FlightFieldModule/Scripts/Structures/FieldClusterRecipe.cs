@@ -14,15 +14,15 @@ namespace Features.FlightFieldModule.Scripts.Structures {
         [SerializeField] private Material[] _materials = Array.Empty<Material>();
         [Tooltip("Main rock size as a share of the footprint's shorter side; the layout shrinks it so it stays inside the footprint.")]
         [SerializeField, Range(0.3f, 1.2f)] private float _mainSize = 0.95f;
-        [Tooltip("Main rock height offset as a share of its size, either way. At most 0.1 keeps it crossing the flight plane.")]
+        [Tooltip("Main rock height offset as a share of its size, either way. The thinnest rock is about 0.13 of its size thick on each side of its middle, so at most 0.1 keeps the flight plane inside it; 0.08 is about 60 % of that.")]
         [SerializeField, Range(0f, 0.1f)] private float _mainHeightJitter = 0.05f;
         [Tooltip("Random per-axis scale of every rock (non-uniform), min and max.")]
         [SerializeField] private Vector2 _axisScale = new(0.8f, 1.2f);
         [SerializeField] private Vector2Int _satelliteCount = new(2, 4);
         [Tooltip("Satellite size as a share of the cell, min and max.")]
         [SerializeField] private Vector2 _satelliteSize = new(0.2f, 0.45f);
-        [Tooltip("Satellites and debris stand up to this many cells above or below the flight plane.")]
-        [SerializeField, Range(0f, 0.75f)] private float _heightSpreadCells = 0.6f;
+        [Tooltip("Satellites and debris stand up to this many cells above or below the flight plane; a wide spread breaks the flat line of the field.")]
+        [SerializeField, Range(0f, 3f)] private float _heightSpreadCells = 2f;
         [Tooltip("Chance that a cluster gets debris.")]
         [SerializeField, Range(0f, 1f)] private float _debrisChance = 0.5f;
         [SerializeField] private Vector2Int _debrisCount = new(3, 10);

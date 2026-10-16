@@ -20,7 +20,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const float MAIN_CROSSING_SHARE = 0.15f;
         // The farthest vertex of a rock prefab from its pivot, as a share of its size (see FieldClusterLayout).
         private const float ROCK_REACH = 0.7f;
-        private const float MAX_HEIGHT_CELLS = 0.75f;
         private const float HALF = 0.5f;
 
         private FlightFieldEditorComposition _composition;
@@ -127,7 +126,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 float reach = Mathf.Max(rock.Scale.x, Mathf.Max(rock.Scale.y, rock.Scale.z)) * ROCK_REACH;
                 Assert.LessOrEqual(Mathf.Abs(rock.Offset.x) + reach, acrossLimit, $"{structure.name} seed {seed}: a rock reaches too far across the field.");
                 Assert.LessOrEqual(Mathf.Abs(rock.Offset.z) + reach, alongLimit, $"{structure.name} seed {seed}: a rock reaches too far along the field.");
-                Assert.LessOrEqual(Mathf.Abs(rock.Offset.y), MAX_HEIGHT_CELLS * CELL_SIZE + TOLERANCE, $"{structure.name} seed {seed}: a rock is too far from the plane.");
+                Assert.LessOrEqual(Mathf.Abs(rock.Offset.y), structure.ClusterRecipe.HeightSpreadCells * CELL_SIZE + TOLERANCE, $"{structure.name} seed {seed}: a rock is too far from the plane.");
             }
         }
 
