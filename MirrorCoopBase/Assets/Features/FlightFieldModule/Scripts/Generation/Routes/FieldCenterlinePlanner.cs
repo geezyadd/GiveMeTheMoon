@@ -17,8 +17,8 @@ namespace Features.FlightFieldModule.Scripts.Generation.Routes {
 
         public List<Vector2Int> Plan(FieldGenerationContext context, FieldCorridorShape shape) {
             int inset = shape.HalfWidthCells + WALL_CELLS;
-            int side = context.Frame.SideCells;
-            List<Vector2Int> waypoints = CreateWaypoints(context, ClampInside(context.CruiseStartCell, inset, side), ClampInside(context.StationBCell, inset, side),
+            Vector2Int size = context.Frame.Size;
+            List<Vector2Int> waypoints = CreateWaypoints(context, ClampInside(context.CruiseStartCell, inset, size), ClampInside(context.StationBCell, inset, size),
                 shape.MaxSideOffsetCells, inset);
             List<Vector2Int> centerline = new() { waypoints[0] };
             for (int i = 1; i < waypoints.Count; i++)
@@ -36,7 +36,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Routes {
             for (int leg = 1; leg < legCount; leg++) {
                 Vector2 onLine = Vector2.Lerp(start, end, leg / (float)legCount);
                 int offset = context.Random.Range(-maxSideOffset, maxSideOffset + 1);
-                waypoints.Add(ClampInside(Vector2Int.RoundToInt(onLine) + sideways * offset, inset, context.Frame.SideCells));
+                waypoints.Add(ClampInside(Vector2Int.RoundToInt(onLine) + sideways * offset, inset, context.Frame.Size));
             }
 
             waypoints.Add(end);
@@ -49,7 +49,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Routes {
                 centerline.Add(leg[i]);
         }
 
-        private static Vector2Int ClampInside(Vector2Int cell, int inset, int side) =>
-            new(Mathf.Clamp(cell.x, inset, side - 1 - inset), Mathf.Clamp(cell.y, inset, side - 1 - inset));
+        private static Vector2Int ClampInside(Vector2Int cell, int inset, Vector2Int size) =>
+            new(Mathf.Clamp(cell.x, inset, size.x - 1 - inset), Mathf.Clamp(cell.y, inset, size.y - 1 - inset));
     }
 }

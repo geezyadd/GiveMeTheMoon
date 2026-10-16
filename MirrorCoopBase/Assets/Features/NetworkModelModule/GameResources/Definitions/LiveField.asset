@@ -33,7 +33,10 @@ MonoBehaviour:
   - _name: CellSize
     _typeName: float
     _defaultValue: 
-  - _name: SideCells
+  - _name: LengthCells
+    _typeName: int
+    _defaultValue: 
+  - _name: WidthCells
     _typeName: int
     _defaultValue: 
   - _name: Placements

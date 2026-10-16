@@ -6,10 +6,13 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private float _takeoffForward = 22f;
         [SerializeField] private float _takeoffHeight = 12f;
         [SerializeField] private float _takeoffSeconds = 9f;
-        [Tooltip("Route work in seconds at flight speed 1. HUD time = work / FlightSpeed.")]
-        [SerializeField] private float _cruiseSeconds = 20f;
+        [Tooltip("Cruise seconds of loop 0 in a straight line from the hover point to the next station at flight speed 1.")]
+        [SerializeField] private float _firstFlightSeconds = 120f;
+        [Tooltip("Cruise seconds added per loop: seconds(loop) = first + loop * per loop.")]
+        [SerializeField] private float _perLoopFlightSeconds = 120f;
+        [Tooltip("The most cruise seconds of a flight; 0 = no cap.")]
+        [SerializeField] private float _maxFlightSeconds;
         [SerializeField] private float _landingSeconds = 9f;
-        [SerializeField] private float _perLoopCruiseSeconds = 8f;
         [SerializeField] private float _thrustCruiseBonus = 1.5f;
         [SerializeField] private float _stationSpacing = 48f;
         [Tooltip("Random destination yaw cone in front of launch heading. 170 keeps the pad ahead, never behind.")]
@@ -23,10 +26,10 @@ namespace Features.ShipModule.Scripts {
         public float TakeoffForward => Mathf.Max(0.2f, _takeoffForward);
         public float TakeoffHeight => Mathf.Max(0.2f, _takeoffHeight);
         public float TakeoffSeconds => Mathf.Max(0.2f, _takeoffSeconds);
-        public float CruiseSeconds => Mathf.Max(1f, _cruiseSeconds);
-        public float RouteWorkSeconds => CruiseSeconds;
+        public float FirstFlightSeconds => _firstFlightSeconds;
+        public float PerLoopFlightSeconds => _perLoopFlightSeconds;
+        public float MaxFlightSeconds => _maxFlightSeconds;
         public float LandingSeconds => Mathf.Max(0.2f, _landingSeconds);
-        public float PerLoopCruiseSeconds => Mathf.Max(0f, _perLoopCruiseSeconds);
         public float ThrustCruiseBonus => Mathf.Max(0f, _thrustCruiseBonus);
         public float StationSpacing => Mathf.Max(2f, _stationSpacing);
         public float DestinationConeDegrees => Mathf.Clamp(_destinationConeDegrees, 10f, 170f);

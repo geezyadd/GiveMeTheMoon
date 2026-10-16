@@ -8,7 +8,7 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
 
         [SetUp]
         public void SetUp() =>
-            _engineRule = new ShipSocketRule(ShipModuleType.Engine, UNLOCK_LOOP);
+            _engineRule = new ShipSocketRule(ShipModuleType.Engine, UNLOCK_LOOP, null);
 
         [Test]
         public void WhenEmptyOpenSocketInBuild_ThenModuleCanBeInstalled() =>

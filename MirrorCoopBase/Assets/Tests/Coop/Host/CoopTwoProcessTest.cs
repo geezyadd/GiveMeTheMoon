@@ -218,6 +218,7 @@ namespace Tests.Coop.Host {
             Assert.AreEqual(loopIndex - 1, Model.LoopIndex, "LoopIndex before launch.");
             _flight.PullLaunchLever(loopIndex);
             yield return WaitForCoroutine(() => Model.Phase == ShipRunPhase.Cruise, $"Cruise of loop {loopIndex}");
+            _flight.FaceDestination();
             BeginStep($"loop {loopIndex} cruise");
             yield return WaitForReportCoroutine(CoopTestSteps.IN_CRUISE);
             Assert.AreEqual(ShipRunPhase.Cruise, Model.Phase, $"The client's cruise report of loop {loopIndex} came after the cruise.");

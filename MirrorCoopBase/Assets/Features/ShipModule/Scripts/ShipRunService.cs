@@ -115,12 +115,10 @@ namespace Features.ShipModule.Scripts {
             Vector3 hover = _route.PlanLaunch(from, ship.transform.forward);
             ShipFlightMode mode = _route.SelectedFlightMode;
             Quaternion heading = Quaternion.LookRotation(_route.LaunchForward, Vector3.up);
-            Quaternion routeHeading = Quaternion.LookRotation(_route.DestinationForward, Vector3.up);
             ship.BeginTakeoff(
                 from,
                 hover,
                 heading,
-                routeHeading,
                 _config.TakeoffSeconds,
                 stats.DodgeRangeScale,
                 mode);

@@ -52,8 +52,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 FlightField field = _fieldsByLoop[loop][i];
                 FieldTestOccupancy occupancy = CreateOccupancy(field);
                 FieldRequest request = CreateRequest(FIRST_SEED + i, loop);
-                for (int x = 0; x < occupancy.Side; x++) {
-                    for (int y = 0; y < occupancy.Side; y++)
+                for (int x = 0; x < occupancy.Size.x; x++) {
+                    for (int y = 0; y < occupancy.Size.y; y++)
                         AssertNotInEmptyZone(field, occupancy, request, new Vector2Int(x, y));
                 }
             }
@@ -71,7 +71,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         public void WhenFieldsAreGenerated_ThenTheBorderWallHasNoHolesOutsideReservedCells(int loop) {
             foreach (FlightField field in _fieldsByLoop[loop]) {
                 FieldTestOccupancy occupancy = CreateOccupancy(field);
-                foreach (Vector2Int cell in GetBorderCells(occupancy.Side)) {
+                foreach (Vector2Int cell in GetBorderCells(occupancy.Size)) {
                     bool isClosed = occupancy.IsOccupied(cell) || field.Cells[cell].IsReserved;
                     Assert.IsTrue(isClosed, $"Seed {field.Seed}, loop {loop}: hole in the wall at {cell}.");
                 }
@@ -119,8 +119,15 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             Vector2 stationA = ToPlane(request.StationA);
             Assert.Greater(Vector2.Distance(center, stationA), _composition.Configuration.StationAZoneRadius, $"Seed {field.Seed}: structure at {cell} in the zone of A.");
             Assert.Greater(Vector2.Distance(center, ToPlane(request.StationB)), _composition.Configuration.StationBZoneRadius, $"Seed {field.Seed}: structure at {cell} in the zone of B.");
-            Assert.Greater(DistanceToSegment(center, stationA, ToPlane(request.CruiseStart)), _composition.Configuration.TakeoffCorridorHalfWidth,
+            Assert.Greater(DistanceToSegment(center, stationA, TakeoffCorridorEnd(request)), _composition.Configuration.TakeoffCorridorHalfWidth,
                 $"Seed {field.Seed}: structure at {cell} in the takeoff corridor.");
+        }
+
+        // The corridor runs on along the takeoff heading past the cruise start: the autopilot keeps that heading.
+        private Vector2 TakeoffCorridorEnd(FieldRequest request) {
+            Vector2 cruiseStart = ToPlane(request.CruiseStart);
+            Vector2 takeoffForward = (cruiseStart - ToPlane(request.StationA)).normalized;
+            return cruiseStart + takeoffForward * _composition.Configuration.TakeoffRunOutLength;
         }
 
         private static float DistanceToSegment(Vector2 point, Vector2 start, Vector2 end) {
@@ -132,12 +139,15 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private static Vector2 ToPlane(Vector3 point) =>
             new(point.x, point.z);
 
-        private static IEnumerable<Vector2Int> GetBorderCells(int side) {
-            for (int i = 0; i < side; i++) {
-                yield return new Vector2Int(i, 0);
-                yield return new Vector2Int(i, side - 1);
-                yield return new Vector2Int(0, i);
-                yield return new Vector2Int(side - 1, i);
+        private static IEnumerable<Vector2Int> GetBorderCells(Vector2Int size) {
+            for (int x = 0; x < size.x; x++) {
+                yield return new Vector2Int(x, 0);
+                yield return new Vector2Int(x, size.y - 1);
+            }
+
+            for (int y = 0; y < size.y; y++) {
+                yield return new Vector2Int(0, y);
+                yield return new Vector2Int(size.x - 1, y);
             }
         }
     }

@@ -12,7 +12,8 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public Vector3 Origin { get; }
         public Vector3 Forward { get; }
         public float CellSize { get; }
-        public int SideCells { get; }
+        public int LengthCells { get; }
+        public int WidthCells { get; }
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> Placements { get; }
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteEntry> Routes { get; }
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteCellEntry> RouteCells { get; }
@@ -23,7 +24,8 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public event Action OnOriginChanged;
         public event Action OnForwardChanged;
         public event Action OnCellSizeChanged;
-        public event Action OnSideCellsChanged;
+        public event Action OnLengthCellsChanged;
+        public event Action OnWidthCellsChanged;
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> OnPlacementsAdded;
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> OnPlacementsRemoved;
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> OnPlacementsSet;

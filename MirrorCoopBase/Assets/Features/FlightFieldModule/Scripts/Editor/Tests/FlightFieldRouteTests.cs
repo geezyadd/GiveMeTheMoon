@@ -18,7 +18,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const float HARD = 1f;
         private const int SEED = 17;
         private const int TIMING_SEEDS = 20;
-        private const int TIMING_SIDE_CELLS = 40;
+        private const int TIMING_LENGTH_CELLS = 40;
         private const double MAX_AVERAGE_MILLISECONDS = 50.0;
         private const float TAKEOFF_FORWARD = 350f;
         private const float TAKEOFF_HEIGHT = 100f;
@@ -27,6 +27,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const string MAX_REPAIR_ROUNDS_FIELD = "_maxRepairRounds";
         private const string MAX_SEED_ATTEMPTS_FIELD = "_maxSeedAttempts";
         private const string CORRIDOR_OBSTACLE_SHARE_FIELD = "_routeShape._corridorObstacleShare";
+        private const string TAKEOFF_RUN_OUT_LENGTH_FIELD = "_takeoffRunOutLength";
 
         private FlightFieldEditorComposition _composition;
 
@@ -90,17 +91,17 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         }
 
         [Test]
-        public void WhenFieldIs40x40_ThenGenerationIsFasterThanTheThreshold() {
-            float distance = (TIMING_SIDE_CELLS - _composition.Configuration.MarginBehindACells - _composition.Configuration.MarginBehindBCells - 1) * _composition.Configuration.CellSize
+        public void WhenFieldIs40CellsLong_ThenGenerationIsFasterThanTheThreshold() {
+            float distance = (TIMING_LENGTH_CELLS - _composition.Configuration.MarginBehindACells - _composition.Configuration.MarginBehindBCells - 1) * _composition.Configuration.CellSize
                 + _composition.Configuration.CellSize / 2f;
-            Assert.AreEqual(TIMING_SIDE_CELLS, _composition.Generator.Generate(CreateStraightRequestAt(SEED, distance, EASY)).Frame.SideCells);
+            Assert.AreEqual(TIMING_LENGTH_CELLS, _composition.Generator.Generate(CreateStraightRequestAt(SEED, distance, EASY)).Frame.LengthCells);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             for (int seed = 0; seed < TIMING_SEEDS; seed++)
                 _composition.Generator.Generate(CreateStraightRequestAt(seed, distance, EASY));
 
             double averageMilliseconds = stopwatch.Elapsed.TotalMilliseconds / TIMING_SEEDS;
-            Assert.Less(averageMilliseconds, MAX_AVERAGE_MILLISECONDS, $"A 40 x 40 field takes {averageMilliseconds:0.0} ms on average.");
+            Assert.Less(averageMilliseconds, MAX_AVERAGE_MILLISECONDS, $"A 40-cell long field takes {averageMilliseconds:0.0} ms on average.");
         }
 
         private static FieldRequest CreateStraightRequest(int seed, params float[] difficulties) =>
@@ -112,8 +113,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             return new FieldRequest(Vector3.zero, Vector3.forward * distance, cruiseStart, 0, seed, routeRequests);
         }
 
-        // Every free cell filled, obstacles filling whole corridors, no repair and one seed: only the forced clearing
-        // can give a passage.
+        // Every free cell filled, obstacles filling whole corridors, no takeoff run-out, no repair and one seed: only the
+        // forced clearing can give a passage.
         private FlightFieldConfiguration CreateBlockingConfiguration() {
             FlightFieldConfiguration configuration = Object.Instantiate(_composition.Configuration);
             SerializedObject serializedConfiguration = new(configuration);
@@ -121,6 +122,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             serializedConfiguration.FindProperty(MAX_REPAIR_ROUNDS_FIELD).intValue = 0;
             serializedConfiguration.FindProperty(MAX_SEED_ATTEMPTS_FIELD).intValue = 1;
             serializedConfiguration.FindProperty(CORRIDOR_OBSTACLE_SHARE_FIELD).animationCurveValue = AnimationCurve.Constant(0f, 1f, 1f);
+            // On this short straight route the run-out past the cruise start would reach B and give a passage by itself.
+            serializedConfiguration.FindProperty(TAKEOFF_RUN_OUT_LENGTH_FIELD).floatValue = 0f;
             serializedConfiguration.ApplyModifiedPropertiesWithoutUndo();
             return configuration;
         }

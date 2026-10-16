@@ -19,7 +19,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
                 return false;
 
             IReadOnlyLiveFieldModel liveFieldModel = container.Resolve<IReadOnlyLiveFieldModel>();
-            FieldFrame liveFrame = new(liveFieldModel.Origin, liveFieldModel.Forward, liveFieldModel.CellSize, liveFieldModel.SideCells);
+            FieldFrame liveFrame = new(liveFieldModel.Origin, liveFieldModel.Forward, liveFieldModel.CellSize, liveFieldModel.LengthCells, liveFieldModel.WidthCells);
             bool hasShip = container.Resolve<IShipPositionSource>().TryGetShipPosition(out Vector3 shipPosition);
             snapshot = new FlightFieldLiveSnapshot(serverModel.Field, serverModel.Number, liveFrame, hasShip, shipPosition);
             return true;

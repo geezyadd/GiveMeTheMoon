@@ -48,10 +48,10 @@ namespace Features.ShipModule.Scripts {
         internal void ApplyDefaultStats() =>
             _stats.ApplyDefaults(_statsConfiguration().Defaults);
 
-        internal void ClearInstalledModules() {
+        internal void ResetInstalledModules() {
             for (int i = 0; i < _sockets.Length; i++) {
                 if (_sockets[i] != null)
-                    _sockets[i].ServerClearInstall();
+                    _sockets[i].ServerResetInstall();
             }
         }
     }

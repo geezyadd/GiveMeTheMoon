@@ -51,12 +51,12 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         public void PlaceRoot(Transform root, IReadOnlyLiveFieldModel liveFieldModel) =>
             root.SetPositionAndRotation(liveFieldModel.Origin, Quaternion.LookRotation(liveFieldModel.Forward, Vector3.up));
 
-        // A networked placement is skipped: the server spawns it through Mirror.
-        public void BuildLocalStructure(Transform root, IReadOnlyLiveFieldModel liveFieldModel, int placementIndex) {
+        // A networked placement is skipped (false): the server spawns it through Mirror.
+        public bool BuildLocalStructure(Transform root, IReadOnlyLiveFieldModel liveFieldModel, int placementIndex) {
             FieldPlacementEntry placement = liveFieldModel.Placements[placementIndex];
             FieldStructureDefinition structure = _fieldStructureCatalog.GetRequired(placement.StructureId);
             if (!_fieldStructureSpawnRule.IsBuiltLocally(structure))
-                return;
+                return false;
 
             List<GameObject> objects = TakeObjectList();
             _objectsByPlacement.Add(placementIndex, objects);
@@ -66,6 +66,8 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             Transform instance = BuildTrigger(root, structure, pose, objects);
             if (structure.HasClusterRecipe)
                 BuildCluster(instance, structure, footprint, liveFieldModel.CellSize, objects);
+
+            return true;
         }
 
         public void ReleaseLocalStructure(Transform root, int placementIndex) {

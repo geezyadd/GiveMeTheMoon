@@ -85,6 +85,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return _session.WaitForCoroutine(IsCruisingAfterTakeoffFrame, FLIGHT_TIMEOUT_SECONDS, $"Cruise of loop {expectedLoopIndex}");
             Debug.Log($"[LoopSmoke] loop {expectedLoopIndex} takeoff: longest frame {_longestTakeoffFrame * MILLISECONDS_PER_SECOND:0.0} ms");
             Assert.IsTrue(LocalPlayer.GetComponent<ShipRider>().IsRiding, $"Loop {expectedLoopIndex}: the player is not riding the ship in cruise.");
+            FaceDestination();
             yield return _fieldCheck.AssertNewFieldStandsCoroutine(expectedLoopIndex);
             if (inCruise != null)
                 yield return inCruise();
@@ -139,6 +140,10 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.IsNotNull(closest, "No landing pad in the scene.");
             return closest;
         }
+
+        // The autopilot keeps the takeoff heading: the test pilot turns the ship to B once, as a crew does by radar.
+        public void FaceDestination() =>
+            Ship.FlightControlDebug.DebugFace(Model.TransitDestination - Ship.transform.position);
 
         public void PullLaunchLever(int loop) {
             ShipLaunchInteractable lever = Object.FindAnyObjectByType<ShipLaunchInteractable>();
