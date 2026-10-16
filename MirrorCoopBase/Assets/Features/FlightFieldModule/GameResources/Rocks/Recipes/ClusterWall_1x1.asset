@@ -49,21 +49,19 @@ MonoBehaviour:
   _debrisCount: {x: 4, y: 8}
   _debrisSize: {x: 0.03, y: 0.08}
   _planeRocks:
-  - _prefab: {fileID: 502716433160651421, guid: c811cc461ead7fe4c92e96127460c9e7, type: 3}
+  - _prefab: {fileID: 1366553966095815797, guid: a7a0009763c559b4cae8e118507e9011, type: 3}
     _weight: 1
   - _prefab: {fileID: 4032994201507482594, guid: eaf29583ee60a434e8dff9c72054ace1, type: 3}
     _weight: 1
-  _planeHalfExtentShare: 0.46
-  _planeReachShare: 0.5
-  _planeHalfHeightShare: 0.35
-  _planeYawJitterDegrees: 4
+  _planeHalfExtentShare: 0.3
+  _planeReachShare: 0.65
+  _planeSizeVariation: 0.4
   _planeGapMeters: {x: 0, y: 5}
-  _planeProtrusionMeters: {x: 0, y: 8}
   _planeJitterMeters: 3
-  _planeHalfHeightPerMeter: 1
-  _planeHalfHeightMeters: {x: 110, y: 220}
-  _planeMaxHeightToWidth: 2
-  _planeHeightVariation: 0.25
-  _planeHeightJitterMeters: 25
-  _planeSplitChance: 0.5
-  _planeSplitMinCells: 3
+  _planeHeightJitterMeters: 3
+  _planeMinHalfHeightMeters: 11
+  _planeMaxSpillMeters: 35
+  _planeMinPartMeters: 20
+  _extraRocksPerCell: 0.5
+  _extraHeightMeters: {x: 25, y: 130}
+  _extraDiameterMeters: {x: 15, y: 70}

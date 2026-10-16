@@ -55,24 +55,24 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
 
         private Dictionary<Vector2Int, List<FieldDebrisSpot>> LayOutCorridorDebris(FieldGenerationContext context) {
             Dictionary<Vector2Int, List<FieldDebrisSpot>> spotsByCell = new();
-            IFieldRandom random = _fieldRandomFactory.Create(0);
+            MatrixFieldDebrisCells cells = new(context.Cells, _fieldStructureCatalog);
+            FieldDebrisWorkspace workspace = new(_fieldRandomFactory.Create(0));
             Vector2Int size = context.Frame.Size;
             for (int y = 0; y < size.y; y++) {
                 for (int x = 0; x < size.x; x++) {
                     FieldCell cell = context.Cells[x, y];
                     bool isCorridorDebris = cell.HasDebris && cell.Reserve is FieldReserveKind.RouteCorridor or FieldReserveKind.AlternativeCorridor;
                     if (isCorridorDebris)
-                        spotsByCell.Add(new Vector2Int(x, y), LayOut(context, cell, new Vector2Int(x, y), random));
+                        spotsByCell.Add(new Vector2Int(x, y), LayOut(context, new Vector2Int(x, y), cells, workspace));
                 }
             }
 
             return spotsByCell;
         }
 
-        private List<FieldDebrisSpot> LayOut(FieldGenerationContext context, FieldCell cell, Vector2Int position, IFieldRandom random) {
+        private List<FieldDebrisSpot> LayOut(FieldGenerationContext context, Vector2Int position, IFieldDebrisCells cells, FieldDebrisWorkspace workspace) {
             List<FieldDebrisSpot> spots = new();
-            FieldDebrisRecipe recipe = _fieldStructureCatalog.GetRequiredDebris(cell.DebrisId).Recipe;
-            _fieldDebrisLayout.Fill(recipe, cell.DebrisDensity, context.Seed, position, context.Frame.CellSize, _flightFieldConfiguration.DebrisMinGapMeters, random, spots);
+            _fieldDebrisLayout.Fill(context.Seed, position, context.Frame.CellSize, cells, workspace, spots);
             return spots;
         }
 

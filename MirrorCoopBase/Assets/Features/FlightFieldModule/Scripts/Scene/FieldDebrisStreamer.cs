@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Configuration;
+using Features.FlightFieldModule.Scripts.Debris;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
+using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Scene {
@@ -13,17 +15,23 @@ namespace Features.FlightFieldModule.Scripts.Scene {
 
         private readonly IFieldDebrisSceneBuilder _fieldDebrisSceneBuilder;
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
-        private readonly List<FieldDebrisRunEntry> _cellRuns = new();
+        private readonly LiveFieldDebrisCells _debrisCells = new();
+        private readonly FieldStructureCatalog _fieldStructureCatalog;
+        private readonly IFieldFootprintReader _fieldFootprintReader;
         private readonly List<Vector2Int> _cells = new();
         private readonly List<bool> _isBuilt = new();
 
-        public FieldDebrisStreamer(IFieldDebrisSceneBuilder fieldDebrisSceneBuilder, FlightFieldConfiguration flightFieldConfiguration) {
+        public FieldDebrisStreamer(IFieldDebrisSceneBuilder fieldDebrisSceneBuilder, FlightFieldConfiguration flightFieldConfiguration, FieldStructureCatalog fieldStructureCatalog,
+                                   IFieldFootprintReader fieldFootprintReader) {
             _fieldDebrisSceneBuilder = fieldDebrisSceneBuilder;
             _flightFieldConfiguration = flightFieldConfiguration;
+            _fieldStructureCatalog = fieldStructureCatalog;
+            _fieldFootprintReader = fieldFootprintReader;
         }
 
         public void Restart(IReadOnlyLiveFieldModel liveFieldModel) {
             Clear();
+            _debrisCells.Read(liveFieldModel, _fieldStructureCatalog, _fieldFootprintReader);
             foreach (FieldDebrisRunEntry run in liveFieldModel.DebrisRuns)
                 AddRunCells(run);
         }
@@ -41,8 +49,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
                 }
                 else if (!_isBuilt[i] && distanceSquared <= buildRadiusSquared && budget > 0) {
                     budget--;
-                    FieldDebrisRunEntry run = _cellRuns[i];
-                    _fieldDebrisSceneBuilder.BuildCell(root, liveFieldModel.Seed, cellSize, _cells[i], run.Density, run.DebrisId);
+                    _fieldDebrisSceneBuilder.BuildCell(root, liveFieldModel.Seed, cellSize, _cells[i], _debrisCells);
                     _isBuilt[i] = true;
                 }
             }
@@ -50,7 +57,6 @@ namespace Features.FlightFieldModule.Scripts.Scene {
 
         public void Clear() {
             _fieldDebrisSceneBuilder.ReleaseAll();
-            _cellRuns.Clear();
             _cells.Clear();
             _isBuilt.Clear();
         }
@@ -58,7 +64,6 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         private void AddRunCells(FieldDebrisRunEntry run) {
             for (int x = run.Start.x; x < run.Start.x + run.Length; x++) {
                 _cells.Add(new Vector2Int(x, run.Start.y));
-                _cellRuns.Add(run);
                 _isBuilt.Add(false);
             }
         }

@@ -41,8 +41,9 @@ namespace Tests.PlayMode.LoopSmoke {
         private const string RIDGE_OBSTACLES_PROPERTY = "_ridgeObstacles";
         private const string OBSTACLE_STRUCTURE_PROPERTY = "_structure";
         private const string OBSTACLE_WEIGHT_PROPERTY = "_weight";
-        // Against weight 1 of the single-cell rock: a few beacons per field, not hundreds of Mirror objects.
-        private const float BEACON_WEIGHT = 0.05f;
+        // Against weight 1 of the single-cell rock: about one beacon in a Channels warm-up field (almost all big wall
+        // footprints, ~5 single cells), a dozen in the busiest fields, not hundreds of Mirror objects.
+        private const float BEACON_WEIGHT = 0.25f;
 #endif
 
         private readonly Dictionary<string, int> _mostLocalObjectsByStructure = new Dictionary<string, int>();

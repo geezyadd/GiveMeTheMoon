@@ -6,19 +6,15 @@ using UnityEngine;
 namespace Features.FlightFieldModule.Scripts.Scene {
     // Where the rocks of one cluster stand. Everything comes from the given random sequence, so the same seed gives
     // the same rocks on every peer. Offsets are in field space from the middle of the footprint box: x across the
-    // field (box height), z along it (box width), y up from the flight plane. A recipe with plane rocks gets giants that
-    // close the plane and rise far above and below it, with satellites as outcrops at their top and bottom; a recipe
-    // without them gets one main rock across the plane and satellites spread up and down.
+    // field (box height), z along it (box width), y up from the flight plane. A recipe with dense rocks gets the dense
+    // rock field that closes the plane (IFieldPlaneCoverLayout); a recipe without them gets one main rock across the
+    // plane, satellites spread up and down and sometimes debris.
     public sealed class FieldClusterLayout : IFieldClusterLayout {
         private const float HALF = 0.5f;
         // The farthest vertex of a rock prefab from its pivot, as a share of the rock's size (the pack's rocks reach 0.69
         // when normalised to 1 m): the bound that keeps a turned rock inside the footprint.
         private const float ROCK_REACH = 0.7f;
         private const float FULL_TURN_RADIANS = 2f * Mathf.PI;
-        // Outcrops stand between these shares of the giant's half height from the plane: from its shoulder to its top or
-        // bottom, so they break its outline instead of floating above it.
-        private const float OUTCROP_LOWEST_SHARE = 0.7f;
-        private const float OUTCROP_HIGHEST_SHARE = 0.95f;
 
         private readonly IFieldPlaneCoverLayout _fieldPlaneCoverLayout;
 
@@ -27,15 +23,15 @@ namespace Features.FlightFieldModule.Scripts.Scene {
 
         public void Fill(FieldClusterRecipe recipe, FieldFootprint footprint, float cellSize, IFieldRandom random, List<FieldClusterRockPose> rocks) {
             rocks.Clear();
-            float giantHalfHeight = _fieldPlaneCoverLayout.Add(recipe, footprint, cellSize, random, rocks);
-            if (!recipe.HasPlaneCover)
-                AddMainRock(recipe, footprint, cellSize, random, rocks);
-
-            int satellites = random.Range(recipe.SatelliteCount.x, recipe.SatelliteCount.y + 1);
-            for (int i = 0; i < satellites; i++) {
-                FieldClusterRockPose satellite = CreateCellRock(recipe, footprint, cellSize, recipe.SatelliteSize, random);
-                rocks.Add(recipe.HasPlaneCover ? AtGiantEdge(satellite, giantHalfHeight, random) : satellite);
+            if (recipe.HasPlaneCover) {
+                _fieldPlaneCoverLayout.Add(recipe, footprint, cellSize, random, rocks);
+                return;
             }
+
+            AddMainRock(recipe, footprint, cellSize, random, rocks);
+            int satellites = random.Range(recipe.SatelliteCount.x, recipe.SatelliteCount.y + 1);
+            for (int i = 0; i < satellites; i++)
+                rocks.Add(CreateCellRock(recipe, footprint, cellSize, recipe.SatelliteSize, random));
 
             if (random.Value() >= recipe.DebrisChance)
                 return;
@@ -64,13 +60,6 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             Vector3 cellCenter = new((cell.y + HALF - footprint.Height * HALF) * cellSize, 0f, (cell.x + HALF - footprint.Width * HALF) * cellSize);
             Vector3 offset = cellCenter + new Vector3(Spread(reach, random), Spread(recipe.HeightSpreadCells * cellSize, random), Spread(reach, random));
             return CreateRock(recipe, offset, size, random);
-        }
-
-        // An outcrop standing out of the giant's top or bottom: the uneven skyline of a ridge.
-        private static FieldClusterRockPose AtGiantEdge(FieldClusterRockPose rock, float giantHalfHeight, IFieldRandom random) {
-            float side = random.Value() < HALF ? -1f : 1f;
-            float height = side * giantHalfHeight * Mathf.Lerp(OUTCROP_LOWEST_SHARE, OUTCROP_HIGHEST_SHARE, random.Value());
-            return new FieldClusterRockPose(rock.Prefab, rock.Material, new Vector3(rock.Offset.x, height, rock.Offset.z), rock.Rotation, rock.Scale);
         }
 
         private static FieldClusterRockPose CreateRock(FieldClusterRecipe recipe, Vector3 offset, float size, IFieldRandom random) {

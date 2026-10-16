@@ -2,13 +2,14 @@ using System;
 using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Structures;
+using UnityEngine;
 using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Configuration {
     // The one startup check of the difficulty profiles: ids set and unique; shares and thresholds in 0..1 with room
     // left for empty cells; corridors at least as wide as the ship's passage; a wall; wall and ridge options of the
     // catalog with a single-cell option each (so every closed cell gets a rock) and plane gaps below the configured one;
-    // debris kinds of the catalog whose grid keeps the ship gap.
+    // debris kinds of the catalog with rock diameter ranges.
     public sealed class FieldDifficultyProfileValidator : IInitializable {
         private const int SINGLE_CELL = 1;
 
@@ -97,8 +98,8 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
                     throw new InvalidOperationException($"{profile.name}: a debris kind is empty, has no recipe or is missing from {_fieldStructureCatalog.name}.");
 
                 FieldDebrisRecipe recipe = option.Debris.Recipe;
-                if (recipe.SpacingMeters < _flightFieldConfiguration.DebrisMinGapMeters + recipe.DiameterMeters.y)
-                    throw new InvalidOperationException($"{recipe.name}: the grid spacing is below the ship gap plus the largest diameter: two rocks could close the way.");
+                if (!IsDiameterRange(recipe.SmallDiameterMeters) || !IsDiameterRange(recipe.BigDiameterMeters))
+                    throw new InvalidOperationException($"{recipe.name}: a rock diameter range is empty or not a range.");
 
                 totalWeight += option.Weight;
             }
@@ -115,6 +116,9 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
 
             return false;
         }
+
+        private static bool IsDiameterRange(Vector2 range) =>
+            range.x > 0f && range.x <= range.y;
 
         private static bool IsShare(FieldDifficultyRange range) =>
             range.Easy >= 0f && range.Easy <= 1f && range.Hard >= 0f && range.Hard <= 1f;

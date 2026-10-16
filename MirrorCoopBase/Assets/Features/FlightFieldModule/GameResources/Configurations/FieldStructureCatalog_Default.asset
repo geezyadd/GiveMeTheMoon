@@ -32,3 +32,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 62dc337730b4a634fbcdfa7a0db29c4a, type: 2}
   _debris:
   - {fileID: 11400000, guid: be6f2da1c4ef1bc4ebcf3d43690ae629, type: 2}
+  - {fileID: 11400000, guid: 13a4bcdccbf15ba48aaaaf775c0fcf9b, type: 2}
+  - {fileID: 11400000, guid: 9d0288036306f3e4090db831526d4684, type: 2}
+  - {fileID: 11400000, guid: f6aa605e763a5ab40bc28a47a3ab3862, type: 2}

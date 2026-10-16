@@ -1,0 +1,110 @@
+using System.Collections.Generic;
+using Features.FlightFieldModule.Scripts.Configuration;
+using Features.FlightFieldModule.Scripts.Debris;
+using Features.FlightFieldModule.Scripts.Generation;
+using Features.FlightFieldModule.Scripts.Model;
+using Features.FlightFieldModule.Scripts.Structures;
+using UnityEngine;
+
+namespace Features.FlightFieldModule.Scripts.Editor {
+    // Lays out every debris rock of a generated field exactly as the peers build them and measures the slalom: the way
+    // from the cruise start to B for a ship that needs half the debris gap (ship width + margin) on every side, its
+    // length against the straight line, the narrowest gap along it, and the rocks per kilometre of the main channels.
+    // The walls count as their cells grown by the largest spill of the wall rocks.
+    public sealed class FieldSlalomAnalyzer {
+        private const float HALF = 0.5f;
+        private const float CELL_CENTER = 0.5f;
+        // Gaps wider than twice this are reported as this: only the narrow ones matter.
+        private const float CLEARANCE_LIMIT_METERS = 100f;
+
+        private readonly FlightFieldConfiguration _flightFieldConfiguration;
+        private readonly FieldStructureCatalog _fieldStructureCatalog;
+        private readonly IFieldDebrisLayout _fieldDebrisLayout;
+        private readonly IFieldRandomFactory _fieldRandomFactory;
+        private readonly FieldSlalomPathFinder _fieldSlalomPathFinder = new();
+
+        public FieldSlalomAnalyzer(FlightFieldEditorComposition composition) {
+            _flightFieldConfiguration = composition.Configuration;
+            _fieldStructureCatalog = composition.Catalog;
+            _fieldDebrisLayout = composition.DebrisLayout;
+            _fieldRandomFactory = composition.RandomFactory;
+        }
+
+        public FieldSlalomReport Analyze(FlightField field) {
+            float cellSize = field.Frame.CellSize;
+            FieldSlalomObstacles obstacles = new(field.Cells, field.Frame.Size, cellSize, WallRockSpill());
+            List<FieldSlalomRock> rocks = new();
+            int channelRocks = LayOutRocks(field, obstacles, rocks);
+            float clearance = _flightFieldConfiguration.DebrisMinGapMeters * HALF;
+            Vector2 start = CellCenter(field.CruiseStartCell, cellSize);
+            Vector2 goal = CellCenter(field.StationBCell, cellSize);
+            List<Vector2> path = new();
+            bool isFound = _fieldSlalomPathFinder.TryFind(obstacles, start, goal, clearance, path);
+            float minGap = isFound ? _fieldSlalomPathFinder.MinClearance(obstacles, path, CLEARANCE_LIMIT_METERS) * 2f : 0f;
+            return new FieldSlalomReport(isFound, path, rocks, Length(path), Vector2.Distance(start, goal), minGap, channelRocks, ChannelLength(field));
+        }
+
+        // Returns the rocks standing in main corridor cells.
+        private int LayOutRocks(FlightField field, FieldSlalomObstacles obstacles, List<FieldSlalomRock> rocks) {
+            MatrixFieldDebrisCells cells = new(field.Cells, _fieldStructureCatalog);
+            FieldDebrisWorkspace workspace = new(_fieldRandomFactory.Create(0));
+            List<FieldDebrisSpot> spots = new();
+            int channelRocks = 0;
+            foreach (Vector2Int cell in field.Cells.GetIndexes(HasDebris)) {
+                _fieldDebrisLayout.Fill(field.Seed, cell, field.Frame.CellSize, cells, workspace, spots);
+                if (field.Cells[cell].Reserve == FieldReserveKind.RouteCorridor)
+                    channelRocks += spots.Count;
+
+                foreach (FieldDebrisSpot spot in spots)
+                    AddRock(CellCenter(cell, field.Frame.CellSize), spot, obstacles, rocks);
+            }
+
+            return channelRocks;
+        }
+
+        private static void AddRock(Vector2 cellCenter, FieldDebrisSpot spot, FieldSlalomObstacles obstacles, List<FieldSlalomRock> rocks) {
+            FieldSlalomRock rock = new(cellCenter + new Vector2(spot.Offset.x, spot.Offset.z), spot.Radius, Mathf.Abs(spot.Offset.y) < spot.Radius);
+            rocks.Add(rock);
+            obstacles.Add(rock);
+        }
+
+        // The farthest any wall rock may reach past its cell, taken everywhere: the check is on the safe side.
+        private float WallRockSpill() {
+            float spill = 0f;
+            foreach (FieldStructureDefinition structure in _fieldStructureCatalog.Structures) {
+                if (structure.HasClusterRecipe && structure.ClusterRecipe.HasPlaneCover)
+                    spill = Mathf.Max(spill, structure.ClusterRecipe.PlaneMaxSpillMeters);
+            }
+
+            return spill;
+        }
+
+        private static float ChannelLength(FlightField field) {
+            float length = 0f;
+            foreach (FieldRoute route in field.Routes) {
+                if (route.Kind != FieldRouteKind.Main)
+                    continue;
+
+                for (int i = 1; i < route.Centerline.Count; i++)
+                    length += Vector2Int.Distance(route.Centerline[i - 1], route.Centerline[i]) * field.Frame.CellSize;
+            }
+
+            return length;
+        }
+
+        private static float Length(IReadOnlyList<Vector2> path) {
+            float length = 0f;
+            for (int i = 1; i < path.Count; i++)
+                length += Vector2.Distance(path[i - 1], path[i]);
+
+            return length;
+        }
+
+        private static bool HasDebris(FieldCell cell) =>
+            cell.HasDebris;
+
+        // Field plane: x across (matrix y), y along (matrix x).
+        private static Vector2 CellCenter(Vector2Int cell, float cellSize) =>
+            new((cell.y + CELL_CENTER) * cellSize, (cell.x + CELL_CENTER) * cellSize);
+    }
+}

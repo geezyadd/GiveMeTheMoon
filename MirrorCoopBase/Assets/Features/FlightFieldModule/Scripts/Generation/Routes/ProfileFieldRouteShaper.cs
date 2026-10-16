@@ -14,7 +14,8 @@ namespace Features.FlightFieldModule.Scripts.Generation.Routes {
             float clamped = Mathf.Clamp01(difficulty);
             int halfWidth = Mathf.Max(_flightFieldConfiguration.PassageClearanceCells, Mathf.RoundToInt(profile.CorridorHalfWidthCells.Evaluate(clamped)));
             return new FieldCorridorShape(halfWidth, Mathf.Max(0f, profile.WidthVariationCells.Evaluate(clamped)), Mathf.Max(0f, profile.MeanderAmplitudeCells.Evaluate(clamped)),
-                Mathf.Max(1f, profile.MeanderPeriodCells.Evaluate(clamped)), Mathf.Clamp01(profile.CorridorDebrisDensity.Evaluate(clamped)));
+                Mathf.Max(1f, profile.MeanderPeriodCells.Evaluate(clamped)), Mathf.Clamp01(profile.CorridorDebrisDensity.Evaluate(clamped)),
+                Mathf.Max(0f, profile.MeanderWaves.Evaluate(clamped)), 0f);
         }
     }
 }

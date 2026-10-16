@@ -36,6 +36,14 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [Tooltip("Radius of a large empty area, cells, min and max.")]
         [SerializeField] private Vector2 _voidRadiusCells = new(3f, 6f);
 
+        [Header("Channels")]
+        [Tooltip("Main corridors (channels) per route: they part after the start, run side by side and meet before B.")]
+        [SerializeField] private FieldDifficultyRange _channelCount = new(1f, 1f);
+        [Tooltip("Sideways distance between neighbouring channels, as a share of the field width.")]
+        [SerializeField] private FieldDifficultyRange _channelSpreadShare = new(0f, 0f);
+        [Tooltip("Share of the route over which the channels part after the start and meet before B.")]
+        [SerializeField, Range(0f, 0.5f)] private float _channelSplitShare = 0.18f;
+
         [Header("Main route")]
         [Tooltip("Cells on each side of the main centerline; the corridor is 2 * value + 1 cells wide.")]
         [SerializeField] private FieldDifficultyRange _corridorHalfWidthCells = new(2f, 1f);
@@ -45,8 +53,10 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [SerializeField, Min(1f)] private float _widthNoiseScaleCells = 12f;
         [Tooltip("Sideways swing of the winding corridor, cells (two sines, the second half as long, 75/25).")]
         [SerializeField] private FieldDifficultyRange _meanderAmplitudeCells = new(8f, 8f);
-        [Tooltip("Length of one full swing of the main sine, cells.")]
+        [Tooltip("Length of one full swing of the main sine, cells (used when the waves below are 0).")]
         [SerializeField] private FieldDifficultyRange _meanderPeriodCells = new(20f, 20f);
+        [Tooltip("Full swings of the main sine over the whole route; 0 = the period above.")]
+        [SerializeField] private FieldDifficultyRange _meanderWaves = new(0f, 0f);
         [Tooltip("Cells near each station over which the swing fades in and out.")]
         [SerializeField, Min(0f)] private float _meanderFadeCells = 8f;
         [Tooltip("Debris density (0..1) inside the main corridor.")]
@@ -111,11 +121,15 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public FieldDifficultyRange GladeDebrisDensity => _gladeDebrisDensity;
         public FieldDifficultyRange VoidCount => _voidCount;
         public Vector2 VoidRadiusCells => _voidRadiusCells;
+        public FieldDifficultyRange ChannelCount => _channelCount;
+        public FieldDifficultyRange ChannelSpreadShare => _channelSpreadShare;
+        public float ChannelSplitShare => _channelSplitShare;
         public FieldDifficultyRange CorridorHalfWidthCells => _corridorHalfWidthCells;
         public FieldDifficultyRange WidthVariationCells => _widthVariationCells;
         public float WidthNoiseScaleCells => _widthNoiseScaleCells;
         public FieldDifficultyRange MeanderAmplitudeCells => _meanderAmplitudeCells;
         public FieldDifficultyRange MeanderPeriodCells => _meanderPeriodCells;
+        public FieldDifficultyRange MeanderWaves => _meanderWaves;
         public float MeanderFadeCells => _meanderFadeCells;
         public FieldDifficultyRange CorridorDebrisDensity => _corridorDebrisDensity;
         public FieldDifficultyRange ShoulderWidthCells => _shoulderWidthCells;

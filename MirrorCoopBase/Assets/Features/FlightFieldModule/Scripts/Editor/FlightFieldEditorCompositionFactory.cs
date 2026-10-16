@@ -2,6 +2,7 @@ using System.IO;
 using System.Linq;
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.FlightFieldModule.Scripts.Configuration;
+using Features.FlightFieldModule.Scripts.Debris;
 using Features.FlightFieldModule.Scripts.Generation;
 using Features.FlightFieldModule.Scripts.Requests;
 using Features.FlightFieldModule.Scripts.Structures;
@@ -26,7 +27,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             container.Bind<FieldStructureCatalog>().FromInstance(catalog).AsSingle();
             FlightFieldModuleInstaller.Install(container);
             return new FlightFieldEditorComposition(configuration, catalog, container.Resolve<IFlightFieldGenerator>(), container.Resolve<IFieldRequestFactory>(),
-                container.Resolve<IFieldFootprintReader>());
+                container.Resolve<IFieldFootprintReader>(), container.Resolve<IFieldDebrisLayout>(), container.Resolve<IFieldRandomFactory>());
         }
 
         public static T LoadConfiguration<T>(string address) where T : ScriptableObject {

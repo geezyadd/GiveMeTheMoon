@@ -47,6 +47,36 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             texture.Apply();
         }
 
+        // The debris rocks as discs (those off the flight plane dimmer) and the slalom way as a line of dots.
+        public void PaintSlalom(Texture2D texture, FieldSlalomReport report, float cellSize, int pixelsPerCell) {
+            float pixelsPerMeter = pixelsPerCell / cellSize;
+            foreach (FieldSlalomRock rock in report.Rocks)
+                PaintDisc(texture, rock.Position * pixelsPerMeter, Mathf.Max(1f, rock.Radius * pixelsPerMeter), rock.IsInPlane ? FlightFieldMapLegend.Rock : FlightFieldMapLegend.OffPlaneRock);
+
+            for (int i = 1; i < report.Path.Count; i++)
+                PaintLine(texture, report.Path[i - 1] * pixelsPerMeter, report.Path[i] * pixelsPerMeter, FlightFieldMapLegend.SlalomPath);
+
+            texture.Apply();
+        }
+
+        private static void PaintDisc(Texture2D texture, Vector2 center, float radius, Color color) {
+            int reach = Mathf.CeilToInt(radius);
+            for (int x = -reach; x <= reach; x++) {
+                for (int y = -reach; y <= reach; y++) {
+                    if (x * x + y * y <= radius * radius)
+                        SetPixelInside(texture, Mathf.FloorToInt(center.x) + x, Mathf.FloorToInt(center.y) + y, color);
+                }
+            }
+        }
+
+        private static void PaintLine(Texture2D texture, Vector2 from, Vector2 to, Color color) {
+            int samples = Mathf.Max(1, Mathf.CeilToInt(Vector2.Distance(from, to)));
+            for (int i = 0; i <= samples; i++) {
+                Vector2 point = Vector2.Lerp(from, to, i / (float)samples);
+                SetPixelInside(texture, Mathf.FloorToInt(point.x), Mathf.FloorToInt(point.y), color);
+            }
+        }
+
         private static void PaintCell(Texture2D texture, FlightField field, Vector2Int cell, int pixelsPerCell, FlightFieldMapLayer layer) {
             FieldCell fieldCell = field.Cells[cell];
             Color fill = layer == FlightFieldMapLayer.Density ? GetDensityColor(field.Density, cell) : GetZoneColor(fieldCell);

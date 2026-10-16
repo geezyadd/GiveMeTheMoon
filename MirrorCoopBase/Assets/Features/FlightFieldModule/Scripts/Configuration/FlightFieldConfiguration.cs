@@ -64,6 +64,10 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [SerializeField, Min(1f)] private float _shipWidthMeters = 10f;
         [Tooltip("Room kept on top of the ship width between two debris rocks, meters.")]
         [SerializeField, Min(0f)] private float _debrisGapMarginMeters = 6f;
+        [Tooltip("Spacing of the grid the rocks of passable cells are drawn on, meters: finer gives more candidate spots.")]
+        [SerializeField, Min(1f)] private float _debrisGridSpacingMeters = 25f;
+        [Tooltip("Room a passable cell's rock keeps from the nearest closed cell beyond its radius, meters. Small: the rocks stand against the walls and no free lane runs along them; a channel stays open because it is wider than the widest rock plus the ship gap plus the wall rocks' spill on both sides (checked by the slalom tests).")]
+        [SerializeField, Min(0f)] private float _debrisWallClearanceMeters = 5f;
         [Tooltip("The widest gap allowed at the flight plane inside or between occupied cells, meters; below the ship width, so a ridge is closed.")]
         [SerializeField, Min(0f)] private float _maxPlaneGapMeters = 4f;
         [Tooltip("Half of the slab around the flight plane that ridges must close, meters: half the ship's height and a margin.")]
@@ -116,6 +120,8 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public float ShipWidthMeters => _shipWidthMeters;
         public float DebrisGapMarginMeters => _debrisGapMarginMeters;
         public float DebrisMinGapMeters => _shipWidthMeters + _debrisGapMarginMeters;
+        public float DebrisGridSpacingMeters => _debrisGridSpacingMeters;
+        public float DebrisWallClearanceMeters => _debrisWallClearanceMeters;
         public float MaxPlaneGapMeters => _maxPlaneGapMeters;
         public float PlaneHalfThicknessMeters => _planeHalfThicknessMeters;
         public float MetricCruiseSpeed => _metricCruiseSpeed;

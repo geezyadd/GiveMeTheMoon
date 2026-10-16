@@ -6,6 +6,7 @@ using Features.FlightFieldModule.Scripts.Scene;
 using Features.FlightFieldModule.Scripts.Structures;
 using NUnit.Framework;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // The flight plane is closed: every field of every profile is laid out as a peer builds it (the cluster rocks of
@@ -17,6 +18,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const int SEEDS = 2;
         private const int LOOP = 0;
         private const float TOLERANCE = 0.001f;
+        private const int TURNS_SAMPLED = 500;
+        private const float SQUARE_ROOT_OF_THREE = 1.7320508f;
         private const float CELL_CENTER = 0.5f;
         // A large prime keeps the visual sequences of neighbouring placements apart (like the scene builder).
         private const int VISUAL_SEED_STEP = 486187739;
@@ -73,21 +76,19 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private FlightField Generate(FieldDifficultyProfile profile, int seed) =>
             _composition.Generator.Generate(FieldTestRequests.WithProfile(_scenario.CreateRequest(_composition.RequestFactory, seed, LOOP), profile));
 
-        // A plane rock turned by quarter turns covers its block by its one-sided extents along its own x and z, swings at
-        // most its reach into the other axis, and closes the plane slab by its one-sided vertical extent at the lowest
-        // giant the recipe can make.
+        // A dense-field rock turned any way covers its part by its smallest one-sided extent, reaches at most its reach,
+        // and closes the plane slab whatever its height jitter.
         private void AssertPlaneRockFits(FieldClusterRecipe recipe, FieldRockVisual prefab) {
-            Bounds bounds = _meshBounds.Get(prefab, Quaternion.identity, Vector3.one);
-            float halfExtent = Mathf.Min(Mathf.Min(-bounds.min.x, bounds.max.x), Mathf.Min(-bounds.min.z, bounds.max.z));
-            float reach = Mathf.Max(Mathf.Max(-bounds.min.x, bounds.max.x), Mathf.Max(-bounds.min.z, bounds.max.z));
-            float halfHeight = Mathf.Min(-bounds.min.y, bounds.max.y);
-            Assert.GreaterOrEqual(halfExtent + TOLERANCE, recipe.PlaneHalfExtentShare, $"{recipe.name}: {prefab.name} is narrower than the plane half-extent share.");
-            Assert.LessOrEqual(reach, recipe.PlaneReachShare + TOLERANCE, $"{recipe.name}: {prefab.name} reaches farther than the plane reach share.");
-            Assert.GreaterOrEqual(halfHeight + TOLERANCE, recipe.PlaneHalfHeightShare, $"{recipe.name}: {prefab.name} is flatter than the plane half-height share.");
-            float cellSize = _composition.Configuration.CellSize;
-            float lowestGiant = Mathf.Min(recipe.PlaneHalfHeightMeters.x, cellSize * recipe.PlaneMaxHeightToWidth) * (1f - recipe.PlaneHeightVariation);
-            float lowestEdge = lowestGiant - Mathf.Min(recipe.PlaneHeightJitterMeters, lowestGiant / 2f);
-            Assert.GreaterOrEqual(lowestEdge, _composition.Configuration.PlaneHalfThicknessMeters, $"{recipe.name}: the lowest giant does not close the plane slab.");
+            Random.InitState(prefab.name.Length);
+            for (int turn = 0; turn < TURNS_SAMPLED; turn++) {
+                Bounds bounds = _meshBounds.Get(prefab, Random.rotationUniform, Vector3.one);
+                float extent = Mathf.Min(Mathf.Min(Mathf.Min(-bounds.min.x, bounds.max.x), Mathf.Min(-bounds.min.z, bounds.max.z)), Mathf.Min(-bounds.min.y, bounds.max.y));
+                Assert.GreaterOrEqual(extent + TOLERANCE, recipe.PlaneHalfExtentShare, $"{recipe.name}: {prefab.name} is narrower than the plane half-extent share in some turn.");
+                Assert.LessOrEqual(bounds.extents.magnitude, recipe.PlaneReachShare * SQUARE_ROOT_OF_THREE + TOLERANCE, $"{recipe.name}: {prefab.name} bounds are too large.");
+            }
+
+            Assert.GreaterOrEqual(recipe.PlaneMinHalfHeightMeters - recipe.PlaneHeightJitterMeters, _composition.Configuration.PlaneHalfThicknessMeters,
+                $"{recipe.name}: the smallest rock does not close the plane slab.");
             Assert.LessOrEqual(recipe.PlaneGapMeters.y, _composition.Configuration.MaxPlaneGapMeters, $"{recipe.name}: the plane gap is wider than the configured one.");
         }
 

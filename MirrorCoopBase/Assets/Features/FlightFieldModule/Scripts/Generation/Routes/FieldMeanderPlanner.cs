@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Generation.Routes {
-    // A winding centerline: the straight line from start to end plus a sideways swing of two sines, the main one and
-    // one half as long (75 / 25), with random phases; the swing fades in after the start and out before the end, so
-    // the corridor leaves the takeoff and meets station B straight.
+    // A winding centerline: the straight line from start to end, moved sideways by the channel's offset (which grows
+    // in over the profile's split share after the start and fades out over it before the end, so channels part and
+    // meet) plus a swing of two sines, the main one and one half as long (75 / 25), with random phases; the swing fades
+    // in after the start and out before the end, so the corridor leaves the takeoff and meets station B straight.
     public sealed class FieldMeanderPlanner : IFieldCenterlinePlanner {
         private const float SAMPLE_STEP_CELLS = 0.25f;
         private const float MAIN_SINE_SHARE = 0.75f;
@@ -36,11 +37,13 @@ namespace Features.FlightFieldModule.Scripts.Generation.Routes {
             Vector2 normal = new(-direction.y, direction.x);
             int samples = Mathf.CeilToInt(length / SAMPLE_STEP_CELLS);
             float fade = context.Profile.MeanderFadeCells;
+            float period = shape.MeanderWaves > 0f ? length / shape.MeanderWaves : shape.MeanderPeriodCells;
+            float split = context.Profile.ChannelSplitShare * length;
             for (int i = 1; i <= samples; i++) {
                 float along = length * i / samples;
-                float angle = FULL_TURN_RADIANS * along / shape.MeanderPeriodCells;
+                float angle = FULL_TURN_RADIANS * along / period;
                 float swing = MAIN_SINE_SHARE * Mathf.Sin(angle + phases.x) + SECOND_SINE_SHARE * Mathf.Sin(2f * angle + phases.y);
-                float offset = Fade(along, length, fade) * shape.MeanderAmplitudeCells * swing;
+                float offset = Fade(along, length, fade) * shape.MeanderAmplitudeCells * swing + Fade(along, length, split) * shape.LateralOffsetCells;
                 _fieldPathRasterizer.Append(path, _fieldPathRasterizer.ClampInside(start + direction * along + normal * offset, inset, context.Frame.Size));
             }
         }

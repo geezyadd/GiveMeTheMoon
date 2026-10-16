@@ -14,7 +14,11 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // field. The fields are generated in parallel (the generation touches no Unity object and keeps no state); the
     // generation time is measured on its own, one field after another. The balance table of every profile goes to
     // the log (metric failures, zone shares, L_free / L_route, dodges per minute, generation time).
+    // Each check walks 200 fields of every profile at a loop, rebuilding their occupied cells: a loop 10 check takes
+    // minutes with the Channels profiles, whose fields are almost all wall.
+    [Timeout(TEST_TIMEOUT_MILLISECONDS)]
     public sealed class FlightFieldGenerationTests {
+        private const int TEST_TIMEOUT_MILLISECONDS = 900000;
         private const int SEED_COUNT = 200;
         private const int FIRST_SEED = 1;
         // Share of fields per profile and loop that may miss the "route matters" metric after the repair rounds.
@@ -119,9 +123,11 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 float blocked = fields.Average(field => field.Metrics.BlockedShare);
                 float debris = fields.Average(field => field.Metrics.DebrisShare);
                 float difficulty = fields[0].Difficulty;
+                float expectedBlocked = Mathf.Min(profile.BlockedShare.Evaluate(difficulty), fields.Average(UnreservedShare));
+                float expectedDebris = Mathf.Max(profile.DebrisShare.Evaluate(difficulty), fields.Average(CorridorDebrisShare));
 
-                Assert.AreEqual(profile.BlockedShare.Evaluate(difficulty), blocked, tolerance, $"{profile.Id} loop {loop}: blocked share.");
-                Assert.AreEqual(profile.DebrisShare.Evaluate(difficulty), debris, tolerance, $"{profile.Id} loop {loop}: debris share.");
+                Assert.AreEqual(expectedBlocked, blocked, tolerance, $"{profile.Id} loop {loop}: blocked share.");
+                Assert.AreEqual(expectedDebris, debris, tolerance, $"{profile.Id} loop {loop}: debris share.");
             }
         }
 
@@ -223,6 +229,20 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
             return cells;
         }
+
+        // A profile may ask for more closed cells than the field has outside its reserved zones (Channels close all of
+        // them), and for less debris than its corridors carry: then the field gives what it can.
+        private static float UnreservedShare(FlightField field) =>
+            field.Cells.GetIndexes(IsUnreserved).Count / (float)(field.Frame.LengthCells * field.Frame.WidthCells);
+
+        private static float CorridorDebrisShare(FlightField field) =>
+            field.Cells.GetIndexes(IsCorridorDebris).Count / (float)(field.Frame.LengthCells * field.Frame.WidthCells);
+
+        private static bool IsUnreserved(FieldCell cell) =>
+            !cell.IsReserved;
+
+        private static bool IsCorridorDebris(FieldCell cell) =>
+            cell.HasDebris && cell.IsCorridor;
 
         private static bool HasDebris(FieldCell cell) =>
             cell.HasDebris;

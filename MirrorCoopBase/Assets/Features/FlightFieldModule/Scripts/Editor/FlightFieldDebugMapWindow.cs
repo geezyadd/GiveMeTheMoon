@@ -22,6 +22,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
         private const int MAX_LOOP = 30;
         private const float LEGEND_SWATCH_SIZE = 12f;
         private const double LIVE_REFRESH_SECONDS = 0.5;
+        private const float METERS_PER_KILOMETER = 1000f;
         private const string NO_LIVE_FIELD = "No live field: enter Play mode as host and launch the ship.";
 
         [SerializeField] private int _seed = 1;
@@ -30,6 +31,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
         [SerializeField] private int _profileChoice;
         [SerializeField] private FlightFieldMapLayer _layer = FlightFieldMapLayer.Zones;
         [SerializeField] private bool _isShowingPaths = true;
+        [SerializeField] private bool _isShowingSlalom = true;
         [SerializeField] private FieldDebugScenario _scenario = new();
         [SerializeField] private bool _isLive;
 
@@ -96,6 +98,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             _profileChoice = EditorGUILayout.Popup("Profile", _profileChoice, GetProfileChoices());
             _layer = (FlightFieldMapLayer)EditorGUILayout.EnumPopup("Layer", _layer);
             _isShowingPaths = EditorGUILayout.Toggle("Shortest ways", _isShowingPaths);
+            _isShowingSlalom = EditorGUILayout.Toggle("Rocks and slalom way", _isShowingSlalom);
             _pixelsPerCell = EditorGUILayout.IntSlider("Pixels per cell", _pixelsPerCell, MIN_PIXELS_PER_CELL, MAX_PIXELS_PER_CELL);
             _serializedWindow.Update();
             EditorGUILayout.PropertyField(_scenarioProperty, true);
@@ -143,6 +146,9 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             DrawLegendEntry(FlightFieldMapLegend.StationA, "A");
             DrawLegendEntry(FlightFieldMapLegend.StationB, "B");
             DrawLegendEntry(FlightFieldMapLegend.Ship, "Ship");
+            DrawLegendEntry(FlightFieldMapLegend.Rock, "Rock");
+            DrawLegendEntry(FlightFieldMapLegend.OffPlaneRock, "Rock off plane");
+            DrawLegendEntry(FlightFieldMapLegend.SlalomPath, "Slalom way");
             EditorGUILayout.EndHorizontal();
         }
 
@@ -159,9 +165,22 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             FlightField field = composition.Generator.Generate(request);
             double generationMilliseconds = stopwatch.Elapsed.TotalMilliseconds;
             DestroyMap();
-            _map = new FlightFieldMapPainter().Paint(field, _pixelsPerCell, _layer, _isShowingPaths);
+            FlightFieldMapPainter painter = new();
+            _map = painter.Paint(field, _pixelsPerCell, _layer, _isShowingPaths);
             FillSummary(field, generationMilliseconds);
+            if (_isShowingSlalom)
+                ShowSlalom(painter, new FieldSlalomAnalyzer(composition).Analyze(field), field.Frame.CellSize);
+
             Repaint();
+        }
+
+        private void ShowSlalom(FlightFieldMapPainter painter, FieldSlalomReport report, float cellSize) {
+            painter.PaintSlalom(_map, report, cellSize, _pixelsPerCell);
+            string way = report.IsPathFound
+                ? $"way {report.PathLengthMeters:0} m vs straight {report.StraightLengthMeters:0} m ({report.PathToStraightRatio:0.00}), narrowest gap {report.MinGapMeters:0.0} m"
+                : "NO WAY for the ship";
+            _summaryLines.Add($"Slalom: {way}; rocks {report.Rocks.Count}, in main channels {report.ChannelRocks} over {report.ChannelLengthMeters / METERS_PER_KILOMETER:0.0} km "
+                + $"= {report.RocksPerKilometer:0} per km");
         }
 
         private FieldRequest WithChosenProfile(FieldRequest request, FlightFieldConfiguration configuration) {
