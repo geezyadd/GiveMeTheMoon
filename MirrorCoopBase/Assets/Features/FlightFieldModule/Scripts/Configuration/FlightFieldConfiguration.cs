@@ -39,8 +39,10 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [SerializeField, Min(1)] private int _marginBehindACells = 5;
         [Tooltip("Cells of the field behind station B.")]
         [SerializeField, Min(1)] private int _marginBehindBCells = 5;
-        [Tooltip("The least number of cells on each side of the A -> B axis; a short flight still gets a wide field.")]
+        [Tooltip("The least number of cells on each side of the A -> B axis, and the room kept beside the cruise start when the ship starts at an angle to the axis.")]
         [SerializeField, Min(1)] private int _sideMarginCells = 8;
+        [Tooltip("Cells of the field across the A -> B axis; the length along it follows the flight distance. Widened when the cruise start lies far off the axis.")]
+        [SerializeField, Min(1)] private int _fieldWidthCells = 61;
 
         [Header("Empty zones")]
         [Tooltip("Radius around station A kept empty, meters.")]
@@ -72,14 +74,25 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [Tooltip("Seeds tried before the route corridors are cleared by force.")]
         [SerializeField, Min(1)] private int _maxSeedAttempts = 3;
 
+        [Header("Publishing")]
+        [Tooltip("Placements, routes and route cells written into the live field model per batch; one placement is about 23 bytes, so a batch stays well below the 16 KB Telepathy message limit.")]
+        [SerializeField, Min(1)] private int _publishEntriesPerBatch = 300;
+        [Tooltip("Seconds between two publish batches; several network broadcasts long, so one Mirror delta never carries two batches.")]
+        [SerializeField, Min(0.01f)] private float _publishBatchIntervalSeconds = 0.1f;
+
         [Header("Building")]
-        [Tooltip("Local structures every peer builds per frame from the live field; the 9 s takeoff hides the whole field.")]
+        [Tooltip("Local structures every peer builds per frame from the live field.")]
         [SerializeField, Min(1)] private int _structuresBuiltPerFrame = 16;
+        [Tooltip("A local structure is built when its placement is within this horizontal distance of the local ship, meters.")]
+        [SerializeField, Min(1f)] private float _buildRadius = 1300f;
+        [Tooltip("A built local structure goes back to the pool beyond this horizontal distance of the local ship, meters; above the build radius so a structure on the edge does not flicker.")]
+        [SerializeField, Min(1f)] private float _releaseRadius = 1500f;
 
         public float CellSize => _cellSize;
         public int MarginBehindACells => _marginBehindACells;
         public int MarginBehindBCells => _marginBehindBCells;
         public int SideMarginCells => _sideMarginCells;
+        public int FieldWidthCells => _fieldWidthCells;
         public float StationAZoneRadius => _stationAZoneRadius;
         public float StationBZoneRadius => _stationBZoneRadius;
         public float TakeoffCorridorHalfWidth => _takeoffCorridorHalfWidth;
@@ -92,6 +105,10 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public int PassageClearanceCells => _passageClearanceCells;
         public int MaxRepairRounds => _maxRepairRounds;
         public int MaxSeedAttempts => _maxSeedAttempts;
+        public int PublishEntriesPerBatch => _publishEntriesPerBatch;
+        public float PublishBatchIntervalSeconds => _publishBatchIntervalSeconds;
         public int StructuresBuiltPerFrame => _structuresBuiltPerFrame;
+        public float BuildRadius => _buildRadius;
+        public float ReleaseRadius => _releaseRadius;
     }
 }

@@ -25,7 +25,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
         private FieldRoute CreateRoute(FieldGenerationContext context, int routeId, float difficulty) {
             FieldCorridorShape shape = _fieldRouteShaper.Shape(difficulty);
             List<Vector2Int> centerline = _fieldCenterlinePlanner.Plan(context, shape);
-            foreach (Vector2Int cell in _fieldCorridorMapper.Map(context.Frame.SideCells, centerline, shape.HalfWidthCells)) {
+            foreach (Vector2Int cell in _fieldCorridorMapper.Map(context.Frame.Size, centerline, shape.HalfWidthCells)) {
                 if (!context.Cells[cell].IsReserved)
                     context.Cells[cell] = context.Cells[cell].WithReserve(FieldReserveKind.RouteCorridor);
             }

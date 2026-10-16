@@ -29,6 +29,8 @@ namespace Features.ShipModule.Scripts.Debug {
         private const float StrafeSeconds = 2f;
         private const float SprintSeconds = 2f;
         private const float JumpGapSeconds = 1.15f;
+        // The flight length the harness was tuned on (the old 20 s cruise); real flights are minutes long.
+        private const float FlightSeconds = 20f;
 
         public static int Done;
         public static string Status = "idle";
@@ -38,6 +40,7 @@ namespace Features.ShipModule.Scripts.Debug {
         private readonly IConnectionSessionService _connection;
         private readonly IGameFlowStateMachineService _flow;
         private readonly IShipRouteDebug _route;
+        private readonly IShipFlightLengthDebug _flightLength;
         private readonly IShipWorldShiftDebug _worldShift;
         private readonly IReadOnlyShipRunModel _model;
         private readonly ShipStationCatalog _stations;
@@ -109,6 +112,7 @@ namespace Features.ShipModule.Scripts.Debug {
             IConnectionSessionService connection,
             IGameFlowStateMachineService flow,
             IShipRouteDebug route,
+            IShipFlightLengthDebug flightLength,
             IShipWorldShiftDebug worldShift,
             IReadOnlyShipRunModel model,
             ShipStationCatalog stations) {
@@ -117,6 +121,7 @@ namespace Features.ShipModule.Scripts.Debug {
             _connection = connection;
             _flow = flow;
             _route = route;
+            _flightLength = flightLength;
             _worldShift = worldShift;
             _model = model;
             _stations = stations;
@@ -314,6 +319,7 @@ namespace Features.ShipModule.Scripts.Debug {
                 }
             }
 
+            _flightLength.DebugUseFlightSeconds(FlightSeconds);
             if (hover)
                 _route.DebugUseFlightMode(ShipFlightMode.HoverInPlace);
             else

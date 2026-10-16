@@ -4,8 +4,10 @@ using Features.MatrixModule.Scripts.MatrixFactory;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Generation.Steps {
-    // Frame: a square field on the flight plane, side = A -> B in cells + margins behind A and B (at least the side
-    // margins on each side of the axis), the A -> B axis along the middle row.
+    // Frame: a rectangle on the flight plane, length = A -> B in cells + margins behind A and B (at least the side
+    // margins on each side of the axis), width = the configured field width, the A -> B axis along the middle row.
+    // A cruise start far off the axis (the ship takes off at an angle to it) widens the field so the side margin
+    // stays beside it for the turn.
     public sealed class FieldFrameStep : IFieldGenerationStep {
         private const float MIN_AXIS_LENGTH = 0.01f;
 
@@ -21,7 +23,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             FieldRequest request = context.Request;
             FieldFrame frame = CreateFrame(request);
             context.Frame = frame;
-            context.Cells = _matrixFactory.Create(frame.SideCells, frame.SideCells, default(FieldCell));
+            context.Cells = _matrixFactory.Create(frame.LengthCells, frame.WidthCells, default(FieldCell));
             context.StationACell = frame.WorldToCell(request.StationA);
             context.StationBCell = frame.WorldToCell(request.StationB);
             context.CruiseStartCell = frame.WorldToCell(request.CruiseStart);
@@ -33,13 +35,26 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             axis.y = 0f;
             float distance = axis.magnitude;
             Vector3 forward = distance > MIN_AXIS_LENGTH ? axis / distance : Vector3.forward;
-            int fittedSide = Mathf.Max(1, Mathf.CeilToInt(distance / cellSize)) + _flightFieldConfiguration.MarginBehindACells + _flightFieldConfiguration.MarginBehindBCells;
-            int side = Mathf.Max(fittedSide, _flightFieldConfiguration.SideMarginCells * 2 + 1);
-            int cellsBehindA = _flightFieldConfiguration.MarginBehindACells + (side - fittedSide) / 2;
+            int minSide = _flightFieldConfiguration.SideMarginCells * 2 + 1;
+            int fittedLength = Mathf.Max(1, Mathf.CeilToInt(distance / cellSize)) + _flightFieldConfiguration.MarginBehindACells + _flightFieldConfiguration.MarginBehindBCells;
+            int length = Mathf.Max(fittedLength, minSide);
+            int width = MakeOdd(Mathf.Max(_flightFieldConfiguration.FieldWidthCells, minSide, CruiseStartWidth(request, forward, cellSize)));
+            int cellsBehindA = _flightFieldConfiguration.MarginBehindACells + (length - fittedLength) / 2;
             Vector3 stationAOnPlane = new(request.StationA.x, request.CruiseStart.y, request.StationA.z);
             Vector3 right = Vector3.Cross(Vector3.up, forward);
-            Vector3 origin = stationAOnPlane - forward * (cellsBehindA * cellSize + cellSize / 2f) - right * (side / 2 * cellSize + cellSize / 2f);
-            return new FieldFrame(origin, forward, cellSize, side);
+            Vector3 origin = stationAOnPlane - forward * (cellsBehindA * cellSize + cellSize / 2f) - right * (width / 2 * cellSize + cellSize / 2f);
+            return new FieldFrame(origin, forward, cellSize, length, width);
         }
+
+        // The width that keeps the side margin beside the cruise start on both sides of the axis.
+        private int CruiseStartWidth(FieldRequest request, Vector3 forward, float cellSize) {
+            Vector3 offset = request.CruiseStart - request.StationA;
+            float sideways = Mathf.Abs(Vector3.Dot(offset, Vector3.Cross(Vector3.up, forward)));
+            return (Mathf.CeilToInt(sideways / cellSize) + _flightFieldConfiguration.SideMarginCells) * 2 + 1;
+        }
+
+        // An odd width puts the A -> B axis on the middle row with the same cells on each side.
+        private static int MakeOdd(int cells) =>
+            cells % 2 == 0 ? cells + 1 : cells;
     }
 }

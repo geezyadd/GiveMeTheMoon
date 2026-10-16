@@ -1,39 +1,43 @@
+using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Network.Generated;
 using UnityEngine;
+using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Network {
     // Writes a generated field into the live field model: the placements are the content every peer builds from, the
-    // routes are kept for the debug map and later features. The scalar state goes last, so whoever reacts to a new
-    // field number already finds its lists. All of it goes out in one broadcast: a field of a few hundred placements
-    // is a few kilobytes, far below the transports' reliable message limit, so it is not sent in parts.
-    public sealed class FlightFieldPublisher : IFlightFieldPublisher {
+    // routes are kept for the debug map and later features. A long field is tens of kilobytes, above the Telepathy
+    // message limit (16 KB), so it goes out in batches (FieldPublishJob), one batch per publish interval, which spans
+    // several network broadcasts, so every Mirror delta carries at most one batch. The scalar state with the new
+    // number goes last. A new field or Clear drops a publish still in progress.
+    public sealed class FlightFieldPublisher : IFlightFieldPublisher, ITickable {
         private readonly IFlightFieldSyncBindingModel _flightFieldSyncBindingModel;
+        private readonly FlightFieldConfiguration _flightFieldConfiguration;
 
-        public FlightFieldPublisher(IFlightFieldSyncBindingModel flightFieldSyncBindingModel) =>
+        private FieldPublishJob _job;
+        private float _nextBatchTime;
+
+        public FlightFieldPublisher(IFlightFieldSyncBindingModel flightFieldSyncBindingModel, FlightFieldConfiguration flightFieldConfiguration) {
             _flightFieldSyncBindingModel = flightFieldSyncBindingModel;
+            _flightFieldConfiguration = flightFieldConfiguration;
+        }
 
         public void Publish(FlightField field, int number) {
             LiveFieldBridge bridge = _flightFieldSyncBindingModel.Bridge;
+            bridge.ServerSetState(default);
             ClearLists(bridge);
-            foreach (FieldPlacement placement in field.Placements)
-                bridge.ServerAddPlacements(new FieldPlacementEntry { StructureId = placement.StructureId, Anchor = placement.Anchor, Rotation = placement.Rotation });
+            _job = new FieldPublishJob(field, number, _flightFieldConfiguration.PublishEntriesPerBatch);
+            WriteNextBatch();
+        }
 
-            foreach (FieldRoute route in field.Routes)
-                PublishRoute(bridge, route);
-
-            bridge.ServerSetState(new LiveFieldState {
-                Number = number,
-                Seed = field.Seed,
-                Origin = field.Frame.Origin,
-                Forward = field.Frame.Forward,
-                CellSize = field.Frame.CellSize,
-                SideCells = field.Frame.SideCells,
-            });
+        public void Tick() {
+            if (_job != null && Time.unscaledTime >= _nextBatchTime)
+                WriteNextBatch();
         }
 
         // The bridge is gone when the game scene stops before the run is reset; then there is nothing to clear.
         public void Clear() {
+            DropJob();
             if (!_flightFieldSyncBindingModel.IsBound)
                 return;
 
@@ -43,6 +47,7 @@ namespace Features.FlightFieldModule.Scripts.Network {
         }
 
         public void ShiftOrigin(Vector3 delta) {
+            _job?.ShiftOrigin(delta);
             if (!_flightFieldSyncBindingModel.IsBound)
                 return;
 
@@ -55,11 +60,21 @@ namespace Features.FlightFieldModule.Scripts.Network {
             bridge.ServerSetState(state);
         }
 
-        private static void PublishRoute(LiveFieldBridge bridge, FieldRoute route) {
-            bridge.ServerAddRoutes(new FieldRouteEntry { Id = route.Id, Difficulty = route.Difficulty, CorridorWidthCells = route.CorridorWidthCells });
-            foreach (Vector2Int cell in route.Centerline)
-                bridge.ServerAddRouteCells(new FieldRouteCellEntry { RouteId = route.Id, Cell = cell });
+        // The bridge can stop with the game scene while a publish is in progress: the publish ends with it.
+        private void WriteNextBatch() {
+            if (!_flightFieldSyncBindingModel.IsBound) {
+                DropJob();
+                return;
+            }
+
+            _job.WriteNextBatch(new LiveFieldBridgePublishTarget(_flightFieldSyncBindingModel.Bridge));
+            _nextBatchTime = Time.unscaledTime + _flightFieldConfiguration.PublishBatchIntervalSeconds;
+            if (_job.IsDone)
+                DropJob();
         }
+
+        private void DropJob() =>
+            _job = null;
 
         private static void ClearLists(LiveFieldBridge bridge) {
             bridge.ServerClearPlacements();

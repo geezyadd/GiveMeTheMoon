@@ -9,9 +9,9 @@ namespace Features.FlightFieldModule.Scripts.Generation.Placement {
             Vector2 start = ToPlane(segmentStart);
             Vector2 end = ToPlane(segmentEnd);
             float reach = radius + context.Frame.CellSize / 2f;
-            int side = context.Frame.SideCells;
-            for (int y = 0; y < side; y++) {
-                for (int x = 0; x < side; x++)
+            Vector2Int size = context.Frame.Size;
+            for (int y = 0; y < size.y; y++) {
+                for (int x = 0; x < size.x; x++)
                     ReserveCell(context, new Vector2Int(x, y), start, end, reach, reserve);
             }
         }

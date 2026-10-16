@@ -1,6 +1,7 @@
 #if UNITY_INCLUDE_TESTS
 using System.Collections;
 using System.Collections.Generic;
+using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
 using Features.FlightFieldModule.Scripts.Scene;
@@ -8,6 +9,7 @@ using Features.FlightFieldModule.Scripts.Server;
 using Features.FlightFieldModule.Scripts.Structures;
 using Features.ShipModule.Scripts;
 using Mirror;
+using Tests.Shared;
 using NUnit.Framework;
 using UnityEngine;
 using Zenject;
@@ -16,8 +18,9 @@ using UnityEditor;
 #endif
 
 namespace Tests.PlayMode.LoopSmoke {
-    // The flight field on the host. In cruise a new field stands: one active local object per local placement under
-    // the field root, one Mirror object per networked placement (the test's catalog adds the debug networked beacon).
+    // The flight field on the host. In cruise a new field stands: one active local object per local placement near
+    // the camera under the field root (every one within the build radius, none beyond the release radius), one Mirror
+    // object per networked placement (the test's catalog adds the debug networked beacon).
     // After landing nothing of it is left, also for a player who joins at that station. A world shift in flight moves
     // the field with the ship. Pooled objects never grow past what the fields needed.
     public sealed class LoopSmokeFieldCheck {
@@ -25,6 +28,9 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float CLEAR_TIMEOUT_SECONDS = 5f;
         private const float SHIFT_TOLERANCE = 0.01f;
         private const float MIN_SHIFT = 1f;
+        // The camera moves between the last streaming pass and the check; the system measures from the anchor cell.
+        private const float STREAMING_EDGE_METERS = 50f;
+        private const float CELL_CENTER = 0.5f;
 #if UNITY_EDITOR
         private const string DEBUG_NETWORKED_STRUCTURE_PATH = "Assets/Features/FlightFieldModule/GameResources/Debug/Debug_NetworkBeacon.asset";
         private const string STRUCTURES_PROPERTY = "_structures";
@@ -35,6 +41,8 @@ namespace Tests.PlayMode.LoopSmoke {
         private readonly IReadOnlyFlightFieldSceneModel _flightFieldSceneModel;
         private readonly IReadOnlyFlightFieldServerModel _flightFieldServerModel;
         private readonly FieldStructureCatalog _fieldStructureCatalog;
+        private readonly FlightFieldConfiguration _flightFieldConfiguration;
+        private readonly IFieldStreamingViewpoint _fieldStreamingViewpoint;
 
         private int _lastFieldNumber;
         private int _networkedPlacementsSeen;
@@ -50,6 +58,8 @@ namespace Tests.PlayMode.LoopSmoke {
             _flightFieldSceneModel = container.Resolve<IReadOnlyFlightFieldSceneModel>();
             _flightFieldServerModel = container.Resolve<IReadOnlyFlightFieldServerModel>();
             _fieldStructureCatalog = container.Resolve<FieldStructureCatalog>();
+            _flightFieldConfiguration = SessionQueries.Resolve<FlightFieldConfiguration>();
+            _fieldStreamingViewpoint = SessionQueries.Resolve<IFieldStreamingViewpoint>();
         }
 
         // A copy of the game's catalog with the debug networked beacon, which the shipped catalog does not have.
@@ -74,15 +84,20 @@ namespace Tests.PlayMode.LoopSmoke {
 
             Dictionary<string, int> localByStructure = CountLocalPlacementsByStructure(out int networkedPlacements);
             int localPlacements = Sum(localByStructure);
-            Assert.AreEqual(localPlacements, CountActiveLocalObjects(), $"Loop {loopIndex}: local field objects differ from the local placements.");
+            int activeLocalObjects = CountActiveLocalObjects();
+            int mustStand = CountLocalPlacementsWithin(_flightFieldConfiguration.BuildRadius - STREAMING_EDGE_METERS);
+            int mayStand = CountLocalPlacementsWithin(_flightFieldConfiguration.ReleaseRadius + STREAMING_EDGE_METERS);
+            Assert.GreaterOrEqual(activeLocalObjects, mustStand, $"Loop {loopIndex}: local placements within the build radius are not built.");
+            Assert.LessOrEqual(activeLocalObjects, mayStand, $"Loop {loopIndex}: local field objects stand beyond the release radius.");
             Assert.AreEqual(networkedPlacements, CountSpawnedNetworkedStructures(), $"Loop {loopIndex}: Mirror field objects differ from the networked placements.");
             _networkedPlacementsSeen += networkedPlacements;
             LastPlacements = localPlacements + networkedPlacements;
             LastFieldObjects = CountActiveLocalObjects() + CountSpawnedNetworkedStructures();
             RememberMostLocalObjects(localByStructure);
             Assert.LessOrEqual(_flightFieldSceneModel.Root.childCount, Sum(_mostLocalObjectsByStructure), "The pool holds more objects than any field needed.");
-            Debug.Log($"[LoopSmoke] loop {loopIndex} field {_liveFieldModel.Number}: {_liveFieldModel.SideCells} x {_liveFieldModel.SideCells} cells, "
-                      + $"{localPlacements} local + {networkedPlacements} networked placements, {CountActiveLocalObjects()} local objects active, "
+            Debug.Log($"[LoopSmoke] loop {loopIndex} field {_liveFieldModel.Number}: {_liveFieldModel.LengthCells} x {_liveFieldModel.WidthCells} cells, "
+                      + $"{localPlacements} local + {networkedPlacements} networked placements, {activeLocalObjects} local objects active "
+                      + $"({mustStand} within the build radius), "
                       + $"{_flightFieldSceneModel.Root.childCount} pooled in all");
         }
 
@@ -120,6 +135,23 @@ namespace Tests.PlayMode.LoopSmoke {
 
         private bool IsLiveFieldBuilt() =>
             _liveFieldModel.Number != LiveFieldNumbers.NO_FIELD && _flightFieldSceneModel.BuiltNumber == _liveFieldModel.Number && _flightFieldSceneModel.IsBuilt;
+
+        private int CountLocalPlacementsWithin(float radius) {
+            Vector3 viewpoint = _flightFieldSceneModel.Root.InverseTransformPoint(_fieldStreamingViewpoint.GetPosition());
+            Vector2 viewpointOnPlane = new Vector2(viewpoint.x, viewpoint.z);
+            float cellSize = _liveFieldModel.CellSize;
+            int count = 0;
+            foreach (FieldPlacementEntry placement in _liveFieldModel.Placements) {
+                if (_fieldStructureCatalog.GetRequired(placement.StructureId).IsNetworked)
+                    continue;
+
+                Vector2 placementOnPlane = new Vector2((placement.Anchor.y + CELL_CENTER) * cellSize, (placement.Anchor.x + CELL_CENTER) * cellSize);
+                if ((placementOnPlane - viewpointOnPlane).sqrMagnitude <= radius * radius)
+                    count++;
+            }
+
+            return count;
+        }
 
         private bool IsSceneFieldCleared() =>
             _flightFieldSceneModel.BuiltNumber == LiveFieldNumbers.NO_FIELD;

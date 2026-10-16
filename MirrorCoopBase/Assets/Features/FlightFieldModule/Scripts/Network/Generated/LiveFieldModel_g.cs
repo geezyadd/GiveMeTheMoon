@@ -13,7 +13,8 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public Vector3 Origin { get; private set; }
         public Vector3 Forward { get; private set; }
         public float CellSize { get; private set; }
-        public int SideCells { get; private set; }
+        public int LengthCells { get; private set; }
+        public int WidthCells { get; private set; }
         private readonly List<global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> _placements = new();
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> Placements => _placements;
         private readonly List<global::Features.FlightFieldModule.Scripts.Network.FieldRouteEntry> _routes = new();
@@ -26,7 +27,8 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public event Action OnOriginChanged;
         public event Action OnForwardChanged;
         public event Action OnCellSizeChanged;
-        public event Action OnSideCellsChanged;
+        public event Action OnLengthCellsChanged;
+        public event Action OnWidthCellsChanged;
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> OnPlacementsAdded;
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> OnPlacementsRemoved;
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> OnPlacementsSet;
@@ -49,13 +51,15 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
             bool originChanged = EqualityComparer<Vector3>.Default.Equals(Origin, state.Origin) == false;
             bool forwardChanged = EqualityComparer<Vector3>.Default.Equals(Forward, state.Forward) == false;
             bool cellSizeChanged = EqualityComparer<float>.Default.Equals(CellSize, state.CellSize) == false;
-            bool sideCellsChanged = EqualityComparer<int>.Default.Equals(SideCells, state.SideCells) == false;
+            bool lengthCellsChanged = EqualityComparer<int>.Default.Equals(LengthCells, state.LengthCells) == false;
+            bool widthCellsChanged = EqualityComparer<int>.Default.Equals(WidthCells, state.WidthCells) == false;
             Number = state.Number;
             Seed = state.Seed;
             Origin = state.Origin;
             Forward = state.Forward;
             CellSize = state.CellSize;
-            SideCells = state.SideCells;
+            LengthCells = state.LengthCells;
+            WidthCells = state.WidthCells;
             if (numberChanged)
                 OnNumberChanged?.Invoke();
             if (seedChanged)
@@ -66,9 +70,11 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
                 OnForwardChanged?.Invoke();
             if (cellSizeChanged)
                 OnCellSizeChanged?.Invoke();
-            if (sideCellsChanged)
-                OnSideCellsChanged?.Invoke();
-            if (numberChanged || seedChanged || originChanged || forwardChanged || cellSizeChanged || sideCellsChanged)
+            if (lengthCellsChanged)
+                OnLengthCellsChanged?.Invoke();
+            if (widthCellsChanged)
+                OnWidthCellsChanged?.Invoke();
+            if (numberChanged || seedChanged || originChanged || forwardChanged || cellSizeChanged || lengthCellsChanged || widthCellsChanged)
                 RaiseChanged();
         }
 

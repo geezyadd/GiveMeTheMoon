@@ -7,7 +7,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         public bool HasRoot { get; }
         // The live field number the local structures belong to; LiveFieldNumbers.NO_FIELD while none stands.
         public int BuiltNumber { get; }
-        // Every placement of BuiltNumber has been gone through; building runs over several frames.
+        // Every placement of BuiltNumber within the build radius of the viewpoint stands; building runs over several frames.
         public bool IsBuilt { get; }
     }
 }

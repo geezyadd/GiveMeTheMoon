@@ -20,11 +20,12 @@ namespace Features.FlightFieldModule.Scripts.Generation.Passage {
             CreatePassableMatrix(cells).PathFinding(route.Start, route.End, isDiagonalMove: true, predicate: IsPassable).Count > 0;
 
         private IMatrix<bool> CreatePassableMatrix(IMatrix<FieldCell> cells) {
-            int side = cells.GetRowCount();
+            int width = cells.GetColumnCount();
+            int height = cells.GetRowCount();
             int clearance = _flightFieldConfiguration.PassageClearanceCells;
-            IMatrix<bool> passable = _matrixFactory.Create(side, side, false);
-            for (int y = 0; y < side; y++) {
-                for (int x = 0; x < side; x++)
+            IMatrix<bool> passable = _matrixFactory.Create(width, height, false);
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++)
                     passable.SetValue(x, y, HasClearance(cells, x, y, clearance));
             }
 

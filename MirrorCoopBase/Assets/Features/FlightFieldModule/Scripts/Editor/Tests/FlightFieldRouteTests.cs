@@ -18,7 +18,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const float HARD = 1f;
         private const int SEED = 17;
         private const int TIMING_SEEDS = 20;
-        private const int TIMING_SIDE_CELLS = 40;
+        private const int TIMING_LENGTH_CELLS = 40;
         private const double MAX_AVERAGE_MILLISECONDS = 50.0;
         private const float TAKEOFF_FORWARD = 350f;
         private const float TAKEOFF_HEIGHT = 100f;
@@ -90,17 +90,17 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         }
 
         [Test]
-        public void WhenFieldIs40x40_ThenGenerationIsFasterThanTheThreshold() {
-            float distance = (TIMING_SIDE_CELLS - _composition.Configuration.MarginBehindACells - _composition.Configuration.MarginBehindBCells - 1) * _composition.Configuration.CellSize
+        public void WhenFieldIs40CellsLong_ThenGenerationIsFasterThanTheThreshold() {
+            float distance = (TIMING_LENGTH_CELLS - _composition.Configuration.MarginBehindACells - _composition.Configuration.MarginBehindBCells - 1) * _composition.Configuration.CellSize
                 + _composition.Configuration.CellSize / 2f;
-            Assert.AreEqual(TIMING_SIDE_CELLS, _composition.Generator.Generate(CreateStraightRequestAt(SEED, distance, EASY)).Frame.SideCells);
+            Assert.AreEqual(TIMING_LENGTH_CELLS, _composition.Generator.Generate(CreateStraightRequestAt(SEED, distance, EASY)).Frame.LengthCells);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             for (int seed = 0; seed < TIMING_SEEDS; seed++)
                 _composition.Generator.Generate(CreateStraightRequestAt(seed, distance, EASY));
 
             double averageMilliseconds = stopwatch.Elapsed.TotalMilliseconds / TIMING_SEEDS;
-            Assert.Less(averageMilliseconds, MAX_AVERAGE_MILLISECONDS, $"A 40 x 40 field takes {averageMilliseconds:0.0} ms on average.");
+            Assert.Less(averageMilliseconds, MAX_AVERAGE_MILLISECONDS, $"A 40-cell long field takes {averageMilliseconds:0.0} ms on average.");
         }
 
         private static FieldRequest CreateStraightRequest(int seed, params float[] difficulties) =>

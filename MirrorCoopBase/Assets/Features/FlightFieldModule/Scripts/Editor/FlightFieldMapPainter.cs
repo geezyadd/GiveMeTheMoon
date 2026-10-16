@@ -10,12 +10,12 @@ namespace Features.FlightFieldModule.Scripts.Editor {
         private const int MARKER_INSET_DIVIDER = 4;
 
         public Texture2D Paint(FlightField field, int pixelsPerCell) {
-            int side = field.Frame.SideCells;
-            Texture2D texture = new(side * pixelsPerCell, side * pixelsPerCell, TextureFormat.RGBA32, false) {
+            Vector2Int size = field.Frame.Size;
+            Texture2D texture = new(size.y * pixelsPerCell, size.x * pixelsPerCell, TextureFormat.RGBA32, false) {
                 filterMode = FilterMode.Point,
             };
-            for (int x = 0; x < side; x++) {
-                for (int y = 0; y < side; y++)
+            for (int x = 0; x < size.x; x++) {
+                for (int y = 0; y < size.y; y++)
                     PaintCell(texture, field.Cells, new Vector2Int(x, y), pixelsPerCell);
             }
 

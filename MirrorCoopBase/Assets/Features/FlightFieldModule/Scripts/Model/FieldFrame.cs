@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Model {
     // The coordinate system of a field: every cell <-> world conversion goes through it. Matrix x grows along Forward
-    // (A -> B), matrix y along Right. A world shift changes only Origin.
+    // (A -> B) over LengthCells, matrix y along Right over WidthCells. A world shift changes only Origin.
     public readonly struct FieldFrame {
         private const float CELL_CENTER = 0.5f;
 
@@ -10,15 +10,19 @@ namespace Features.FlightFieldModule.Scripts.Model {
         public Vector3 Origin { get; }
         public Vector3 Forward { get; }
         public float CellSize { get; }
-        public int SideCells { get; }
+        public int LengthCells { get; }
+        public int WidthCells { get; }
+        // Matrix size: x = length along Forward, y = width along Right.
+        public Vector2Int Size => new(LengthCells, WidthCells);
         public float Height => Origin.y;
         public Vector3 Right => Vector3.Cross(Vector3.up, Forward);
 
-        public FieldFrame(Vector3 origin, Vector3 forward, float cellSize, int sideCells) {
+        public FieldFrame(Vector3 origin, Vector3 forward, float cellSize, int lengthCells, int widthCells) {
             Origin = origin;
             Forward = forward;
             CellSize = cellSize;
-            SideCells = sideCells;
+            LengthCells = lengthCells;
+            WidthCells = widthCells;
         }
 
         public Vector3 CellToWorld(Vector2Int cell) =>
@@ -30,6 +34,6 @@ namespace Features.FlightFieldModule.Scripts.Model {
         }
 
         public FieldFrame Shift(Vector3 offset) =>
-            new(Origin + offset, Forward, CellSize, SideCells);
+            new(Origin + offset, Forward, CellSize, LengthCells, WidthCells);
     }
 }

@@ -5,7 +5,8 @@ using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Configuration {
     // The one startup check of the flight field configuration: routes for loop 0 on, every wall structure in the
-    // catalog and a last wall structure that closes a single cell, so the wall has no holes.
+    // catalog and a last wall structure that closes a single cell, so the wall has no holes; the release radius not
+    // below the build radius.
     public sealed class FlightFieldConfigurationValidator : IInitializable {
         private const int SINGLE_CELL = 1;
 
@@ -23,6 +24,13 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public void Initialize() {
             ValidateRoutes();
             ValidateWall();
+            ValidateStreaming();
+        }
+
+        private void ValidateStreaming() {
+            if (_flightFieldConfiguration.ReleaseRadius < _flightFieldConfiguration.BuildRadius)
+                throw new InvalidOperationException(
+                    $"{_flightFieldConfiguration.name}: the release radius ({_flightFieldConfiguration.ReleaseRadius} m) is below the build radius ({_flightFieldConfiguration.BuildRadius} m).");
         }
 
         private void ValidateRoutes() {
