@@ -6,24 +6,29 @@ namespace Features.FlightFieldModule.Scripts.Scene {
     // root, so the next field takes it without Instantiate.
     public sealed class FieldStructurePool : IFieldStructurePool {
         private readonly Dictionary<GameObject, Stack<GameObject>> _freeByPrefab = new();
-        private readonly List<GameObject> _activeInstances = new();
-        private readonly List<GameObject> _activePrefabs = new();
+        // Active instance -> its prefab.
+        private readonly Dictionary<GameObject, GameObject> _activePrefabs = new();
 
         public GameObject Take(GameObject prefab, Transform parent) {
             GameObject instance = TakeFree(prefab);
             if (instance == null)
                 instance = Object.Instantiate(prefab, parent, false);
 
-            _activeInstances.Add(instance);
-            _activePrefabs.Add(prefab);
+            _activePrefabs.Add(instance, prefab);
             return instance;
         }
 
-        public void ReturnAll() {
-            for (int i = 0; i < _activeInstances.Count; i++)
-                Return(_activeInstances[i], _activePrefabs[i]);
+        public void Return(GameObject instance) {
+            if (!_activePrefabs.Remove(instance, out GameObject prefab))
+                return;
 
-            _activeInstances.Clear();
+            Deactivate(instance, prefab);
+        }
+
+        public void ReturnAll() {
+            foreach (KeyValuePair<GameObject, GameObject> active in _activePrefabs)
+                Deactivate(active.Key, active.Value);
+
             _activePrefabs.Clear();
         }
 
@@ -41,7 +46,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             return null;
         }
 
-        private void Return(GameObject instance, GameObject prefab) {
+        private void Deactivate(GameObject instance, GameObject prefab) {
             if (instance == null)
                 return;
 

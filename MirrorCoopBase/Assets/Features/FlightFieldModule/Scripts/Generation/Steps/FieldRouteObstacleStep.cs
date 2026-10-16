@@ -27,7 +27,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             if (obstacleShare <= 0f)
                 return;
 
-            List<Vector2Int> corridorCells = _fieldCorridorMapper.Map(context.Frame.SideCells, route.Centerline, route.CorridorHalfWidthCells);
+            List<Vector2Int> corridorCells = _fieldCorridorMapper.Map(context.Frame.Size, route.Centerline, route.CorridorHalfWidthCells);
             corridorCells.RemoveAll(cell => !IsFreeCorridorCell(context.Cells[cell]));
             int targetCells = Mathf.RoundToInt(corridorCells.Count * obstacleShare);
             _fieldObstacleScatterer.Scatter(context, corridorCells, targetCells, FieldReserveKind.RouteCorridor);

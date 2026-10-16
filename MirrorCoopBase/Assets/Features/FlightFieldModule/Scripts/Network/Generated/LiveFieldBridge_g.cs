@@ -51,9 +51,16 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         }
 
         [Server]
-        public void ServerSetSideCells(int value) {
+        public void ServerSetLengthCells(int value) {
             LiveFieldState state = _state;
-            state.SideCells = value;
+            state.LengthCells = value;
+            AssignState(state);
+        }
+
+        [Server]
+        public void ServerSetWidthCells(int value) {
+            LiveFieldState state = _state;
+            state.WidthCells = value;
             AssignState(state);
         }
 
@@ -149,7 +156,7 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         }
 
         protected override void ClearLocal() {
-            Model.ApplyState(new LiveFieldState { Number = default, Seed = default, Origin = default, Forward = default, CellSize = default, SideCells = default });
+            Model.ApplyState(new LiveFieldState { Number = default, Seed = default, Origin = default, Forward = default, CellSize = default, LengthCells = default, WidthCells = default });
             Model.ClearPlacements();
             Model.ClearRoutes();
             Model.ClearRouteCells();

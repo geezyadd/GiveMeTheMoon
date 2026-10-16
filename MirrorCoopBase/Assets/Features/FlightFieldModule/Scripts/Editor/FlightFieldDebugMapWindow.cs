@@ -155,7 +155,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
 
         private void FillSummary(FlightField field, double generationMilliseconds) {
             _summaryLines.Clear();
-            _summaryLines.Add($"Field {field.Frame.SideCells} x {field.Frame.SideCells} cells of {field.Frame.CellSize} m, seed used {field.Seed}, generated in {generationMilliseconds:0.0} ms"
+            _summaryLines.Add($"Field {field.Frame.LengthCells} x {field.Frame.WidthCells} cells of {field.Frame.CellSize} m, seed used {field.Seed}, generated in {generationMilliseconds:0.0} ms"
                 + (field.IsPassageForced ? PASSAGE_FORCED_NOTE : string.Empty));
             string structures = string.Join(", ", field.Placements.GroupBy(placement => placement.StructureId).OrderBy(group => group.Key)
                 .Select(group => $"{group.Key}: {group.Count()}"));

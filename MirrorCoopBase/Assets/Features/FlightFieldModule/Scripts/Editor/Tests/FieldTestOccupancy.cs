@@ -12,11 +12,11 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         private readonly int[,] _placementIds;
 
-        public int Side { get; }
+        public Vector2Int Size { get; }
 
         public FieldTestOccupancy(FlightField field, FieldStructureCatalog catalog, IFieldFootprintReader footprintReader) {
-            Side = field.Frame.SideCells;
-            _placementIds = new int[Side, Side];
+            Size = field.Frame.Size;
+            _placementIds = new int[Size.x, Size.y];
             foreach (FieldPlacement placement in field.Placements)
                 Occupy(placement, catalog, footprintReader);
         }
@@ -25,7 +25,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             _placementIds[cell.x, cell.y] != FieldCell.NO_PLACEMENT;
 
         public bool IsInside(Vector2Int cell) =>
-            cell.x >= 0 && cell.x < Side && cell.y >= 0 && cell.y < Side;
+            cell.x >= 0 && cell.x < Size.x && cell.y >= 0 && cell.y < Size.y;
 
         // A cell the ship fits through: it and every cell within the clearance (diagonals included) are inside and free.
         public bool HasClearance(Vector2Int cell, int clearance) {

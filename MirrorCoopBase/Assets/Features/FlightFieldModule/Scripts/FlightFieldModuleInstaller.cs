@@ -40,12 +40,13 @@ namespace Features.FlightFieldModule.Scripts {
         private void InstallLiveField() {
             Container.Bind<IFieldStructureSpawnRule>().To<FieldStructureSpawnRule>().AsSingle();
             Container.Bind<IFieldStructureLayout>().To<FieldStructureLayout>().AsSingle();
-            Container.Bind<IFlightFieldPublisher>().To<FlightFieldPublisher>().AsSingle();
+            Container.BindInterfacesTo<FlightFieldPublisher>().AsSingle();
             Container.Bind<IFieldNetworkedStructures>().To<FieldNetworkedStructures>().AsSingle();
             Container.Bind<IFieldNetworkedPrefabRegistration>().To<FieldNetworkedPrefabRegistration>().AsSingle();
             Container.BindInterfacesTo<FlightFieldService>().AsSingle();
             Container.Bind<IFieldStructurePool>().To<FieldStructurePool>().AsSingle();
             Container.Bind<IFieldStructureSceneBuilder>().To<FieldStructureSceneBuilder>().AsSingle();
+            Container.Bind<IFieldStreamingViewpoint>().To<CameraFieldStreamingViewpoint>().AsSingle();
             Container.BindInterfacesTo<LiveFieldBuildSystem>().AsSingle();
         }
 

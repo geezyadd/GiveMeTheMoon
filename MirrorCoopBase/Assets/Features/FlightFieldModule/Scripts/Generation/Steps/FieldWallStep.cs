@@ -20,7 +20,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
         }
 
         public void Execute(FieldGenerationContext context) {
-            foreach (Vector2Int cell in GetBorderCells(context.Frame.SideCells)) {
+            foreach (Vector2Int cell in GetBorderCells(context.Frame.Size)) {
                 if (context.Cells[cell].IsFree)
                     CloseWithFirstFitting(context, cell);
             }
@@ -36,8 +36,8 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
         // The footprint box is pushed inside the field so that it covers the border cell.
         private bool TryClose(FieldGenerationContext context, FieldStructureDefinition structure, Vector2Int cell) {
             FieldFootprint footprint = _fieldFootprintReader.Read(structure, FieldRotation.None);
-            int side = context.Frame.SideCells;
-            Vector2Int anchor = new(Mathf.Clamp(cell.x, 0, side - footprint.Width), Mathf.Clamp(cell.y, 0, side - footprint.Height));
+            Vector2Int size = context.Frame.Size;
+            Vector2Int anchor = new(Mathf.Clamp(cell.x, 0, size.x - footprint.Width), Mathf.Clamp(cell.y, 0, size.y - footprint.Height));
             bool isCovered = ContainsCell(footprint, cell - anchor);
             return isCovered && _fieldStructurePlacer.TryPlace(context, structure, anchor, FieldRotation.None, FieldReserveKind.None);
         }
@@ -51,16 +51,16 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             return false;
         }
 
-        private static List<Vector2Int> GetBorderCells(int side) {
+        private static List<Vector2Int> GetBorderCells(Vector2Int size) {
             List<Vector2Int> cells = new();
-            for (int x = 0; x < side; x++) {
+            for (int x = 0; x < size.x; x++) {
                 cells.Add(new Vector2Int(x, 0));
-                cells.Add(new Vector2Int(x, side - 1));
+                cells.Add(new Vector2Int(x, size.y - 1));
             }
 
-            for (int y = 1; y < side - 1; y++) {
+            for (int y = 1; y < size.y - 1; y++) {
                 cells.Add(new Vector2Int(0, y));
-                cells.Add(new Vector2Int(side - 1, y));
+                cells.Add(new Vector2Int(size.x - 1, y));
             }
 
             return cells;

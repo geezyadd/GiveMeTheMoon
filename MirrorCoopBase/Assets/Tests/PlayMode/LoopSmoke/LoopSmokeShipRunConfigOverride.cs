@@ -11,7 +11,7 @@ namespace Tests.PlayMode.LoopSmoke {
     public sealed class LoopSmokeShipRunConfigOverride : IDisposable {
         // Only timings are shortened; distances, heights and pads stay as shipped.
         public const string FAST_TIMINGS_JSON =
-            "{\"_takeoffSeconds\":1.5,\"_cruiseSeconds\":2,\"_landingSeconds\":1.5,\"_perLoopCruiseSeconds\":0}";
+            "{\"_takeoffSeconds\":1.5,\"_firstFlightSeconds\":2,\"_landingSeconds\":1.5,\"_perLoopFlightSeconds\":0.01}";
 
         private readonly string[] _overridesJson;
         private ShipRunConfig _config;

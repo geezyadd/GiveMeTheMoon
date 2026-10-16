@@ -47,7 +47,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [Test]
         public void WhenAFieldPoseIsMovedToTheWorld_ThenItMatchesTheFrameCellCenters() {
             Vector3 forward = Vector3.right;
-            FieldFrame frame = new(_frameOrigin, forward, CELL_SIZE, FRAME_SIDE_CELLS);
+            FieldFrame frame = new(_frameOrigin, forward, CELL_SIZE, FRAME_SIDE_CELLS, FRAME_SIDE_CELLS);
             FieldStructureDefinition single = _composition.Catalog.Structures.First(structure => _composition.FootprintReader.Read(structure, FieldRotation.None).Cells.Count == 1);
 
             Pose world = _layout.ToWorld(_layout.GetFieldPose(single, _anchor, FieldRotation.None, CELL_SIZE), _frameOrigin, forward);

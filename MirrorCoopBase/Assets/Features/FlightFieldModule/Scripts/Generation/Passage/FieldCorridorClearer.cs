@@ -17,7 +17,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Passage {
 
         public void Clear(FieldGenerationContext context, FieldRoute route, int radiusCells) {
             List<int> placementIds = new();
-            foreach (Vector2Int cell in _fieldCorridorMapper.Map(context.Frame.SideCells, route.Centerline, radiusCells)) {
+            foreach (Vector2Int cell in _fieldCorridorMapper.Map(context.Frame.Size, route.Centerline, radiusCells)) {
                 int placementId = context.Cells[cell].PlacementId;
                 if (context.Cells[cell].IsOccupied && !placementIds.Contains(placementId))
                     placementIds.Add(placementId);

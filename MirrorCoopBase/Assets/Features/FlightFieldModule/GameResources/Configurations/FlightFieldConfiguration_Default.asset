@@ -16,6 +16,7 @@ MonoBehaviour:
   _marginBehindACells: 5
   _marginBehindBCells: 5
   _sideMarginCells: 8
+  _fieldWidthCells: 61
   _stationAZoneRadius: 80
   _stationBZoneRadius: 100
   _takeoffCorridorHalfWidth: 60
@@ -112,4 +113,8 @@ MonoBehaviour:
   _passageClearanceCells: 1
   _maxRepairRounds: 2
   _maxSeedAttempts: 3
+  _publishEntriesPerBatch: 300
+  _publishBatchIntervalSeconds: 0.1
   _structuresBuiltPerFrame: 16
+  _buildRadius: 1300
+  _releaseRadius: 1500
