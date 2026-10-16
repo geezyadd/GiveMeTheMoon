@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
+using Features.FlightFieldModule.Scripts.Generation;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Structures {
     // The single description of one kind of field structure; generation and building read structures only through it.
     [CreateAssetMenu(menuName = "Game/Flight Field/Structure Definition", fileName = "FieldStructureDefinition")]
-    public sealed class FieldStructureDefinition : ScriptableObject {
+    public sealed class FieldStructureDefinition : ScriptableObject, IFieldWeighted {
         [Tooltip("Stable id stored in field placements and sent over the network: never rename it once it is used.")]
         [SerializeField] private string _id;
         [Tooltip("Which generation step places this structure.")]
