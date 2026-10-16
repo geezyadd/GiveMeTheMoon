@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Features.FlightFieldModule.Scripts.Generation;
 using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
@@ -31,22 +32,28 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [SerializeField, Range(0f, 1f)] private float _planetChance = 0.4f;
         [Tooltip("Planets per flight at most.")]
         [SerializeField, Min(0)] private int _maxPlanetsPerFlight = 1;
-        [Tooltip("Distance from the route to the planet's middle, meters, min and max. The far edge must stay inside the player camera's far clip plane (5000 m).")]
+        [Tooltip("Distance from the route to the planet's near surface, meters, min and max: a bigger planet stands farther. Pulled in when the far edge would leave the view reach.")]
         [SerializeField] private Vector2 _planetDistance = new(2000f, 3600f);
         [Tooltip("Where in the sky a planet stands and how often: a side is picked by weight, then its elevation, so the planet stays there whatever the light does.")]
         [SerializeField] private PlanetSide[] _planetSides = Array.Empty<PlanetSide>();
         [Tooltip("Smallest angle between the course ahead (A -> B, seen from the start of the field) and the planet's middle, degrees: a planet never covers station B.")]
         [SerializeField, Range(1f, 80f)] private float _planetMinAngleFromCourse = 35f;
+        [Tooltip("Smallest gap between a planet's surface and the field, meters: beside the field's width across the route axis, or above / below the decor rock layers.")]
+        [SerializeField, Min(0f)] private float _planetFieldClearance = 300f;
+        [Tooltip("Smallest gap between a planet's surface and the route axis A -> B, meters: both station pads stand on it, so no planet comes near them.")]
+        [SerializeField, Min(0f)] private float _planetStationClearance = 1000f;
         [Tooltip("How far along the route the planet may stand from the field origin, meters, min and max.")]
         [SerializeField] private Vector2 _planetAlongRoute = new(0f, 1500f);
         [Tooltip("Largest turn of the planet away from the main light's travel direction around the vertical, degrees: the light comes from behind the viewer, so the lit side faces the ship.")]
         [SerializeField, Range(0f, 180f)] private float _planetMaxAngleFromLight = 50f;
         [Tooltip("Seeded positions tried within the picked side around the light's direction; the closest one to it is used.")]
         [SerializeField, Min(1)] private int _planetPlacementTries = 8;
-        [Tooltip("Planet diameter, meters, min and max.")]
-        [SerializeField] private Vector2 _planetDiameter = new(500f, 1100f);
-        [Tooltip("Planet prefabs picked with equal chance.")]
-        [SerializeField] private GameObject[] _planetPrefabs = Array.Empty<GameObject>();
+        [Tooltip("The player camera's far clip plane, meters: nothing of a planet may lie beyond it.")]
+        [SerializeField, Min(1f)] private float _viewFarClipPlane = 5000f;
+        [Tooltip("How far inside the far clip plane the planet's far edge stays, meters.")]
+        [SerializeField, Min(0f)] private float _planetFarClipMargin = 300f;
+        [Tooltip("Planets picked by weight, each with its own size.")]
+        [SerializeField] private PlanetDefinition[] _planets = Array.Empty<PlanetDefinition>();
 
         public Vector2 LayerHeight => _layerHeight;
         public float RocksPerSquareKilometer => _rocksPerSquareKilometer;
@@ -61,14 +68,31 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public Vector2 PlanetDistance => _planetDistance;
         public IReadOnlyList<PlanetSide> PlanetSides => _planetSides;
         public float PlanetMinAngleFromCourse => _planetMinAngleFromCourse;
+        public float PlanetFieldClearance => _planetFieldClearance;
+        public float PlanetStationClearance => _planetStationClearance;
         public Vector2 PlanetAlongRoute => _planetAlongRoute;
         public float PlanetMaxAngleFromLight => _planetMaxAngleFromLight;
         public int PlanetPlacementTries => _planetPlacementTries;
-        public Vector2 PlanetDiameter => _planetDiameter;
-        public IReadOnlyList<GameObject> PlanetPrefabs => _planetPrefabs;
+        public float ViewFarClipPlane => _viewFarClipPlane;
+        public float PlanetFarClipMargin => _planetFarClipMargin;
+        public IReadOnlyList<PlanetDefinition> Planets => _planets;
 
         [Serializable]
-        public sealed class PlanetSide {
+        public sealed class PlanetDefinition : IFieldWeighted {
+            [Tooltip("The planet prefab: a sphere of 1 m diameter, scaled to the picked diameter.")]
+            [SerializeField] private GameObject _prefab;
+            [Tooltip("Relative chance of this planet among all planets.")]
+            [SerializeField, Min(0f)] private float _weight = 1f;
+            [Tooltip("Planet diameter, meters, min and max. Shrunk (not below the min) when the planet would not fit between the clearances and the view reach; a planet that does not fit even then is not shown.")]
+            [SerializeField] private Vector2 _diameter = new(700f, 1100f);
+
+            public GameObject Prefab => _prefab;
+            public float Weight => _weight;
+            public Vector2 Diameter => _diameter;
+        }
+
+        [Serializable]
+        public sealed class PlanetSide : IFieldWeighted {
             [Tooltip("Name shown in the inspector and in validation messages.")]
             [SerializeField] private string _name;
             [Tooltip("Relative chance of this side among all sides.")]

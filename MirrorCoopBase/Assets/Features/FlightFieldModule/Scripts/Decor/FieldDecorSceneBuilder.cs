@@ -70,11 +70,12 @@ namespace Features.FlightFieldModule.Scripts.Decor {
         // within their side to where the light comes from behind the viewer, so a player sees their lit side; with no
         // main light they follow the seed only.
         public void BuildPlanets(Transform root, int fieldSeed) {
-            Vector3 courseStart = new(_liveFieldModel.WidthCells * _liveFieldModel.CellSize / 2f, 0f, 0f);
+            float fieldHalfWidth = _liveFieldModel.WidthCells * _liveFieldModel.CellSize / 2f;
+            Vector3 courseStart = new(fieldHalfWidth, 0f, 0f);
             if (_fieldDecorLightSource.TryGetLightTravel(out Vector3 lightTravel))
-                _fieldDecorPlanetPicker.Fill(fieldSeed, courseStart, root.InverseTransformDirection(lightTravel), _planets);
+                _fieldDecorPlanetPicker.Fill(fieldSeed, courseStart, fieldHalfWidth, root.InverseTransformDirection(lightTravel), _planets);
             else
-                _fieldDecorPlanetPicker.Fill(fieldSeed, courseStart, _planets);
+                _fieldDecorPlanetPicker.Fill(fieldSeed, courseStart, fieldHalfWidth, _planets);
 
             foreach (FieldDecorPlanet planet in _planets) {
                 GameObject instance = _fieldStructurePool.Take(planet.Prefab, root);

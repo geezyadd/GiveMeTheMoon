@@ -19,6 +19,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const int FIRST_SEED = 1;
         private const int CHUNK_REACH = 3;
         private const float TOLERANCE = 0.001f;
+        private const float DISTANCE_TOLERANCE = 0.05f;
         private const float SIDE_SHARE_TOLERANCE = 0.05f;
         private const float ANGLE_TOLERANCE_DEGREES = 0.01f;
         // Under a sun 50 degrees down a planet at least 25 degrees above the plane cannot face it fully: past 90
@@ -26,7 +27,14 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const float LIT_SIDE_MAX_ANGLE_DEGREES = 100f;
         private const string PLANET_CHANCE_FIELD = "_planetChance";
         // A field 61 cells of 40 m wide: the route axis runs through the middle of its width.
-        private static readonly Vector3 _courseStart = new(1220f, 0f, 0f);
+        private const float FIELD_HALF_WIDTH = 1220f;
+        // A field of about 6 km: both station pads stand on the route axis inside it.
+        private const float FIELD_LENGTH = 6000f;
+        private const float MIN_SHOWN_PLANET_SHARE = 0.9f;
+        private static readonly Vector3 _courseStart = new(FIELD_HALF_WIDTH, 0f, 0f);
+        // The default field and fields widened for a cruise start up to about 2 km off the axis (a takeoff turned
+        // up to 85 degrees from the course).
+        private static readonly float[] _fieldHalfWidths = { FIELD_HALF_WIDTH, 1620f, 2020f, 2420f };
         // A sun shining down at a slant, one shining straight along the course (the worst case for the course
         // exclusion), one shining across it and the game scene's sun, 50 degrees down (the worst case for the lit side
         // of a planet above), along and across the course.
@@ -94,7 +102,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             List<FieldDecorPlanet> planets = new();
             int planetCount = 0;
             for (int seed = FIRST_SEED; seed <= SIDE_SHARE_SEEDS; seed++) {
-                picker.Fill(seed, _courseStart, _lightTravels[seed % _lightTravels.Length], planets);
+                picker.Fill(seed, _courseStart, FIELD_HALF_WIDTH, _lightTravels[seed % _lightTravels.Length], planets);
                 foreach (FieldDecorPlanet planet in planets) {
                     countsBySide.TryGetValue(planet.Side, out int count);
                     countsBySide[planet.Side] = count + 1;
@@ -118,13 +126,54 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             List<FieldDecorPlanet> planets = new();
             for (int seed = FIRST_SEED; seed <= SIDE_SHARE_SEEDS; seed++) {
                 foreach (Vector3 lightTravel in _lightTravels) {
-                    picker.Fill(seed, _courseStart, lightTravel, planets);
+                    picker.Fill(seed, _courseStart, FIELD_HALF_WIDTH, lightTravel, planets);
                     AssertClearOfCourse(planets, seed);
                 }
 
-                picker.Fill(seed, _courseStart, planets);
+                picker.Fill(seed, _courseStart, FIELD_HALF_WIDTH, planets);
                 AssertClearOfCourse(planets, seed);
             }
+        }
+
+        [Test]
+        public void WhenPlanetsArePickedWithAnyLight_ThenEveryPlanetKeepsItsOwnSizeAndStaysInsideTheFarClipPlane() {
+            FieldDecorPlanetPicker picker = new(_alwaysPlanetConfiguration, _randomFactory);
+            List<FieldDecorPlanet> planets = new();
+            for (int seed = FIRST_SEED; seed <= SIDE_SHARE_SEEDS; seed++) {
+                foreach (Vector3 lightTravel in _lightTravels) {
+                    picker.Fill(seed, _courseStart, FIELD_HALF_WIDTH, lightTravel, planets);
+                    AssertSizedWithinReach(planets, seed);
+                }
+
+                picker.Fill(seed, _courseStart, FIELD_HALF_WIDTH, planets);
+                AssertSizedWithinReach(planets, seed);
+            }
+        }
+
+        [Test]
+        public void WhenPlanetsArePickedForFieldsOfAnyWidth_ThenNoPlanetEntersTheFieldTheLayersOrTheStationZones() {
+            FieldDecorPlanetPicker picker = new(_alwaysPlanetConfiguration, _randomFactory);
+            List<FieldDecorPlanet> planets = new();
+            int tries = 0;
+            int shown = 0;
+            foreach (float halfWidth in _fieldHalfWidths) {
+                Vector3 courseStart = new(halfWidth, 0f, 0f);
+                for (int seed = FIRST_SEED; seed <= SIDE_SHARE_SEEDS; seed++) {
+                    foreach (Vector3 lightTravel in _lightTravels) {
+                        picker.Fill(seed, courseStart, halfWidth, lightTravel, planets);
+                        AssertClearOfFieldAndStations(planets, courseStart, halfWidth, seed);
+                        tries++;
+                        shown += planets.Count;
+                    }
+
+                    picker.Fill(seed, courseStart, halfWidth, planets);
+                    AssertClearOfFieldAndStations(planets, courseStart, halfWidth, seed);
+                    tries++;
+                    shown += planets.Count;
+                }
+            }
+
+            Assert.GreaterOrEqual((float)shown / tries, MIN_SHOWN_PLANET_SHARE, $"Only {shown} of {tries} flights with a planet kept it: the clearances leave too little room.");
         }
 
         [Test]
@@ -133,7 +182,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             List<FieldDecorPlanet> planets = new();
             for (int seed = FIRST_SEED; seed <= SIDE_SHARE_SEEDS; seed++) {
                 foreach (Vector3 lightTravel in _lightTravels) {
-                    picker.Fill(seed, _courseStart, lightTravel, planets);
+                    picker.Fill(seed, _courseStart, FIELD_HALF_WIDTH, lightTravel, planets);
                     foreach (FieldDecorPlanet planet in planets)
                         AssertPlanetOnItsLitSide(planet, lightTravel, seed);
                 }
@@ -149,13 +198,13 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             int seedsWithPlanet = 0;
             for (int seed = FIRST_SEED; seed <= SEEDS; seed++) {
                 Vector3 lightTravel = _lightTravels[seed % _lightTravels.Length];
-                firstPicker.Fill(seed, _courseStart, lightTravel, first);
-                secondPicker.Fill(seed + 1, _courseStart, lightTravel, second);
-                secondPicker.Fill(seed, _courseStart, lightTravel, second);
+                firstPicker.Fill(seed, _courseStart, FIELD_HALF_WIDTH, lightTravel, first);
+                secondPicker.Fill(seed + 1, _courseStart, FIELD_HALF_WIDTH, lightTravel, second);
+                secondPicker.Fill(seed, _courseStart, FIELD_HALF_WIDTH, lightTravel, second);
                 AssertSamePlanets(first, second, seed);
-                firstPicker.Fill(seed, _courseStart, first);
-                secondPicker.Fill(seed + 1, _courseStart, second);
-                secondPicker.Fill(seed, _courseStart, second);
+                firstPicker.Fill(seed, _courseStart, FIELD_HALF_WIDTH, first);
+                secondPicker.Fill(seed + 1, _courseStart, FIELD_HALF_WIDTH, second);
+                secondPicker.Fill(seed, _courseStart, FIELD_HALF_WIDTH, second);
                 AssertSamePlanets(first, second, seed);
                 seedsWithPlanet += first.Count > 0 ? 1 : 0;
             }
@@ -181,6 +230,44 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             }
         }
 
+        // The field with its decor layers is a box across the width, along the length and up to the layers' top above
+        // and below the plane; the station pads stand on the route axis inside it, anywhere along its length.
+        private void AssertClearOfFieldAndStations(List<FieldDecorPlanet> planets, Vector3 courseStart, float halfWidth, int seed) {
+            float layerTop = _configuration.LayerHeight.y;
+            Vector3 boxMin = new(courseStart.x - halfWidth, -layerTop, 0f);
+            Vector3 boxMax = new(courseStart.x + halfWidth, layerTop, FIELD_LENGTH);
+            foreach (FieldDecorPlanet planet in planets) {
+                float radius = planet.Diameter / 2f;
+                Vector3 nearestInBox = Vector3.Max(boxMin, Vector3.Min(boxMax, planet.Position));
+                Assert.GreaterOrEqual(Vector3.Distance(planet.Position, nearestInBox) - radius, _configuration.PlanetFieldClearance - DISTANCE_TOLERANCE,
+                    $"Seed {seed}, half width {halfWidth}: the {planet.Side.Name} planet {planet.Prefab.name} comes into the field or its decor layers.");
+                Vector3 nearestOnAxis = new(courseStart.x, 0f, Mathf.Clamp(planet.Position.z, 0f, FIELD_LENGTH));
+                Assert.GreaterOrEqual(Vector3.Distance(planet.Position, nearestOnAxis) - radius, _configuration.PlanetStationClearance - DISTANCE_TOLERANCE,
+                    $"Seed {seed}, half width {halfWidth}: the {planet.Side.Name} planet {planet.Prefab.name} comes too close to a station.");
+            }
+        }
+
+        // Seen from the course start the planet's far edge stays inside the far clip plane, and its size comes from its
+        // own definition.
+        private void AssertSizedWithinReach(List<FieldDecorPlanet> planets, int seed) {
+            float viewReach = _configuration.ViewFarClipPlane - _configuration.PlanetFarClipMargin;
+            foreach (FieldDecorPlanet planet in planets) {
+                Vector2 diameter = FindDefinition(planet.Prefab).Diameter;
+                Assert.That(planet.Diameter, Is.InRange(diameter.x - TOLERANCE, diameter.y + TOLERANCE), $"Seed {seed}: {planet.Prefab.name} is outside its own size range.");
+                Assert.LessOrEqual((planet.Position - _courseStart).magnitude + planet.Diameter / 2f, viewReach + DISTANCE_TOLERANCE,
+                    $"Seed {seed}: the far edge of {planet.Prefab.name} lies beyond the far clip plane minus its margin.");
+            }
+        }
+
+        private FlightFieldDecorConfiguration.PlanetDefinition FindDefinition(GameObject prefab) {
+            foreach (FlightFieldDecorConfiguration.PlanetDefinition definition in _configuration.Planets) {
+                if (definition.Prefab == prefab)
+                    return definition;
+            }
+
+            throw new KeyNotFoundException($"No planet definition has the prefab {prefab.name}.");
+        }
+
         private void AssertPlanetOnItsLitSide(FieldDecorPlanet planet, Vector3 lightTravel, int seed) {
             Vector2 elevation = planet.Side.ElevationDegrees;
             if (elevation.x > 0f && !planet.Side.IsMirroredBelowPlane)
@@ -189,8 +276,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             if (elevation.y < 0f)
                 Assert.Less(planet.Position.y, 0f, $"Seed {seed}: the {planet.Side.Name} planet stands above the flight plane.");
 
-            Vector3 besideRoute = planet.Position - new Vector3(_courseStart.x, 0f, planet.Position.z);
-            Assert.LessOrEqual(besideRoute.magnitude, _configuration.PlanetDistance.y + TOLERANCE, $"Seed {seed}: the planet is too far from the route.");
             Assert.Less(Vector3.Angle(planet.Position - _courseStart, lightTravel), LIT_SIDE_MAX_ANGLE_DEGREES,
                 $"Seed {seed}, light {lightTravel}: the {planet.Side.Name} planet shows little more than its night side.");
         }

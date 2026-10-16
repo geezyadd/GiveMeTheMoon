@@ -17,7 +17,6 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
             ValidateRange(_flightFieldDecorConfiguration.RockSize, nameof(FlightFieldDecorConfiguration.RockSize));
             ValidateRange(_flightFieldDecorConfiguration.PlanetDistance, nameof(FlightFieldDecorConfiguration.PlanetDistance));
             ValidateRange(_flightFieldDecorConfiguration.PlanetAlongRoute, nameof(FlightFieldDecorConfiguration.PlanetAlongRoute));
-            ValidateRange(_flightFieldDecorConfiguration.PlanetDiameter, nameof(FlightFieldDecorConfiguration.PlanetDiameter));
             ValidateRocks();
             ValidatePlanets();
         }
@@ -41,15 +40,27 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         }
 
         private void ValidatePlanets() {
-            if (_flightFieldDecorConfiguration.MaxPlanetsPerFlight > 0 && _flightFieldDecorConfiguration.PlanetPrefabs.Count == 0)
-                throw new InvalidOperationException($"{_flightFieldDecorConfiguration.name}: planets are allowed but there is no planet prefab.");
-
-            foreach (GameObject planet in _flightFieldDecorConfiguration.PlanetPrefabs) {
-                if (planet == null)
+            float totalWeight = 0f;
+            foreach (FlightFieldDecorConfiguration.PlanetDefinition planet in _flightFieldDecorConfiguration.Planets) {
+                if (planet.Prefab == null)
                     throw new InvalidOperationException($"{_flightFieldDecorConfiguration.name}: a planet prefab is empty.");
+
+                ValidateRange(planet.Diameter, $"{planet.Prefab.name} {nameof(FlightFieldDecorConfiguration.PlanetDefinition.Diameter)}");
+                totalWeight += planet.Weight;
             }
 
+            if (_flightFieldDecorConfiguration.MaxPlanetsPerFlight > 0 && totalWeight <= 0f)
+                throw new InvalidOperationException($"{_flightFieldDecorConfiguration.name}: planets are allowed but no planet has a weight.");
+
+            ValidateViewReach();
             ValidatePlanetSides();
+        }
+
+        // The picker shrinks a planet to fit between the nearest planet distance and the view reach; that room must exist.
+        private void ValidateViewReach() {
+            float viewReach = _flightFieldDecorConfiguration.ViewFarClipPlane - _flightFieldDecorConfiguration.PlanetFarClipMargin;
+            if (viewReach <= _flightFieldDecorConfiguration.PlanetDistance.x)
+                throw new InvalidOperationException($"{_flightFieldDecorConfiguration.name}: the far clip plane minus its margin ({viewReach} m) leaves no room beyond the nearest planet distance {_flightFieldDecorConfiguration.PlanetDistance.x} m.");
         }
 
         private void ValidatePlanetSides() {
