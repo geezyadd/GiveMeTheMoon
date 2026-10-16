@@ -17,6 +17,8 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private Transform _defaultInstallPoint;
         [SerializeField] private ItemViewInstallPoint[] _viewInstallPoints;
         [SerializeField] private int _unlockLoop;
+        [Tooltip("Installed here at every ship reset (run start and end, aborted flight). Empty: the socket starts empty.")]
+        [SerializeField] private ModuleDefinition _startingModule;
         [SerializeField] private ShipBase _ship;
 
         private ModuleCatalog _moduleCatalog;
@@ -45,7 +47,9 @@ namespace Features.ShipModule.Scripts {
 
         public bool IsUnlocked => Rule.IsUnlocked(RunState);
 
-        private ShipSocketRule Rule => _rule ??= new ShipSocketRule(_acceptedType, _unlockLoop);
+        private ShipSocketRule Rule => _rule ??= new ShipSocketRule(_acceptedType, _unlockLoop, StartingModuleId);
+
+        private string StartingModuleId => _startingModule != null ? _startingModule.Id : null;
 
         private bool IsInstalledModuleRemovable =>
             TryGetInstalledModule(out ModuleDefinition module) && module.IsRemovable;
@@ -160,6 +164,17 @@ namespace Features.ShipModule.Scripts {
             _ship.Modules.ServerOnModuleUninstalled(this);
 
             ServerWriteState(default);
+        }
+
+        internal void ServerResetInstall() {
+            if (isServer == false)
+                return;
+
+            _ship.Modules.ServerOnModuleUninstalled(this);
+
+            ServerWriteState(Rule.CreateResetState());
+            if (_startingModule != null)
+                _ship.Modules.ServerOnModuleInstalled(this, _startingModule);
         }
 
         internal Vector3 ResolveSitLocalOffset(Transform ship) {

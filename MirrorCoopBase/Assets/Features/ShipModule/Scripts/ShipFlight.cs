@@ -22,8 +22,6 @@ namespace Features.ShipModule.Scripts {
         private Vector3 _routeAnchor;
         private Vector3 _landVelocity;
         private Quaternion _restHeading = Quaternion.identity;
-        private Quaternion _launchHeading = Quaternion.identity;
-        private Quaternion _routeHeading = Quaternion.identity;
         private Quaternion _landFromHeading = Quaternion.identity;
         private Quaternion _landHeading = Quaternion.identity;
         private float _yaw;
@@ -58,7 +56,6 @@ namespace Features.ShipModule.Scripts {
             Vector3 from,
             Vector3 hover,
             Quaternion heading,
-            Quaternion routeHeading,
             ShipFlightSettings settings,
             float takeoffSeconds,
             float dodgeRangeScale,
@@ -86,9 +83,8 @@ namespace Features.ShipModule.Scripts {
             _takeoffSeconds = Mathf.Max(0.2f, takeoffSeconds);
             _landAge = 0f;
             _landed = false;
-            _launchHeading = FlattenHeading(heading);
-            _routeHeading = FlattenHeading(routeHeading);
-            _restHeading = _launchHeading;
+            // The autopilot keeps the takeoff heading; the crew finds the destination by radar and steers there.
+            _restHeading = FlattenHeading(heading);
             Rotation = _restHeading;
             _phase = Phase.Takeoff;
         }
@@ -96,9 +92,6 @@ namespace Features.ShipModule.Scripts {
         public void BeginCruise() {
             _cruiseAge = 0f;
             _routeAnchor = _hover;
-            if (_mode == ShipFlightMode.TravelInSpace)
-                _restHeading = _routeHeading;
-
             _phase = Phase.Cruise;
         }
 
@@ -142,7 +135,6 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             _restHeading = Quaternion.LookRotation(flat.normalized, Vector3.up);
-            _routeHeading = _restHeading;
         }
 #endif
 
@@ -176,9 +168,6 @@ namespace Features.ShipModule.Scripts {
         private void SimulateTakeoff(float dt) {
             _takeoffAge += dt;
             Vector3 hover = Vector3.Lerp(_from, _hover, TakeoffT);
-            if (_mode == ShipFlightMode.TravelInSpace)
-                _restHeading = Quaternion.Slerp(_launchHeading, _routeHeading, TakeoffT);
-
             ApplyAttitude(dt, true);
             CommitPose(hover + CruiseDodge(), dt);
         }
