@@ -1381,6 +1381,7 @@ MonoBehaviour:
   - _module: {fileID: 11400000, guid: ed0a9eee18ae3044abbdd909ac66cfb6, type: 2}
     _point: {fileID: 996847198775849381}
   _unlockLoop: 0
+  _startingModule: {fileID: 11400000, guid: ed0a9eee18ae3044abbdd909ac66cfb6, type: 2}
   _ship: {fileID: 1000000003}
 --- !u!114 &2605500354235494865
 MonoBehaviour:

@@ -53,7 +53,8 @@ namespace Features.ShipModule.Scripts {
         internal ShipPoseSync PoseSync => _poseSync;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         internal IShipRidersDebug RidersDebug => _riders;
-        internal IShipFlightControlDebug FlightControlDebug => _flightControl;
+        // Public for the loop tests: their pilot faces the ship to the destination, as a crew does by radar.
+        public IShipFlightControlDebug FlightControlDebug => _flightControl;
         internal IShipDeckCargoDebug CargoDebug => _cargo;
 #endif
 
@@ -117,7 +118,6 @@ namespace Features.ShipModule.Scripts {
             Vector3 from,
             Vector3 hover,
             Quaternion heading,
-            Quaternion routeHeading,
             float takeoffSeconds,
             float dodgeRangeScale,
             ShipFlightMode mode) {
@@ -128,7 +128,6 @@ namespace Features.ShipModule.Scripts {
                 from,
                 hover,
                 heading,
-                routeHeading,
                 takeoffSeconds,
                 dodgeRangeScale,
                 mode);
@@ -184,8 +183,8 @@ namespace Features.ShipModule.Scripts {
             // hanging at the seat after the ship and its seats are reset.
             _riders.ServerReleaseRiders();
             _seats.ClearAllOccupants();
-            _modules.ClearInstalledModules();
-            // A run starts with this reset: a ship without modules publishes nothing on uninstall, so publish here.
+            _modules.ResetInstalledModules();
+            // A run starts with this reset: a ship with no stat modules publishes nothing on uninstall, so publish here.
             _modules.ServerPublishStats();
             _flightControl.UnlockControls();
             if (_lever != null)

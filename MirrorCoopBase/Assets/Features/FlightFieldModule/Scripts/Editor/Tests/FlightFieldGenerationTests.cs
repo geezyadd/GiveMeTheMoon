@@ -119,8 +119,15 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             Vector2 stationA = ToPlane(request.StationA);
             Assert.Greater(Vector2.Distance(center, stationA), _composition.Configuration.StationAZoneRadius, $"Seed {field.Seed}: structure at {cell} in the zone of A.");
             Assert.Greater(Vector2.Distance(center, ToPlane(request.StationB)), _composition.Configuration.StationBZoneRadius, $"Seed {field.Seed}: structure at {cell} in the zone of B.");
-            Assert.Greater(DistanceToSegment(center, stationA, ToPlane(request.CruiseStart)), _composition.Configuration.TakeoffCorridorHalfWidth,
+            Assert.Greater(DistanceToSegment(center, stationA, TakeoffCorridorEnd(request)), _composition.Configuration.TakeoffCorridorHalfWidth,
                 $"Seed {field.Seed}: structure at {cell} in the takeoff corridor.");
+        }
+
+        // The corridor runs on along the takeoff heading past the cruise start: the autopilot keeps that heading.
+        private Vector2 TakeoffCorridorEnd(FieldRequest request) {
+            Vector2 cruiseStart = ToPlane(request.CruiseStart);
+            Vector2 takeoffForward = (cruiseStart - ToPlane(request.StationA)).normalized;
+            return cruiseStart + takeoffForward * _composition.Configuration.TakeoffRunOutLength;
         }
 
         private static float DistanceToSegment(Vector2 point, Vector2 start, Vector2 end) {

@@ -99,7 +99,10 @@ namespace Features.ShipModule.Scripts {
                 float distance = HorizontalDistance(ship.transform.position, _destinationPoint);
                 float speed = ReadTravelMetersPerSecond();
                 _transit.PreviewRoute(distance, speed, _destinationForward);
-                _transit.SetAlignment(EvaluateTransitAlignment());
+                // The autopilot does not turn to B: the alignment is the nose against the bearing to B right now.
+                _transit.SetAlignment(ShipTransit.EvaluateAlignment(
+                    FlattenForward(ship.transform.forward),
+                    FlattenForward(_destinationPoint - ship.transform.position)));
                 return;
             }
 
