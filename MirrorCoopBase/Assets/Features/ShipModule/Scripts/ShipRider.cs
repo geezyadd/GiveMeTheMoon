@@ -1,5 +1,6 @@
 using Features.CameraModule.Scripts.Services;
 using Features.CharacterMovableModule.Scripts;
+using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.FloatingControllerModule;
 using Features.GameCoreModule.Contracts;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -16,7 +17,7 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private NetworkRigidbodyUnreliable _netBody;
         [SerializeField] private float _walkSpeed = 5f;
         [SerializeField] private float _sprintSpeed = 8f;
-        [SerializeField] private float _jumpHeight = 4f;
+        [SerializeField] private PlayerStatEntity _stats;
         [SerializeField] private float _deckInset = 0.08f;
 
         // Mirror runs hooks in declaration order: the offset hook sees its fresh stamp, a bind sees the fresh offset.
@@ -62,7 +63,8 @@ namespace Features.ShipModule.Scripts {
         private float _nextOffsetSend;
         private float _nextSteerSend;
         private float _rideRestY;
-        private float _rideJumpVel;
+        private float _rideFloorY;
+        private readonly RideVertical _vertical = new RideVertical();
         private Vector3 _rideVelocity;
         private float _reboardAt;
 
@@ -103,13 +105,13 @@ namespace Features.ShipModule.Scripts {
             if (_bound) {
                 _localOffset = seatOffset;
                 // A rider who sat down mid-jump would get the rest of the jump back when standing up.
-                _rideJumpVel = 0f;
+                ResetVertical(0f);
                 return;
             }
 
             if (_rb != null && ship != null) {
                 Bind(ship, seatOffset);
-                _rideJumpVel = 0f;
+                ResetVertical(0f);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 RideDiagnostics.LogBound(this, ship, ShipRideDiagnostics.CAUSE_SEAT);
 #endif
@@ -123,8 +125,9 @@ namespace Features.ShipModule.Scripts {
             float localVerticalSpeed = (toLocal * _rb.linearVelocity).y;
             _localOffset = localOffset;
             _rideRestY = ResolveRideRestY();
-            _rideJumpVel = isOwned && _localOffset.y > _rideRestY ? localVerticalSpeed : 0f;
+            _rideFloorY = ResolveRideFloorY();
             _jumpHeldPrev = _input != null && _input.JumpHeld;
+            ResetVertical(isOwned && _localOffset.y > _rideRestY ? localVerticalSpeed : 0f);
             _remoteOffsets.Reset(_syncedOffsetTime, _localOffset);
             _lastPlatformPos = _platform.position;
             _lastPlatformRot = _platform.rotation;
@@ -166,7 +169,7 @@ namespace Features.ShipModule.Scripts {
 
         internal void DebugSetLocalOffset(Vector3 localOffset) {
             _localOffset = localOffset;
-            _rideJumpVel = 0f;
+            ResetVertical(0f);
             _remoteOffsets.Reset(NetworkTime.time, localOffset);
             if (_platform == null)
                 return;
@@ -250,7 +253,10 @@ namespace Features.ShipModule.Scripts {
 
             if (isOwned) {
                 bool jumped = ConsumeJumpPress();
+                _vertical.ReadInput(_input.JumpHeld, dt);
                 if (_seated) {
+                    // The press that stands the rider up must not jump right after.
+                    _vertical.DropQueuedJump();
                     if (_helmSeat)
                         SendSteerIfNeeded();
 
@@ -259,10 +265,7 @@ namespace Features.ShipModule.Scripts {
                 }
                 else {
                     ApplyOwnedWalk(dt);
-                    if (jumped)
-                        BeginRideJump();
-
-                    SimulateRideJump(dt);
+                    SimulateRideVertical(dt);
                     SendOffsetIfNeeded();
                 }
             }
@@ -353,41 +356,27 @@ namespace Features.ShipModule.Scripts {
             SendOffsetIfNeeded();
         }
 
-        private void BeginRideJump() {
-            if (_localOffset.y > _rideRestY + 0.05f)
-                return;
-
-            _rideJumpVel = Mathf.Sqrt(2f * -Physics.gravity.y * Mathf.Max(0.1f, _jumpHeight));
-            _nextOffsetSend = 0f;
-            SendOffsetIfNeeded();
-        }
-
-        private void SimulateRideJump(float dt) {
+        // The station hover spring, jump and air gravity in ship space, from this player's own float and stats.
+        private void SimulateRideVertical(float dt) {
             if (dt <= 0f)
                 return;
 
-            bool grounded = _localOffset.y <= _rideRestY + 0.001f && _rideJumpVel <= 0f;
-            if (grounded) {
-                _localOffset.y = Mathf.MoveTowards(_localOffset.y, _rideRestY, _ship.StandUpSpeed * dt);
-                _rideJumpVel = 0f;
-                return;
-            }
-
-            float extra = 0f;
-            if (_rideJumpVel > 0.15f)
-                extra = _input != null && _input.JumpHeld ? 1.2f : 2f;
-            else if (_rideJumpVel < -0.15f)
-                extra = 3f;
-
-            _rideJumpVel += Physics.gravity.y * (1f + extra) * dt;
-            _localOffset.y += _rideJumpVel * dt;
-            if (_localOffset.y > _rideRestY)
-                return;
-
-            _localOffset.y = _rideRestY;
-            _rideJumpVel = 0f;
-            SendOffsetIfNeeded();
+            RideVerticalFrame frame = new RideVerticalFrame(
+                _floating.Spring,
+                JumpTuning.Read(_stats),
+                _rideRestY,
+                _rideFloorY,
+                Physics.gravity.y,
+                Time.fixedDeltaTime);
+            _localOffset.y = _vertical.Advance(_localOffset.y, dt, frame);
         }
+
+        private void ResetVertical(float velocity) =>
+            _vertical.Reset(
+                _localOffset.y,
+                velocity,
+                _input.JumpHeld,
+                JumpTuning.Read(_stats).ExtraAirJumps);
 
         private void SendOffsetIfNeeded() {
             if (Time.unscaledTime < _nextOffsetSend)
@@ -438,7 +427,7 @@ namespace Features.ShipModule.Scripts {
         private void OnSeatedChanged(bool previous, bool current) {
             if (isOwned && current == false) {
                 // Standing up starts from rest on the seat, never with a velocity left over from before sitting.
-                _rideJumpVel = 0f;
+                ResetVertical(0f);
                 return;
             }
 
@@ -467,6 +456,10 @@ namespace Features.ShipModule.Scripts {
 
             return deckSurfaceY + _floating.StandHeight;
         }
+
+        // The rider collider stands on the deck: the spring may sag the rider down to here, never lower.
+        private float ResolveRideFloorY() =>
+            _rideRestY - _floating.StandHeight + _floating.ContactHeight;
 
         private float CurrentSpeed() {
             if (_input != null && _input.SprintHeld)
