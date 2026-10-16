@@ -33,13 +33,15 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [SerializeField, Min(0)] private int _maxPlanetsPerFlight = 1;
         [Tooltip("Distance from the route to the planet's middle, meters, min and max. The far edge must stay inside the player camera's far clip plane (5000 m).")]
         [SerializeField] private Vector2 _planetDistance = new(2000f, 3600f);
-        [Tooltip("Angle of the planet above or below the flight plane, degrees, min and max.")]
-        [SerializeField] private Vector2 _planetElevationDegrees = new(15f, 55f);
+        [Tooltip("Where in the sky a planet stands and how often: a side is picked by weight, then its elevation, so the planet stays there whatever the light does.")]
+        [SerializeField] private PlanetSide[] _planetSides = Array.Empty<PlanetSide>();
+        [Tooltip("Smallest angle between the course ahead (A -> B, seen from the start of the field) and the planet's middle, degrees: a planet never covers station B.")]
+        [SerializeField, Range(1f, 80f)] private float _planetMinAngleFromCourse = 35f;
         [Tooltip("How far along the route the planet may stand from the field origin, meters, min and max.")]
         [SerializeField] private Vector2 _planetAlongRoute = new(0f, 1500f);
-        [Tooltip("Largest angle between the direction to the planet and the main light's travel direction, degrees: the light comes from behind the viewer, so the lit side faces the ship.")]
+        [Tooltip("Largest turn of the planet away from the main light's travel direction around the vertical, degrees: the light comes from behind the viewer, so the lit side faces the ship.")]
         [SerializeField, Range(0f, 180f)] private float _planetMaxAngleFromLight = 50f;
-        [Tooltip("Seeded positions tried around the light's direction; the closest one to it is used.")]
+        [Tooltip("Seeded positions tried within the picked side around the light's direction; the closest one to it is used.")]
         [SerializeField, Min(1)] private int _planetPlacementTries = 8;
         [Tooltip("Planet diameter, meters, min and max.")]
         [SerializeField] private Vector2 _planetDiameter = new(500f, 1100f);
@@ -57,11 +59,29 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public float PlanetChance => _planetChance;
         public int MaxPlanetsPerFlight => _maxPlanetsPerFlight;
         public Vector2 PlanetDistance => _planetDistance;
-        public Vector2 PlanetElevationDegrees => _planetElevationDegrees;
+        public IReadOnlyList<PlanetSide> PlanetSides => _planetSides;
+        public float PlanetMinAngleFromCourse => _planetMinAngleFromCourse;
         public Vector2 PlanetAlongRoute => _planetAlongRoute;
         public float PlanetMaxAngleFromLight => _planetMaxAngleFromLight;
         public int PlanetPlacementTries => _planetPlacementTries;
         public Vector2 PlanetDiameter => _planetDiameter;
         public IReadOnlyList<GameObject> PlanetPrefabs => _planetPrefabs;
+
+        [Serializable]
+        public sealed class PlanetSide {
+            [Tooltip("Name shown in the inspector and in validation messages.")]
+            [SerializeField] private string _name;
+            [Tooltip("Relative chance of this side among all sides.")]
+            [SerializeField, Min(0f)] private float _weight = 1f;
+            [Tooltip("Elevation of the planet above the flight plane, degrees, min and max; negative is below the plane.")]
+            [SerializeField] private Vector2 _elevationDegrees;
+            [Tooltip("The elevation is mirrored below the plane with equal chance (a side near the horizon).")]
+            [SerializeField] private bool _isMirroredBelowPlane;
+
+            public string Name => _name;
+            public float Weight => _weight;
+            public Vector2 ElevationDegrees => _elevationDegrees;
+            public bool IsMirroredBelowPlane => _isMirroredBelowPlane;
+        }
     }
 }

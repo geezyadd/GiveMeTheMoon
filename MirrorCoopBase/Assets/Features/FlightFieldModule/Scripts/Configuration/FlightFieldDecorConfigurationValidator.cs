@@ -3,8 +3,10 @@ using UnityEngine;
 using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Configuration {
-    // The one startup check of the decor configuration: ordered ranges, a rock recipe, materials and planet prefabs.
+    // The one startup check of the decor configuration: ordered ranges, a rock recipe, materials, planet sides and prefabs.
     public sealed class FlightFieldDecorConfigurationValidator : IInitializable {
+        private const float MAX_ELEVATION_DEGREES = 90f;
+
         private readonly FlightFieldDecorConfiguration _flightFieldDecorConfiguration;
 
         public FlightFieldDecorConfigurationValidator(FlightFieldDecorConfiguration flightFieldDecorConfiguration) =>
@@ -14,7 +16,6 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
             ValidateRange(_flightFieldDecorConfiguration.LayerHeight, nameof(FlightFieldDecorConfiguration.LayerHeight));
             ValidateRange(_flightFieldDecorConfiguration.RockSize, nameof(FlightFieldDecorConfiguration.RockSize));
             ValidateRange(_flightFieldDecorConfiguration.PlanetDistance, nameof(FlightFieldDecorConfiguration.PlanetDistance));
-            ValidateRange(_flightFieldDecorConfiguration.PlanetElevationDegrees, nameof(FlightFieldDecorConfiguration.PlanetElevationDegrees));
             ValidateRange(_flightFieldDecorConfiguration.PlanetAlongRoute, nameof(FlightFieldDecorConfiguration.PlanetAlongRoute));
             ValidateRange(_flightFieldDecorConfiguration.PlanetDiameter, nameof(FlightFieldDecorConfiguration.PlanetDiameter));
             ValidateRocks();
@@ -47,6 +48,29 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
                 if (planet == null)
                     throw new InvalidOperationException($"{_flightFieldDecorConfiguration.name}: a planet prefab is empty.");
             }
+
+            ValidatePlanetSides();
+        }
+
+        private void ValidatePlanetSides() {
+            float totalWeight = 0f;
+            foreach (FlightFieldDecorConfiguration.PlanetSide side in _flightFieldDecorConfiguration.PlanetSides) {
+                ValidatePlanetSide(side);
+                totalWeight += side.Weight;
+            }
+
+            if (_flightFieldDecorConfiguration.MaxPlanetsPerFlight > 0 && totalWeight <= 0f)
+                throw new InvalidOperationException($"{_flightFieldDecorConfiguration.name}: planets are allowed but no planet side has a weight.");
+        }
+
+        private void ValidatePlanetSide(FlightFieldDecorConfiguration.PlanetSide side) {
+            Vector2 elevation = side.ElevationDegrees;
+            bool isOrderedWithinSky = elevation.x >= -MAX_ELEVATION_DEGREES && elevation.x <= elevation.y && elevation.y <= MAX_ELEVATION_DEGREES;
+            if (!isOrderedWithinSky)
+                throw new InvalidOperationException($"{_flightFieldDecorConfiguration.name}: planet side {side.Name} elevation {elevation} is not a range of min <= max within +-90 degrees.");
+
+            if (side.IsMirroredBelowPlane && elevation.x < 0f)
+                throw new InvalidOperationException($"{_flightFieldDecorConfiguration.name}: planet side {side.Name} is mirrored below the plane, so its elevation {elevation} must not be negative.");
         }
     }
 }

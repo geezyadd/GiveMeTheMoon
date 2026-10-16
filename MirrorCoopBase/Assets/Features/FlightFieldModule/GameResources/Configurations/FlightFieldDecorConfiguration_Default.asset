@@ -26,7 +26,20 @@ MonoBehaviour:
   _planetChance: 0.4
   _maxPlanetsPerFlight: 1
   _planetDistance: {x: 2000, y: 3600}
-  _planetElevationDegrees: {x: 15, y: 55}
+  _planetSides:
+  - _name: Side
+    _weight: 0.5
+    _elevationDegrees: {x: 5, y: 20}
+    _isMirroredBelowPlane: 1
+  - _name: Above
+    _weight: 0.4
+    _elevationDegrees: {x: 25, y: 60}
+    _isMirroredBelowPlane: 0
+  - _name: Below
+    _weight: 0.1
+    _elevationDegrees: {x: -50, y: -25}
+    _isMirroredBelowPlane: 0
+  _planetMinAngleFromCourse: 35
   _planetAlongRoute: {x: 0, y: 1500}
   _planetMaxAngleFromLight: 50
   _planetPlacementTries: 8
