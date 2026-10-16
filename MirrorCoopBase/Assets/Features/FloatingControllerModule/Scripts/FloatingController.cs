@@ -36,6 +36,13 @@ namespace Features.FloatingControllerModule {
         public bool HoverEnabled { get; set; } = true;
         public float StandHeight =>
             _hoverClearance - (ProbeStart().y - transform.position.y);
+        public HoverSpringSettings Spring => new HoverSpringSettings(
+            _hoverClearance, _stiffness, _damping, _maxHoverForce, _skipHoverIfFallingFasterThan, _supportPause);
+        // Height of the pivot above the bottom of the collider: the lowest the pivot gets over a support it lands on.
+        public float ContactHeight => _capsuleCollider != null
+            ? -transform.InverseTransformPoint(_capsuleCollider.transform.TransformPoint(
+                _capsuleCollider.center + Vector3.down * (_capsuleCollider.height * 0.5f))).y
+            : 0f;
 
         private void FixedUpdate() {
             if (isOwned == false)
@@ -92,7 +99,7 @@ namespace Features.FloatingControllerModule {
 
             if (found == false
                 || Vector3.Angle(Vector3.up, _supportHit.normal) > _maxSlope
-                || _supportHit.distance > _hoverClearance * 1.3f) {
+                || HoverSpring.Reaches(Spring, _supportHit.distance) == false) {
                 _hasSupport = false;
                 _supportNormal = Vector3.up;
                 return;
@@ -107,16 +114,15 @@ namespace Features.FloatingControllerModule {
                 return;
 
             Vector3 velocity = _rb.linearVelocity;
-            if (velocity.y < _skipHoverIfFallingFasterThan)
+            HoverSpringSettings spring = Spring;
+            if (HoverSpring.Holds(spring, velocity.y) == false)
                 return;
 
             Vector3 supportVelocity = _supportHit.rigidbody != null
                 ? _supportHit.rigidbody.linearVelocity
                 : Vector3.zero;
-            float heightError = _hoverClearance - _supportHit.distance;
             float closingSpeed = Vector3.Dot(Vector3.up, velocity - supportVelocity);
-            float magnitude = heightError * _stiffness - closingSpeed * _damping;
-            magnitude = Mathf.Clamp(magnitude, -_maxHoverForce, _maxHoverForce);
+            float magnitude = HoverSpring.Acceleration(spring, _supportHit.distance, closingSpeed);
 
             Vector3 force = (_rb.mass * -Physics.gravity) + (Vector3.up * (magnitude * _rb.mass));
             _rb.AddForce(force);

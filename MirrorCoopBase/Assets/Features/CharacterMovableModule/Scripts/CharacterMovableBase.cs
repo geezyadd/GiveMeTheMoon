@@ -30,13 +30,7 @@ namespace Features.CharacterMovableModule.Scripts {
         [Inject]
         private CharacterInputBuffer _input;
         private float _moveSpeed;
-        private bool _jumpHeld;
-        private bool _jumpQueued;
-        private float _jumpReadyIn;
-        private float _jumpPressedAgo = 999f;
-        private float _airTime = 999f;
-        private bool _jumpedThisAir;
-        private int _airJumpsLeft;
+        private readonly JumpAndAirGravity _jump = new JumpAndAirGravity();
         private Vector3 _weight;
         private int _shoveMask;
 
@@ -54,7 +48,7 @@ namespace Features.CharacterMovableModule.Scripts {
 
         public override void OnStartLocalPlayer() {
             _moveSpeed = ReadStat(PlayerStatType.WalkSpeed);
-            _airJumpsLeft = ExtraAirJumps;
+            _jump.RefillAirJumps(ExtraAirJumps);
             CacheWeight();
         }
 
@@ -62,17 +56,7 @@ namespace Features.CharacterMovableModule.Scripts {
             if (ControlsSelf == false)
                 return;
 
-            _jumpPressedAgo += Time.deltaTime;
-            bool supported = HasSupport();
-            _airTime = supported ? 0f : _airTime + Time.deltaTime;
-
-            bool holdingJump = _input != null && _input.JumpHeld;
-            if (holdingJump && _jumpHeld == false) {
-                _jumpQueued = true;
-                _jumpPressedAgo = 0f;
-            }
-
-            _jumpHeld = holdingJump;
+            _jump.ReadInput(_input != null && _input.JumpHeld, HasSupport(), Time.deltaTime);
         }
 
         private void LateUpdate() {
@@ -177,47 +161,19 @@ namespace Features.CharacterMovableModule.Scripts {
             if (_floatingController == null)
                 return;
 
-            _jumpReadyIn -= Time.fixedDeltaTime;
+            JumpTuning tuning = JumpTuning.Read(_stats);
             bool supported = HasSupport();
-            bool fromLedge = _airTime <= ReadStat(PlayerStatType.CoyoteTime) && _jumpedThisAir == false;
-            bool buffered = _jumpPressedAgo <= ReadStat(PlayerStatType.JumpBuffer);
-            bool canGroundJump = (supported || fromLedge) && _jumpReadyIn <= 0f;
-            bool canAirJump = _airJumpsLeft > 0 && _jumpReadyIn <= 0f;
-
-            if (_jumpQueued && buffered && (canGroundJump || canAirJump)) {
-                bool groundedTakeoff = supported || fromLedge;
-                if (groundedTakeoff == false)
-                    _airJumpsLeft--;
-
-                _jumpedThisAir = true;
-                _jumpQueued = false;
-                _jumpPressedAgo = ReadStat(PlayerStatType.JumpBuffer);
-                _jumpReadyIn = ReadStat(PlayerStatType.JumpCooldown);
+            if (_jump.TryTakeoff(tuning, supported, _rb.linearVelocity.y, Physics.gravity.y, Time.fixedDeltaTime,
+                    out float speedChange)) {
                 _floatingController.PauseSupport();
-
-                Vector3 velocity = _rb.linearVelocity;
-                if (groundedTakeoff == false)
-                    velocity.y = 0f;
-
-                float takeoff = Mathf.Sqrt(2f * ReadStat(PlayerStatType.JumpHeight) * -Physics.gravity.y);
-                _rb.AddForce(new Vector3(0f, takeoff - velocity.y, 0f) * _rb.mass, ForceMode.Impulse);
+                _rb.AddForce(new Vector3(0f, speedChange, 0f) * _rb.mass, ForceMode.Impulse);
             }
 
-            if (supported && _jumpedThisAir && _rb.linearVelocity.y <= 0.05f) {
-                _jumpedThisAir = false;
-                _airJumpsLeft = ExtraAirJumps;
-            }
-
+            _jump.Land(tuning, supported, _rb.linearVelocity.y);
             if (supported)
                 return;
 
-            float vy = _rb.linearVelocity.y;
-            float extra = 0f;
-            if (vy > 0.15f)
-                extra = _jumpHeld ? ReadStat(PlayerStatType.RiseGravity) : ReadStat(PlayerStatType.ShortHopGravity);
-            else if (vy < -0.15f)
-                extra = ReadStat(PlayerStatType.FallGravity);
-
+            float extra = _jump.AirGravityExtra(tuning, _rb.linearVelocity.y);
             if (extra > 0f)
                 _rb.AddForce(_weight * extra);
         }

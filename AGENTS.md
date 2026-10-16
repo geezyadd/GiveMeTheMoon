@@ -33,6 +33,13 @@ is not final yet and needs evaluation. **How the code works now** (`ShipFlightSe
 - the old mode `HoverInPlace` is still in the code: the ship hangs at the hover point, progress is the `ShipTransit`
   timer and the next pad spawns at landing. It is chosen in the config asset or, in editor / development builds,
   through `IShipRouteDebug.DebugUseFlightMode`.
+- in flight the players on deck ride the ship (`ShipRider`): the body is kinematic and placed from a ship-space
+  offset every frame; the owner sends the offset to the others (`CmdSetRideOffset` / `RideOffset`). The ride's
+  vertical motion (`RideVertical`) is the station one: the same hover spring formula as `FloatingController`
+  (`HoverSpring`, values from the player's own `FloatingController.Spring`) and the same jump, coyote time, jump buffer
+  and air gravity (`JumpAndAirGravity` with `JumpTuning` from `PlayerStatsConfiguration`, shared with
+  `CharacterMovableBase`). It runs in fixed physics steps (`Time.fixedDeltaTime`) inside the frame and is shown
+  interpolated, so it feels the same at any frame rate and never sinks below the deck.
 
 ## Loop status (2026-10-11)
 The loop runs from start to end, but it does not match the design yet:

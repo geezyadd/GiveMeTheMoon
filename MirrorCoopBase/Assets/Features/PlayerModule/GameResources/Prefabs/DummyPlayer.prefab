@@ -340,7 +340,7 @@ MonoBehaviour:
   _netBody: {fileID: 919415383680135416}
   _walkSpeed: 5
   _sprintSpeed: 8
-  _jumpHeight: 4
+  _stats: {fileID: 8309845104136634496}
   _deckInset: 0.08
 --- !u!114 &8309845104136634496
 MonoBehaviour:
