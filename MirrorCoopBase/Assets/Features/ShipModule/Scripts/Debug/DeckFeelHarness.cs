@@ -34,7 +34,7 @@ namespace Features.ShipModule.Scripts.Debug {
         private const float AIRBORNE_METERS = 0.05f;
         // Long enough for both cruise measurements (with the 2 s jump gaps) to end before the landing; real flights are
         // minutes long.
-        private const float FlightSeconds = 45f;
+        private const float FLIGHT_SECONDS = 45f;
 
         public static int Done;
         public static string Status = "idle";
@@ -317,7 +317,7 @@ namespace Features.ShipModule.Scripts.Debug {
                 }
             }
 
-            _flightLength.DebugUseFlightSeconds(FlightSeconds);
+            _flightLength.DebugUseFlightSeconds(FLIGHT_SECONDS);
             if (hover)
                 _route.DebugUseFlightMode(ShipFlightMode.HoverInPlace);
             else

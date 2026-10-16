@@ -255,6 +255,7 @@ MonoBehaviour:
   _maxHoverForce: 50
   _skipHoverIfFallingFasterThan: -5
   _supportPause: 0.1
+  _supportReachFactor: 1.3
   _rb: {fileID: 7148192738405830123}
   _pushSupportBody: 1
 --- !u!114 &337762568883164761
@@ -341,7 +342,7 @@ MonoBehaviour:
   _netBody: {fileID: 919415383680135416}
   _walkSpeed: 5
   _sprintSpeed: 8
-  _jumpHeight: 4
+  _stats: {fileID: 8309845104136634496}
   _deckInset: 0.08
 --- !u!114 &8309845104136634496
 MonoBehaviour:

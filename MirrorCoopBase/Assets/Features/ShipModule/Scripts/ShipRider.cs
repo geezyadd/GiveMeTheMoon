@@ -126,7 +126,7 @@ namespace Features.ShipModule.Scripts {
             _localOffset = localOffset;
             _rideRestY = ResolveRideRestY();
             _rideFloorY = ResolveRideFloorY();
-            _jumpHeldPrev = _input != null && _input.JumpHeld;
+            _jumpHeldPrev = _input.JumpHeld;
             ResetVertical(isOwned && _localOffset.y > _rideRestY ? localVerticalSpeed : 0f);
             _remoteOffsets.Reset(_syncedOffsetTime, _localOffset);
             _lastPlatformPos = _platform.position;
