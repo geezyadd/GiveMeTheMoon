@@ -141,6 +141,11 @@ namespace Features.ShipModule.Scripts {
             _deckCargo.OnRemove += OnDeckCargoRemoved;
             for (int i = 0; i < _deckCargo.Count; i++)
                 AttachDeckItem(_deckCargo[i]);
+
+            // Mirror calls no SyncVar hook on the first spawn: a client that joins while the ship flies takes the
+            // flight state here, or it would never board or catch its player.
+            if (_flying)
+                _shipBase.OnClientFlightChanged(true);
         }
 
         public override void OnStopClient() {

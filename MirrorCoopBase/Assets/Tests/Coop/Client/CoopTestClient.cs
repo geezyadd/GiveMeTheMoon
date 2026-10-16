@@ -75,9 +75,10 @@ namespace Tests.Coop.Client {
             Report(CoopObserver.CaptureStep(CoopTestSteps.IN_LOBBY));
         }
 
+        // At the stern: the client must ride away from wherever on the deck it stands, also farthest from the pivot.
         private IEnumerator BoardCoroutine() {
             ShipBase ship = Object.FindAnyObjectByType<ShipBase>();
-            ShipDeckBoarding.PutAboveDeck(SessionQueries.LocalPlayer.GetComponent<CharacterMovableBase>(), ship);
+            ShipDeckBoarding.PutAboveStern(SessionQueries.LocalPlayer.GetComponent<CharacterMovableBase>(), ship);
             yield return _settle;
             Report(CoopObserver.CaptureGame(CoopTestSteps.BOARDED));
         }

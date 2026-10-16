@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Features.CameraModule.Scripts.Services;
 using Features.CharacterMovableModule.Scripts;
 using Features.FloatingControllerModule;
@@ -48,6 +49,7 @@ namespace Features.ShipModule.Scripts {
         private bool _bound;
         private Vector3 _localOffset;
         private readonly RideOffsetBuffer _remoteOffsets = new RideOffsetBuffer(OffsetSendSeconds);
+        private readonly ShipRideDiagnostics _rideDiagnostics = new ShipRideDiagnostics();
         private bool _jumpHeldPrev;
         private Vector3 _lastPlatformPos;
         private Quaternion _lastPlatformRot = Quaternion.identity;
@@ -74,34 +76,34 @@ namespace Features.ShipModule.Scripts {
                 _ship.ServerRemoveRider(this);
         }
 
-        internal bool WantsLand(ShipBase ship) {
-            if (isOwned == false || _bound || _rb == null || ship == null)
-                return false;
+        public override void OnStartClient() {
+            // Mirror calls no SyncVar hook on the first spawn: a rider already riding when this client joins is bound here.
+            if (isOwned == false && _syncedRideShip != null)
+                OnRideShipChanged(null, _syncedRideShip);
+        }
 
+        internal ShipRideRefusal CheckLanding(ShipBase ship) {
             // Right after a drop the interpolated body still trails the moving deck by a frame; without this it lands
             // back on the deck it just left.
             if (Time.time < _reboardAt)
-                return false;
+                return ShipRideRefusal.ReboardDelay;
 
             Transform platform = ship.transform;
             Vector3 local = Quaternion.Inverse(platform.rotation) * (transform.position - platform.position);
-            if (ship.DeckGeometry.ContainsDeckWalk(local, _deckInset) == false)
-                return false;
-
-            if (_rb.linearVelocity.y > 0.15f)
-                return false;
-
-            return local.y <= 1.75f && local.y >= 0.25f;
+            return ship.RideRule.CheckCatch(local, _rb.linearVelocity.y, _deckInset);
         }
 
-        internal void BindToPlatform(ShipBase ship) {
+        internal void LogRideRefusal(ShipBase ship, string check, ShipRideRefusal refusal) =>
+            _rideDiagnostics.LogRefused(this, ship, check, refusal);
+
+        internal void BindToPlatform(ShipBase ship, [CallerMemberName] string cause = "") {
             if (_rb == null || ship == null || _bound)
                 return;
 
             Vector3 standingOffset = Quaternion.Inverse(ship.transform.rotation) * (transform.position - ship.transform.position);
             ship.DeckGeometry.ClampDeckWalk(ref standingOffset, _deckInset);
             // A seated rider keeps the server's seat offset; its own standing spot would overwrite it on the server.
-            Bind(ship, _seated ? _syncedLocalOffset : standingOffset);
+            Bind(ship, _seated ? _syncedLocalOffset : standingOffset, cause);
         }
 
         internal void BindToSeat(ShipBase ship, Vector3 seatOffset) {
@@ -113,12 +115,12 @@ namespace Features.ShipModule.Scripts {
             }
 
             if (_rb != null && ship != null) {
-                Bind(ship, seatOffset);
+                Bind(ship, seatOffset, nameof(BindToSeat));
                 _rideJumpVel = 0f;
             }
         }
 
-        private void Bind(ShipBase ship, Vector3 localOffset) {
+        private void Bind(ShipBase ship, Vector3 localOffset, string cause) {
             _ship = ship;
             _platform = ship.transform;
             Quaternion toLocal = Quaternion.Inverse(_platform.rotation);
@@ -145,6 +147,7 @@ namespace Features.ShipModule.Scripts {
             if (_floating != null)
                 _floating.HoverEnabled = false;
 
+            _rideDiagnostics.LogBound(this, ship, _localOffset, cause);
             if (isOwned) {
                 _syncedLocalOffset = _localOffset;
                 CmdBeginRide(_localOffset, NetworkTime.time, ship.NetIdentity);
@@ -156,7 +159,7 @@ namespace Features.ShipModule.Scripts {
         private void BindRemote(ShipBase ship) {
             ship.Riders.TrackRider(this);
             if (_bound == false) {
-                Bind(ship, _syncedLocalOffset);
+                Bind(ship, _syncedLocalOffset, nameof(BindRemote));
                 return;
             }
 
@@ -189,12 +192,13 @@ namespace Features.ShipModule.Scripts {
             RpcRelease();
         }
 
-        internal void ReleaseFromPlatform() {
+        internal void ReleaseFromPlatform([CallerMemberName] string cause = "") {
             if (_bound == false)
                 return;
 
             // The ship may have been snapped (origin shift at the station) since the last Follow.
             ApplyWorldPose();
+            _rideDiagnostics.LogReleased(this, _ship, _localOffset, cause);
             bool carryVelocity = isOwned && _ship.IsFlying;
             if (carryVelocity)
                 _reboardAt = Time.time + _ship.ReboardDelaySeconds;
