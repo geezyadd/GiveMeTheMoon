@@ -20,6 +20,7 @@ MonoBehaviour:
   _stationAZoneRadius: 80
   _stationBZoneRadius: 100
   _takeoffCorridorHalfWidth: 60
+  _takeoffRunOutLength: 200
   _routesByLoop:
   - _fromLoop: 0
     _routeDifficulties:

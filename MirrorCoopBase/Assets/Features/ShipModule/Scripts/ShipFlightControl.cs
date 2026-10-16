@@ -39,7 +39,6 @@ namespace Features.ShipModule.Scripts {
             Vector3 from,
             Vector3 hover,
             Quaternion heading,
-            Quaternion routeHeading,
             float takeoffSeconds,
             float dodgeRangeScale,
             ShipFlightMode mode) {
@@ -47,7 +46,6 @@ namespace Features.ShipModule.Scripts {
                 from,
                 hover,
                 heading,
-                routeHeading,
                 _flightSettings(),
                 takeoffSeconds,
                 dodgeRangeScale,

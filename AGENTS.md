@@ -9,7 +9,7 @@ station to station and upgrades the ship with modules along the way.
 ### Core loop (current focus)
 1. Start at the first station with base money, enough for the simplest upgrades.
 2. **Management phase.** Players buy modules at the station's shop kiosk (aim + **E**; bought items appear on its delivery pad) and install them in ship slots: engines,
-   propeller, helm, radar, more later. The balance is shared by the crew.
+   propeller, radar, more later. The helm is always on the ship (see below). The balance is shared by the crew.
 3. **Flight phase.** The ship flies to the next station while players stand and walk on the deck.
 4. Arrival at the next station: new purchases and upgrades, then the loop repeats.
 
@@ -26,12 +26,20 @@ is not final yet and needs evaluation. **How the code works now** (`ShipFlightSe
   speed 1, faster engines shorten it (`ShipFlightStatService.EvaluateRouteWork`). Tests shorten it with their own copy
   of the config (`LoopSmokeShipRunConfigOverride`) or, in editor / development builds, with
   `IShipFlightLengthDebug.DebugUseFlightSeconds` (`DeckFeelHarness`);
-- on takeoff the ship moves over 9 s to a hover point (+350 m forward, +100 m up) and turns its nose to the route;
-- in cruise it flies along its heading at `CruiseSpeed` (14 m/s) × the `FlightSpeed` stat. With a helm module
-  installed, the pilot in the helm seat turns the heading and sways the ship sideways; without a helm module the ship
-  keeps the route heading;
+- on takeoff the ship moves over 9 s to a hover point (+350 m forward, +100 m up) and **keeps the heading it had at
+  the station**: the autopilot does not turn to the destination (`ShipFlight`);
+- in cruise it flies along its heading at `CruiseSpeed` (14 m/s) × the `FlightSpeed` stat. The pilot in the helm
+  seat turns the heading and sways the ship sideways. The destination lies up to 85° off the takeoff heading, so the
+  crew finds it **by radar**: the arrow and the beacon at the minimap edge (`ShipRadarService`, `Aux_MP` with
+  `Arrow = 1`) and the arrow on the radar module's screen (`ShipRadarScreen`);
+- the helm is **mandatory**: the ship's `control` socket has `HelmModule` as its starting module
+  (`ShipSocket._startingModule`, data on `ShipPlatform.prefab`), every `ServerResetForBuild` installs it again and the
+  module is not removable (`ModuleDefinition._isRemovable` = false, `ShipSocketRule.CanUninstall`). It is not sold in
+  the shop and does not drop at stations. The branch "no control module" in `ShipFlightControl.ServerStep` stays as a
+  guard; normal play never gets there;
 - arrival is by distance: the ship is within `ApproachDistance` (70 m) of the destination (`ShipRoute.HasArrived`).
-  In this mode `ShipTransit` only gives the time estimate for the HUD (distance / speed);
+  In this mode `ShipTransit` only gives the HUD estimate, live from the current position: distance / cruise speed;
+  while the nose points away from the destination the HUD shows the distance instead (`FlightTimePresenter`);
 - on landing the ship eases onto the pad's landing point (`LandingSeconds` = 9 s) and the phase becomes `Build`;
 - after a landing farther than 800 m from the world origin the world is shifted back to it
   (`ShipWorldShiftService.RecenterIfFar`, `WorldShift`; clients get it through `ShipRunDirector`);
@@ -45,7 +53,8 @@ is not final yet and needs evaluation. **How the code works now** (`ShipFlightSe
 
 ## Loop status (2026-10-11)
 The loop runs from start to end, but it does not match the design yet:
-- modules stay on the ship after a normal landing. `ServerResetForBuild` removes **all** installed modules only at the
+- modules stay on the ship after a normal landing. `ServerResetForBuild` resets every socket to its starting module
+  (the helm) or to empty only at the
   start and end of a run and on an aborted flight (`ShipRunService.FinishAtCurrentPose`; nothing calls `ServerAbort`
   yet);
 - modules are installed and removed only in the `Build` phase (`ShipSocketRule`);
@@ -55,7 +64,8 @@ The loop runs from start to end, but it does not match the design yet:
 - the final ship stats are synced to clients (`ShipStats` model), but only `FlightSpeed` (cruise speed) and
   `DodgeRange` (side sway) affect the game, and no module changes `DodgeRange`; `Thrust`, `Handling` and `Armor` are
   not read by gameplay;
-- a pilot who turns the ship away from the destination can fly forever: there is no autopilot and no timeout;
+- a crew that does not steer to the destination can fly forever: the autopilot only keeps the heading and there is no
+  timeout;
 - the run has no goal: it ends only when the whole crew is dead (`PlayerLifeSystem` → lobby);
 - players can join or come back in the lobby or while the ship stands at a station (`Build`); in flight, in a wreck,
   while the map changes and with a full crew they are turned away with a reason the menu shows (see "Player data and
@@ -65,7 +75,7 @@ The loop runs from start to end, but it does not match the design yet:
 ### Known limits
 - **The ship flies through the flight field's rocks.** Rocks have no damage, no bounce and no effect on the ship or
   the players: their colliders are triggers on the built-in `Ignore Raycast` layer (see "Flight field" in Key places).
-  Damage, armor and a mandatory helm are separate tasks.
+  Damage and armor are separate tasks.
 - The field has no "left the field" event and the rocks are not on the radar yet.
 - **No world shift in flight.** On loop 4 the ship is ~8-9 km from the origin before the landing recenter (float
   step there is ~1 mm); deck and camera jitter at that distance is not checked yet.
@@ -188,7 +198,7 @@ types.
 | Modules and slots | a module is one `ModuleDefinition` asset (`ShipModule/GameResources/Modules/`: id, slot type, item prefab, slot view, name, price, stat modifiers); `ModuleCatalog` lists them all and resolves a module id (`ModuleCatalogValidator` checks it at startup); `ShipItem`, `ShipSocket` (+ `ShipSocketRule`, state in the `ShipSockets` model), `Ship*Interactable`; catalogs in `ShipModule/GameResources/Configurations/` (Addressables) |
 | Stats | `Assets/Features/StatsModule/`, `ShipStatType`, `ShipStatEntity`, `ShipStatSheet` (server: base values from `ShipAccumulativeStatsConfiguration` plus module modifiers), synced `ShipStats` model; player movement stats are `PlayerStatType` / `PlayerStatsConfiguration` in `CharacterMovableModule/Scripts/PlayerStats/` |
 | World shift | `WorldShift` (count and total of the shifts), `ShipWorldShiftService`, `ShipPoseSync`; content outside the ship module follows a shift through `IWorldShiftFollower` (server: `ShipWorldShiftService.ApplyWorldShift`, remote clients: `ShipRunDirector.RpcShiftWorld`) |
-| Flight field | `Assets/Features/FlightFieldModule/`: model (`FieldFrame` cell <-> world, a rectangle: `LengthCells` along A -> B = the distance in cells + the margins behind A and B, `WidthCells` across = `FieldWidthCells` (61), widened when the cruise start lies far off the axis so `SideMarginCells` stay beside it; `FieldCell`, `FieldPlacement`, `FieldRoute`, `FieldRequest`, `FlightField`); a structure is one `FieldStructureDefinition` (id, kind, footprint rows, prefab, `IsNetworked`, weight, visual yaw / scale jitter) in `FieldStructureCatalog`; tuning in `FlightFieldConfiguration` (both in the `Configurations` group); `IFlightFieldGenerator` runs the `IFieldGenerationStep`s in the order of their bindings in `FlightFieldModuleInstaller`; `IFieldRouteShaper` turns route difficulty into corridor parameters. In the world: `FlightFieldService` (server, `IFlightRouteListener` + `IWorldShiftFollower`) generates at launch on a worker thread (the generation touches no Unity object; a loop 9 field takes over 100 ms), keeps the field in `FlightFieldServerModel` and publishes it through `FlightFieldPublisher` into the `LiveField` model in batches (`FieldPublishJob`: `PublishEntriesPerBatch` = 300 entries, about 7 KB, one batch every `PublishBatchIntervalSeconds` = 0.1 s, so every Mirror delta stays below Telepathy's 16 KB message limit; FizzySteamworks allows 512 KB; the state with the new field number goes out after the last batch, a new field or `Clear` drops a publish in progress; a loop 9 field of ~53 KB takes about 1 s) (`FlightFieldSync` on the `ShipRunDirector` object); `LiveFieldBuildSystem` streams the local structures on every peer: it builds the placements within `BuildRadius` (1 300 m) of the game camera (`IFieldStreamingViewpoint`), at most `StructuresBuiltPerFrame` per frame, and returns the ones beyond `ReleaseRadius` (1 500 m) to the pool (`IFieldStructureSceneBuilder.ReleaseLocalStructure`), through `FieldStructureSceneBuilder` + `FieldStructurePool` under one `FlightField` root (`FlightFieldSceneModel`); `FieldStructureSpawnRule` decides local or Mirror (`FieldNetworkedStructures`, prefab marked with `FieldNetworkedStructure`; a client registers the networked prefabs of the catalog with Mirror on every client start, `FieldNetworkedPrefabRegistration` called by `FieldNetworkedPrefabSystem` in GameCore, so they are not in the network manager's spawn prefabs). Rocks: trigger colliders on the built-in `Ignore Raycast` layer, the collision matrix is unchanged (triggers push nothing; the aim ignores triggers and that layer is not in `InteractableMask`). Debug: **Tools → Flight Field → Debug Map** (editor; "Live field" shows the running host's field and the ship), `GameResources/Debug/Debug_NetworkBeacon` (networked test structure, not in the catalog) |
+| Flight field | `Assets/Features/FlightFieldModule/`: model (`FieldFrame` cell <-> world, a rectangle: `LengthCells` along A -> B = the distance in cells + the margins behind A and B, `WidthCells` across = `FieldWidthCells` (61), widened when the cruise start lies far off the axis so `SideMarginCells` stay beside it; `FieldCell`, `FieldPlacement`, `FieldRoute`, `FieldRequest`, `FlightField`); a structure is one `FieldStructureDefinition` (id, kind, footprint rows, prefab, `IsNetworked`, weight, visual yaw / scale jitter) in `FieldStructureCatalog`; tuning in `FlightFieldConfiguration` (both in the `Configurations` group; the takeoff corridor of `FieldTakeoffCorridorStep` runs from A along the takeoff heading past the cruise start by `TakeoffRunOutLength`, so the pilot has room to find B and turn); `IFlightFieldGenerator` runs the `IFieldGenerationStep`s in the order of their bindings in `FlightFieldModuleInstaller`; `IFieldRouteShaper` turns route difficulty into corridor parameters. In the world: `FlightFieldService` (server, `IFlightRouteListener` + `IWorldShiftFollower`) generates at launch on a worker thread (the generation touches no Unity object; a loop 9 field takes over 100 ms), keeps the field in `FlightFieldServerModel` and publishes it through `FlightFieldPublisher` into the `LiveField` model in batches (`FieldPublishJob`: `PublishEntriesPerBatch` = 300 entries, about 7 KB, one batch every `PublishBatchIntervalSeconds` = 0.1 s, so every Mirror delta stays below Telepathy's 16 KB message limit; FizzySteamworks allows 512 KB; the state with the new field number goes out after the last batch, a new field or `Clear` drops a publish in progress; a loop 9 field of ~53 KB takes about 1 s) (`FlightFieldSync` on the `ShipRunDirector` object); `LiveFieldBuildSystem` streams the local structures on every peer: it builds the placements within `BuildRadius` (1 300 m) of the game camera (`IFieldStreamingViewpoint`), at most `StructuresBuiltPerFrame` per frame, and returns the ones beyond `ReleaseRadius` (1 500 m) to the pool (`IFieldStructureSceneBuilder.ReleaseLocalStructure`), through `FieldStructureSceneBuilder` + `FieldStructurePool` under one `FlightField` root (`FlightFieldSceneModel`); `FieldStructureSpawnRule` decides local or Mirror (`FieldNetworkedStructures`, prefab marked with `FieldNetworkedStructure`; a client registers the networked prefabs of the catalog with Mirror on every client start, `FieldNetworkedPrefabRegistration` called by `FieldNetworkedPrefabSystem` in GameCore, so they are not in the network manager's spawn prefabs). Rocks: trigger colliders on the built-in `Ignore Raycast` layer, the collision matrix is unchanged (triggers push nothing; the aim ignores triggers and that layer is not in `InteractableMask`). Debug: **Tools → Flight Field → Debug Map** (editor; "Live field" shows the running host's field and the ship), `GameResources/Debug/Debug_NetworkBeacon` (networked test structure, not in the catalog) |
 | Cargo on the deck | `ShipDeckCargo`: items lying on the deck are attached to the ship and travel with it |
 | Radar | `ShipRadarService`, `ShipRadarScreen`, `ShipRadarCatalog` |
 | Deck debugging | `ShipModule/Scripts/Debug/` (editor / development builds only): `DeckFeelHarness` (deck feel measurements), `ShipStatsDebugOverlay` |
@@ -236,7 +246,8 @@ takeoff logs its longest frame (`[LoopSmoke] loop N takeoff`). The test shortens
 changed. The test timeout is 180 s (a run takes about 110 s). The shared steps live in helpers both loop tests use:
 `LoopSmokeSession` (menu, Host, lobby, Start, all dead -> lobby, Leave; waits record the run phases),
 `LoopSmokeFlight` (engines, boarding, the lever, the phases of a loop with the field checks and the checks after
-landing, messages start with "Loop N:"), `LoopSmokeShipRunConfigOverride` and `LoopSmokeFieldCatalogOverride` (the
+landing, messages start with "Loop N:"; at the cruise start its pilot faces the ship to the destination once through
+`ShipBase.FlightControlDebug`, because the autopilot keeps the takeoff heading), `LoopSmokeShipRunConfigOverride` and `LoopSmokeFieldCatalogOverride` (the
 config copies) and `LoopSmokeSpawnCounts`.
 
 The soak test `LoopSoakTest` (`Assets/Tests/PlayMode/LoopSoak/`, `[Category("Soak")]`, about 3 minutes) flies 15

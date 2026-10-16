@@ -49,8 +49,10 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [SerializeField, Min(0f)] private float _stationAZoneRadius = 80f;
         [Tooltip("Radius around station B kept empty for the approach, meters (the ship arrives within 70 m).")]
         [SerializeField, Min(0f)] private float _stationBZoneRadius = 100f;
-        [Tooltip("Half width of the empty takeoff corridor from station A to the cruise start, meters.")]
+        [Tooltip("Half width of the empty takeoff corridor from station A along the takeoff heading, meters.")]
         [SerializeField, Min(0f)] private float _takeoffCorridorHalfWidth = 60f;
+        [Tooltip("Length of the takeoff corridor past the cruise start along the takeoff heading, meters: the autopilot keeps that heading, and the pilot needs this run-out to find B on the radar and turn (run-up plus margin).")]
+        [SerializeField, Min(0f)] private float _takeoffRunOutLength = 200f;
 
         [Header("Routes")]
         [SerializeField] private LoopRoutes[] _routesByLoop = { new() };
@@ -96,6 +98,7 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public float StationAZoneRadius => _stationAZoneRadius;
         public float StationBZoneRadius => _stationBZoneRadius;
         public float TakeoffCorridorHalfWidth => _takeoffCorridorHalfWidth;
+        public float TakeoffRunOutLength => _takeoffRunOutLength;
         public IReadOnlyList<LoopRoutes> RoutesByLoop => _routesByLoop;
         public RouteShapeCurves RouteShape => _routeShape;
         public int WaypointSpacingCells => _waypointSpacingCells;

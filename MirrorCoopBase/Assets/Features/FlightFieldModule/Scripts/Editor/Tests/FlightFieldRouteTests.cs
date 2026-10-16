@@ -27,6 +27,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const string MAX_REPAIR_ROUNDS_FIELD = "_maxRepairRounds";
         private const string MAX_SEED_ATTEMPTS_FIELD = "_maxSeedAttempts";
         private const string CORRIDOR_OBSTACLE_SHARE_FIELD = "_routeShape._corridorObstacleShare";
+        private const string TAKEOFF_RUN_OUT_LENGTH_FIELD = "_takeoffRunOutLength";
 
         private FlightFieldEditorComposition _composition;
 
@@ -112,8 +113,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             return new FieldRequest(Vector3.zero, Vector3.forward * distance, cruiseStart, 0, seed, routeRequests);
         }
 
-        // Every free cell filled, obstacles filling whole corridors, no repair and one seed: only the forced clearing
-        // can give a passage.
+        // Every free cell filled, obstacles filling whole corridors, no takeoff run-out, no repair and one seed: only the
+        // forced clearing can give a passage.
         private FlightFieldConfiguration CreateBlockingConfiguration() {
             FlightFieldConfiguration configuration = Object.Instantiate(_composition.Configuration);
             SerializedObject serializedConfiguration = new(configuration);
@@ -121,6 +122,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             serializedConfiguration.FindProperty(MAX_REPAIR_ROUNDS_FIELD).intValue = 0;
             serializedConfiguration.FindProperty(MAX_SEED_ATTEMPTS_FIELD).intValue = 1;
             serializedConfiguration.FindProperty(CORRIDOR_OBSTACLE_SHARE_FIELD).animationCurveValue = AnimationCurve.Constant(0f, 1f, 1f);
+            // On this short straight route the run-out past the cruise start would reach B and give a passage by itself.
+            serializedConfiguration.FindProperty(TAKEOFF_RUN_OUT_LENGTH_FIELD).floatValue = 0f;
             serializedConfiguration.ApplyModifiedPropertiesWithoutUndo();
             return configuration;
         }
