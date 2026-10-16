@@ -6,7 +6,8 @@ using UnityEngine;
 namespace Features.FlightFieldModule.Scripts.Scene {
     // Where the rocks of one cluster stand. Everything comes from the given random sequence, so the same seed gives
     // the same rocks on every peer. Offsets are in field space from the middle of the footprint box: x across the
-    // field (box height), z along it (box width), y up from the flight plane.
+    // field (box height), z along it (box width), y up from the flight plane. The main rock and the plane rocks stay
+    // at the flight plane; only the satellites and the debris spread up and down.
     public sealed class FieldClusterLayout : IFieldClusterLayout {
         private const float HALF = 0.5f;
         // The farthest vertex of a rock prefab from its pivot, as a share of the rock's size (the pack's rocks reach 0.69
@@ -14,9 +15,15 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         private const float ROCK_REACH = 0.7f;
         private const float FULL_TURN_RADIANS = 2f * Mathf.PI;
 
+        private readonly IFieldPlaneCoverLayout _fieldPlaneCoverLayout;
+
+        public FieldClusterLayout(IFieldPlaneCoverLayout fieldPlaneCoverLayout) =>
+            _fieldPlaneCoverLayout = fieldPlaneCoverLayout;
+
         public void Fill(FieldClusterRecipe recipe, FieldFootprint footprint, float cellSize, IFieldRandom random, List<FieldClusterRockPose> rocks) {
             rocks.Clear();
             AddMainRock(recipe, footprint, cellSize, random, rocks);
+            _fieldPlaneCoverLayout.Add(recipe, footprint, cellSize, random, rocks);
             int satellites = random.Range(recipe.SatelliteCount.x, recipe.SatelliteCount.y + 1);
             for (int i = 0; i < satellites; i++)
                 rocks.Add(CreateCellRock(recipe, footprint, cellSize, recipe.SatelliteSize, random));
@@ -58,19 +65,22 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             return new FieldClusterRockPose(prefab, material, offset, rotation, scale);
         }
 
-        internal static FieldRockVisual PickPrefab(FieldClusterRecipe recipe, IFieldRandom random) {
+        internal static FieldRockVisual PickPrefab(FieldClusterRecipe recipe, IFieldRandom random) =>
+            PickRock(recipe.Rocks, random);
+
+        internal static FieldRockVisual PickRock(IReadOnlyList<FieldClusterRockOption> options, IFieldRandom random) {
             float total = 0f;
-            foreach (FieldClusterRockOption option in recipe.Rocks)
+            foreach (FieldClusterRockOption option in options)
                 total += option.Weight;
 
             float pick = random.Value() * total;
-            foreach (FieldClusterRockOption option in recipe.Rocks) {
+            foreach (FieldClusterRockOption option in options) {
                 pick -= option.Weight;
                 if (pick < 0f)
                     return option.Prefab;
             }
 
-            return recipe.Rocks[recipe.Rocks.Count - 1].Prefab;
+            return options[options.Count - 1].Prefab;
         }
 
         // The largest rock that, turned any way and stretched by the recipe's largest axis scale, stays inside a box of

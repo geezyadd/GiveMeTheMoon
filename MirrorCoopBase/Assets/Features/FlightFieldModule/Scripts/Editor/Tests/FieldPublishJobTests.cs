@@ -7,7 +7,8 @@ using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // A long field goes into the live field model in batches: no batch over the batch size, every entry once and in
-    // order, the state with the field number alone after the last entry.
+    // order, every debris cell in exactly one run, the state with the field number and profile alone after the last
+    // entry.
     public sealed class FieldPublishJobTests {
         private const int SEED = 41;
         private const int NUMBER = 7;
@@ -52,6 +53,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
             Assert.AreEqual(_field.Routes.Count, target.Routes);
             Assert.AreEqual(CountRouteCells(), target.RouteCells);
+            Assert.AreEqual(_field.Cells.GetIndexes(HasDebris).Count, target.DebrisCells, "Debris cells got lost or doubled in the runs.");
+            Assert.AreEqual(_field.ProfileId, target.State.ProfileId);
 
             target.BeginBatch();
             job.WriteNextBatch(target);
@@ -83,6 +86,9 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             Assert.AreEqual(_field.Frame.Origin + shift, target.State.Origin);
         }
 
+        private static bool HasDebris(FieldCell cell) =>
+            cell.HasDebris;
+
         private int CountRouteCells() {
             int cells = 0;
             foreach (FieldRoute route in _field.Routes)
@@ -95,6 +101,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             public List<FieldPlacementEntry> Placements { get; } = new();
             public int Routes { get; private set; }
             public int RouteCells { get; private set; }
+            public int DebrisCells { get; private set; }
             public int StateWrites { get; private set; }
             public LiveFieldState State { get; private set; }
             public int EntriesInBatch { get; private set; }
@@ -114,6 +121,11 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
             public void AddRouteCell(FieldRouteCellEntry routeCell) {
                 RouteCells++;
+                EntriesInBatch++;
+            }
+
+            public void AddDebrisRun(FieldDebrisRunEntry debrisRun) {
+                DebrisCells += debrisRun.Length;
                 EntriesInBatch++;
             }
 

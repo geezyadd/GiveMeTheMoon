@@ -25,91 +25,44 @@ MonoBehaviour:
   - _fromLoop: 0
     _routeDifficulties:
     - 0
+    _profiles:
+    - _profile: {fileID: 11400000, guid: de460ba1713a5774589405e0ca382a66, type: 2}
+      _weight: 1
+  - _fromLoop: 1
+    _routeDifficulties:
+    - 0.15
+    _profiles:
+    - _profile: {fileID: 11400000, guid: de460ba1713a5774589405e0ca382a66, type: 2}
+      _weight: 1
+    - _profile: {fileID: 11400000, guid: 161a9e51794c3214fbe3ecf1216c7a14, type: 2}
+      _weight: 1
   - _fromLoop: 3
     _routeDifficulties:
     - 0.35
+    _profiles:
+    - _profile: {fileID: 11400000, guid: 161a9e51794c3214fbe3ecf1216c7a14, type: 2}
+      _weight: 1
+    - _profile: {fileID: 11400000, guid: bf2d44d4f5473394fb8047bd7b3ce734, type: 2}
+      _weight: 1
   - _fromLoop: 6
     _routeDifficulties:
     - 0.7
-  _routeShape:
-    _corridorHalfWidthCells:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 2
-        inSlope: 0
-        outSlope: -1
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: -1
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    _maxSideOffsetCells:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 1
-        inSlope: 0
-        outSlope: 3
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 4
-        inSlope: 3
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    _corridorObstacleShare:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: 0
-        outSlope: 0.15
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 0.15
-        inSlope: 0.15
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-  _waypointSpacingCells: 4
-  _obstacleDensity: 0.3
-  _wallStructures:
-  - {fileID: 11400000, guid: 139b6e748dcd810469fb11cfb64202db, type: 2}
-  - {fileID: 11400000, guid: 2b09c6a12e6c6ba439b5bf4ac33b4bec, type: 2}
-  _placementTries: 12
+    _profiles:
+    - _profile: {fileID: 11400000, guid: bf2d44d4f5473394fb8047bd7b3ce734, type: 2}
+      _weight: 1
+    - _profile: {fileID: 11400000, guid: 2c2fc55148917af4c82cd89af7946de1, type: 2}
+      _weight: 1
+  _difficultyProfiles:
+  - {fileID: 11400000, guid: de460ba1713a5774589405e0ca382a66, type: 2}
+  - {fileID: 11400000, guid: 161a9e51794c3214fbe3ecf1216c7a14, type: 2}
+  - {fileID: 11400000, guid: bf2d44d4f5473394fb8047bd7b3ce734, type: 2}
+  - {fileID: 11400000, guid: 2c2fc55148917af4c82cd89af7946de1, type: 2}
+  _shipWidthMeters: 10
+  _debrisGapMarginMeters: 6
+  _maxPlaneGapMeters: 4
+  _planeHalfThicknessMeters: 8
+  _metricCruiseSpeed: 14
+  _zoneShareTolerance: 0.08
   _passageClearanceCells: 1
   _maxRepairRounds: 2
   _maxSeedAttempts: 3
@@ -118,3 +71,6 @@ MonoBehaviour:
   _structuresBuiltPerFrame: 16
   _buildRadius: 1300
   _releaseRadius: 1500
+  _debrisCellsBuiltPerFrame: 24
+  _debrisBuildRadius: 900
+  _debrisReleaseRadius: 1050

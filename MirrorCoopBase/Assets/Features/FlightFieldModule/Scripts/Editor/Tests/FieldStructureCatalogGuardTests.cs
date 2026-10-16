@@ -5,17 +5,19 @@ using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Structures;
 using NUnit.Framework;
-using UnityEngine;
+using UnityEditor;
 using Object = UnityEngine.Object;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // Guards field structures as data: every structure is one definition in the catalog with an id, a prefab and a
-    // footprint, the startup validators accept the game's assets, and no field code checks a concrete structure.
+    // footprint, every debris kind has an id and a recipe, the startup validators accept the game's assets, and no
+    // field code checks a concrete structure.
     public sealed class FieldStructureCatalogGuardTests {
         private const string MODULE_SCRIPTS_FOLDER = "Assets/Features/FlightFieldModule/Scripts";
         private const string SOURCE_PATTERN = "*.cs";
         private const string TESTS_FOLDER = "/Tests/";
         private const char QUOTE = '"';
+        private const string DIFFICULTY_PROFILES_FIELD = "_difficultyProfiles";
 
         private FlightFieldEditorComposition _composition;
 
@@ -42,23 +44,34 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         }
 
         [Test]
-        public void WhenCatalogIsRead_ThenTheRandomFillHasAnObstacleToPick() =>
-            Assert.IsTrue(_composition.Catalog.Structures.Any(structure => structure.IsRandomObstacle), $"{_composition.Catalog.name} has no obstacle with a positive weight.");
+        public void WhenCatalogIsRead_ThenEveryDebrisKindHasAUniqueIdAndARecipe() {
+            string[] ids = _composition.Catalog.Debris.Select(debris => debris.Id).ToArray();
+
+            Assert.IsNotEmpty(ids, $"{_composition.Catalog.name} has no debris kind.");
+            Assert.IsFalse(ids.Any(string.IsNullOrEmpty), $"A debris kind in {_composition.Catalog.name} has no id.");
+            Assert.AreEqual(ids.Length, ids.Distinct().Count(), "A debris id is used twice.");
+            Assert.IsTrue(_composition.Catalog.Debris.All(debris => debris.Recipe != null), "A debris kind has no recipe.");
+        }
 
         [Test]
-        public void WhenCatalogHasNoObstacle_ThenTheStartupValidatorFails() {
-            FieldStructureCatalog emptyCatalog = ScriptableObject.CreateInstance<FieldStructureCatalog>();
+        public void WhenConfigurationHasNoProfile_ThenTheProfileValidatorFails() {
+            FlightFieldConfiguration configuration = Object.Instantiate(_composition.Configuration);
             try {
-                Assert.Throws<InvalidOperationException>(new FieldStructureCatalogValidator(emptyCatalog).Initialize);
+                SerializedObject serializedConfiguration = new(configuration);
+                serializedConfiguration.FindProperty(DIFFICULTY_PROFILES_FIELD).arraySize = 0;
+                serializedConfiguration.ApplyModifiedPropertiesWithoutUndo();
+
+                Assert.Throws<InvalidOperationException>(new FieldDifficultyProfileValidator(configuration, _composition.Catalog, _composition.FootprintReader).Initialize);
             } finally {
-                Object.DestroyImmediate(emptyCatalog);
+                Object.DestroyImmediate(configuration);
             }
         }
 
         [Test]
         public void WhenStartupValidatorsRunOnTheGameAssets_ThenTheyAcceptThem() {
             Assert.DoesNotThrow(new FieldStructureCatalogValidator(_composition.Catalog).Initialize);
-            Assert.DoesNotThrow(new FlightFieldConfigurationValidator(_composition.Configuration, _composition.Catalog, _composition.FootprintReader).Initialize);
+            Assert.DoesNotThrow(new FlightFieldConfigurationValidator(_composition.Configuration).Initialize);
+            Assert.DoesNotThrow(new FieldDifficultyProfileValidator(_composition.Configuration, _composition.Catalog, _composition.FootprintReader).Initialize);
         }
 
         [Test]

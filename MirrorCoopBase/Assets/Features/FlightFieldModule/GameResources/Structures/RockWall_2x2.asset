@@ -19,7 +19,6 @@ MonoBehaviour:
   - XX
   _prefab: {fileID: 1142218335592292982, guid: 114e453f24f70db439c31ac9bf8d053f, type: 3}
   _isNetworked: 0
-  _weight: 0
   _isRotatable: 1
   _visualYawJitterDegrees: 180
   _visualScaleJitter: 0.12

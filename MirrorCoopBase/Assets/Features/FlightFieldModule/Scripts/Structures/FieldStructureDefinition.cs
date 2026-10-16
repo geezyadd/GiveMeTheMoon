@@ -15,8 +15,6 @@ namespace Features.FlightFieldModule.Scripts.Structures {
         [SerializeField] private GameObject _prefab;
         [Tooltip("A Mirror object the server spawns; otherwise every participant builds a local static object.")]
         [SerializeField] private bool _isNetworked;
-        [Tooltip("Relative chance to be picked by a random fill; 0 = never picked by chance (e.g. wall only).")]
-        [SerializeField, Min(0f)] private float _weight = 1f;
         [Tooltip("May be turned by 90 degrees when placed.")]
         [SerializeField] private bool _isRotatable = true;
         [Tooltip("Visual only: the built object turns by a random angle up to this many degrees either way; the footprint does not change.")]
@@ -31,12 +29,10 @@ namespace Features.FlightFieldModule.Scripts.Structures {
         public IReadOnlyList<string> FootprintRows => _footprintRows;
         public GameObject Prefab => _prefab;
         public bool IsNetworked => _isNetworked;
-        public float Weight => _weight;
         public bool IsRotatable => _isRotatable;
         public float VisualYawJitterDegrees => _visualYawJitterDegrees;
         public float VisualScaleJitter => _visualScaleJitter;
         public bool HasClusterRecipe => _clusterRecipe != null;
         public FieldClusterRecipe ClusterRecipe => _clusterRecipe;
-        public bool IsRandomObstacle => _kind == FieldStructureKind.Obstacle && _weight > 0f;
     }
 }

@@ -9,6 +9,18 @@ namespace Features.FlightFieldModule.Scripts.Generation.Routes {
             foreach (Vector2Int cell in centerline)
                 MarkSquare(isInCorridor, cell, halfWidthCells, size);
 
+            return Collect(isInCorridor, size);
+        }
+
+        public List<Vector2Int> Map(Vector2Int size, IReadOnlyList<Vector2Int> centerline, IReadOnlyList<int> halfWidths) {
+            bool[,] isInCorridor = new bool[size.x, size.y];
+            for (int i = 0; i < centerline.Count; i++)
+                MarkSquare(isInCorridor, centerline[i], halfWidths[i], size);
+
+            return Collect(isInCorridor, size);
+        }
+
+        private static List<Vector2Int> Collect(bool[,] isInCorridor, Vector2Int size) {
             List<Vector2Int> corridor = new();
             for (int y = 0; y < size.y; y++)
                 CollectRow(isInCorridor, y, size.x, corridor);

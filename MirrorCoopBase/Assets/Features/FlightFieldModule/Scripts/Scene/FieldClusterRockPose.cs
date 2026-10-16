@@ -10,13 +10,19 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         public Vector3 Offset { get; }
         public Quaternion Rotation { get; }
         public Vector3 Scale { get; }
+        // A rock that closes the flight plane over footprint cells; it may reach a little past the footprint.
+        public bool IsPlaneCover { get; }
 
-        public FieldClusterRockPose(FieldRockVisual prefab, Material material, Vector3 offset, Quaternion rotation, Vector3 scale) {
+        public FieldClusterRockPose(FieldRockVisual prefab, Material material, Vector3 offset, Quaternion rotation, Vector3 scale)
+            : this(prefab, material, offset, rotation, scale, false) { }
+
+        public FieldClusterRockPose(FieldRockVisual prefab, Material material, Vector3 offset, Quaternion rotation, Vector3 scale, bool isPlaneCover) {
             Prefab = prefab;
             Material = material;
             Offset = offset;
             Rotation = rotation;
             Scale = scale;
+            IsPlaneCover = isPlaneCover;
         }
     }
 }

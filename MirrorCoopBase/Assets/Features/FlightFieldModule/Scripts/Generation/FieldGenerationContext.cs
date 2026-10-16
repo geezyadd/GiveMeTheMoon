@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Model;
 using Features.MatrixModule.Scripts;
 using UnityEngine;
@@ -16,6 +17,10 @@ namespace Features.FlightFieldModule.Scripts.Generation {
         public IFieldRandom Random { get; }
         public IReadOnlyList<FieldPlacement> Placements => _placements;
         public IReadOnlyList<FieldRoute> Routes => _routes;
+        public FieldDifficultyProfile Profile => Request.Profile;
+        public float Difficulty => Request.Difficulty;
+        public FieldMetrics Metrics { get; } = new();
+        public FieldDensityMap Density { get; set; }
         public FieldFrame Frame { get; set; }
         public IMatrix<FieldCell> Cells { get; set; }
         public Vector2Int StationACell { get; set; }

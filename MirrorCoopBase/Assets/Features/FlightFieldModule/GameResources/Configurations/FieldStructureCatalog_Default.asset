@@ -19,3 +19,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0b6db49bddaa57e439877c6c9086d769, type: 2}
   - {fileID: 11400000, guid: 139b6e748dcd810469fb11cfb64202db, type: 2}
   - {fileID: 11400000, guid: 2b09c6a12e6c6ba439b5bf4ac33b4bec, type: 2}
+  - {fileID: 11400000, guid: 5bc757835b136c8468aa451cca1244a7, type: 2}
+  - {fileID: 11400000, guid: 4df5bab68b6a55d4db832addae91125b, type: 2}
+  - {fileID: 11400000, guid: afb3b71ef3460294ba21e203a00f49f0, type: 2}
+  - {fileID: 11400000, guid: 1e37e56fd8e861c4cb7badbb31e57d32, type: 2}
+  - {fileID: 11400000, guid: e71722fab001ff741837b85f5289aef7, type: 2}
+  _debris:
+  - {fileID: 11400000, guid: be6f2da1c4ef1bc4ebcf3d43690ae629, type: 2}

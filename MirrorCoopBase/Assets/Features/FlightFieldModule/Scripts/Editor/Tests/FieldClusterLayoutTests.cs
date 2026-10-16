@@ -9,8 +9,9 @@ using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // The rocks of a cluster come only from the seed (every peer builds the same field), the main rock crosses the
-    // flight plane, every rock stays inside the footprint (the client does not know the corridor cells) and within the
-    // recipe's height, and the game's recipes are complete visual-only data whose meshes fit the layout's reach.
+    // flight plane, every rock but the plane rocks stays inside the footprint (the client does not know the corridor
+    // cells) and within the recipe's height, plane rocks stay on the plane and reach at most one cell past the
+    // footprint, and the game's recipes are complete visual-only data whose meshes fit the layout's reach.
     public sealed class FieldClusterLayoutTests {
         private const float CELL_SIZE = 40f;
         private const int SEEDS = 200;
@@ -28,7 +29,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [OneTimeSetUp]
         public void OneTimeSetUp() {
             _composition = new FlightFieldEditorCompositionFactory().Create();
-            _layout = new FieldClusterLayout();
+            _layout = new FieldClusterLayout(new FieldPlaneCoverLayout());
         }
 
         [Test]
@@ -124,10 +125,22 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             Assert.GreaterOrEqual(rocks.Count, structure.ClusterRecipe.SatelliteCount.x + 1, $"{structure.name} seed {seed}: too few satellites.");
             foreach (FieldClusterRockPose rock in rocks) {
                 float reach = Mathf.Max(rock.Scale.x, Mathf.Max(rock.Scale.y, rock.Scale.z)) * ROCK_REACH;
+                if (rock.IsPlaneCover) {
+                    AssertPlaneRockNearFootprint(structure, seed, rock, reach, acrossLimit, alongLimit);
+                    continue;
+                }
+
                 Assert.LessOrEqual(Mathf.Abs(rock.Offset.x) + reach, acrossLimit, $"{structure.name} seed {seed}: a rock reaches too far across the field.");
                 Assert.LessOrEqual(Mathf.Abs(rock.Offset.z) + reach, alongLimit, $"{structure.name} seed {seed}: a rock reaches too far along the field.");
                 Assert.LessOrEqual(Mathf.Abs(rock.Offset.y), structure.ClusterRecipe.HeightSpreadCells * CELL_SIZE + TOLERANCE, $"{structure.name} seed {seed}: a rock is too far from the plane.");
             }
+        }
+
+        private static void AssertPlaneRockNearFootprint(FieldStructureDefinition structure, int seed, FieldClusterRockPose rock, float reach, float acrossLimit,
+                                                         float alongLimit) {
+            Assert.AreEqual(0f, rock.Offset.y, TOLERANCE, $"{structure.name} seed {seed}: a plane rock left the flight plane.");
+            Assert.LessOrEqual(Mathf.Abs(rock.Offset.x) + reach, acrossLimit + CELL_SIZE, $"{structure.name} seed {seed}: a plane rock reaches more than a cell past the footprint.");
+            Assert.LessOrEqual(Mathf.Abs(rock.Offset.z) + reach, alongLimit + CELL_SIZE, $"{structure.name} seed {seed}: a plane rock reaches more than a cell past the footprint.");
         }
 
         private static void AssertSameRock(FieldClusterRockPose expected, FieldClusterRockPose actual, string what) {

@@ -6,6 +6,7 @@ namespace Features.FlightFieldModule.Scripts.Network {
         public void AddPlacement(FieldPlacementEntry placement);
         public void AddRoute(FieldRouteEntry route);
         public void AddRouteCell(FieldRouteCellEntry routeCell);
+        public void AddDebrisRun(FieldDebrisRunEntry debrisRun);
         public void SetState(LiveFieldState state);
     }
 }

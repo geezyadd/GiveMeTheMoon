@@ -12,7 +12,8 @@ namespace Features.FlightFieldModule.Scripts.Scene {
     // few per frame, and the built ones beyond the release radius go back to the pool, so a long field never stands
     // whole. A late joiner takes the same path from the model snapshot. The rebuild waits for the next tick, so the
     // order in which the field's state and lists arrive does not matter; the root pose follows the model at once, so
-    // a world shift moves the structures in the frame the ship moves.
+    // a world shift moves the structures in the frame the ship moves. The small debris of passable cells streams the
+    // same way through IFieldDebrisStreamer under its own root.
     public sealed class LiveFieldBuildSystem : IInitializable, IDisposable, ITickable {
         private const float CELL_CENTER = 0.5f;
 
@@ -27,6 +28,8 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         private readonly IFieldStructureSceneBuilder _fieldStructureSceneBuilder;
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
         private readonly IFieldStreamingViewpoint _fieldStreamingViewpoint;
+        private readonly IFieldDebrisSceneBuilder _fieldDebrisSceneBuilder;
+        private readonly IFieldDebrisStreamer _fieldDebrisStreamer;
         private readonly List<PlacementState> _placementStates = new();
 
         private bool _isDirty;
@@ -34,12 +37,15 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         private bool IsShowingLiveField => _flightFieldSceneModel.BuiltNumber != LiveFieldNumbers.NO_FIELD && _flightFieldSceneModel.BuiltNumber == _liveFieldModel.Number;
 
         public LiveFieldBuildSystem(IReadOnlyLiveFieldModel liveFieldModel, FlightFieldSceneModel flightFieldSceneModel, IFieldStructureSceneBuilder fieldStructureSceneBuilder,
-                                    FlightFieldConfiguration flightFieldConfiguration, IFieldStreamingViewpoint fieldStreamingViewpoint) {
+                                    FlightFieldConfiguration flightFieldConfiguration, IFieldStreamingViewpoint fieldStreamingViewpoint,
+                                    IFieldDebrisSceneBuilder fieldDebrisSceneBuilder, IFieldDebrisStreamer fieldDebrisStreamer) {
             _liveFieldModel = liveFieldModel;
             _flightFieldSceneModel = flightFieldSceneModel;
             _fieldStructureSceneBuilder = fieldStructureSceneBuilder;
             _flightFieldConfiguration = flightFieldConfiguration;
             _fieldStreamingViewpoint = fieldStreamingViewpoint;
+            _fieldDebrisSceneBuilder = fieldDebrisSceneBuilder;
+            _fieldDebrisStreamer = fieldDebrisStreamer;
         }
 
         public void Initialize() =>
@@ -63,15 +69,17 @@ namespace Features.FlightFieldModule.Scripts.Scene {
                 return;
 
             _fieldStructureSceneBuilder.ReleaseAll();
+            _fieldDebrisStreamer.Clear();
             _flightFieldSceneModel.Clear();
             _placementStates.Clear();
             if (liveNumber == LiveFieldNumbers.NO_FIELD)
                 return;
 
             if (!_flightFieldSceneModel.HasRoot)
-                _flightFieldSceneModel.SetRoot(_fieldStructureSceneBuilder.CreateRoot());
+                _flightFieldSceneModel.SetRoots(_fieldStructureSceneBuilder.CreateRoot(), _fieldDebrisSceneBuilder.CreateRoot());
 
-            _fieldStructureSceneBuilder.PlaceRoot(_flightFieldSceneModel.Root, _liveFieldModel);
+            PlaceRoots();
+            _fieldDebrisStreamer.Restart(_liveFieldModel);
             _flightFieldSceneModel.BeginBuild(liveNumber);
         }
 
@@ -114,6 +122,13 @@ namespace Features.FlightFieldModule.Scripts.Scene {
 
             if (!isWaitingForBudget && !_flightFieldSceneModel.IsBuilt)
                 _flightFieldSceneModel.CompleteBuild();
+
+            _fieldDebrisStreamer.Stream(_flightFieldSceneModel.DebrisRoot, _liveFieldModel, viewpointOnPlane);
+        }
+
+        private void PlaceRoots() {
+            _fieldStructureSceneBuilder.PlaceRoot(_flightFieldSceneModel.Root, _liveFieldModel);
+            _fieldStructureSceneBuilder.PlaceRoot(_flightFieldSceneModel.DebrisRoot, _liveFieldModel);
         }
 
         // The center of the anchor cell in root space (x along Right, z along Forward); a structure of up to 4 cells
@@ -126,7 +141,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         private void OnLiveFieldChanged() {
             _isDirty = true;
             if (IsShowingLiveField)
-                _fieldStructureSceneBuilder.PlaceRoot(_flightFieldSceneModel.Root, _liveFieldModel);
+                PlaceRoots();
         }
     }
 }

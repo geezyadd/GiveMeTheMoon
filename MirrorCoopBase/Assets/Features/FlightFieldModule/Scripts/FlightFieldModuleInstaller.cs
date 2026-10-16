@@ -1,6 +1,8 @@
 using Features.FlightFieldModule.Scripts.Configuration;
+using Features.FlightFieldModule.Scripts.Debris;
 using Features.FlightFieldModule.Scripts.Decor;
 using Features.FlightFieldModule.Scripts.Generation;
+using Features.FlightFieldModule.Scripts.Generation.Noise;
 using Features.FlightFieldModule.Scripts.Generation.Passage;
 using Features.FlightFieldModule.Scripts.Generation.Placement;
 using Features.FlightFieldModule.Scripts.Generation.Routes;
@@ -18,22 +20,29 @@ namespace Features.FlightFieldModule.Scripts {
         public override void InstallBindings() {
             Container.BindInterfacesTo<FieldStructureCatalogValidator>().AsSingle();
             Container.BindInterfacesTo<FlightFieldConfigurationValidator>().AsSingle();
+            Container.BindInterfacesTo<FieldDifficultyProfileValidator>().AsSingle();
             Container.BindInterfacesTo<FlightFieldDecorConfigurationValidator>().AsSingle();
             Container.Bind<IMatrixFactory>().To<MatrixFactory>().AsSingle();
             Container.Bind<IFieldRandomFactory>().To<FieldRandomFactory>().AsSingle();
             Container.Bind<IFieldFootprintReader>().To<FieldFootprintReader>().AsSingle();
-            Container.Bind<IFieldStructurePicker>().To<FieldStructurePicker>().AsSingle();
             Container.Bind<IFieldStructurePlacer>().To<FieldStructurePlacer>().AsSingle();
-            Container.Bind<IFieldObstacleScatterer>().To<FieldObstacleScatterer>().AsSingle();
+            Container.Bind<IFieldGiantPacker>().To<FieldGiantPacker>().AsSingle();
+            Container.Bind<IFieldDebrisPicker>().To<FieldDebrisPicker>().AsSingle();
             Container.Bind<IFieldAreaReserver>().To<FieldAreaReserver>().AsSingle();
-            Container.Bind<IFieldRouteShaper>().To<CurveFieldRouteShaper>().AsSingle();
-            Container.Bind<IFieldCenterlinePlanner>().To<FieldCenterlinePlanner>().AsSingle();
+            Container.Bind<IFieldNoise>().To<FieldValueNoise>().AsSingle();
+            Container.Bind<IFieldRouteShaper>().To<ProfileFieldRouteShaper>().AsSingle();
+            Container.Bind<IFieldPathRasterizer>().To<FieldPathRasterizer>().AsSingle();
+            Container.Bind<IFieldCenterlinePlanner>().To<FieldMeanderPlanner>().AsSingle();
+            Container.Bind<IFieldBranchPlanner>().To<FieldBranchPlanner>().AsSingle();
             Container.Bind<IFieldCorridorMapper>().To<FieldCorridorMapper>().AsSingle();
             Container.Bind<IFieldPassageChecker>().To<FieldPassageChecker>().AsSingle();
+            Container.Bind<IFieldClearancePathFinder>().To<FieldClearancePathFinder>().AsSingle();
             Container.Bind<IFieldCorridorClearer>().To<FieldCorridorClearer>().AsSingle();
+            Container.Bind<IFieldDebrisLayout>().To<FieldDebrisLayout>().AsSingle();
             InstallGenerationSteps();
             Container.Bind<IFlightFieldGenerator>().To<FlightFieldGenerator>().AsSingle();
             Container.BindInterfacesTo<FlightFieldGenerationWarmup>().AsSingle();
+            Container.BindInterfacesTo<FieldProfileSelector>().AsSingle();
             Container.Bind<IFieldRequestFactory>().To<FieldRequestFactory>().AsSingle();
             InstallLiveField();
             InstallDecor();
@@ -50,9 +59,11 @@ namespace Features.FlightFieldModule.Scripts {
         }
 
         // The field in the world: the server publishes it at launch, every peer builds it from the live field model.
+        // The debris has its own pool: the structures' pool is emptied as a whole whenever the field changes.
         private void InstallLiveField() {
             Container.Bind<IFieldStructureSpawnRule>().To<FieldStructureSpawnRule>().AsSingle();
             Container.Bind<IFieldStructureLayout>().To<FieldStructureLayout>().AsSingle();
+            Container.Bind<IFieldPlaneCoverLayout>().To<FieldPlaneCoverLayout>().AsSingle();
             Container.Bind<IFieldClusterLayout>().To<FieldClusterLayout>().AsSingle();
             Container.BindInterfacesTo<FlightFieldPublisher>().AsSingle();
             Container.Bind<IFieldNetworkedStructures>().To<FieldNetworkedStructures>().AsSingle();
@@ -60,6 +71,8 @@ namespace Features.FlightFieldModule.Scripts {
             Container.BindInterfacesTo<FlightFieldService>().AsSingle();
             Container.Bind<IFieldStructurePool>().To<FieldStructurePool>().AsSingle();
             Container.Bind<IFieldStructureSceneBuilder>().To<FieldStructureSceneBuilder>().AsSingle();
+            Container.Bind<IFieldDebrisSceneBuilder>().To<FieldDebrisSceneBuilder>().AsSingle().WithArguments(new FieldStructurePool());
+            Container.Bind<IFieldDebrisStreamer>().To<FieldDebrisStreamer>().AsSingle();
             Container.Bind<IFieldStreamingViewpoint>().To<CameraFieldStreamingViewpoint>().AsSingle();
             Container.BindInterfacesTo<LiveFieldBuildSystem>().AsSingle();
         }
@@ -71,10 +84,14 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldGenerationStep>().To<FieldStationZoneStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldTakeoffCorridorStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldRouteStep>().AsSingle();
+            Container.Bind<IFieldGenerationStep>().To<FieldBranchStep>().AsSingle();
+            Container.Bind<IFieldGenerationStep>().To<FieldDensityMapStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldWallStep>().AsSingle();
-            Container.Bind<IFieldGenerationStep>().To<FieldObstacleFillStep>().AsSingle();
-            Container.Bind<IFieldGenerationStep>().To<FieldRouteObstacleStep>().AsSingle();
+            Container.Bind<IFieldGenerationStep>().To<FieldZoneStep>().AsSingle();
+            Container.Bind<IFieldGenerationStep>().To<FieldGiantPlacementStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldPassageStep>().AsSingle();
+            Container.Bind<IFieldGenerationStep>().To<FieldPathMetricStep>().AsSingle();
+            Container.Bind<IFieldGenerationStep>().To<FieldBalanceMetricStep>().AsSingle();
         }
     }
 }

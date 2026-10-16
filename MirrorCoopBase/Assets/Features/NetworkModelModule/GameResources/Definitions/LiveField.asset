@@ -39,6 +39,9 @@ MonoBehaviour:
   - _name: WidthCells
     _typeName: int
     _defaultValue: 
+  - _name: ProfileId
+    _typeName: string
+    _defaultValue: 
   - _name: Placements
     _typeName: List<FieldPlacementEntry>
     _defaultValue: 
@@ -47,4 +50,7 @@ MonoBehaviour:
     _defaultValue: 
   - _name: RouteCells
     _typeName: List<FieldRouteCellEntry>
+    _defaultValue: 
+  - _name: DebrisRuns
+    _typeName: List<FieldDebrisRunEntry>
     _defaultValue: 
