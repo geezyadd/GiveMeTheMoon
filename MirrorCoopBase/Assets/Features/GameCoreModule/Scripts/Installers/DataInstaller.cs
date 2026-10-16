@@ -2,6 +2,7 @@ using Features.CameraModule.Scripts.Models;
 using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.CrewInviteModule.Data.Generated;
+using Features.FlightFieldModule.Scripts.Decor;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
 using Features.FlightFieldModule.Scripts.Scene;
@@ -31,6 +32,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<PlayerControlBlockModel>().AsSingle();
             Container.Bind<GameCameraModel>().AsSingle();
             Container.Bind<IShipRunBindingModel>().To<ShipRunBindingModel>().AsSingle();
+            Container.Bind<IShipClientBindingModel>().To<ShipClientBindingModel>().AsSingle();
             Container.Bind<HoveredInteractableModel>().AsSingle();
             Container.Bind<SpectatorModel>().AsSingle();
             Container.Bind<ShopVisitModel>().AsSingle();
@@ -47,6 +49,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<IFlightFieldSyncBindingModel>().To<FlightFieldSyncBindingModel>().AsSingle();
             Container.BindInterfacesAndSelfTo<FlightFieldServerModel>().AsSingle();
             Container.BindInterfacesAndSelfTo<FlightFieldSceneModel>().AsSingle();
+            Container.Bind<FieldDecorSceneModel>().AsSingle();
         }
     }
 }

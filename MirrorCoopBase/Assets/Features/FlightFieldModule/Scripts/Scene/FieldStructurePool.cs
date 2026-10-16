@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Scene {
@@ -7,14 +8,29 @@ namespace Features.FlightFieldModule.Scripts.Scene {
     public sealed class FieldStructurePool : IFieldStructurePool {
         private readonly Dictionary<GameObject, Stack<GameObject>> _freeByPrefab = new();
         private readonly Dictionary<GameObject, GameObject> _activePrefabByInstance = new();
+        // Read once when a rock is made, so taking a pooled rock does not look its component up again.
+        private readonly Dictionary<GameObject, FieldRockVisual> _rockVisualByInstance = new();
 
+        // A free instance is moved under the given parent, so it ends up where a new one would be made.
         public GameObject Take(GameObject prefab, Transform parent) {
             GameObject instance = TakeFree(prefab);
             if (instance == null)
                 instance = Object.Instantiate(prefab, parent, false);
+            else
+                instance.transform.SetParent(parent, false);
 
             _activePrefabByInstance.Add(instance, prefab);
             return instance;
+        }
+
+        public FieldRockVisual TakeRock(FieldRockVisual prefab, Transform parent) {
+            GameObject instance = Take(prefab.gameObject, parent);
+            if (!_rockVisualByInstance.TryGetValue(instance, out FieldRockVisual rockVisual)) {
+                rockVisual = instance.GetComponent<FieldRockVisual>();
+                _rockVisualByInstance.Add(instance, rockVisual);
+            }
+
+            return rockVisual;
         }
 
         public void Return(GameObject instance) {

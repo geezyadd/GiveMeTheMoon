@@ -33,7 +33,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         // even at the smallest axis scale it still crosses the plane.
         private static void AddMainRock(FieldClusterRecipe recipe, FieldFootprint footprint, float cellSize, IFieldRandom random, List<FieldClusterRockPose> rocks) {
             float shorterSide = Mathf.Min(footprint.Width, footprint.Height) * cellSize;
-            float size = Mathf.Min(recipe.MainSize * shorterSide, shorterSide * HALF / (ROCK_REACH * recipe.AxisScale.y));
+            float size = Mathf.Min(recipe.MainSize * shorterSide, LargestSizeInside(shorterSide, recipe));
             float height = Mathf.Lerp(-recipe.MainHeightJitter, recipe.MainHeightJitter, random.Value()) * size;
             rocks.Add(CreateRock(recipe, new Vector3(0f, height, 0f), size, random));
         }
@@ -42,7 +42,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         // cells, so a rock must not reach into a neighbouring one.
         private static FieldClusterRockPose CreateCellRock(FieldClusterRecipe recipe, FieldFootprint footprint, float cellSize, Vector2 sizeRange, IFieldRandom random) {
             Vector2Int cell = footprint.Cells[random.Range(0, footprint.Cells.Count)];
-            float size = Mathf.Min(Mathf.Lerp(sizeRange.x, sizeRange.y, random.Value()) * cellSize, cellSize * HALF / (ROCK_REACH * recipe.AxisScale.y));
+            float size = Mathf.Min(Mathf.Lerp(sizeRange.x, sizeRange.y, random.Value()) * cellSize, LargestSizeInside(cellSize, recipe));
             float radius = size * recipe.AxisScale.y * ROCK_REACH;
             float reach = cellSize * HALF - radius;
             Vector3 cellCenter = new((cell.y + HALF - footprint.Height * HALF) * cellSize, 0f, (cell.x + HALF - footprint.Width * HALF) * cellSize);
@@ -58,7 +58,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             return new FieldClusterRockPose(prefab, material, offset, rotation, scale);
         }
 
-        private static FieldRockVisual PickPrefab(FieldClusterRecipe recipe, IFieldRandom random) {
+        internal static FieldRockVisual PickPrefab(FieldClusterRecipe recipe, IFieldRandom random) {
             float total = 0f;
             foreach (FieldClusterRockOption option in recipe.Rocks)
                 total += option.Weight;
@@ -73,6 +73,11 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             return recipe.Rocks[recipe.Rocks.Count - 1].Prefab;
         }
 
+        // The largest rock that, turned any way and stretched by the recipe's largest axis scale, stays inside a box of
+        // the given side around its pivot.
+        private static float LargestSizeInside(float extent, FieldClusterRecipe recipe) =>
+            extent * HALF / (ROCK_REACH * recipe.AxisScale.y);
+
         private static float AxisScale(FieldClusterRecipe recipe, IFieldRandom random) =>
             Mathf.Lerp(recipe.AxisScale.x, recipe.AxisScale.y, random.Value());
 
@@ -80,13 +85,14 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             Mathf.Lerp(-extent, extent, random.Value());
 
         // Uniform over all orientations (Shoemake): an asteroid has no up.
-        private static Quaternion RandomRotation(IFieldRandom random) {
-            float u1 = random.Value();
-            float u2 = random.Value() * FULL_TURN_RADIANS;
-            float u3 = random.Value() * FULL_TURN_RADIANS;
-            float a = Mathf.Sqrt(1f - u1);
-            float b = Mathf.Sqrt(u1);
-            return new Quaternion(a * Mathf.Sin(u2), a * Mathf.Cos(u2), b * Mathf.Sin(u3), b * Mathf.Cos(u3));
+        internal static Quaternion RandomRotation(IFieldRandom random) {
+            float split = random.Value();
+            float firstAngle = random.Value() * FULL_TURN_RADIANS;
+            float secondAngle = random.Value() * FULL_TURN_RADIANS;
+            float firstRadius = Mathf.Sqrt(1f - split);
+            float secondRadius = Mathf.Sqrt(split);
+            return new Quaternion(firstRadius * Mathf.Sin(firstAngle), firstRadius * Mathf.Cos(firstAngle), secondRadius * Mathf.Sin(secondAngle),
+                                  secondRadius * Mathf.Cos(secondAngle));
         }
     }
 }

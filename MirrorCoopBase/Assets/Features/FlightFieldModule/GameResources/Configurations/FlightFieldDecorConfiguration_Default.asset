@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ed818fa57eae8249baba6a0be994264, type: 3}
+  m_Name: FlightFieldDecorConfiguration_Default
+  m_EditorClassIdentifier: 
+  _layerHeight: {x: 150, y: 600}
+  _rocksPerSquareKilometer: 40
+  _rockSize: {x: 8, y: 40}
+  _chunkSize: 250
+  _viewDistance: 1200
+  _chunksBuiltPerFrame: 2
+  _rockRecipe: {fileID: 11400000, guid: d6426e80af6244d49b0f5462ea5c0645, type: 2}
+  _materialsByDistance:
+  - {fileID: 2100000, guid: cecb049dad8d1d44ea147570e06fd803, type: 2}
+  - {fileID: 2100000, guid: f7a15f1f7d220b544a221cf9725123f2, type: 2}
+  - {fileID: 2100000, guid: 5634bd1a3cd24f547a5061471a5cf067, type: 2}
+  _planetChance: 0.4
+  _maxPlanetsPerFlight: 1
+  _planetDistance: {x: 2000, y: 3600}
+  _planetElevationDegrees: {x: 15, y: 55}
+  _planetAlongRoute: {x: 0, y: 1500}
+  _planetMaxAngleFromLight: 50
+  _planetPlacementTries: 8
+  _planetDiameter: {x: 500, y: 1100}
+  _planetPrefabs:
+  - {fileID: 540730829684080100, guid: 8984d2963e5d04c4ab7ff7296a6afd76, type: 3}
+  - {fileID: 1316388196231806480, guid: a5a075e53afb2854998b0a909626d9d5, type: 3}
+  - {fileID: 5413398046172216061, guid: 4868185e48ea92a408aa20558b9d0cf8, type: 3}
+  - {fileID: 9128021319773061726, guid: 6a4216b3c8720174fa96539b0b3f8343, type: 3}
+  - {fileID: 3252346480801621941, guid: 6ecd4efcdc38f694a8d9d30bafc3a96f, type: 3}

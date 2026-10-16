@@ -35,14 +35,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [Test]
         public void WhenTheSameSeedIsLaidOutTwice_ThenTheRocksAreTheSame() {
             foreach (FieldStructureDefinition structure in GetClusterStructures()) {
-                for (int seed = FIRST_SEED; seed <= SEEDS; seed++) {
-                    List<FieldClusterRockPose> first = Lay(structure, seed);
-                    List<FieldClusterRockPose> second = Lay(structure, seed);
-
-                    Assert.AreEqual(first.Count, second.Count, $"{structure.name} seed {seed}: another rock count.");
-                    for (int i = 0; i < first.Count; i++)
-                        AssertSameRock(first[i], second[i], $"{structure.name} seed {seed} rock {i}");
-                }
+                for (int seed = FIRST_SEED; seed <= SEEDS; seed++)
+                    AssertSameCluster(structure, seed);
             }
         }
 
@@ -74,16 +68,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 FieldFootprint footprint = _composition.FootprintReader.Read(structure, FieldRotation.None);
                 float acrossLimit = footprint.Height * HALF * CELL_SIZE + TOLERANCE;
                 float alongLimit = footprint.Width * HALF * CELL_SIZE + TOLERANCE;
-                for (int seed = FIRST_SEED; seed <= SEEDS; seed++) {
-                    List<FieldClusterRockPose> rocks = Lay(structure, seed);
-                    Assert.GreaterOrEqual(rocks.Count, structure.ClusterRecipe.SatelliteCount.x + 1, $"{structure.name} seed {seed}: too few satellites.");
-                    foreach (FieldClusterRockPose rock in rocks) {
-                        float reach = Mathf.Max(rock.Scale.x, Mathf.Max(rock.Scale.y, rock.Scale.z)) * ROCK_REACH;
-                        Assert.LessOrEqual(Mathf.Abs(rock.Offset.x) + reach, acrossLimit, $"{structure.name} seed {seed}: a rock reaches too far across the field.");
-                        Assert.LessOrEqual(Mathf.Abs(rock.Offset.z) + reach, alongLimit, $"{structure.name} seed {seed}: a rock reaches too far along the field.");
-                        Assert.LessOrEqual(Mathf.Abs(rock.Offset.y), MAX_HEIGHT_CELLS * CELL_SIZE + TOLERANCE, $"{structure.name} seed {seed}: a rock is too far from the plane.");
-                    }
-                }
+                for (int seed = FIRST_SEED; seed <= SEEDS; seed++)
+                    AssertRocksStayInside(structure, seed, acrossLimit, alongLimit);
             }
         }
 
@@ -123,6 +109,26 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             FieldFootprint footprint = _composition.FootprintReader.Read(structure, FieldRotation.None);
             _layout.Fill(structure.ClusterRecipe, footprint, CELL_SIZE, new FieldRandom(seed), rocks);
             return rocks;
+        }
+
+        private void AssertSameCluster(FieldStructureDefinition structure, int seed) {
+            List<FieldClusterRockPose> first = Lay(structure, seed);
+            List<FieldClusterRockPose> second = Lay(structure, seed);
+
+            Assert.AreEqual(first.Count, second.Count, $"{structure.name} seed {seed}: another rock count.");
+            for (int i = 0; i < first.Count; i++)
+                AssertSameRock(first[i], second[i], $"{structure.name} seed {seed} rock {i}");
+        }
+
+        private void AssertRocksStayInside(FieldStructureDefinition structure, int seed, float acrossLimit, float alongLimit) {
+            List<FieldClusterRockPose> rocks = Lay(structure, seed);
+            Assert.GreaterOrEqual(rocks.Count, structure.ClusterRecipe.SatelliteCount.x + 1, $"{structure.name} seed {seed}: too few satellites.");
+            foreach (FieldClusterRockPose rock in rocks) {
+                float reach = Mathf.Max(rock.Scale.x, Mathf.Max(rock.Scale.y, rock.Scale.z)) * ROCK_REACH;
+                Assert.LessOrEqual(Mathf.Abs(rock.Offset.x) + reach, acrossLimit, $"{structure.name} seed {seed}: a rock reaches too far across the field.");
+                Assert.LessOrEqual(Mathf.Abs(rock.Offset.z) + reach, alongLimit, $"{structure.name} seed {seed}: a rock reaches too far along the field.");
+                Assert.LessOrEqual(Mathf.Abs(rock.Offset.y), MAX_HEIGHT_CELLS * CELL_SIZE + TOLERANCE, $"{structure.name} seed {seed}: a rock is too far from the plane.");
+            }
         }
 
         private static void AssertSameRock(FieldClusterRockPose expected, FieldClusterRockPose actual, string what) {

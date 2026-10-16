@@ -60,11 +60,12 @@ namespace Features.FlightFieldModule.Scripts.Scene {
 
             List<GameObject> objects = TakeObjectList();
             _objectsByPlacement.Add(placementIndex, objects);
-            Pose pose = _fieldStructureLayout.GetFieldPose(structure, placement.Anchor, placement.Rotation, liveFieldModel.CellSize);
+            FieldFootprint footprint = _fieldFootprintReader.Read(structure, placement.Rotation);
+            Pose pose = _fieldStructureLayout.GetFieldPose(footprint, placement.Anchor, placement.Rotation, liveFieldModel.CellSize);
             _visualRandom.Reseed(unchecked(liveFieldModel.Seed + placementIndex * VISUAL_SEED_STEP));
             Transform instance = BuildTrigger(root, structure, pose, objects);
             if (structure.HasClusterRecipe)
-                BuildCluster(instance, structure, placement, liveFieldModel.CellSize, objects);
+                BuildCluster(instance, structure, footprint, liveFieldModel.CellSize, objects);
         }
 
         public void ReleaseLocalStructure(Transform root, int placementIndex) {
@@ -100,18 +101,17 @@ namespace Features.FlightFieldModule.Scripts.Scene {
 
         // The rocks are children of the trigger, so the field root keeps one object per structure; their offsets
         // are in field space and are carried into the trigger's turned and scaled space.
-        private void BuildCluster(Transform trigger, FieldStructureDefinition structure, FieldPlacementEntry placement, float cellSize, List<GameObject> objects) {
-            FieldFootprint footprint = _fieldFootprintReader.Read(structure, placement.Rotation);
+        private void BuildCluster(Transform trigger, FieldStructureDefinition structure, FieldFootprint footprint, float cellSize, List<GameObject> objects) {
             _fieldClusterLayout.Fill(structure.ClusterRecipe, footprint, cellSize, _visualRandom, _clusterRocks);
             Quaternion toTrigger = Quaternion.Inverse(trigger.localRotation);
             float triggerScale = trigger.localScale.x;
             foreach (FieldClusterRockPose rockPose in _clusterRocks) {
-                GameObject rock = Take(rockPose.Prefab.gameObject, trigger, objects);
-                rock.transform.SetParent(trigger, false);
+                FieldRockVisual rock = _fieldStructurePool.TakeRock(rockPose.Prefab, trigger);
+                objects.Add(rock.gameObject);
                 rock.transform.SetLocalPositionAndRotation(toTrigger * rockPose.Offset / triggerScale, toTrigger * rockPose.Rotation);
                 rock.transform.localScale = rockPose.Scale / triggerScale;
-                rock.GetComponent<FieldRockVisual>().SetMaterial(rockPose.Material);
-                rock.SetActive(true);
+                rock.SetMaterial(rockPose.Material);
+                rock.gameObject.SetActive(true);
             }
         }
 

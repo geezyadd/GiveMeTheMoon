@@ -21,6 +21,9 @@ namespace Features.ShipModule.Scripts {
         private IShipRadarBinding _radar;
 
         [Inject]
+        private IShipClientBindingModel _clientShip;
+
+        [Inject]
         private List<IWorldShiftFollower> _worldShiftFollowers;
 
         private GameObject _localWreck;
@@ -52,11 +55,13 @@ namespace Features.ShipModule.Scripts {
             base.OnStartClient();
             _clientStarted = true;
             _radar.BindShip(_ship);
+            _clientShip.Bind(_ship);
         }
 
         public override void OnStopClient() {
             _clientStarted = false;
             _radar.UnbindShip();
+            _clientShip.Clear();
             base.OnStopClient();
         }
 

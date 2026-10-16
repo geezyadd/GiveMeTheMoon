@@ -39,6 +39,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<CameraCatalog>(Address.Configurations.CameraCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FieldStructureCatalog>(Address.Configurations.FieldStructureCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default).AsSingle();
         }
     }
 }

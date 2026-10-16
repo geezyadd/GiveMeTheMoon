@@ -1,4 +1,5 @@
 using Features.FlightFieldModule.Scripts.Configuration;
+using Features.FlightFieldModule.Scripts.Decor;
 using Features.FlightFieldModule.Scripts.Generation;
 using Features.FlightFieldModule.Scripts.Generation.Passage;
 using Features.FlightFieldModule.Scripts.Generation.Placement;
@@ -17,6 +18,7 @@ namespace Features.FlightFieldModule.Scripts {
         public override void InstallBindings() {
             Container.BindInterfacesTo<FieldStructureCatalogValidator>().AsSingle();
             Container.BindInterfacesTo<FlightFieldConfigurationValidator>().AsSingle();
+            Container.BindInterfacesTo<FlightFieldDecorConfigurationValidator>().AsSingle();
             Container.Bind<IMatrixFactory>().To<MatrixFactory>().AsSingle();
             Container.Bind<IFieldRandomFactory>().To<FieldRandomFactory>().AsSingle();
             Container.Bind<IFieldFootprintReader>().To<FieldFootprintReader>().AsSingle();
@@ -34,6 +36,17 @@ namespace Features.FlightFieldModule.Scripts {
             Container.BindInterfacesTo<FlightFieldGenerationWarmup>().AsSingle();
             Container.Bind<IFieldRequestFactory>().To<FieldRequestFactory>().AsSingle();
             InstallLiveField();
+            InstallDecor();
+        }
+
+        // The visual-only decor every peer builds around its ship; its own pool, because the field's pool is emptied
+        // whenever the field changes.
+        private void InstallDecor() {
+            Container.Bind<IFieldDecorChunkLayout>().To<FieldDecorChunkLayout>().AsSingle();
+            Container.Bind<IFieldDecorPlanetPicker>().To<FieldDecorPlanetPicker>().AsSingle();
+            Container.Bind<IFieldDecorLightSource>().To<SceneSunLightSource>().AsSingle();
+            Container.Bind<IFieldDecorSceneBuilder>().To<FieldDecorSceneBuilder>().AsSingle().WithArguments(new FieldStructurePool());
+            Container.BindInterfacesTo<FieldDecorBuildSystem>().AsSingle();
         }
 
         // The field in the world: the server publishes it at launch, every peer builds it from the live field model.
