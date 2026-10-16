@@ -6,6 +6,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         public Transform CreateRoot();
         public void PlaceRoot(Transform root, IReadOnlyLiveFieldModel liveFieldModel);
         public void BuildLocalStructure(Transform root, IReadOnlyLiveFieldModel liveFieldModel, int placementIndex);
+        public void ReleaseLocalStructure(Transform root, int placementIndex);
         public void ReleaseAll();
     }
 }

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55e313db24b63d04e9304424e4453e2e, type: 3}
+  m_Name: RockWall_2x2
+  m_EditorClassIdentifier: 
+  _id: rock_wall_2x2
+  _kind: 1
+  _footprintRows:
+  - XX
+  - XX
+  _prefab: {fileID: 1142218335592292982, guid: 114e453f24f70db439c31ac9bf8d053f, type: 3}
+  _isNetworked: 0
+  _weight: 0
+  _isRotatable: 1
+  _visualYawJitterDegrees: 180
+  _visualScaleJitter: 0.12
+  _clusterRecipe: {fileID: 11400000, guid: 3b355e5258b3bdb4c9094a897031c3c9, type: 2}

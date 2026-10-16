@@ -2,29 +2,33 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Scene {
-    // Local structure objects kept between fields: a returned object is only deactivated and stays under the field
-    // root, so the next field takes it without Instantiate.
+    // Local field objects (structure triggers and single visual rocks) kept between fields: a returned object is only
+    // deactivated and stays where it is, so the next field takes it without Instantiate.
     public sealed class FieldStructurePool : IFieldStructurePool {
         private readonly Dictionary<GameObject, Stack<GameObject>> _freeByPrefab = new();
-        private readonly List<GameObject> _activeInstances = new();
-        private readonly List<GameObject> _activePrefabs = new();
+        private readonly Dictionary<GameObject, GameObject> _activePrefabByInstance = new();
 
         public GameObject Take(GameObject prefab, Transform parent) {
             GameObject instance = TakeFree(prefab);
             if (instance == null)
                 instance = Object.Instantiate(prefab, parent, false);
 
-            _activeInstances.Add(instance);
-            _activePrefabs.Add(prefab);
+            _activePrefabByInstance.Add(instance, prefab);
             return instance;
         }
 
-        public void ReturnAll() {
-            for (int i = 0; i < _activeInstances.Count; i++)
-                Return(_activeInstances[i], _activePrefabs[i]);
+        public void Return(GameObject instance) {
+            if (!_activePrefabByInstance.Remove(instance, out GameObject prefab))
+                throw new KeyNotFoundException($"{instance} was not taken from the field pool or is already returned.");
 
-            _activeInstances.Clear();
-            _activePrefabs.Clear();
+            PushFree(instance, prefab);
+        }
+
+        public void ReturnAll() {
+            foreach (KeyValuePair<GameObject, GameObject> active in _activePrefabByInstance)
+                PushFree(active.Key, active.Value);
+
+            _activePrefabByInstance.Clear();
         }
 
         // The root is kept across scenes, but an object destroyed from outside must not come back from the pool.
@@ -41,7 +45,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             return null;
         }
 
-        private void Return(GameObject instance, GameObject prefab) {
+        private void PushFree(GameObject instance, GameObject prefab) {
             if (instance == null)
                 return;
 

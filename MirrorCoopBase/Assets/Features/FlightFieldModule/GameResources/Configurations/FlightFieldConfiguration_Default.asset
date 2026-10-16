@@ -105,8 +105,8 @@ MonoBehaviour:
   _waypointSpacingCells: 4
   _obstacleDensity: 0.3
   _wallStructures:
-  - {fileID: 11400000, guid: 6546e913a2520cf43b2eb21137491769, type: 2}
-  - {fileID: 11400000, guid: aeb9a4e8232f418409d2aee5c1591cce, type: 2}
+  - {fileID: 11400000, guid: 139b6e748dcd810469fb11cfb64202db, type: 2}
+  - {fileID: 11400000, guid: 2b09c6a12e6c6ba439b5bf4ac33b4bec, type: 2}
   _placementTries: 12
   _passageClearanceCells: 1
   _maxRepairRounds: 2
