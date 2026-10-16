@@ -1,35 +1,50 @@
 using System.Collections.Generic;
+using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Scene {
-    // Local structure objects kept between fields: a returned object is only deactivated and stays under the field
-    // root, so the next field takes it without Instantiate.
+    // Local field objects (structure triggers and single visual rocks) kept between fields: a returned object is only
+    // deactivated and stays where it is, so the next field takes it without Instantiate.
     public sealed class FieldStructurePool : IFieldStructurePool {
         private readonly Dictionary<GameObject, Stack<GameObject>> _freeByPrefab = new();
-        // Active instance -> its prefab.
-        private readonly Dictionary<GameObject, GameObject> _activePrefabs = new();
+        private readonly Dictionary<GameObject, GameObject> _activePrefabByInstance = new();
+        // Read once when a rock is made, so taking a pooled rock does not look its component up again.
+        private readonly Dictionary<GameObject, FieldRockVisual> _rockVisualByInstance = new();
 
+        // A free instance is moved under the given parent, so it ends up where a new one would be made.
         public GameObject Take(GameObject prefab, Transform parent) {
             GameObject instance = TakeFree(prefab);
             if (instance == null)
                 instance = Object.Instantiate(prefab, parent, false);
+            else
+                instance.transform.SetParent(parent, false);
 
-            _activePrefabs.Add(instance, prefab);
+            _activePrefabByInstance.Add(instance, prefab);
             return instance;
         }
 
-        public void Return(GameObject instance) {
-            if (!_activePrefabs.Remove(instance, out GameObject prefab))
-                return;
+        public FieldRockVisual TakeRock(FieldRockVisual prefab, Transform parent) {
+            GameObject instance = Take(prefab.gameObject, parent);
+            if (!_rockVisualByInstance.TryGetValue(instance, out FieldRockVisual rockVisual)) {
+                rockVisual = instance.GetComponent<FieldRockVisual>();
+                _rockVisualByInstance.Add(instance, rockVisual);
+            }
 
-            Deactivate(instance, prefab);
+            return rockVisual;
+        }
+
+        public void Return(GameObject instance) {
+            if (!_activePrefabByInstance.Remove(instance, out GameObject prefab))
+                throw new KeyNotFoundException($"{instance} was not taken from the field pool or is already returned.");
+
+            PushFree(instance, prefab);
         }
 
         public void ReturnAll() {
-            foreach (KeyValuePair<GameObject, GameObject> active in _activePrefabs)
-                Deactivate(active.Key, active.Value);
+            foreach (KeyValuePair<GameObject, GameObject> active in _activePrefabByInstance)
+                PushFree(active.Key, active.Value);
 
-            _activePrefabs.Clear();
+            _activePrefabByInstance.Clear();
         }
 
         // The root is kept across scenes, but an object destroyed from outside must not come back from the pool.
@@ -46,7 +61,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             return null;
         }
 
-        private void Deactivate(GameObject instance, GameObject prefab) {
+        private void PushFree(GameObject instance, GameObject prefab) {
             if (instance == null)
                 return;
 

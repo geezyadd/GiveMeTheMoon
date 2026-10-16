@@ -23,3 +23,4 @@ MonoBehaviour:
   _isRotatable: 1
   _visualYawJitterDegrees: 180
   _visualScaleJitter: 0.12
+  _clusterRecipe: {fileID: 11400000, guid: 5caed816ff245d24aaa2b9d806f09b90, type: 2}

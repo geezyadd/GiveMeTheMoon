@@ -29,7 +29,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
                 container.Resolve<IFieldFootprintReader>());
         }
 
-        private static T LoadConfiguration<T>(string address) where T : ScriptableObject {
+        public static T LoadConfiguration<T>(string address) where T : ScriptableObject {
             AddressableAssetGroup group = AddressableAssetSettingsDefaultObject.Settings.FindGroup(Address.Configurations.ADDRESSABLE_GROUP_NAME);
             AddressableAssetEntry entry = group.entries.FirstOrDefault(candidate => candidate.address == address);
             if (entry == null)

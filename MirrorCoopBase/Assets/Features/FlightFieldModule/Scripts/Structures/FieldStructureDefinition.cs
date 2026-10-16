@@ -23,6 +23,8 @@ namespace Features.FlightFieldModule.Scripts.Structures {
         [SerializeField, Range(0f, 180f)] private float _visualYawJitterDegrees;
         [Tooltip("Visual only: the built object's scale differs by a random share up to this value either way; the footprint does not change.")]
         [SerializeField, Range(0f, 0.5f)] private float _visualScaleJitter;
+        [Tooltip("Visual only: the rocks a local structure is built from; the prefab keeps only the trigger. Empty = the prefab is the whole look.")]
+        [SerializeField] private FieldClusterRecipe _clusterRecipe;
 
         public string Id => _id;
         public FieldStructureKind Kind => _kind;
@@ -33,6 +35,8 @@ namespace Features.FlightFieldModule.Scripts.Structures {
         public bool IsRotatable => _isRotatable;
         public float VisualYawJitterDegrees => _visualYawJitterDegrees;
         public float VisualScaleJitter => _visualScaleJitter;
+        public bool HasClusterRecipe => _clusterRecipe != null;
+        public FieldClusterRecipe ClusterRecipe => _clusterRecipe;
         public bool IsRandomObstacle => _kind == FieldStructureKind.Obstacle && _weight > 0f;
     }
 }

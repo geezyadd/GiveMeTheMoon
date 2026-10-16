@@ -12,8 +12,10 @@ namespace Features.FlightFieldModule.Scripts.Structures {
         public FieldStructureLayout(IFieldFootprintReader fieldFootprintReader) =>
             _fieldFootprintReader = fieldFootprintReader;
 
-        public Pose GetFieldPose(FieldStructureDefinition structure, Vector2Int anchor, FieldRotation rotation, float cellSize) {
-            FieldFootprint footprint = _fieldFootprintReader.Read(structure, rotation);
+        public Pose GetFieldPose(FieldStructureDefinition structure, Vector2Int anchor, FieldRotation rotation, float cellSize) =>
+            GetFieldPose(_fieldFootprintReader.Read(structure, rotation), anchor, rotation, cellSize);
+
+        public Pose GetFieldPose(FieldFootprint footprint, Vector2Int anchor, FieldRotation rotation, float cellSize) {
             Vector3 position = new((anchor.y + footprint.Height / 2f) * cellSize, 0f, (anchor.x + footprint.Width / 2f) * cellSize);
             return new Pose(position, Quaternion.Euler(0f, (int)rotation * QUARTER_TURN_DEGREES, 0f));
         }
