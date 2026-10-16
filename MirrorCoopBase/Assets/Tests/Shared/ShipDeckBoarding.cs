@@ -1,4 +1,5 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+using System;
 using Features.CharacterMovableModule.Scripts;
 using Features.GameCoreModule.Contracts;
 using Features.ShipModule.Scripts;
@@ -26,9 +27,13 @@ namespace Tests.Shared {
 
         // The walkable deck point nearest to a far ship-local point, moved a little inwards, on the deck surface.
         public static Vector3 DeckEdgeSpot(ShipBase ship, Vector3 farLocal, Vector3 inward) {
-            ship.DeckGeometry.TryClosestDeckWalk(farLocal, out Vector3 edge, out _, out _);
+            if (ship.DeckGeometry.TryClosestDeckWalk(farLocal, out Vector3 edge, out _, out _) == false)
+                throw new InvalidOperationException($"{ship.name} has no walkable deck box near {farLocal}.");
+
             Vector3 spot = edge + inward * EDGE_INSET;
-            ship.DeckGeometry.TryGetDeckSurfaceY(spot, out float surfaceY);
+            if (ship.DeckGeometry.TryGetDeckSurfaceY(spot, out float surfaceY) == false)
+                throw new InvalidOperationException($"{ship.name} has no deck surface under the edge spot {spot}.");
+
             spot.y = surfaceY;
             return spot;
         }

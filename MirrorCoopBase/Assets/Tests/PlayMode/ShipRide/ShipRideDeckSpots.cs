@@ -1,4 +1,5 @@
 #if UNITY_INCLUDE_TESTS
+using System;
 using Features.CharacterMovableModule.Scripts;
 using Features.ShipModule.Scripts;
 using Mirror;
@@ -23,9 +24,10 @@ namespace Tests.PlayMode.ShipRide {
 
         public Vector3 Centre {
             get {
-                _ship.DeckGeometry.TryGetDeckStandPoint(out Vector3 stand);
-                _ship.DeckGeometry.TryGetDeckSurfaceY(stand, out float surfaceY);
-                stand.y = surfaceY;
+                if (_ship.DeckGeometry.TryGetDeckStandPoint(out Vector3 stand) == false)
+                    throw new InvalidOperationException($"{_ship.name} has no deck stand point.");
+
+                stand.y -= HeightAboveDeck(_ship.transform.TransformPoint(stand));
                 return stand;
             }
         }
@@ -58,7 +60,9 @@ namespace Tests.PlayMode.ShipRide {
 
         public float HeightAboveDeck(Vector3 worldPosition) {
             Vector3 local = _ship.transform.InverseTransformPoint(worldPosition);
-            _ship.DeckGeometry.TryGetDeckSurfaceY(local, out float surfaceY);
+            if (_ship.DeckGeometry.TryGetDeckSurfaceY(local, out float surfaceY) == false)
+                throw new InvalidOperationException($"{_ship.name} has no deck surface under {local}.");
+
             return local.y - surfaceY;
         }
 

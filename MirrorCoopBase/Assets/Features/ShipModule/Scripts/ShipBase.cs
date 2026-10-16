@@ -1,4 +1,3 @@
-using Features.CharacterMovableModule.Scripts;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.GameCoreModule.Contracts;
 using Features.ShipModule.Scripts.Generated;
@@ -51,7 +50,7 @@ namespace Features.ShipModule.Scripts {
         public IShipDeckGeometry DeckGeometry => _deckGeometry;
         internal IShipModules Modules => _modules;
         internal IShipRiders Riders => _riders;
-        internal ShipDeckRideRule RideRule => _rideRule;
+        internal IShipDeckRideRule RideRule => _rideRule;
         internal IShipSeats Seats => _seats;
         internal IShipFlightControl FlightControl => _flightControl;
         internal IShipDeckCargo Cargo => _cargo;
@@ -108,7 +107,7 @@ namespace Features.ShipModule.Scripts {
             _deckGeometry = new ShipDeckGeometry(transform, _deck, _deckColliders);
             _modules = new ShipModules(_sockets, new ShipStatSheet(_stats), _statsSync, ReadStatsConfiguration);
             _rideRule = new ShipDeckRideRule(_deckGeometry, ReadFlightSettings);
-            _riders = new ShipRiders(this, _rideRule, ReadLocalPlayer);
+            _riders = new ShipRiders(this, _rideRule, ReadCharacterMovables);
             _seats = new ShipSeats(this, _sockets, _riders);
             _flightControl = new ShipFlightControl(ReadFlightSettings, _modules, _seats);
             _cargo = new ShipDeckCargo(transform, this, _poseSync);
@@ -296,6 +295,9 @@ namespace Features.ShipModule.Scripts {
                 _riders.CatchDeckRiders();
         }
 
+        internal Vector3 ToShipLocal(Vector3 worldPosition) =>
+            Quaternion.Inverse(transform.rotation) * (worldPosition - transform.position);
+
         internal void ApplyDisplayPose(Vector3 position, Quaternion rotation) {
             transform.SetPositionAndRotation(position, rotation);
             if (_body == null)
@@ -313,8 +315,8 @@ namespace Features.ShipModule.Scripts {
         private ShipAccumulativeStatsConfiguration ReadStatsConfiguration() =>
             _statsConfiguration;
 
-        private CharacterMovableBase ReadLocalPlayer() =>
-            _characterMovableModel.LocalMovable;
+        private CharacterMovableModel ReadCharacterMovables() =>
+            _characterMovableModel;
 
         private void SleepBody() {
             if (_body == null)

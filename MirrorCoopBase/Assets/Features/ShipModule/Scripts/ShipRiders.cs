@@ -1,7 +1,10 @@
 using System.Collections.Generic;
 using Features.CharacterMovableModule.Scripts;
+using Features.CharacterMovableModule.Scripts.Models;
 using Mirror;
-using UnityEngine;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using Features.ShipModule.Scripts.Debug;
+#endif
 
 namespace Features.ShipModule.Scripts {
     internal sealed class ShipRiders : IShipRiders
@@ -9,13 +12,10 @@ namespace Features.ShipModule.Scripts {
         , IShipRidersDebug
 #endif
     {
-        private const string TAKEOFF_CHECK = "takeoff";
-        private const string CATCH_CHECK = "in-flight catch";
-
         private readonly ShipBase _ship;
-        private readonly ShipDeckRideRule _rideRule;
-        // Read on use: the local player can spawn after the ship.
-        private readonly System.Func<CharacterMovableBase> _localPlayer;
+        private readonly IShipDeckRideRule _rideRule;
+        // Read on use: the model is injected after the ship's parts are created, and the players spawn after the ship.
+        private readonly System.Func<CharacterMovableModel> _characterMovables;
         private readonly List<ShipRider> _riders = new List<ShipRider>();
 
         private CharacterMovableBase _cachedLocalPlayer;
@@ -23,10 +23,10 @@ namespace Features.ShipModule.Scripts {
 
         public IReadOnlyList<ShipRider> All => _riders;
 
-        internal ShipRiders(ShipBase ship, ShipDeckRideRule rideRule, System.Func<CharacterMovableBase> localPlayer) {
+        internal ShipRiders(ShipBase ship, IShipDeckRideRule rideRule, System.Func<CharacterMovableModel> characterMovables) {
             _ship = ship;
             _rideRule = rideRule;
-            _localPlayer = localPlayer;
+            _characterMovables = characterMovables;
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -36,6 +36,7 @@ namespace Features.ShipModule.Scripts {
 
             TrackRider(rider);
             rider.BindToPlatform(_ship);
+            rider.RideDiagnostics.LogBound(rider, _ship, ShipRideDiagnostics.CAUSE_DEBUG);
         }
 #endif
 
@@ -75,23 +76,25 @@ namespace Features.ShipModule.Scripts {
         internal void Remove(ShipRider rider) =>
             _riders.Remove(rider);
 
-        // Every rider over the deck rides from the takeoff, wherever on the deck it stands. Each peer binds only its own
+        // Every player over the deck rides from the takeoff, wherever on the deck it stands. Each peer binds only its own
         // player; the others follow their owner's synced ride (ShipRider hooks).
         internal void BoardRidersOverDeck() {
-            ShipRider[] riders = Object.FindObjectsByType<ShipRider>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-            for (int i = 0; i < riders.Length; i++) {
-                ShipRider rider = riders[i];
-                ShipRideRefusal refusal = _rideRule.CheckBoarding(ToShipLocal(rider.transform.position));
-                if (refusal != ShipRideRefusal.None) {
-                    if (rider.isOwned)
-                        rider.LogRideRefusal(_ship, TAKEOFF_CHECK, refusal);
+            foreach (CharacterMovableBase movable in _characterMovables().Movables.Values) {
+                if (movable == null || movable.TryGetComponent(out ShipRider rider) == false)
+                    continue;
 
+                ShipRideRefusal refusal = _rideRule.CheckBoarding(_ship.ToShipLocal(rider.transform.position));
+                if (refusal != ShipRideRefusal.None) {
+                    LogTakeoffRefusal(rider, refusal);
                     continue;
                 }
 
                 TrackRider(rider);
-                if (rider.isOwned)
-                    rider.BindToPlatform(_ship);
+                if (rider.isOwned == false || rider.IsRiding)
+                    continue;
+
+                rider.BindToPlatform(_ship);
+                LogTakeoffBound(rider);
             }
         }
 
@@ -130,16 +133,44 @@ namespace Features.ShipModule.Scripts {
 
             ShipRideRefusal refusal = rider.CheckLanding(_ship);
             if (refusal != ShipRideRefusal.None) {
-                rider.LogRideRefusal(_ship, CATCH_CHECK, refusal);
+                LogCatchRefusal(rider, refusal);
                 return;
             }
 
             TrackRider(rider);
             rider.BindToPlatform(_ship);
+            LogCatchBound(rider);
+        }
+
+        private void LogTakeoffRefusal(ShipRider rider, ShipRideRefusal refusal) {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (rider.isOwned)
+                rider.RideDiagnostics.LogRefused(rider, _ship, ShipRideDiagnostics.CAUSE_TAKEOFF, refusal);
+#endif
+        }
+
+        private void LogTakeoffBound(ShipRider rider) {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (rider.IsRiding)
+                rider.RideDiagnostics.LogBound(rider, _ship, ShipRideDiagnostics.CAUSE_TAKEOFF);
+#endif
+        }
+
+        private void LogCatchBound(ShipRider rider) {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (rider.IsRiding)
+                rider.RideDiagnostics.LogBound(rider, _ship, ShipRideDiagnostics.CAUSE_CATCH);
+#endif
+        }
+
+        private void LogCatchRefusal(ShipRider rider, ShipRideRefusal refusal) {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            rider.RideDiagnostics.LogRefused(rider, _ship, ShipRideDiagnostics.CAUSE_CATCH, refusal);
+#endif
         }
 
         private ShipRider LocalRider() {
-            CharacterMovableBase localPlayer = _localPlayer();
+            CharacterMovableBase localPlayer = _characterMovables().LocalMovable;
             if (localPlayer == _cachedLocalPlayer)
                 return _localRider;
 
@@ -149,11 +180,6 @@ namespace Features.ShipModule.Scripts {
                 localPlayer.TryGetComponent(out _localRider);
 
             return _localRider;
-        }
-
-        private Vector3 ToShipLocal(Vector3 worldPosition) {
-            Transform ship = _ship.transform;
-            return Quaternion.Inverse(ship.rotation) * (worldPosition - ship.position);
         }
     }
 }

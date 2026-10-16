@@ -5,7 +5,7 @@ namespace Features.ShipModule.Scripts {
     // Whether a rider at a ship-local point may be bound to the deck: when the ship takes off (boarding) and when the
     // rider comes down on the deck in flight (catch). Heights are measured from the deck surface under the rider, not
     // from the ship's pivot, so a deck above or below the pivot or a rider on a raised spot is judged the same way.
-    public sealed class ShipDeckRideRule {
+    public sealed class ShipDeckRideRule : IShipDeckRideRule {
         private readonly IShipDeckGeometry _deckGeometry;
         // Read on use: the settings can be injected after the ship's parts are created.
         private readonly Func<ShipFlightSettings> _flightSettings;

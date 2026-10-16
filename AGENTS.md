@@ -63,12 +63,14 @@ its own player; the others follow the owner's synced offset. When and how a play
   stands or comes down over the walk boxes, `CatchMinHeight`..`CatchMaxHeight` (-0.5..1.5 m) above the deck surface under
   it and not rising faster than `CatchMaxRiseSpeed` (0.15 m/s). A standing player's position is 1 m above the deck surface;
 - all heights come from `ShipDeckRideRule`, measured from the deck surface under the player, not from the ship's pivot;
-- a client that spawns the ship while it flies takes the flight state in `ShipPoseSync.OnStartClient` (Mirror calls no
-  SyncVar hook on the first spawn), and a remote player already riding is bound in `ShipRider.OnStartClient`;
+- a client that spawns the ship while it flies gets the flight state through the `ShipPoseSync._flying` hook: Mirror's
+  generated SyncVar deserialization calls the hook on the first spawn too, whenever the value differs from the default;
+  the same holds for `ShipRider._syncedRideShip` of a player already riding;
 - walking or jumping past the deck edge in flight still drops the player off the ship (`DropOffDeck`, with
   `_confineRidersToDeck` off) and it cannot be caught again for `ReboardDelaySeconds` (0.5 s); the safety net then catches
   it only if it is over the deck again;
-- in editor and development builds every bind, release and refusal is logged with `[ShipRide]` (`ShipRideDiagnostics`):
+- in editor and development builds every bind, release and refusal is logged with `[ShipRide]` (`Debug/ShipRideDiagnostics`,
+  compiled only under `UNITY_EDITOR || DEVELOPMENT_BUILD` together with its call sites):
   who, where on the deck (ship-local, height above the deck), which check refused, flying on this peer, host / client;
   a refusal only when its reason changes, at most once a second per player.
 
@@ -98,8 +100,8 @@ The loop runs from start to end, but it does not match the design yet:
   the players: their colliders are triggers on the built-in `Ignore Raycast` layer (see "Flight field" in Key places).
   Damage and armor are separate tasks.
 - The field has no "left the field" event and the rocks are not on the radar yet.
-- A client that spawns the ship while it flies (`ShipPoseSync.OnStartClient`, `ShipRider.OnStartClient`) is covered by
-  code only: a join in flight is turned away, so no test reaches it. The server kills a fallen player by its server
+- A client that spawns the ship while it flies is not tested: a join in flight is turned away, so no test reaches it;
+  it relies on the SyncVar hooks above firing on the first spawn. The server kills a fallen player by its server
   position (`FallKillSystem`); between the owner binding itself and its `CmdBeginRide` arriving (one round trip at the
   start of a takeoff) the server still sees it standing where it was, which is far above the 30 m kill depth.
 - **No world shift in flight.** On loop 4 the ship is ~8-9 km from the origin before the landing recenter (float
