@@ -32,8 +32,11 @@ MonoBehaviour:
   _planetPlacementTries: 8
   _planetDiameter: {x: 500, y: 1100}
   _planetPrefabs:
+  - {fileID: 1924119423381419774, guid: 180b787c60fe8a94899897459077f972, type: 3}
+  - {fileID: 3622320230212270030, guid: b191622c03be6fe4d82a7841fff2fba4, type: 3}
+  - {fileID: 3003111091043583004, guid: e967001777902494f9376bfaa67232f9, type: 3}
+  - {fileID: 6996996210386608633, guid: d214ab72f694f5640b52c10b545a86e0, type: 3}
+  - {fileID: 2144988667149434970, guid: f949cc7544bb2b3429ecde7aa8e5fd17, type: 3}
+  - {fileID: 6342856610871284867, guid: dfa32c6e57ae2db43b930ba4c35f0928, type: 3}
   - {fileID: 540730829684080100, guid: 8984d2963e5d04c4ab7ff7296a6afd76, type: 3}
-  - {fileID: 1316388196231806480, guid: a5a075e53afb2854998b0a909626d9d5, type: 3}
-  - {fileID: 5413398046172216061, guid: 4868185e48ea92a408aa20558b9d0cf8, type: 3}
-  - {fileID: 9128021319773061726, guid: 6a4216b3c8720174fa96539b0b3f8343, type: 3}
   - {fileID: 3252346480801621941, guid: 6ecd4efcdc38f694a8d9d30bafc3a96f, type: 3}
