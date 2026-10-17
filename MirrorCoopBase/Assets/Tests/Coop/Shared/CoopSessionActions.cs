@@ -15,7 +15,9 @@ namespace Tests.Coop.Shared {
         public static void PrepareDirect(ushort port, string playerName) {
             ConnectionNetworkManager manager = SessionQueries.NetworkManager;
             manager.GetComponent<TelepathyTransport>().port = port;
-            ((ConnectionAuthenticator)manager.authenticator).PlayerName = playerName;
+            ConnectionAuthenticator authenticator = (ConnectionAuthenticator)manager.authenticator;
+            authenticator.PlayerName = playerName;
+            authenticator.UsesSteamIdentity = false;
         }
 
         public static void JoinThroughMenu(string address) {
