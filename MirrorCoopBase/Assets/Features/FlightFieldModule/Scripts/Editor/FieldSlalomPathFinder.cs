@@ -34,9 +34,8 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             if (!search.IsClosed(goalIndex))
                 return false;
 
-            int[] parents = search.Parents;
 
-            List<Vector2> steps = TraceBack(grid, parents, goalIndex);
+            List<Vector2> steps = TraceBack(grid, search.Parents, goalIndex);
             steps[0] = start;
             steps[^1] = goal;
             PullStraight(obstacles, steps, clearance, path);

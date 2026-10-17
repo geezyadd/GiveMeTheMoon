@@ -6,6 +6,7 @@ using Features.FlightFieldModule.Scripts.Generation;
 using Features.FlightFieldModule.Scripts.Generation.Noise;
 using Features.FlightFieldModule.Scripts.Scene;
 using NUnit.Framework;
+using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
@@ -19,8 +20,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const int CHUNK_REACH = 2;
         private const float TOLERANCE = 0.01f;
         private const float CELL_SIZE = 40f;
-        // The farthest vertex of a rock prefab from its pivot, as a share of the rock's size (see FieldClusterLayout).
-        private const float ROCK_REACH = 0.7f;
         private const float FAR_AWAY = 1e6f;
 
         private readonly FieldRandomFactory _randomFactory = new();
@@ -148,7 +147,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         // However the rock is turned, its mesh stays within this distance of its middle.
         private static float Reach(FieldClusterRockPose rock) =>
-            Mathf.Max(rock.Scale.x, Mathf.Max(rock.Scale.y, rock.Scale.z)) * ROCK_REACH;
+            Mathf.Max(rock.Scale.x, Mathf.Max(rock.Scale.y, rock.Scale.z)) * FieldRockVisual.MESH_REACH;
 
         private static void AssertSameRock(FieldClusterRockPose expected, FieldClusterRockPose actual, int seed) {
             Assert.AreSame(expected.Prefab, actual.Prefab, $"Seed {seed}: rock prefab differs.");

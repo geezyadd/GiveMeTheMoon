@@ -34,7 +34,7 @@ namespace Features.FlightFieldModule.Scripts.Debris {
             Vector2 cellCenter = cellMin + Vector2.one * (cellSize * CELL_CENTER);
             Vector2Int first = new(Mathf.FloorToInt(cellMin.x / spacing), Mathf.FloorToInt(cellMin.y / spacing));
             Vector2Int last = new(Mathf.FloorToInt((cellMin.x + cellSize) / spacing), Mathf.FloorToInt((cellMin.y + cellSize) / spacing));
-            DebrisLayoutFrame frame = new(fieldSeed, cellSize, cells, workspace);
+            DebrisLayoutFrame frame = new(fieldSeed, cellSize, cells, workspace, LargestRadius());
             for (int across = first.x; across <= last.x; across++) {
                 for (int along = first.y; along <= last.y; along++)
                     TryAddSpot(frame, new Vector2Int(across, along), cell, cellCenter, spots);
@@ -88,7 +88,7 @@ namespace Features.FlightFieldModule.Scripts.Debris {
 
         private FieldDebrisRivalState ReadRivals(DebrisLayoutFrame frame, Vector2Int point, FieldDebrisCandidate candidate, out Vector2Int undecided) {
             float gap = _flightFieldConfiguration.DebrisMinGapMeters;
-            int reach = Mathf.CeilToInt((candidate.Radius + LargestRadius() + gap) / _flightFieldConfiguration.DebrisGridSpacingMeters);
+            int reach = Mathf.CeilToInt((candidate.Radius + frame.LargestRadius + gap) / _flightFieldConfiguration.DebrisGridSpacingMeters);
             FieldDebrisRivalState state = FieldDebrisRivalState.Free;
             undecided = point;
             for (int across = point.x - reach; across <= point.x + reach; across++) {

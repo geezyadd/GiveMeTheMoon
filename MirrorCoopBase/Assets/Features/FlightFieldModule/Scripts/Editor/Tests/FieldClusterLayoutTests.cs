@@ -19,8 +19,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const float TOLERANCE = 0.001f;
         // The main rock's height offset stays below this share of its smallest axis, so its surface crosses the plane.
         private const float MAIN_CROSSING_SHARE = 0.15f;
-        // The farthest vertex of a rock prefab from its pivot, as a share of its size (see FieldClusterLayout).
-        private const float ROCK_REACH = 0.7f;
         private const float HALF = 0.5f;
 
         private readonly FieldRockMeshBounds _meshBounds = new();
@@ -87,7 +85,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 foreach (FieldClusterRockOption option in recipe.Rocks) {
                     Assert.IsNotNull(option.Prefab, $"{recipe.name} has an empty rock slot.");
                     Assert.IsEmpty(option.Prefab.GetComponentsInChildren<Collider>(true), $"{option.Prefab.name} has a collider: visual rocks must not collide.");
-                    Assert.LessOrEqual(GetFarthestVertex(option.Prefab), ROCK_REACH + TOLERANCE, $"{option.Prefab.name} reaches farther than the layout allows: normalise its mesh to about 1 m.");
+                    Assert.LessOrEqual(GetFarthestVertex(option.Prefab), FieldRockVisual.MESH_REACH + TOLERANCE, $"{option.Prefab.name} reaches farther than the layout allows: normalise its mesh to about 1 m.");
                 }
             }
         }

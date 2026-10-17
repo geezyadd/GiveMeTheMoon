@@ -55,6 +55,9 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             return Mathf.Min(clearance, RockClearance(point, center, limit));
         }
 
+        public bool IsClosed(Vector2Int cell) =>
+            !_cells.ValidateIndex(cell) || _cells[cell].IsOccupied;
+
         private float WallClearance(Vector2 point, Vector2Int center, float limit) {
             int reach = Mathf.CeilToInt((_wallReach + limit) / _cellSize);
             float clearance = limit;
@@ -90,9 +93,6 @@ namespace Features.FlightFieldModule.Scripts.Editor {
 
             return nearest;
         }
-
-        public bool IsClosed(Vector2Int cell) =>
-            !_cells.ValidateIndex(cell) || _cells[cell].IsOccupied;
 
         // Field plane: x across, y along; the cell is the matrix one (x along, y across).
         private float DistanceToCell(Vector2 point, Vector2Int cell) {

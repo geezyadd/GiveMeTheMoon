@@ -17,8 +17,6 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         private const float FULL_TURN_RADIANS = 2f * Mathf.PI;
         // A part longer than this many times its width is halved along its length first.
         private const float MAX_PART_ASPECT = 1.5f;
-        // The farthest vertex of any recipe rock from its pivot, as a share of its size (see FieldClusterLayout).
-        private const float ROCK_REACH = 0.7f;
 
         public void Add(FieldClusterRecipe recipe, FieldFootprint footprint, float cellSize, IFieldRandom random, List<FieldClusterRockPose> rocks) {
             if (!recipe.HasPlaneCover)
@@ -104,7 +102,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             Vector3 offset = cellCenter + new Vector3(Spread(cellSize * HALF, random), 0f, Spread(cellSize * HALF, random));
             FieldRockVisual prefab = FieldClusterLayout.PickRock(recipe.Rocks, random);
             Material material = recipe.Materials[random.Range(0, recipe.Materials.Count)];
-            float size = diameter * HALF / ROCK_REACH;
+            float size = diameter * HALF / FieldRockVisual.MESH_REACH;
             return new FieldClusterRockPose(prefab, material, offset, FieldClusterLayout.RandomRotation(random), Vector3.one * size);
         }
 

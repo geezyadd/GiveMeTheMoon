@@ -14,8 +14,6 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         private const string ROOT_NAME = "FlightFieldDebris";
         private const float HALF = 0.5f;
         private const float CELL_CENTER = 0.5f;
-        // The farthest vertex of a rock prefab from its pivot, as a share of the rock's size (see FieldClusterLayout).
-        private const float ROCK_REACH = 0.7f;
 
         private readonly IFieldDebrisLayout _fieldDebrisLayout;
         private readonly IFieldStructurePool _fieldStructurePool;
@@ -83,7 +81,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         // the largest axis stretch.
         private GameObject BuildRock(Transform root, FieldDebrisRecipe recipe, Vector3 position, float diameter) {
             FieldRockVisual rock = _fieldStructurePool.TakeRock(FieldClusterLayout.PickRock(recipe.Rocks, _lookRandom), root);
-            float size = diameter * HALF / (ROCK_REACH * recipe.AxisScale.y);
+            float size = diameter * HALF / (FieldRockVisual.MESH_REACH * recipe.AxisScale.y);
             rock.transform.SetLocalPositionAndRotation(position, FieldClusterLayout.RandomRotation(_lookRandom));
             rock.transform.localScale = new Vector3(AxisScale(recipe) * size, AxisScale(recipe) * size, AxisScale(recipe) * size);
             rock.SetMaterial(recipe.Materials[_lookRandom.Range(0, recipe.Materials.Count)]);

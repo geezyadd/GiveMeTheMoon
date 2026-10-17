@@ -65,6 +65,7 @@ namespace Features.FlightFieldModule.Scripts.Decor {
         }
 
         private bool TryFindProfile(string id, out FieldDifficultyProfile found) {
+            found = null;
             foreach (FieldDifficultyProfile profile in _flightFieldConfiguration.DifficultyProfiles) {
                 if (profile.Id != id)
                     continue;
@@ -73,7 +74,6 @@ namespace Features.FlightFieldModule.Scripts.Decor {
                 return true;
             }
 
-            found = null;
             return false;
         }
 

@@ -15,8 +15,6 @@ namespace Features.FlightFieldModule.Scripts.Decor {
         private const float HALF = 0.5f;
         private const float UP = 1f;
         private const float DOWN = -1f;
-        // The farthest vertex of a rock prefab from its pivot, as a share of the rock's size (see FieldClusterLayout).
-        private const float ROCK_REACH = 0.7f;
         private static readonly int[] _sides = { (int)UP, (int)DOWN };
 
         private readonly FlightFieldDecorConfiguration _flightFieldDecorConfiguration;
@@ -102,7 +100,7 @@ namespace Features.FlightFieldModule.Scripts.Decor {
             random.Reseed(candidate.LookSeed);
             FieldRockVisual prefab = FieldClusterLayout.PickRock(volume.Rocks, random);
             Material material = band.Materials[random.Range(0, band.Materials.Count)];
-            float size = candidate.Radius / (ROCK_REACH * volume.AxisScale.y);
+            float size = candidate.Radius / (FieldRockVisual.MESH_REACH * volume.AxisScale.y);
             Vector3 scale = new(AxisScale(volume, random) * size, AxisScale(volume, random) * size, AxisScale(volume, random) * size);
             return new FieldClusterRockPose(prefab, material, candidate.Position, FieldClusterLayout.RandomRotation(random), scale);
         }

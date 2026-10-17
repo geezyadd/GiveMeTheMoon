@@ -16,7 +16,8 @@ namespace Features.FlightFieldModule.Scripts.Decor {
         private const float HALF = 0.5f;
 
         private readonly FlightFieldDecorConfiguration _flightFieldDecorConfiguration;
-        private readonly FlightFieldConfiguration _flightFieldConfiguration;
+        // The highest the volume rock bands reach above (and below) the plane, read once: planets keep clear of it.
+        private readonly float _volumeTop;
         private readonly IFieldRandom _random;
 
         private float ViewReach =>
@@ -25,7 +26,7 @@ namespace Features.FlightFieldModule.Scripts.Decor {
         public FieldDecorPlanetPicker(FlightFieldDecorConfiguration flightFieldDecorConfiguration, FlightFieldConfiguration flightFieldConfiguration,
                                       IFieldRandomFactory fieldRandomFactory) {
             _flightFieldDecorConfiguration = flightFieldDecorConfiguration;
-            _flightFieldConfiguration = flightFieldConfiguration;
+            _volumeTop = FindVolumeTop(flightFieldConfiguration.Volume);
             _random = fieldRandomFactory.Create(0);
         }
 
@@ -121,7 +122,7 @@ namespace Features.FlightFieldModule.Scripts.Decor {
             float clearance = _flightFieldDecorConfiguration.PlanetFieldClearance;
             float clearOfStations = (_flightFieldDecorConfiguration.PlanetStationClearance + radius) / AxisShare(direction);
             float besideField = (fieldHalfWidth + clearance + radius) / Mathf.Abs(direction.x);
-            float beyondLayers = (_flightFieldConfiguration.Volume.TopMeters + clearance + radius) / Mathf.Abs(direction.y);
+            float beyondLayers = (_volumeTop + clearance + radius) / Mathf.Abs(direction.y);
             return Mathf.Max(Mathf.Max(_flightFieldDecorConfiguration.PlanetDistance.x + radius, clearOfStations), Mathf.Min(besideField, beyondLayers));
         }
 
@@ -133,7 +134,7 @@ namespace Features.FlightFieldModule.Scripts.Decor {
             float byNearest = (viewReach - _flightFieldDecorConfiguration.PlanetDistance.x) / 2f;
             float byStations = MaxRadiusFor(viewReach, _flightFieldDecorConfiguration.PlanetStationClearance, AxisShare(direction));
             float besideField = MaxRadiusFor(viewReach, fieldHalfWidth + clearance, Mathf.Abs(direction.x));
-            float beyondLayers = MaxRadiusFor(viewReach, _flightFieldConfiguration.Volume.TopMeters + clearance, Mathf.Abs(direction.y));
+            float beyondLayers = MaxRadiusFor(viewReach, _volumeTop + clearance, Mathf.Abs(direction.y));
             return Mathf.Min(Mathf.Min(byNearest, byStations), Mathf.Max(besideField, beyondLayers));
         }
 
@@ -169,5 +170,13 @@ namespace Features.FlightFieldModule.Scripts.Decor {
 
         private float Lerp(Vector2 range) =>
             Mathf.Lerp(range.x, range.y, _random.Value());
+
+        private static float FindVolumeTop(FieldVolumeConfiguration volume) {
+            float top = 0f;
+            foreach (FieldVolumeConfiguration.Band band in volume.Bands)
+                top = Mathf.Max(top, band.HeightMeters.y);
+
+            return top;
+        }
     }
 }
