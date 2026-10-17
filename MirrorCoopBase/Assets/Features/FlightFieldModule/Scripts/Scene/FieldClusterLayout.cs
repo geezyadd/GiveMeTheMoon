@@ -73,20 +73,8 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         internal static FieldRockVisual PickPrefab(FieldClusterRecipe recipe, IFieldRandom random) =>
             PickRock(recipe.Rocks, random);
 
-        internal static FieldRockVisual PickRock(IReadOnlyList<FieldClusterRockOption> options, IFieldRandom random) {
-            float total = 0f;
-            foreach (FieldClusterRockOption option in options)
-                total += option.Weight;
-
-            float pick = random.Value() * total;
-            foreach (FieldClusterRockOption option in options) {
-                pick -= option.Weight;
-                if (pick < 0f)
-                    return option.Prefab;
-            }
-
-            return options[options.Count - 1].Prefab;
-        }
+        internal static FieldRockVisual PickRock(IReadOnlyList<FieldClusterRockOption> options, IFieldRandom random) =>
+            FieldWeightedPick.Pick(options, random).Prefab;
 
         // The largest rock that, turned any way and stretched by the recipe's largest axis scale, stays inside a box of
         // the given side around its pivot.

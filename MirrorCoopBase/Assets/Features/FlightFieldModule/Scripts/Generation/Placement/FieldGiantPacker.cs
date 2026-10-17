@@ -115,22 +115,8 @@ namespace Features.FlightFieldModule.Scripts.Generation.Placement {
         private FieldFootprint Read(FieldPackingChoice choice) =>
             _fieldFootprintReader.Read(choice.Option.Structure, choice.Rotation);
 
-        private static FieldPackingChoice PickByWeight(List<FieldPackingChoice> group, IFieldRandom random) {
-            if (group.Count == 1)
-                return group[0];
-
-            float total = 0f;
-            foreach (FieldPackingChoice choice in group)
-                total += choice.Option.Weight;
-
-            float roll = random.Value() * total;
-            foreach (FieldPackingChoice choice in group) {
-                roll -= choice.Option.Weight;
-                if (roll < 0f)
-                    return choice;
-            }
-
-            return group[group.Count - 1];
-        }
+        // A single choice takes no roll, so adding a footprint never shifts the sequence of the others.
+        private static FieldPackingChoice PickByWeight(List<FieldPackingChoice> group, IFieldRandom random) =>
+            group.Count == 1 ? group[0] : FieldWeightedPick.Pick(group, random);
     }
 }

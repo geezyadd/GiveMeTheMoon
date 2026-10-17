@@ -50,23 +50,7 @@ namespace Features.FlightFieldModule.Scripts.Requests {
             _debugProfile = null;
 #endif
 
-        private FieldDifficultyProfile PickByWeight(FlightFieldConfiguration.LoopRoutes loopRoutes, IFieldRandom random) {
-            IReadOnlyList<FlightFieldConfiguration.ProfileOption> options = loopRoutes.Profiles;
-            float total = 0f;
-            foreach (FlightFieldConfiguration.ProfileOption option in options)
-                total += option.Weight;
-
-            if (total <= 0f)
-                throw new InvalidOperationException($"{_flightFieldConfiguration.name}: loops from {loopRoutes.FromLoop} have no profile with a positive weight.");
-
-            float roll = random.Value() * total;
-            foreach (FlightFieldConfiguration.ProfileOption option in options) {
-                roll -= option.Weight;
-                if (roll < 0f)
-                    return option.Profile;
-            }
-
-            return options[options.Count - 1].Profile;
-        }
+        private static FieldDifficultyProfile PickByWeight(FlightFieldConfiguration.LoopRoutes loopRoutes, IFieldRandom random) =>
+            FieldWeightedPick.Pick(loopRoutes.Profiles, random).Profile;
     }
 }

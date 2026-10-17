@@ -48,5 +48,15 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public Vector2 AxisScale => _axisScale;
         public float PlaneClearanceMeters => _planeClearanceMeters;
         public float StationClearanceMeters => _stationClearanceMeters;
+        // The highest any band reaches above the plane (and, mirrored, below it): planets keep clear of it.
+        public float TopMeters {
+            get {
+                float top = 0f;
+                foreach (Band band in _bands)
+                    top = Mathf.Max(top, band.HeightMeters.y);
+
+                return top;
+            }
+        }
     }
 }

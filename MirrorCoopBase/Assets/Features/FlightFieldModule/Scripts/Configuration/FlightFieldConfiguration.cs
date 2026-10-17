@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Features.FlightFieldModule.Scripts.Generation;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Configuration {
@@ -22,7 +23,7 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         }
 
         [Serializable]
-        public sealed class ProfileOption {
+        public sealed class ProfileOption : IFieldWeighted {
             [SerializeField] private FieldDifficultyProfile _profile;
             [SerializeField, Min(0f)] private float _weight = 1f;
 

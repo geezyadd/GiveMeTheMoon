@@ -15,11 +15,16 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private float _boardingEdgeTolerance = 0.5f;
         [SerializeField] private float _boardingMinHeight = -0.5f;
         [SerializeField] private float _boardingMaxHeight = 6f;
-        [SerializeField] private float _standUpSpeed = 6f;
         [Tooltip("On: the deck edge stops riders. Off: walking or jumping past the deck edge drops the rider off the ship.")]
         [SerializeField] private bool _confineRidersToDeck;
         [Tooltip("After dropping off the deck in flight, the rider cannot land back on it for this long (s).")]
         [SerializeField] private float _reboardDelaySeconds = 0.5f;
+        [Tooltip("In flight a rider who comes down on the deck is bound to it from this height above the deck surface under it (m).")]
+        [SerializeField] private float _catchMinHeight = -0.5f;
+        [Tooltip("In flight a rider who comes down on the deck is bound to it up to this height above the deck surface under it (m).")]
+        [SerializeField] private float _catchMaxHeight = 1.5f;
+        [Tooltip("In flight a rider rising faster than this (m/s) is not bound to the deck yet: it is still on its way up.")]
+        [SerializeField] private float _catchMaxRiseSpeed = 0.15f;
 
         public ShipFlightMode FlightMode =>
             _flightMode == ShipFlightMode.None ? ShipFlightMode.TravelInSpace : _flightMode;
@@ -35,8 +40,10 @@ namespace Features.ShipModule.Scripts {
         public float BoardingEdgeTolerance => _boardingEdgeTolerance;
         public float BoardingMinHeight => _boardingMinHeight;
         public float BoardingMaxHeight => _boardingMaxHeight;
-        public float StandUpSpeed => _standUpSpeed;
         public bool ConfineRidersToDeck => _confineRidersToDeck;
         public float ReboardDelaySeconds => Mathf.Max(0f, _reboardDelaySeconds);
+        public float CatchMinHeight => _catchMinHeight;
+        public float CatchMaxHeight => _catchMaxHeight;
+        public float CatchMaxRiseSpeed => _catchMaxRiseSpeed;
     }
 }

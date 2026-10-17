@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Generation;
+using Features.FlightFieldModule.Scripts.Network.Generated;
 using Features.FlightFieldModule.Scripts.Scene;
 using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
@@ -15,6 +16,7 @@ namespace Features.FlightFieldModule.Scripts.Decor {
         private readonly IFieldDecorPlanetPicker _fieldDecorPlanetPicker;
         private readonly IFieldStructurePool _fieldStructurePool;
         private readonly IFieldDecorLightSource _fieldDecorLightSource;
+        private readonly IReadOnlyLiveFieldModel _liveFieldModel;
         // One reseeded sequence and reused lists: chunks are built while flying and allocate nothing once warm.
         private readonly IFieldRandom _decorRandom;
         private readonly List<FieldClusterRockPose> _chunkRocks = new();
@@ -23,11 +25,12 @@ namespace Features.FlightFieldModule.Scripts.Decor {
         private readonly Stack<List<GameObject>> _freeObjectLists = new();
 
         public FieldDecorSceneBuilder(IFieldDecorChunkLayout fieldDecorChunkLayout, IFieldDecorPlanetPicker fieldDecorPlanetPicker, IFieldStructurePool fieldStructurePool,
-                                      IFieldDecorLightSource fieldDecorLightSource, IFieldRandomFactory fieldRandomFactory) {
+                                      IFieldDecorLightSource fieldDecorLightSource, IReadOnlyLiveFieldModel liveFieldModel, IFieldRandomFactory fieldRandomFactory) {
             _fieldDecorChunkLayout = fieldDecorChunkLayout;
             _fieldDecorPlanetPicker = fieldDecorPlanetPicker;
             _fieldStructurePool = fieldStructurePool;
             _fieldDecorLightSource = fieldDecorLightSource;
+            _liveFieldModel = liveFieldModel;
             _decorRandom = fieldRandomFactory.Create(0);
         }
 
@@ -63,13 +66,16 @@ namespace Features.FlightFieldModule.Scripts.Decor {
             _freeObjectLists.Push(objects);
         }
 
-        // The planets go where the light comes from behind the viewer, so a player sees their lit side; with no main
-        // light they follow the seed only.
+        // The planets stand around the route axis (the middle of the field's width, the root is its corner) and turn
+        // within their side to where the light comes from behind the viewer, so a player sees their lit side; with no
+        // main light they follow the seed only.
         public void BuildPlanets(Transform root, int fieldSeed) {
+            float fieldHalfWidth = _liveFieldModel.WidthCells * _liveFieldModel.CellSize / 2f;
+            Vector3 courseStart = new(fieldHalfWidth, 0f, 0f);
             if (_fieldDecorLightSource.TryGetLightTravel(out Vector3 lightTravel))
-                _fieldDecorPlanetPicker.Fill(fieldSeed, root.InverseTransformDirection(lightTravel), _planets);
+                _fieldDecorPlanetPicker.Fill(fieldSeed, courseStart, fieldHalfWidth, root.InverseTransformDirection(lightTravel), _planets);
             else
-                _fieldDecorPlanetPicker.Fill(fieldSeed, _planets);
+                _fieldDecorPlanetPicker.Fill(fieldSeed, courseStart, fieldHalfWidth, _planets);
 
             foreach (FieldDecorPlanet planet in _planets) {
                 GameObject instance = _fieldStructurePool.Take(planet.Prefab, root);
