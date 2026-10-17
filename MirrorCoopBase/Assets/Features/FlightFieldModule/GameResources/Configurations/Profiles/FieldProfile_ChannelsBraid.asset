@@ -1,0 +1,145 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02d0199b2bfd97b46bc5ddcf98b4eedc, type: 3}
+  m_Name: FieldProfile_ChannelsBraid
+  m_EditorClassIdentifier: 
+  _id: channels_braid
+  _blockedShare:
+    _easy: 1
+    _hard: 1
+  _debrisShare:
+    _easy: 0
+    _hard: 0
+  _noiseScaleCells:
+    _easy: 10
+    _hard: 8
+  _noiseStretchAcross: 0.5
+  _contrast:
+    _easy: 2
+    _hard: 2.5
+  _ridgeThreshold:
+    _easy: 1
+    _hard: 1
+  _gladeThreshold:
+    _easy: 0
+    _hard: 0
+  _gladeNoiseScaleCells: 6
+  _gladeDebrisDensity:
+    _easy: 0.3
+    _hard: 0.4
+  _voidCount:
+    _easy: 0
+    _hard: 0
+  _voidRadiusCells: {x: 3, y: 6}
+  _channelCount:
+    _easy: 3
+    _hard: 3
+  _channelSpreadShare:
+    _easy: 0.15
+    _hard: 0.15
+  _channelSplitShare: 0.18
+  _corridorHalfWidthCells:
+    _easy: 3
+    _hard: 3
+  _widthVariationCells:
+    _easy: 1
+    _hard: 1
+  _widthNoiseScaleCells: 12
+  _meanderAmplitudeCells:
+    _easy: 9
+    _hard: 9
+  _meanderPeriodCells:
+    _easy: 20
+    _hard: 16
+  _meanderWaves:
+    _easy: 3.5
+    _hard: 3.5
+  _meanderFadeCells: 6
+  _corridorDebrisDensity:
+    _easy: 0.7
+    _hard: 0.7
+  _shoulderWidthCells:
+    _easy: 0
+    _hard: 0
+  _shoulderStrength:
+    _easy: 0
+    _hard: 0
+  _alternativeRoutes:
+    _easy: 0
+    _hard: 0
+  _alternativeHalfWidthCells:
+    _easy: 1
+    _hard: 1
+  _alternativeOffsetCells:
+    _easy: 9
+    _hard: 10
+  _alternativeLengthCells: {x: 20, y: 40}
+  _alternativeDebrisDensity:
+    _easy: 0.5
+    _hard: 0.7
+  _alternativeClosedChance:
+    _easy: 0
+    _hard: 0
+  _deadEnds:
+    _easy: 0
+    _hard: 0
+  _deadEndHalfWidthCells:
+    _easy: 1
+    _hard: 1
+  _deadEndLengthCells: {x: 8, y: 16}
+  _deadEndCapCells: 2
+  _wallThicknessCells: 3
+  _minFreeToRouteRatio:
+    _easy: 1
+    _hard: 1
+  _requiresNoFreePath: 1
+  _maxPathRepairRounds: 6
+  _pathRepairRadiusCells: 2
+  _wallObstacles:
+  - _structure: {fileID: 11400000, guid: e71722fab001ff741837b85f5289aef7, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: 139b6e748dcd810469fb11cfb64202db, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: 2b09c6a12e6c6ba439b5bf4ac33b4bec, type: 2}
+    _weight: 1
+  _ridgeObstacles:
+  - _structure: {fileID: 11400000, guid: 1e37e56fd8e861c4cb7badbb31e57d32, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: afb3b71ef3460294ba21e203a00f49f0, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: 4df5bab68b6a55d4db832addae91125b, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: 5bc757835b136c8468aa451cca1244a7, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: 0b6db49bddaa57e439877c6c9086d769, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: 54be77dd9e9a07b48bf8b1e73cc264d2, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: 6546e913a2520cf43b2eb21137491769, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: aeb9a4e8232f418409d2aee5c1591cce, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: bab395562d0a7d243805a07c5f17bb60, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: e62bc129d2dcdb9418d35dbef15de73a, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: ce3cf10d077df2f46bc841a9775e9081, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: 52fd2bf6425672747b2d27fba551dfd3, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: a7a60006a622deb4da025cc951de04fc, type: 2}
+    _weight: 1
+  - _structure: {fileID: 11400000, guid: 62dc337730b4a634fbcdfa7a0db29c4a, type: 2}
+    _weight: 1
+  _debrisTypes:
+  - _debris: {fileID: 11400000, guid: f6aa605e763a5ab40bc28a47a3ab3862, type: 2}
+    _weight: 1

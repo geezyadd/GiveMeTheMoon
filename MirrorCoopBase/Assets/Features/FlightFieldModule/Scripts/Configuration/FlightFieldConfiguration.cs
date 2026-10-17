@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
-using Features.FlightFieldModule.Scripts.Structures;
+using Features.FlightFieldModule.Scripts.Generation;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Configuration {
-    // Tuning of the flight field: frame size, empty zones, routes per loop, obstacle density and the passage check.
+    // Tuning of the flight field: frame size, empty zones, routes and difficulty profiles per loop, the ship gaps the
+    // obstacles keep, the passage check, publishing and building. The structure of a field comes from its profile.
     [CreateAssetMenu(menuName = "Game/Flight Field/Configuration", fileName = "FlightFieldConfiguration_Default")]
     public sealed class FlightFieldConfiguration : ScriptableObject {
         [Serializable]
@@ -13,23 +14,21 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
             [SerializeField, Min(0)] private int _fromLoop;
             [Tooltip("One difficulty per route of the field: 0 the easiest, 1 the hardest.")]
             [SerializeField, Range(0f, 1f)] private float[] _routeDifficulties = { 0f };
+            [Tooltip("The difficulty profiles a field of these loops may get, picked by weight from the field seed.")]
+            [SerializeField] private ProfileOption[] _profiles = Array.Empty<ProfileOption>();
 
             public int FromLoop => _fromLoop;
             public IReadOnlyList<float> RouteDifficulties => _routeDifficulties;
+            public IReadOnlyList<ProfileOption> Profiles => _profiles;
         }
 
         [Serializable]
-        public sealed class RouteShapeCurves {
-            [Tooltip("Difficulty (0..1) -> cells on each side of the route centerline; the corridor is 2 * value + 1 cells wide.")]
-            [SerializeField] private AnimationCurve _corridorHalfWidthCells = AnimationCurve.Linear(0f, 2f, 1f, 1f);
-            [Tooltip("Difficulty (0..1) -> how far (cells) a waypoint of the centerline may move sideways.")]
-            [SerializeField] private AnimationCurve _maxSideOffsetCells = AnimationCurve.Linear(0f, 1f, 1f, 4f);
-            [Tooltip("Difficulty (0..1) -> share (0..1) of free corridor cells filled with obstacles.")]
-            [SerializeField] private AnimationCurve _corridorObstacleShare = AnimationCurve.Constant(0f, 1f, 0f);
+        public sealed class ProfileOption : IFieldWeighted {
+            [SerializeField] private FieldDifficultyProfile _profile;
+            [SerializeField, Min(0f)] private float _weight = 1f;
 
-            public AnimationCurve CorridorHalfWidthCells => _corridorHalfWidthCells;
-            public AnimationCurve MaxSideOffsetCells => _maxSideOffsetCells;
-            public AnimationCurve CorridorObstacleShare => _corridorObstacleShare;
+            public FieldDifficultyProfile Profile => _profile;
+            public float Weight => _weight;
         }
 
         [Header("Frame")]
@@ -54,19 +53,30 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [Tooltip("Length of the takeoff corridor past the cruise start along the takeoff heading, meters: the autopilot keeps that heading, and the pilot needs this run-out to find B on the radar and turn (run-up plus margin).")]
         [SerializeField, Min(0f)] private float _takeoffRunOutLength = 200f;
 
-        [Header("Routes")]
+        [Header("Routes and profiles")]
         [SerializeField] private LoopRoutes[] _routesByLoop = { new() };
-        [SerializeField] private RouteShapeCurves _routeShape = new();
-        [Tooltip("Cells between two random waypoints of a route centerline.")]
-        [SerializeField, Min(1)] private int _waypointSpacingCells = 4;
+        [Tooltip("Every difficulty profile a field may get; a peer resolves the profile id of a field here.")]
+        [SerializeField] private FieldDifficultyProfile[] _difficultyProfiles = Array.Empty<FieldDifficultyProfile>();
+        [Tooltip("The visual-only volume of big rocks above and below the flight plane.")]
+        [SerializeField] private FieldVolumeConfiguration _volume;
 
-        [Header("Content")]
-        [Tooltip("Share (0..1) of free cells outside the reserved zones covered by obstacles.")]
-        [SerializeField, Range(0f, 1f)] private float _obstacleDensity = 0.3f;
-        [Tooltip("Structures of the border wall, tried in this order for every border cell; the last one has to fit a single cell.")]
-        [SerializeField] private FieldStructureDefinition[] _wallStructures = Array.Empty<FieldStructureDefinition>();
-        [Tooltip("Random spots tried for one structure before it is dropped.")]
-        [SerializeField, Min(1)] private int _placementTries = 12;
+        [Header("Ship gaps")]
+        [Tooltip("Width of the ship, meters (the ship is about 10 x 19 m).")]
+        [SerializeField, Min(1f)] private float _shipWidthMeters = 10f;
+        [Tooltip("Room kept on top of the ship width between two debris rocks, meters.")]
+        [SerializeField, Min(0f)] private float _debrisGapMarginMeters = 6f;
+        [Tooltip("Spacing of the grid the rocks of passable cells are drawn on, meters: finer gives more candidate spots.")]
+        [SerializeField, Min(1f)] private float _debrisGridSpacingMeters = 25f;
+        [Tooltip("Room a passable cell's rock keeps from the nearest closed cell beyond its radius, meters. Small: the rocks stand against the walls and no free lane runs along them; a channel stays open because it is wider than the widest rock plus the ship gap plus the wall rocks' spill on both sides (checked by the slalom tests).")]
+        [SerializeField, Min(0f)] private float _debrisWallClearanceMeters = 5f;
+        [Tooltip("The widest gap allowed at the flight plane inside or between occupied cells, meters; below the ship width, so a ridge is closed.")]
+        [SerializeField, Min(0f)] private float _maxPlaneGapMeters = 4f;
+        [Tooltip("Half of the slab around the flight plane that ridges must close, meters: half the ship's height and a margin.")]
+        [SerializeField, Min(0f)] private float _planeHalfThicknessMeters = 8f;
+        [Tooltip("Speed the dodges-per-minute metric flies the main route at, m/s (the base cruise speed).")]
+        [SerializeField, Min(0.1f)] private float _metricCruiseSpeed = 14f;
+        [Tooltip("How far the zone shares of a field may lie from its profile's shares (0..1).")]
+        [SerializeField, Range(0f, 1f)] private float _zoneShareTolerance = 0.08f;
 
         [Header("Passage")]
         [Tooltip("Free cells needed on every side of a passage cell, diagonals included (the ship is about 10 x 19 m).")]
@@ -89,6 +99,12 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [SerializeField, Min(1f)] private float _buildRadius = 1300f;
         [Tooltip("A built local structure goes back to the pool beyond this horizontal distance of the local ship, meters; above the build radius so a structure on the edge does not flicker.")]
         [SerializeField, Min(1f)] private float _releaseRadius = 1500f;
+        [Tooltip("Debris cells every peer builds per frame.")]
+        [SerializeField, Min(1)] private int _debrisCellsBuiltPerFrame = 24;
+        [Tooltip("The small debris of a cell is built within this horizontal distance of the viewpoint, meters.")]
+        [SerializeField, Min(1f)] private float _debrisBuildRadius = 900f;
+        [Tooltip("Built debris goes back to the pool beyond this horizontal distance, meters; above the debris build radius.")]
+        [SerializeField, Min(1f)] private float _debrisReleaseRadius = 1050f;
 
         public float CellSize => _cellSize;
         public int MarginBehindACells => _marginBehindACells;
@@ -100,11 +116,17 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public float TakeoffCorridorHalfWidth => _takeoffCorridorHalfWidth;
         public float TakeoffRunOutLength => _takeoffRunOutLength;
         public IReadOnlyList<LoopRoutes> RoutesByLoop => _routesByLoop;
-        public RouteShapeCurves RouteShape => _routeShape;
-        public int WaypointSpacingCells => _waypointSpacingCells;
-        public float ObstacleDensity => _obstacleDensity;
-        public IReadOnlyList<FieldStructureDefinition> WallStructures => _wallStructures;
-        public int PlacementTries => _placementTries;
+        public IReadOnlyList<FieldDifficultyProfile> DifficultyProfiles => _difficultyProfiles;
+        public FieldVolumeConfiguration Volume => _volume;
+        public float ShipWidthMeters => _shipWidthMeters;
+        public float DebrisGapMarginMeters => _debrisGapMarginMeters;
+        public float DebrisMinGapMeters => _shipWidthMeters + _debrisGapMarginMeters;
+        public float DebrisGridSpacingMeters => _debrisGridSpacingMeters;
+        public float DebrisWallClearanceMeters => _debrisWallClearanceMeters;
+        public float MaxPlaneGapMeters => _maxPlaneGapMeters;
+        public float PlaneHalfThicknessMeters => _planeHalfThicknessMeters;
+        public float MetricCruiseSpeed => _metricCruiseSpeed;
+        public float ZoneShareTolerance => _zoneShareTolerance;
         public int PassageClearanceCells => _passageClearanceCells;
         public int MaxRepairRounds => _maxRepairRounds;
         public int MaxSeedAttempts => _maxSeedAttempts;
@@ -113,5 +135,8 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public int StructuresBuiltPerFrame => _structuresBuiltPerFrame;
         public float BuildRadius => _buildRadius;
         public float ReleaseRadius => _releaseRadius;
+        public int DebrisCellsBuiltPerFrame => _debrisCellsBuiltPerFrame;
+        public float DebrisBuildRadius => _debrisBuildRadius;
+        public float DebrisReleaseRadius => _debrisReleaseRadius;
     }
 }

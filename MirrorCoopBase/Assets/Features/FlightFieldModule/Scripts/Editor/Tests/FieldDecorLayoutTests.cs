@@ -3,21 +3,19 @@ using Features.AddressablesConstantsGenerator.Generated;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Decor;
 using Features.FlightFieldModule.Scripts.Generation;
-using Features.FlightFieldModule.Scripts.Scene;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
-    // The decor comes only from the field seed (every peer and a rejoining player see the same picture): a chunk gives
-    // the same rocks whatever was built before it, its rocks stay inside the chunk and the layers, and the planet
-    // choice depends on the seed alone: its side of the sky follows the side weights whatever the light, it never
-    // covers the course ahead and it shows its lit side.
+    // The planet of the decor comes only from the field seed (every peer and a rejoining player see the same
+    // picture): its side of the sky follows the side weights whatever the light, it never covers the course ahead,
+    // keeps clear of the field, the volume rock bands and the stations, and shows its lit side. The volume rocks of
+    // the decor chunks: FieldVolumeLayoutTests.
     public sealed class FieldDecorLayoutTests {
         private const int SEEDS = 200;
         private const int SIDE_SHARE_SEEDS = 1000;
         private const int FIRST_SEED = 1;
-        private const int CHUNK_REACH = 3;
         private const float TOLERANCE = 0.001f;
         private const float DISTANCE_TOLERANCE = 0.05f;
         private const float SIDE_SHARE_TOLERANCE = 0.05f;
@@ -26,6 +24,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         // degrees it shows a little less than half its lit side, up to this angle that is still a wide crescent.
         private const float LIT_SIDE_MAX_ANGLE_DEGREES = 100f;
         private const string PLANET_CHANCE_FIELD = "_planetChance";
+        private const float HALF_PLANET_CHANCE = 0.5f;
         // A field 61 cells of 40 m wide: the route axis runs through the middle of its width.
         private const float FIELD_HALF_WIDTH = 1220f;
         // A field of about 6 km: both station pads stand on the route axis inside it.
@@ -48,56 +47,35 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         private FlightFieldDecorConfiguration _configuration;
         private FlightFieldDecorConfiguration _alwaysPlanetConfiguration;
-        private FieldDecorChunkLayout _chunkLayout;
+        // The game shows a planet on every flight; the seed check needs a chance that gives both skies.
+        private FlightFieldDecorConfiguration _halfChanceConfiguration;
+        private FlightFieldConfiguration _fieldConfiguration;
         private FieldRandomFactory _randomFactory;
 
         [OneTimeSetUp]
         public void OneTimeSetUp() {
             _configuration = FlightFieldEditorCompositionFactory.LoadConfiguration<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default);
-            _chunkLayout = new FieldDecorChunkLayout(_configuration);
+            _fieldConfiguration = FlightFieldEditorCompositionFactory.LoadConfiguration<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default);
             _randomFactory = new FieldRandomFactory();
             _alwaysPlanetConfiguration = Object.Instantiate(_configuration);
             SerializedObject alwaysPlanet = new(_alwaysPlanetConfiguration);
             alwaysPlanet.FindProperty(PLANET_CHANCE_FIELD).floatValue = 1f;
             alwaysPlanet.ApplyModifiedPropertiesWithoutUndo();
+            _halfChanceConfiguration = Object.Instantiate(_configuration);
+            SerializedObject halfChance = new(_halfChanceConfiguration);
+            halfChance.FindProperty(PLANET_CHANCE_FIELD).floatValue = HALF_PLANET_CHANCE;
+            halfChance.ApplyModifiedPropertiesWithoutUndo();
         }
 
         [OneTimeTearDown]
-        public void OneTimeTearDown() =>
+        public void OneTimeTearDown() {
             Object.DestroyImmediate(_alwaysPlanetConfiguration);
-
-        [Test]
-        public void WhenAChunkIsLaidOutAfterOtherChunks_ThenItsRocksAreTheSameAsWhenLaidOutAlone() {
-            IFieldRandom sharedRandom = _randomFactory.Create(0);
-            for (int seed = FIRST_SEED; seed <= SEEDS; seed++) {
-                Vector2Int chunk = new(seed % CHUNK_REACH - 1, seed / CHUNK_REACH);
-                List<FieldClusterRockPose> alone = LayChunk(_randomFactory.Create(0), seed, chunk);
-                LayChunk(sharedRandom, seed, chunk + Vector2Int.one);
-                List<FieldClusterRockPose> afterOthers = LayChunk(sharedRandom, seed, chunk);
-                Assert.AreEqual(alone.Count, afterOthers.Count, $"Seed {seed}, chunk {chunk}: rock count differs.");
-                for (int i = 0; i < alone.Count; i++)
-                    AssertSameRock(alone[i], afterOthers[i], seed);
-            }
-        }
-
-        [Test]
-        public void WhenChunksAreLaidOut_ThenEveryRockStaysInsideItsChunkAndItsLayer() {
-            IFieldRandom random = _randomFactory.Create(0);
-            float chunkSize = _configuration.ChunkSize;
-            for (int seed = FIRST_SEED; seed <= SEEDS; seed++) {
-                Vector2Int chunk = new(seed % CHUNK_REACH - 1, -seed % CHUNK_REACH);
-                foreach (FieldClusterRockPose rock in LayChunk(random, seed, chunk)) {
-                    Assert.That(rock.Offset.x, Is.InRange(chunk.x * chunkSize, (chunk.x + 1) * chunkSize), $"Seed {seed}: rock outside its chunk across the field.");
-                    Assert.That(rock.Offset.z, Is.InRange(chunk.y * chunkSize, (chunk.y + 1) * chunkSize), $"Seed {seed}: rock outside its chunk along the field.");
-                    Assert.That(Mathf.Abs(rock.Offset.y), Is.InRange(_configuration.LayerHeight.x - TOLERANCE, _configuration.LayerHeight.y + TOLERANCE),
-                        $"Seed {seed}: rock outside the decor layers.");
-                }
-            }
+            Object.DestroyImmediate(_halfChanceConfiguration);
         }
 
         [Test]
         public void WhenPlanetsArePickedOnManySeeds_ThenTheSideSharesFollowTheWeights() {
-            FieldDecorPlanetPicker picker = new(_alwaysPlanetConfiguration, _randomFactory);
+            FieldDecorPlanetPicker picker = new(_alwaysPlanetConfiguration, _fieldConfiguration, _randomFactory);
             Dictionary<FlightFieldDecorConfiguration.PlanetSide, int> countsBySide = new();
             List<FieldDecorPlanet> planets = new();
             int planetCount = 0;
@@ -122,7 +100,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenPlanetsArePickedWithAnyLight_ThenNoPlanetCoversTheCourseAhead() {
-            FieldDecorPlanetPicker picker = new(_alwaysPlanetConfiguration, _randomFactory);
+            FieldDecorPlanetPicker picker = new(_alwaysPlanetConfiguration, _fieldConfiguration, _randomFactory);
             List<FieldDecorPlanet> planets = new();
             for (int seed = FIRST_SEED; seed <= SIDE_SHARE_SEEDS; seed++) {
                 foreach (Vector3 lightTravel in _lightTravels) {
@@ -137,7 +115,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenPlanetsArePickedWithAnyLight_ThenEveryPlanetKeepsItsOwnSizeAndStaysInsideTheFarClipPlane() {
-            FieldDecorPlanetPicker picker = new(_alwaysPlanetConfiguration, _randomFactory);
+            FieldDecorPlanetPicker picker = new(_alwaysPlanetConfiguration, _fieldConfiguration, _randomFactory);
             List<FieldDecorPlanet> planets = new();
             for (int seed = FIRST_SEED; seed <= SIDE_SHARE_SEEDS; seed++) {
                 foreach (Vector3 lightTravel in _lightTravels) {
@@ -152,7 +130,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenPlanetsArePickedForFieldsOfAnyWidth_ThenNoPlanetEntersTheFieldTheLayersOrTheStationZones() {
-            FieldDecorPlanetPicker picker = new(_alwaysPlanetConfiguration, _randomFactory);
+            FieldDecorPlanetPicker picker = new(_alwaysPlanetConfiguration, _fieldConfiguration, _randomFactory);
             List<FieldDecorPlanet> planets = new();
             int tries = 0;
             int shown = 0;
@@ -178,7 +156,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenPlanetsArePickedAlongTheLight_ThenEveryPlanetStaysOnItsSideAndShowsALitCrescentAtLeast() {
-            FieldDecorPlanetPicker picker = new(_alwaysPlanetConfiguration, _randomFactory);
+            FieldDecorPlanetPicker picker = new(_alwaysPlanetConfiguration, _fieldConfiguration, _randomFactory);
             List<FieldDecorPlanet> planets = new();
             for (int seed = FIRST_SEED; seed <= SIDE_SHARE_SEEDS; seed++) {
                 foreach (Vector3 lightTravel in _lightTravels) {
@@ -191,8 +169,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenTheSameSeedPicksPlanetsTwice_ThenThePlanetsAreTheSame() {
-            FieldDecorPlanetPicker firstPicker = new(_configuration, _randomFactory);
-            FieldDecorPlanetPicker secondPicker = new(_configuration, _randomFactory);
+            FieldDecorPlanetPicker firstPicker = new(_halfChanceConfiguration, _fieldConfiguration, _randomFactory);
+            FieldDecorPlanetPicker secondPicker = new(_halfChanceConfiguration, _fieldConfiguration, _randomFactory);
             List<FieldDecorPlanet> first = new();
             List<FieldDecorPlanet> second = new();
             int seedsWithPlanet = 0;
@@ -233,7 +211,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         // The field with its decor layers is a box across the width, along the length and up to the layers' top above
         // and below the plane; the station pads stand on the route axis inside it, anywhere along its length.
         private void AssertClearOfFieldAndStations(List<FieldDecorPlanet> planets, Vector3 courseStart, float halfWidth, int seed) {
-            float layerTop = _configuration.LayerHeight.y;
+            float layerTop = FieldDecorPlanetPicker.FindVolumeTop(_fieldConfiguration.Volume);
             Vector3 boxMin = new(courseStart.x - halfWidth, -layerTop, 0f);
             Vector3 boxMax = new(courseStart.x + halfWidth, layerTop, FIELD_LENGTH);
             foreach (FieldDecorPlanet planet in planets) {
@@ -278,20 +256,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
             Assert.Less(Vector3.Angle(planet.Position - _courseStart, lightTravel), LIT_SIDE_MAX_ANGLE_DEGREES,
                 $"Seed {seed}, light {lightTravel}: the {planet.Side.Name} planet shows little more than its night side.");
-        }
-
-        private List<FieldClusterRockPose> LayChunk(IFieldRandom random, int seed, Vector2Int chunk) {
-            List<FieldClusterRockPose> rocks = new();
-            _chunkLayout.Fill(seed, chunk, random, rocks);
-            return rocks;
-        }
-
-        private static void AssertSameRock(FieldClusterRockPose expected, FieldClusterRockPose actual, int seed) {
-            Assert.AreSame(expected.Prefab, actual.Prefab, $"Seed {seed}: rock prefab differs.");
-            Assert.AreSame(expected.Material, actual.Material, $"Seed {seed}: rock material differs.");
-            Assert.Less(Vector3.Distance(expected.Offset, actual.Offset), TOLERANCE, $"Seed {seed}: rock position differs.");
-            Assert.Less(Quaternion.Angle(expected.Rotation, actual.Rotation), TOLERANCE, $"Seed {seed}: rock turn differs.");
-            Assert.Less(Vector3.Distance(expected.Scale, actual.Scale), TOLERANCE, $"Seed {seed}: rock scale differs.");
         }
     }
 }

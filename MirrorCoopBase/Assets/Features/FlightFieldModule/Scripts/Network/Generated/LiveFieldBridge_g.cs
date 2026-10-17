@@ -14,6 +14,7 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         private readonly SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> _placements = new();
         private readonly SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteEntry> _routes = new();
         private readonly SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteCellEntry> _routeCells = new();
+        private readonly SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> _debrisRuns = new();
 
         [Server]
         public void ServerSetNumber(int value) {
@@ -61,6 +62,13 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public void ServerSetWidthCells(int value) {
             LiveFieldState state = _state;
             state.WidthCells = value;
+            AssignState(state);
+        }
+
+        [Server]
+        public void ServerSetProfileId(string value) {
+            LiveFieldState state = _state;
+            state.ProfileId = value;
             AssignState(state);
         }
 
@@ -148,30 +156,58 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public void ServerClearRouteCells() =>
             _routeCells.Clear();
 
+        [Server]
+        public void ServerAddDebrisRuns(global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry value) =>
+            _debrisRuns.Add(value);
+
+        [Server]
+        public void ServerInsertDebrisRuns(int index, global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry value) =>
+            _debrisRuns.Insert(index, value);
+
+        [Server]
+        public void ServerSetDebrisRuns(int index, global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry value) =>
+            _debrisRuns[index] = value;
+
+        [Server]
+        public bool ServerRemoveDebrisRuns(global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry value) =>
+            _debrisRuns.Remove(value);
+
+        [Server]
+        public void ServerRemoveDebrisRunsAt(int index) =>
+            _debrisRuns.RemoveAt(index);
+
+        [Server]
+        public void ServerClearDebrisRuns() =>
+            _debrisRuns.Clear();
+
         protected override void PushFullState() {
             Model.ApplyState(_state);
             Model.ReplacePlacements(_placements);
             Model.ReplaceRoutes(_routes);
             Model.ReplaceRouteCells(_routeCells);
+            Model.ReplaceDebrisRuns(_debrisRuns);
         }
 
         protected override void ClearLocal() {
-            Model.ApplyState(new LiveFieldState { Number = default, Seed = default, Origin = default, Forward = default, CellSize = default, LengthCells = default, WidthCells = default });
+            Model.ApplyState(new LiveFieldState { Number = default, Seed = default, Origin = default, Forward = default, CellSize = default, LengthCells = default, WidthCells = default, ProfileId = default });
             Model.ClearPlacements();
             Model.ClearRoutes();
             Model.ClearRouteCells();
+            Model.ClearDebrisRuns();
         }
 
         protected override void BindCallbacks() {
             _placements.Callback += HandlePlacementsChanged;
             _routes.Callback += HandleRoutesChanged;
             _routeCells.Callback += HandleRouteCellsChanged;
+            _debrisRuns.Callback += HandleDebrisRunsChanged;
         }
 
         protected override void ReleaseCallbacks() {
             _placements.Callback -= HandlePlacementsChanged;
             _routes.Callback -= HandleRoutesChanged;
             _routeCells.Callback -= HandleRouteCellsChanged;
+            _debrisRuns.Callback -= HandleDebrisRunsChanged;
         }
 
         private void OnStateSynced(LiveFieldState previous, LiveFieldState current) =>
@@ -231,6 +267,26 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
                     break;
                 case SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteCellEntry>.Operation.OP_CLEAR:
                     Model.ClearRouteCells();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(operation), operation, null);
+            }
+        }
+
+        private void HandleDebrisRunsChanged(SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry>.Operation operation, int index, global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry oldValue, global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry newValue) {
+            switch (operation) {
+                case SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry>.Operation.OP_ADD:
+                case SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry>.Operation.OP_INSERT:
+                    Model.AddDebrisRuns(index, newValue);
+                    break;
+                case SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry>.Operation.OP_SET:
+                    Model.SetDebrisRuns(index, newValue);
+                    break;
+                case SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry>.Operation.OP_REMOVEAT:
+                    Model.RemoveDebrisRunsAt(index, oldValue);
+                    break;
+                case SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry>.Operation.OP_CLEAR:
+                    Model.ClearDebrisRuns();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(operation), operation, null);

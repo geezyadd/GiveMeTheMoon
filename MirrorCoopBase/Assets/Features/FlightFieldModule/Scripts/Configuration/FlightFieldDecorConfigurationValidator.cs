@@ -3,7 +3,8 @@ using UnityEngine;
 using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Configuration {
-    // The one startup check of the decor configuration: ordered ranges, a rock recipe, materials, planet sides and prefabs.
+    // The one startup check of the decor configuration: ordered ranges, planet sides and prefabs (the volume rocks are
+    // checked by FieldVolumeConfigurationValidator).
     public sealed class FlightFieldDecorConfigurationValidator : IInitializable {
         private const float MAX_ELEVATION_DEGREES = 90f;
 
@@ -13,30 +14,14 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
             _flightFieldDecorConfiguration = flightFieldDecorConfiguration;
 
         public void Initialize() {
-            ValidateRange(_flightFieldDecorConfiguration.LayerHeight, nameof(FlightFieldDecorConfiguration.LayerHeight));
-            ValidateRange(_flightFieldDecorConfiguration.RockSize, nameof(FlightFieldDecorConfiguration.RockSize));
             ValidateRange(_flightFieldDecorConfiguration.PlanetDistance, nameof(FlightFieldDecorConfiguration.PlanetDistance));
             ValidateRange(_flightFieldDecorConfiguration.PlanetAlongRoute, nameof(FlightFieldDecorConfiguration.PlanetAlongRoute));
-            ValidateRocks();
             ValidatePlanets();
         }
 
         private void ValidateRange(Vector2 range, string rangeName) {
             if (range.x < 0f || range.y < range.x)
                 throw new InvalidOperationException($"{_flightFieldDecorConfiguration.name}: {rangeName} {range} is not a range of non-negative min <= max.");
-        }
-
-        private void ValidateRocks() {
-            if (_flightFieldDecorConfiguration.RockRecipe == null || _flightFieldDecorConfiguration.RockRecipe.Rocks.Count == 0)
-                throw new InvalidOperationException($"{_flightFieldDecorConfiguration.name}: no rock recipe with rocks.");
-
-            if (_flightFieldDecorConfiguration.MaterialsByDistance.Count == 0)
-                throw new InvalidOperationException($"{_flightFieldDecorConfiguration.name}: no rock materials.");
-
-            foreach (Material material in _flightFieldDecorConfiguration.MaterialsByDistance) {
-                if (material == null)
-                    throw new InvalidOperationException($"{_flightFieldDecorConfiguration.name}: a rock material is empty.");
-            }
         }
 
         private void ValidatePlanets() {

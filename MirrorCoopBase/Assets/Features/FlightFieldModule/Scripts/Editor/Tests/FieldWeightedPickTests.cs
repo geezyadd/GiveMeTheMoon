@@ -1,43 +1,42 @@
 using System.Collections.Generic;
 using Features.AddressablesConstantsGenerator.Generated;
+using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Generation;
-using Features.FlightFieldModule.Scripts.Generation.Placement;
 using Features.FlightFieldModule.Scripts.Structures;
 using NUnit.Framework;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
-    // The shared weighted roll replaced the structure picker's and the cluster layout's own loops: for the same seed
-    // they must still pick the same structures and rocks, or every field and its look would change
+    // The shared weighted roll replaced the giant packer's and the cluster layout's own loops: for the same seed they
+    // must still pick the same obstacles and rocks, or every field and its look would change
     // (FieldClusterLayout.PickPrefab is internal and now only returns the shared pick's prefab).
     public sealed class FieldWeightedPickTests {
         private const int SEEDS = 500;
         private const int PICKS_PER_SEED = 20;
 
         private FieldStructureCatalog _catalog;
+        private FlightFieldConfiguration _configuration;
         private FieldRandomFactory _randomFactory;
 
         [OneTimeSetUp]
         public void OneTimeSetUp() {
             _catalog = FlightFieldEditorCompositionFactory.LoadConfiguration<FieldStructureCatalog>(Address.Configurations.FieldStructureCatalog_Default);
+            _configuration = FlightFieldEditorCompositionFactory.LoadConfiguration<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default);
             _randomFactory = new FieldRandomFactory();
         }
 
         [Test]
-        public void WhenStructuresArePickedByWeight_ThenTheSequenceIsTheSameAsTheFormerStructurePickers() {
-            List<FieldStructureDefinition> obstacles = new();
-            foreach (FieldStructureDefinition structure in _catalog.Structures) {
-                if (structure.IsRandomObstacle)
-                    obstacles.Add(structure);
-            }
-
-            FieldStructurePicker picker = new();
+        public void WhenObstacleOptionsArePickedByWeight_ThenTheSequenceIsTheSameAsTheFormerPackers() {
             IFieldRandom random = _randomFactory.Create(0);
             IFieldRandom formerRandom = _randomFactory.Create(0);
-            for (int seed = 1; seed <= SEEDS; seed++) {
-                random.Reseed(seed);
-                formerRandom.Reseed(seed);
-                for (int i = 0; i < PICKS_PER_SEED; i++)
-                    Assert.AreSame(FormerPickByWeight(obstacles, formerRandom), picker.PickByWeight(obstacles, random), $"Seed {seed}, pick {i}: the structure differs.");
+            foreach (FieldDifficultyProfile profile in _configuration.DifficultyProfiles) {
+                for (int seed = 1; seed <= SEEDS; seed++) {
+                    random.Reseed(seed);
+                    formerRandom.Reseed(seed);
+                    for (int i = 0; i < PICKS_PER_SEED; i++) {
+                        Assert.AreSame(FormerPickByWeight(profile.RidgeObstacles, formerRandom), FieldWeightedPick.Pick(profile.RidgeObstacles, random),
+                            $"{profile.Id}, seed {seed}, pick {i}: the obstacle differs.");
+                    }
+                }
             }
         }
 
@@ -60,20 +59,20 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             }
         }
 
-        // The loop FieldStructurePicker had before the shared pick.
-        private static FieldStructureDefinition FormerPickByWeight(IReadOnlyList<FieldStructureDefinition> structures, IFieldRandom random) {
-            float totalWeight = 0f;
-            foreach (FieldStructureDefinition structure in structures)
-                totalWeight += structure.Weight;
+        // The loop FieldGiantPacker had before the shared pick.
+        private static FieldObstacleOption FormerPickByWeight(IReadOnlyList<FieldObstacleOption> options, IFieldRandom random) {
+            float total = 0f;
+            foreach (FieldObstacleOption option in options)
+                total += option.Weight;
 
-            float roll = random.Value() * totalWeight;
-            foreach (FieldStructureDefinition structure in structures) {
-                roll -= structure.Weight;
+            float roll = random.Value() * total;
+            foreach (FieldObstacleOption option in options) {
+                roll -= option.Weight;
                 if (roll < 0f)
-                    return structure;
+                    return option;
             }
 
-            return structures[structures.Count - 1];
+            return options[options.Count - 1];
         }
 
         // The loop FieldClusterLayout.PickPrefab had before the shared pick.

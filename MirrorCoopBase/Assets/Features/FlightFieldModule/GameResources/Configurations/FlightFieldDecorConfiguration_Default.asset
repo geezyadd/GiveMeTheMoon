@@ -12,18 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ed818fa57eae8249baba6a0be994264, type: 3}
   m_Name: FlightFieldDecorConfiguration_Default
   m_EditorClassIdentifier: 
-  _layerHeight: {x: 150, y: 600}
-  _rocksPerSquareKilometer: 40
-  _rockSize: {x: 8, y: 40}
   _chunkSize: 250
   _viewDistance: 1200
   _chunksBuiltPerFrame: 2
-  _rockRecipe: {fileID: 11400000, guid: d6426e80af6244d49b0f5462ea5c0645, type: 2}
-  _materialsByDistance:
-  - {fileID: 2100000, guid: cecb049dad8d1d44ea147570e06fd803, type: 2}
-  - {fileID: 2100000, guid: f7a15f1f7d220b544a221cf9725123f2, type: 2}
-  - {fileID: 2100000, guid: 5634bd1a3cd24f547a5061471a5cf067, type: 2}
-  _planetChance: 0.4
+  _planetChance: 1
   _maxPlanetsPerFlight: 1
   _planetDistance: {x: 2000, y: 3600}
   _planetSides:

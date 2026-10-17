@@ -6,11 +6,15 @@ namespace Features.FlightFieldModule.Scripts.Scene {
     public sealed class FlightFieldSceneModel : IReadOnlyFlightFieldSceneModel {
         public Transform Root { get; private set; }
         public bool HasRoot => Root != null;
+        // The small debris stands under its own root posed like Root, so Root keeps one object per structure.
+        public Transform DebrisRoot { get; private set; }
         public int BuiltNumber { get; private set; }
         public bool IsBuilt { get; private set; }
 
-        public void SetRoot(Transform root) =>
+        public void SetRoots(Transform root, Transform debrisRoot) {
             Root = root;
+            DebrisRoot = debrisRoot;
+        }
 
         public void BeginBuild(int number) {
             BuiltNumber = number;

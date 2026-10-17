@@ -14,9 +14,11 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public float CellSize { get; }
         public int LengthCells { get; }
         public int WidthCells { get; }
+        public string ProfileId { get; }
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> Placements { get; }
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteEntry> Routes { get; }
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteCellEntry> RouteCells { get; }
+        public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> DebrisRuns { get; }
         public bool IsAvailable { get; }
 
         public event Action OnNumberChanged;
@@ -26,6 +28,7 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public event Action OnCellSizeChanged;
         public event Action OnLengthCellsChanged;
         public event Action OnWidthCellsChanged;
+        public event Action OnProfileIdChanged;
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> OnPlacementsAdded;
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> OnPlacementsRemoved;
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> OnPlacementsSet;
@@ -41,6 +44,11 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldRouteCellEntry> OnRouteCellsSet;
         public event Action OnRouteCellsCleared;
         public event Action OnRouteCellsChanged;
+        public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> OnDebrisRunsAdded;
+        public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> OnDebrisRunsRemoved;
+        public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> OnDebrisRunsSet;
+        public event Action OnDebrisRunsCleared;
+        public event Action OnDebrisRunsChanged;
         public event Action OnChanged;
         public event Action OnAvailableChanged;
     }

@@ -9,20 +9,24 @@ namespace Features.FlightFieldModule.Scripts.Decor {
     // every peer sees the same sky. Positions are in field space: x across the route, y up from the flight plane,
     // z along the route. The side of the sky (near the horizon, above, below) comes from the seed and the side
     // weights only; the light just turns the planet within that side so its lit side faces the ship. A planet never
-    // enters the field, the decor layers or the stations' surroundings, and its far edge stays inside the view reach.
+    // enters the field, the volume rock bands or the stations' surroundings, and its far edge stays inside the view reach.
     public sealed class FieldDecorPlanetPicker : IFieldDecorPlanetPicker {
         // Keeps the planet sequence apart from the structure and decor rock sequences of the same seed.
         private const int PLANET_SEED_SALT = 1640531527;
         private const float HALF = 0.5f;
 
         private readonly FlightFieldDecorConfiguration _flightFieldDecorConfiguration;
+        // The highest the volume rock bands reach above (and below) the plane, read once: planets keep clear of it.
+        private readonly float _volumeTop;
         private readonly IFieldRandom _random;
 
         private float ViewReach =>
             _flightFieldDecorConfiguration.ViewFarClipPlane - _flightFieldDecorConfiguration.PlanetFarClipMargin;
 
-        public FieldDecorPlanetPicker(FlightFieldDecorConfiguration flightFieldDecorConfiguration, IFieldRandomFactory fieldRandomFactory) {
+        public FieldDecorPlanetPicker(FlightFieldDecorConfiguration flightFieldDecorConfiguration, FlightFieldConfiguration flightFieldConfiguration,
+                                      IFieldRandomFactory fieldRandomFactory) {
             _flightFieldDecorConfiguration = flightFieldDecorConfiguration;
+            _volumeTop = FindVolumeTop(flightFieldConfiguration.Volume);
             _random = fieldRandomFactory.Create(0);
         }
 
@@ -113,12 +117,12 @@ namespace Features.FlightFieldModule.Scripts.Decor {
 
         // The planet's middle stands at least this far along the direction: its surface keeps the nearest planet
         // distance, keeps clear of the route axis (both station pads stand on it) and of the field beside it or of the
-        // decor layers above / below it.
+        // volume rock bands above / below it.
         private float RequiredCenterDistance(Vector3 direction, float radius, float fieldHalfWidth) {
             float clearance = _flightFieldDecorConfiguration.PlanetFieldClearance;
             float clearOfStations = (_flightFieldDecorConfiguration.PlanetStationClearance + radius) / AxisShare(direction);
             float besideField = (fieldHalfWidth + clearance + radius) / Mathf.Abs(direction.x);
-            float beyondLayers = (_flightFieldDecorConfiguration.LayerHeight.y + clearance + radius) / Mathf.Abs(direction.y);
+            float beyondLayers = (_volumeTop + clearance + radius) / Mathf.Abs(direction.y);
             return Mathf.Max(Mathf.Max(_flightFieldDecorConfiguration.PlanetDistance.x + radius, clearOfStations), Mathf.Min(besideField, beyondLayers));
         }
 
@@ -130,7 +134,7 @@ namespace Features.FlightFieldModule.Scripts.Decor {
             float byNearest = (viewReach - _flightFieldDecorConfiguration.PlanetDistance.x) / 2f;
             float byStations = MaxRadiusFor(viewReach, _flightFieldDecorConfiguration.PlanetStationClearance, AxisShare(direction));
             float besideField = MaxRadiusFor(viewReach, fieldHalfWidth + clearance, Mathf.Abs(direction.x));
-            float beyondLayers = MaxRadiusFor(viewReach, _flightFieldDecorConfiguration.LayerHeight.y + clearance, Mathf.Abs(direction.y));
+            float beyondLayers = MaxRadiusFor(viewReach, _volumeTop + clearance, Mathf.Abs(direction.y));
             return Mathf.Min(Mathf.Min(byNearest, byStations), Mathf.Max(besideField, beyondLayers));
         }
 
@@ -166,5 +170,14 @@ namespace Features.FlightFieldModule.Scripts.Decor {
 
         private float Lerp(Vector2 range) =>
             Mathf.Lerp(range.x, range.y, _random.Value());
+
+        // The highest volume band: planets keep their clearance above and below it.
+        public static float FindVolumeTop(FieldVolumeConfiguration volume) {
+            float top = 0f;
+            foreach (FieldVolumeConfiguration.Band band in volume.Bands)
+                top = Mathf.Max(top, band.HeightMeters.y);
+
+            return top;
+        }
     }
 }

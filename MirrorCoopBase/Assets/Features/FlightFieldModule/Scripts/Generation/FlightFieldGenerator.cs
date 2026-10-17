@@ -45,8 +45,10 @@ namespace Features.FlightFieldModule.Scripts.Generation {
         }
 
         private void ForcePassage(FieldGenerationContext context) {
-            foreach (FieldRoute route in context.Routes)
-                _fieldCorridorClearer.Clear(context, route, route.CorridorHalfWidthCells);
+            foreach (FieldRoute route in context.Routes) {
+                if (route.Kind == FieldRouteKind.Main)
+                    _fieldCorridorClearer.Clear(context, route, route.CorridorHalfWidthCells);
+            }
 
             Debug.LogError($"Flight field: no passage after {_flightFieldConfiguration.MaxSeedAttempts} seeds from seed {context.Request.Seed}; the route corridors were cleared by force.");
         }
@@ -56,6 +58,6 @@ namespace Features.FlightFieldModule.Scripts.Generation {
 
         private static FlightField CreateField(FieldGenerationContext context, bool isPassageForced) =>
             new(context.Frame, context.Seed, context.Cells, context.Placements, context.Routes, context.StationACell, context.StationBCell,
-                context.CruiseStartCell, isPassageForced);
+                context.CruiseStartCell, isPassageForced, context.Profile.Id, context.Difficulty, context.Density, context.Metrics);
     }
 }

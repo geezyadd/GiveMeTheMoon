@@ -1,29 +1,19 @@
 using System;
-using Features.FlightFieldModule.Scripts.Model;
-using Features.FlightFieldModule.Scripts.Structures;
+using System.Collections.Generic;
 using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Configuration {
-    // The one startup check of the flight field configuration: routes for loop 0 on, every wall structure in the
-    // catalog and a last wall structure that closes a single cell, so the wall has no holes; the release radius not
-    // below the build radius.
+    // The one startup check of the flight field configuration: routes for loop 0 on, every loop entry with a profile of
+    // the configuration's list; a plane gap below the ship width; release radii not below their build radii.
     public sealed class FlightFieldConfigurationValidator : IInitializable {
-        private const int SINGLE_CELL = 1;
-
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
-        private readonly FieldStructureCatalog _fieldStructureCatalog;
-        private readonly IFieldFootprintReader _fieldFootprintReader;
 
-        public FlightFieldConfigurationValidator(FlightFieldConfiguration flightFieldConfiguration, FieldStructureCatalog fieldStructureCatalog,
-                                                 IFieldFootprintReader fieldFootprintReader) {
+        public FlightFieldConfigurationValidator(FlightFieldConfiguration flightFieldConfiguration) =>
             _flightFieldConfiguration = flightFieldConfiguration;
-            _fieldStructureCatalog = fieldStructureCatalog;
-            _fieldFootprintReader = fieldFootprintReader;
-        }
 
         public void Initialize() {
             ValidateRoutes();
-            ValidateWall();
+            ValidateGaps();
             ValidateStreaming();
         }
 
@@ -31,6 +21,16 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
             if (_flightFieldConfiguration.ReleaseRadius < _flightFieldConfiguration.BuildRadius)
                 throw new InvalidOperationException(
                     $"{_flightFieldConfiguration.name}: the release radius ({_flightFieldConfiguration.ReleaseRadius} m) is below the build radius ({_flightFieldConfiguration.BuildRadius} m).");
+
+            if (_flightFieldConfiguration.DebrisReleaseRadius < _flightFieldConfiguration.DebrisBuildRadius)
+                throw new InvalidOperationException(
+                    $"{_flightFieldConfiguration.name}: the debris release radius ({_flightFieldConfiguration.DebrisReleaseRadius} m) is below the debris build radius ({_flightFieldConfiguration.DebrisBuildRadius} m).");
+        }
+
+        private void ValidateGaps() {
+            if (_flightFieldConfiguration.MaxPlaneGapMeters >= _flightFieldConfiguration.ShipWidthMeters)
+                throw new InvalidOperationException(
+                    $"{_flightFieldConfiguration.name}: the plane gap ({_flightFieldConfiguration.MaxPlaneGapMeters} m) lets the ship ({_flightFieldConfiguration.ShipWidthMeters} m wide) through a ridge.");
         }
 
         private void ValidateRoutes() {
@@ -39,6 +39,7 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
                 if (loopRoutes.RouteDifficulties.Count == 0)
                     throw new InvalidOperationException($"{_flightFieldConfiguration.name}: routes from loop {loopRoutes.FromLoop} have no route.");
 
+                ValidateProfiles(loopRoutes);
                 hasFirstLoop |= loopRoutes.FromLoop == 0;
             }
 
@@ -46,19 +47,26 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
                 throw new InvalidOperationException($"{_flightFieldConfiguration.name}: no routes from loop 0.");
         }
 
-        private void ValidateWall() {
-            int count = _flightFieldConfiguration.WallStructures.Count;
-            if (count == 0)
-                throw new InvalidOperationException($"{_flightFieldConfiguration.name}: no wall structures.");
+        private void ValidateProfiles(FlightFieldConfiguration.LoopRoutes loopRoutes) {
+            float totalWeight = 0f;
+            foreach (FlightFieldConfiguration.ProfileOption option in loopRoutes.Profiles) {
+                if (option.Profile == null || !Contains(_flightFieldConfiguration.DifficultyProfiles, option.Profile))
+                    throw new InvalidOperationException($"{_flightFieldConfiguration.name}: a profile of loops from {loopRoutes.FromLoop} is empty or missing from the profile list.");
 
-            foreach (FieldStructureDefinition structure in _flightFieldConfiguration.WallStructures) {
-                if (structure == null || !_fieldStructureCatalog.TryGet(structure.Id, out _))
-                    throw new InvalidOperationException($"{_flightFieldConfiguration.name}: a wall structure is empty or missing from {_fieldStructureCatalog.name}.");
+                totalWeight += option.Weight;
             }
 
-            FieldFootprint lastFootprint = _fieldFootprintReader.Read(_flightFieldConfiguration.WallStructures[count - 1], FieldRotation.None);
-            if (lastFootprint.Cells.Count != SINGLE_CELL)
-                throw new InvalidOperationException($"{_flightFieldConfiguration.name}: the last wall structure must take a single cell, or the wall gets holes.");
+            if (totalWeight <= 0f)
+                throw new InvalidOperationException($"{_flightFieldConfiguration.name}: loops from {loopRoutes.FromLoop} have no profile with a positive weight.");
+        }
+
+        private static bool Contains(IReadOnlyList<FieldDifficultyProfile> profiles, FieldDifficultyProfile profile) {
+            foreach (FieldDifficultyProfile candidate in profiles) {
+                if (candidate == profile)
+                    return true;
+            }
+
+            return false;
         }
     }
 }

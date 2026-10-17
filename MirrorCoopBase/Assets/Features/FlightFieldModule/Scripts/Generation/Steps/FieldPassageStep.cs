@@ -3,8 +3,9 @@ using Features.FlightFieldModule.Scripts.Generation.Passage;
 using Features.FlightFieldModule.Scripts.Model;
 
 namespace Features.FlightFieldModule.Scripts.Generation.Steps {
-    // Check: every route needs a passage with the ship clearance. A blocked route loses the structures standing within
-    // the clearance of its centerline, for a limited number of rounds; the result goes to HasPassage.
+    // Check: every main route needs a passage with the ship clearance (alternatives may be closed, dead ends end in a
+    // ridge). A blocked main route loses the structures standing within the clearance of its centerline, for a
+    // limited number of rounds; the result goes to HasPassage.
     public sealed class FieldPassageStep : IFieldGenerationStep {
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
         private readonly IFieldPassageChecker _fieldPassageChecker;
@@ -31,7 +32,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
 
         private bool AreAllRoutesPassable(FieldGenerationContext context) {
             foreach (FieldRoute route in context.Routes) {
-                if (!_fieldPassageChecker.HasPassage(context.Cells, route))
+                if (route.Kind == FieldRouteKind.Main && !_fieldPassageChecker.HasPassage(context.Cells, route))
                     return false;
             }
 
@@ -40,7 +41,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
 
         private void ClearBlockedRoutes(FieldGenerationContext context) {
             foreach (FieldRoute route in context.Routes) {
-                if (!_fieldPassageChecker.HasPassage(context.Cells, route))
+                if (route.Kind == FieldRouteKind.Main && !_fieldPassageChecker.HasPassage(context.Cells, route))
                     _fieldCorridorClearer.Clear(context, route, _flightFieldConfiguration.PassageClearanceCells);
             }
         }

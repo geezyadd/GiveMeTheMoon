@@ -14,8 +14,9 @@ namespace Features.FlightFieldModule.Scripts.Editor {
 
         [SerializeField] private float _takeoffForward = 350f;
         [SerializeField] private float _takeoffHeight = 100f;
-        [SerializeField] private float _baseDistance = 280f;
-        [SerializeField] private float _distancePerLoop = 112f;
+        // The game's flight length (ShipRunConfig): 120 s + 120 s per loop at the cruise speed of 14 m/s.
+        [SerializeField] private float _baseDistance = 1680f;
+        [SerializeField] private float _distancePerLoop = 1680f;
         [SerializeField] private float _destinationConeDegrees = 170f;
 
         public FieldRequest CreateRequest(IFieldRequestFactory requestFactory, int seed, int loopIndex) {

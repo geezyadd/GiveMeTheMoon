@@ -5,8 +5,8 @@ using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Structures {
     // The one startup check of the structure catalog: every entry set, ids present and unique, a footprint of 'X' and
-    // '.' rows of one length with at least one occupied cell, a kind and a prefab; at least one obstacle the random
-    // fill can pick.
+    // '.' rows of one length with at least one occupied cell, a kind and a prefab; every debris kind set, with an id
+    // used once and a recipe. Which obstacles a field uses comes from its difficulty profile.
     public sealed class FieldStructureCatalogValidator : IInitializable {
         private readonly FieldStructureCatalog _fieldStructureCatalog;
 
@@ -18,17 +18,20 @@ namespace Features.FlightFieldModule.Scripts.Structures {
             for (int i = 0; i < _fieldStructureCatalog.Structures.Count; i++)
                 ValidateStructure(_fieldStructureCatalog.Structures[i], i, ids);
 
-            if (!HasRandomObstacle())
-                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: no obstacle with a positive weight, the field would have no fill.");
+            HashSet<string> debrisIds = new(StringComparer.Ordinal);
+            for (int i = 0; i < _fieldStructureCatalog.Debris.Count; i++)
+                ValidateDebris(_fieldStructureCatalog.Debris[i], i, debrisIds);
         }
 
-        private bool HasRandomObstacle() {
-            foreach (FieldStructureDefinition structure in _fieldStructureCatalog.Structures) {
-                if (structure.IsRandomObstacle)
-                    return true;
-            }
+        private void ValidateDebris(FieldDebrisDefinition debris, int index, HashSet<string> ids) {
+            if (debris == null)
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: debris entry {index} is empty.");
 
-            return false;
+            if (string.IsNullOrEmpty(debris.Id) || !ids.Add(debris.Id))
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: debris {debris.name} has no id or its id is used twice.");
+
+            if (debris.Recipe == null)
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: debris {debris.Id} has no recipe.");
         }
 
         private void ValidateStructure(FieldStructureDefinition structure, int index, HashSet<string> ids) {

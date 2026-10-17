@@ -15,12 +15,15 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public float CellSize { get; private set; }
         public int LengthCells { get; private set; }
         public int WidthCells { get; private set; }
+        public string ProfileId { get; private set; }
         private readonly List<global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> _placements = new();
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> Placements => _placements;
         private readonly List<global::Features.FlightFieldModule.Scripts.Network.FieldRouteEntry> _routes = new();
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteEntry> Routes => _routes;
         private readonly List<global::Features.FlightFieldModule.Scripts.Network.FieldRouteCellEntry> _routeCells = new();
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteCellEntry> RouteCells => _routeCells;
+        private readonly List<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> _debrisRuns = new();
+        public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> DebrisRuns => _debrisRuns;
 
         public event Action OnNumberChanged;
         public event Action OnSeedChanged;
@@ -29,6 +32,7 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public event Action OnCellSizeChanged;
         public event Action OnLengthCellsChanged;
         public event Action OnWidthCellsChanged;
+        public event Action OnProfileIdChanged;
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> OnPlacementsAdded;
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> OnPlacementsRemoved;
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldPlacementEntry> OnPlacementsSet;
@@ -44,6 +48,11 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldRouteCellEntry> OnRouteCellsSet;
         public event Action OnRouteCellsCleared;
         public event Action OnRouteCellsChanged;
+        public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> OnDebrisRunsAdded;
+        public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> OnDebrisRunsRemoved;
+        public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> OnDebrisRunsSet;
+        public event Action OnDebrisRunsCleared;
+        public event Action OnDebrisRunsChanged;
 
         internal void ApplyState(LiveFieldState state) {
             bool numberChanged = EqualityComparer<int>.Default.Equals(Number, state.Number) == false;
@@ -53,6 +62,7 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
             bool cellSizeChanged = EqualityComparer<float>.Default.Equals(CellSize, state.CellSize) == false;
             bool lengthCellsChanged = EqualityComparer<int>.Default.Equals(LengthCells, state.LengthCells) == false;
             bool widthCellsChanged = EqualityComparer<int>.Default.Equals(WidthCells, state.WidthCells) == false;
+            bool profileIdChanged = EqualityComparer<string>.Default.Equals(ProfileId, state.ProfileId) == false;
             Number = state.Number;
             Seed = state.Seed;
             Origin = state.Origin;
@@ -60,6 +70,7 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
             CellSize = state.CellSize;
             LengthCells = state.LengthCells;
             WidthCells = state.WidthCells;
+            ProfileId = state.ProfileId;
             if (numberChanged)
                 OnNumberChanged?.Invoke();
             if (seedChanged)
@@ -74,7 +85,9 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
                 OnLengthCellsChanged?.Invoke();
             if (widthCellsChanged)
                 OnWidthCellsChanged?.Invoke();
-            if (numberChanged || seedChanged || originChanged || forwardChanged || cellSizeChanged || lengthCellsChanged || widthCellsChanged)
+            if (profileIdChanged)
+                OnProfileIdChanged?.Invoke();
+            if (numberChanged || seedChanged || originChanged || forwardChanged || cellSizeChanged || lengthCellsChanged || widthCellsChanged || profileIdChanged)
                 RaiseChanged();
         }
 
@@ -261,6 +274,69 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
 
             for (int i = 0; i < _routeCells.Count; i++) {
                 if (EqualityComparer<global::Features.FlightFieldModule.Scripts.Network.FieldRouteCellEntry>.Default.Equals(_routeCells[i], values[i]) == false)
+                    return false;
+            }
+
+            return true;
+        }
+
+        internal void AddDebrisRuns(int index, global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry value) {
+            _debrisRuns.Insert(index, value);
+            OnDebrisRunsAdded?.Invoke(index, value);
+            OnDebrisRunsChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void SetDebrisRuns(int index, global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry value) {
+            if (EqualityComparer<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry>.Default.Equals(_debrisRuns[index], value))
+                return;
+
+            _debrisRuns[index] = value;
+            OnDebrisRunsSet?.Invoke(index, value);
+            OnDebrisRunsChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void RemoveDebrisRunsAt(int index, global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry removed) {
+            if (index >= 0 && index < _debrisRuns.Count)
+                _debrisRuns.RemoveAt(index);
+
+            OnDebrisRunsRemoved?.Invoke(index, removed);
+            OnDebrisRunsChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void ClearDebrisRuns() {
+            if (_debrisRuns.Count == 0)
+                return;
+
+            _debrisRuns.Clear();
+            OnDebrisRunsCleared?.Invoke();
+            OnDebrisRunsChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void ReplaceDebrisRuns(IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> values) {
+            if (DebrisRunsMatch(values))
+                return;
+
+            _debrisRuns.Clear();
+            OnDebrisRunsCleared?.Invoke();
+            for (int i = 0; i < values.Count; i++) {
+                global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry value = values[i];
+                _debrisRuns.Add(value);
+                OnDebrisRunsAdded?.Invoke(i, value);
+            }
+            OnDebrisRunsChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        private bool DebrisRunsMatch(IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> values) {
+            if (_debrisRuns.Count != values.Count)
+                return false;
+
+            for (int i = 0; i < _debrisRuns.Count; i++) {
+                if (EqualityComparer<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry>.Default.Equals(_debrisRuns[i], values[i]) == false)
                     return false;
             }
 

@@ -14,9 +14,10 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public float CellSize;
         public int LengthCells;
         public int WidthCells;
+        public string ProfileId;
 
         public bool Equals(LiveFieldState other) {
-            return EqualityComparer<int>.Default.Equals(Number, other.Number) && EqualityComparer<int>.Default.Equals(Seed, other.Seed) && EqualityComparer<Vector3>.Default.Equals(Origin, other.Origin) && EqualityComparer<Vector3>.Default.Equals(Forward, other.Forward) && EqualityComparer<float>.Default.Equals(CellSize, other.CellSize) && EqualityComparer<int>.Default.Equals(LengthCells, other.LengthCells) && EqualityComparer<int>.Default.Equals(WidthCells, other.WidthCells);
+            return EqualityComparer<int>.Default.Equals(Number, other.Number) && EqualityComparer<int>.Default.Equals(Seed, other.Seed) && EqualityComparer<Vector3>.Default.Equals(Origin, other.Origin) && EqualityComparer<Vector3>.Default.Equals(Forward, other.Forward) && EqualityComparer<float>.Default.Equals(CellSize, other.CellSize) && EqualityComparer<int>.Default.Equals(LengthCells, other.LengthCells) && EqualityComparer<int>.Default.Equals(WidthCells, other.WidthCells) && EqualityComparer<string>.Default.Equals(ProfileId, other.ProfileId);
         }
 
         public override bool Equals(object obj) =>
@@ -31,6 +32,7 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
             hash.Add(CellSize);
             hash.Add(LengthCells);
             hash.Add(WidthCells);
+            hash.Add(ProfileId);
             return hash.ToHashCode();
         }
     }

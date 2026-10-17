@@ -1,11 +1,13 @@
 using System.Collections.Generic;
+using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Model;
 using NUnit.Framework;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // The rectangular frame of long flights: the length follows A -> B, the width stays the configured one unless the
-    // cruise start lies far off the axis, and the route from the cruise start to B keeps its passage.
+    // cruise start lies far off the axis, and the main route from the cruise start to B keeps its passage on every
+    // difficulty profile.
     public sealed class FlightFieldLongFrameTests {
         private const int SEED = 23;
         private const float EASY = 0f;
@@ -26,7 +28,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [TestCase(FIRST_FLIGHT_DISTANCE)]
         [TestCase(FIFTH_FLIGHT_DISTANCE)]
         public void WhenFlightIsLong_ThenFrameIsAsLongAsTheFlightAndAsWideAsConfigured(float distance) {
-            FlightField field = _composition.Generator.Generate(CreateRequest(distance, 0f, EASY));
+            FlightField field = _composition.Generator.Generate(CreateRequest(distance, 0f, EASY, _composition.Configuration.DifficultyProfiles[0]));
 
             int expectedLength = Mathf.CeilToInt(distance / _composition.Configuration.CellSize) + _composition.Configuration.MarginBehindACells
                 + _composition.Configuration.MarginBehindBCells;
@@ -39,23 +41,28 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [TestCase(-CONE_EDGE_DEGREES, HARD)]
         [TestCase(CONE_EDGE_DEGREES, HARD)]
         public void WhenShipStartsAtTheConeEdge_ThenCruiseStartHasSideRoomAndTheRouteHasAPassage(float launchYaw, float difficulty) {
-            FlightField field = _composition.Generator.Generate(CreateRequest(FIFTH_FLIGHT_DISTANCE, launchYaw, difficulty));
+            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles)
+                AssertSideRoomAndPassage(_composition.Generator.Generate(CreateRequest(FIFTH_FLIGHT_DISTANCE, launchYaw, difficulty, profile)), profile);
+        }
 
+        private void AssertSideRoomAndPassage(FlightField field, FieldDifficultyProfile profile) {
             int sideRoom = _composition.Configuration.SideMarginCells;
             Assert.GreaterOrEqual(field.CruiseStartCell.y, sideRoom, "No room beside the cruise start on the left.");
             Assert.LessOrEqual(field.CruiseStartCell.y, field.Frame.WidthCells - 1 - sideRoom, "No room beside the cruise start on the right.");
-            Assert.IsFalse(field.IsPassageForced, "The passage was forced.");
+            Assert.IsFalse(field.IsPassageForced, $"{profile.Id}: the passage was forced.");
             FieldTestOccupancy occupancy = new(field, _composition.Catalog, _composition.FootprintReader);
-            foreach (FieldRoute route in field.Routes)
-                Assert.IsTrue(occupancy.HasPassage(route.Start, field.StationBCell, _composition.Configuration.PassageClearanceCells), $"Route {route.Id} has no passage.");
+            foreach (FieldRoute route in field.Routes) {
+                if (route.Kind == FieldRouteKind.Main)
+                    Assert.IsTrue(occupancy.HasPassage(route.Start, field.StationBCell, _composition.Configuration.PassageClearanceCells), $"{profile.Id}: route {route.Id} has no passage.");
+            }
         }
 
         // A on the origin, B straight along +z; the ship takes off with the given yaw from the A -> B axis.
-        private static FieldRequest CreateRequest(float distance, float launchYaw, float difficulty) {
+        private static FieldRequest CreateRequest(float distance, float launchYaw, float difficulty, FieldDifficultyProfile profile) {
             Vector3 launchForward = Quaternion.AngleAxis(launchYaw, Vector3.up) * Vector3.forward;
             Vector3 cruiseStart = launchForward * TAKEOFF_FORWARD + Vector3.up * TAKEOFF_HEIGHT;
             List<FieldRouteRequest> routeRequests = new() { new FieldRouteRequest(difficulty) };
-            return new FieldRequest(Vector3.zero, Vector3.forward * distance, cruiseStart, 0, SEED, routeRequests);
+            return new FieldRequest(Vector3.zero, Vector3.forward * distance, cruiseStart, 0, SEED, routeRequests, profile);
         }
 
         private static int OddAtLeast(int cells) =>

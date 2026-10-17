@@ -8,9 +8,10 @@ using NUnit.Framework;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
-    // The rocks of a cluster come only from the seed (every peer builds the same field), the main rock crosses the
-    // flight plane, every rock stays inside the footprint (the client does not know the corridor cells) and within the
-    // recipe's height, and the game's recipes are complete visual-only data whose meshes fit the layout's reach.
+    // The rocks of a cluster come only from the seed (every peer builds the same field), the first rock crosses the
+    // flight plane, every rock stays within the footprint (a dense field: within its spill, because the client does
+    // not know the corridor cells) and within the recipe's height, and the game's recipes are complete visual-only
+    // data whose meshes fit the layout's reach.
     public sealed class FieldClusterLayoutTests {
         private const float CELL_SIZE = 40f;
         private const int SEEDS = 200;
@@ -18,9 +19,9 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const float TOLERANCE = 0.001f;
         // The main rock's height offset stays below this share of its smallest axis, so its surface crosses the plane.
         private const float MAIN_CROSSING_SHARE = 0.15f;
-        // The farthest vertex of a rock prefab from its pivot, as a share of its size (see FieldClusterLayout).
-        private const float ROCK_REACH = 0.7f;
         private const float HALF = 0.5f;
+
+        private readonly FieldRockMeshBounds _meshBounds = new();
 
         private FlightFieldEditorComposition _composition;
         private FieldClusterLayout _layout;
@@ -28,7 +29,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [OneTimeSetUp]
         public void OneTimeSetUp() {
             _composition = new FlightFieldEditorCompositionFactory().Create();
-            _layout = new FieldClusterLayout();
+            _layout = new FieldClusterLayout(new FieldPlaneCoverLayout());
         }
 
         [Test]
@@ -50,13 +51,14 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         }
 
         [Test]
-        public void WhenAClusterIsLaidOut_ThenTheMainRockCrossesTheFlightPlane() {
+        public void WhenAClusterIsLaidOut_ThenItsFirstRockCrossesTheFlightPlane() {
             foreach (FieldStructureDefinition structure in GetClusterStructures()) {
                 for (int seed = FIRST_SEED; seed <= SEEDS; seed++) {
-                    FieldClusterRockPose main = Lay(structure, seed)[0];
-                    float smallestAxis = Mathf.Min(main.Scale.x, Mathf.Min(main.Scale.y, main.Scale.z));
+                    FieldClusterRockPose first = Lay(structure, seed)[0];
+                    float crossing = first.IsPlaneCover ? first.Scale.y * structure.ClusterRecipe.PlaneHalfExtentShare
+                        : Mathf.Min(first.Scale.x, Mathf.Min(first.Scale.y, first.Scale.z)) * MAIN_CROSSING_SHARE;
 
-                    Assert.Less(Mathf.Abs(main.Offset.y), smallestAxis * MAIN_CROSSING_SHARE, $"{structure.name} seed {seed}: the main rock may miss the flight plane.");
+                    Assert.Less(Mathf.Abs(first.Offset.y), crossing, $"{structure.name} seed {seed}: the first rock may miss the flight plane.");
                 }
             }
         }
@@ -83,7 +85,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 foreach (FieldClusterRockOption option in recipe.Rocks) {
                     Assert.IsNotNull(option.Prefab, $"{recipe.name} has an empty rock slot.");
                     Assert.IsEmpty(option.Prefab.GetComponentsInChildren<Collider>(true), $"{option.Prefab.name} has a collider: visual rocks must not collide.");
-                    Assert.LessOrEqual(GetFarthestVertex(option.Prefab), ROCK_REACH + TOLERANCE, $"{option.Prefab.name} reaches farther than the layout allows: normalise its mesh to about 1 m.");
+                    Assert.LessOrEqual(GetFarthestVertex(option.Prefab), FieldRockVisual.MESH_REACH + TOLERANCE, $"{option.Prefab.name} reaches farther than the layout allows: normalise its mesh to about 1 m.");
                 }
             }
         }
@@ -119,14 +121,22 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 AssertSameRock(first[i], second[i], $"{structure.name} seed {seed} rock {i}");
         }
 
+        // A dense-field recipe's rocks may reach past the footprint by its spill (extra rocks by their own radius,
+        // which stays within the spill); other recipes keep every rock inside.
         private void AssertRocksStayInside(FieldStructureDefinition structure, int seed, float acrossLimit, float alongLimit) {
+            FieldClusterRecipe recipe = structure.ClusterRecipe;
             List<FieldClusterRockPose> rocks = Lay(structure, seed);
-            Assert.GreaterOrEqual(rocks.Count, structure.ClusterRecipe.SatelliteCount.x + 1, $"{structure.name} seed {seed}: too few satellites.");
+            float spill = recipe.HasPlaneCover ? recipe.PlaneMaxSpillMeters : 0f;
+            float highest = recipe.HasPlaneCover ? recipe.ExtraHeightMeters.y : recipe.HeightSpreadCells * CELL_SIZE;
+            Assert.IsNotEmpty(rocks, $"{structure.name} seed {seed}: no rock.");
             foreach (FieldClusterRockPose rock in rocks) {
-                float reach = Mathf.Max(rock.Scale.x, Mathf.Max(rock.Scale.y, rock.Scale.z)) * ROCK_REACH;
-                Assert.LessOrEqual(Mathf.Abs(rock.Offset.x) + reach, acrossLimit, $"{structure.name} seed {seed}: a rock reaches too far across the field.");
-                Assert.LessOrEqual(Mathf.Abs(rock.Offset.z) + reach, alongLimit, $"{structure.name} seed {seed}: a rock reaches too far along the field.");
-                Assert.LessOrEqual(Mathf.Abs(rock.Offset.y), structure.ClusterRecipe.HeightSpreadCells * CELL_SIZE + TOLERANCE, $"{structure.name} seed {seed}: a rock is too far from the plane.");
+                Bounds bounds = _meshBounds.Get(rock.Prefab, rock.Rotation, rock.Scale);
+                Assert.LessOrEqual(Mathf.Abs(rock.Offset.x) + bounds.extents.x + Mathf.Abs(bounds.center.x), acrossLimit + spill,
+                    $"{structure.name} seed {seed}: a rock reaches too far across the field.");
+                Assert.LessOrEqual(Mathf.Abs(rock.Offset.z) + bounds.extents.z + Mathf.Abs(bounds.center.z), alongLimit + spill,
+                    $"{structure.name} seed {seed}: a rock reaches too far along the field.");
+                float heightLimit = rock.IsPlaneCover ? recipe.PlaneHeightJitterMeters : highest;
+                Assert.LessOrEqual(Mathf.Abs(rock.Offset.y), heightLimit + TOLERANCE, $"{structure.name} seed {seed}: a rock is too far from the plane.");
             }
         }
 

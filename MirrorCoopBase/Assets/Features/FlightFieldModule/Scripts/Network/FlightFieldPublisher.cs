@@ -5,8 +5,8 @@ using UnityEngine;
 using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Network {
-    // Writes a generated field into the live field model: the placements are the content every peer builds from, the
-    // routes are kept for the debug map and later features. A long field is tens of kilobytes, above the Telepathy
+    // Writes a generated field into the live field model: the placements and the debris runs are the content every
+    // peer builds from, the routes are kept for the debug map and later features. A long field is tens of kilobytes, above the Telepathy
     // message limit (16 KB), so it goes out in batches (FieldPublishJob), one batch per publish interval, which spans
     // several network broadcasts, so every Mirror delta carries at most one batch. The scalar state with the new
     // number goes last. A new field or Clear drops a publish still in progress.
@@ -80,6 +80,7 @@ namespace Features.FlightFieldModule.Scripts.Network {
             bridge.ServerClearPlacements();
             bridge.ServerClearRoutes();
             bridge.ServerClearRouteCells();
+            bridge.ServerClearDebrisRuns();
         }
     }
 }

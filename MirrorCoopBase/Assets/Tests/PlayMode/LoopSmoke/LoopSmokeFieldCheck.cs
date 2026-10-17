@@ -20,7 +20,7 @@ using UnityEditor;
 namespace Tests.PlayMode.LoopSmoke {
     // The flight field on the host. In cruise a new field stands: one active local object per local placement near
     // the camera under the field root (every one within the build radius, none beyond the release radius), one Mirror
-    // object per networked placement (the test's catalog adds the debug networked beacon).
+    // object per networked placement (the test's catalog and difficulty profiles add the debug networked beacon).
     // After landing nothing of it is left, also for a player who joins at that station. A world shift in flight moves
     // the field with the ship. Pooled objects never grow past what the fields needed.
     public sealed class LoopSmokeFieldCheck {
@@ -34,6 +34,16 @@ namespace Tests.PlayMode.LoopSmoke {
 #if UNITY_EDITOR
         private const string DEBUG_NETWORKED_STRUCTURE_PATH = "Assets/Features/FlightFieldModule/GameResources/Debug/Debug_NetworkBeacon.asset";
         private const string STRUCTURES_PROPERTY = "_structures";
+        private const string PROFILES_PROPERTY = "_difficultyProfiles";
+        private const string LOOP_ROUTES_PROPERTY = "_routesByLoop";
+        private const string LOOP_PROFILES_PROPERTY = "_profiles";
+        private const string LOOP_PROFILE_PROPERTY = "_profile";
+        private const string RIDGE_OBSTACLES_PROPERTY = "_ridgeObstacles";
+        private const string OBSTACLE_STRUCTURE_PROPERTY = "_structure";
+        private const string OBSTACLE_WEIGHT_PROPERTY = "_weight";
+        // Against weight 1 of the single-cell rock: about one beacon in a Channels warm-up field (almost all big wall
+        // footprints, ~5 single cells), a dozen in the busiest fields, not hundreds of Mirror objects.
+        private const float BEACON_WEIGHT = 0.25f;
 #endif
 
         private readonly Dictionary<string, int> _mostLocalObjectsByStructure = new Dictionary<string, int>();
@@ -75,6 +85,53 @@ namespace Tests.PlayMode.LoopSmoke {
 #endif
             return copy;
         }
+
+        // A copy of the game's field configuration whose difficulty profiles (copies too) may close a ridge cell with
+        // the debug networked beacon: the obstacle types of a field come from its profile. The copies go to the list.
+        public static FlightFieldConfiguration CreateConfigurationWithNetworkedObstacle(FlightFieldConfiguration configuration, List<Object> copies) {
+            FlightFieldConfiguration copy = Object.Instantiate(configuration);
+            copies.Add(copy);
+#if UNITY_EDITOR
+            Dictionary<Object, Object> profileCopies = new Dictionary<Object, Object>();
+            SerializedObject serializedCopy = new SerializedObject(copy);
+            SerializedProperty profiles = serializedCopy.FindProperty(PROFILES_PROPERTY);
+            for (int i = 0; i < profiles.arraySize; i++) {
+                SerializedProperty profile = profiles.GetArrayElementAtIndex(i);
+                Object profileCopy = CreateProfileWithNetworkedObstacle(profile.objectReferenceValue);
+                profileCopies.Add(profile.objectReferenceValue, profileCopy);
+                copies.Add(profileCopy);
+                profile.objectReferenceValue = profileCopy;
+            }
+
+            SerializedProperty loops = serializedCopy.FindProperty(LOOP_ROUTES_PROPERTY);
+            for (int i = 0; i < loops.arraySize; i++)
+                PointLoopAtCopies(loops.GetArrayElementAtIndex(i).FindPropertyRelative(LOOP_PROFILES_PROPERTY), profileCopies);
+
+            serializedCopy.ApplyModifiedPropertiesWithoutUndo();
+#endif
+            return copy;
+        }
+
+#if UNITY_EDITOR
+        private static Object CreateProfileWithNetworkedObstacle(Object profile) {
+            Object copy = Object.Instantiate(profile);
+            SerializedObject serializedCopy = new SerializedObject(copy);
+            SerializedProperty ridge = serializedCopy.FindProperty(RIDGE_OBSTACLES_PROPERTY);
+            ridge.arraySize++;
+            SerializedProperty beacon = ridge.GetArrayElementAtIndex(ridge.arraySize - 1);
+            beacon.FindPropertyRelative(OBSTACLE_STRUCTURE_PROPERTY).objectReferenceValue = AssetDatabase.LoadAssetAtPath<FieldStructureDefinition>(DEBUG_NETWORKED_STRUCTURE_PATH);
+            beacon.FindPropertyRelative(OBSTACLE_WEIGHT_PROPERTY).floatValue = BEACON_WEIGHT;
+            serializedCopy.ApplyModifiedPropertiesWithoutUndo();
+            return copy;
+        }
+
+        private static void PointLoopAtCopies(SerializedProperty loopProfiles, Dictionary<Object, Object> profileCopies) {
+            for (int i = 0; i < loopProfiles.arraySize; i++) {
+                SerializedProperty profile = loopProfiles.GetArrayElementAtIndex(i).FindPropertyRelative(LOOP_PROFILE_PROPERTY);
+                profile.objectReferenceValue = profileCopies[profile.objectReferenceValue];
+            }
+        }
+#endif
 
         public IEnumerator AssertNewFieldStandsCoroutine(int loopIndex) {
             yield return WaitForCoroutine(IsLiveFieldBuilt, BUILD_TIMEOUT_SECONDS, $"the field of loop {loopIndex} to be built");
