@@ -17,7 +17,7 @@ namespace Tests.Coop.Shared {
             manager.GetComponent<TelepathyTransport>().port = port;
             ConnectionAuthenticator authenticator = (ConnectionAuthenticator)manager.authenticator;
             authenticator.PlayerName = playerName;
-            authenticator.IgnoresSteamIdentity = true;
+            authenticator.UsesSteamIdentity = false;
         }
 
         public static void JoinThroughMenu(string address) {

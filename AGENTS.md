@@ -340,7 +340,7 @@ the editor is the host, a Windows development build of the game is the client. O
   flight, rejoins at the next station on the deck, dies (the dev kill command, like F9), waits to be bought back, rides
   one more loop and quits.
 - **No Steam identity.** Both processes run on one Steam account, so `CoopSessionActions.PrepareDirect` sets
-  `ConnectionAuthenticator.IgnoresSteamIdentity` (editor / development builds only): they authenticate as
+  `ConnectionAuthenticator.UsesSteamIdentity = false` (editor / development builds only): they authenticate as
   `CoopHost` / `CoopClient` with no Steam id (a `client:` player key), as without Steam, instead of the persona name.
   The test passes with the Steam client running; Steam itself still starts. Normal runs keep the Steam name.
 - **Exchange.** The client appends a JSON line per step to `<coopDir>/client-reports.jsonl` (phase, `LoopIndex`,

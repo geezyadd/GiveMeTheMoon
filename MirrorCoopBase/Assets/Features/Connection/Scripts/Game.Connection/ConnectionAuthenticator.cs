@@ -41,7 +41,7 @@ namespace Game.Connection
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         // Tests only: two processes on one PC share the Steam account, so a test that needs its own names per player
         // authenticates with PlayerName and no Steam id, as without Steam.
-        public bool IgnoresSteamIdentity { get; set; }
+        public bool UsesSteamIdentity { get; set; } = true;
 #endif
 
         // The one place that knows how the server stores the accepted request on a connection.
@@ -122,7 +122,7 @@ namespace Game.Connection
         {
             ulong steamId = 0;
             string name = string.IsNullOrWhiteSpace(playerName) ? "Player" : playerName;
-            if (ReadsSteamIdentity())
+            if (IsSteamIdentityUsed())
                 ReadSteamIdentity(ref steamId, ref name);
 
             NetworkClient.Send(new AuthRequestMessage
@@ -134,27 +134,27 @@ namespace Game.Connection
             });
         }
 
-        bool ReadsSteamIdentity()
+        private bool IsSteamIdentityUsed()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            return IgnoresSteamIdentity == false;
+            return UsesSteamIdentity;
 #else
             return true;
 #endif
         }
 
-        static void ReadSteamIdentity(ref ulong steamId, ref string name)
+        private static void ReadSteamIdentity(ref ulong steamId, ref string name)
         {
             try
             {
                 CSteamID id = SteamUser.GetSteamID();
-                if (id.IsValid())
-                {
-                    steamId = id.m_SteamID;
-                    string personaName = SteamFriends.GetPersonaName();
-                    if (string.IsNullOrWhiteSpace(personaName) == false)
-                        name = personaName;
-                }
+                if (id.IsValid() == false)
+                    return;
+
+                steamId = id.m_SteamID;
+                string personaName = SteamFriends.GetPersonaName();
+                if (string.IsNullOrWhiteSpace(personaName) == false)
+                    name = personaName;
             }
             catch
             {
