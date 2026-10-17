@@ -38,6 +38,12 @@ namespace Game.Connection
             set => playerName = value;
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Tests only: two processes on one PC share the Steam account, so a test that needs its own names per player
+        // authenticates with PlayerName and no Steam id, as without Steam.
+        public bool IgnoresSteamIdentity { get; set; }
+#endif
+
         // The one place that knows how the server stores the accepted request on a connection.
         public static AuthRequestMessage GetAuthRequest(NetworkConnectionToClient connection)
         {
@@ -116,6 +122,29 @@ namespace Game.Connection
         {
             ulong steamId = 0;
             string name = string.IsNullOrWhiteSpace(playerName) ? "Player" : playerName;
+            if (ReadsSteamIdentity())
+                ReadSteamIdentity(ref steamId, ref name);
+
+            NetworkClient.Send(new AuthRequestMessage
+            {
+                steamId = steamId,
+                playerName = name,
+                version = Application.version,
+                clientId = ConnectionPlayerIdentityService.GetOrCreateClientId()
+            });
+        }
+
+        bool ReadsSteamIdentity()
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            return IgnoresSteamIdentity == false;
+#else
+            return true;
+#endif
+        }
+
+        static void ReadSteamIdentity(ref ulong steamId, ref string name)
+        {
             try
             {
                 CSteamID id = SteamUser.GetSteamID();
@@ -131,14 +160,6 @@ namespace Game.Connection
             {
                 // Direct IP still authenticates without Steam.
             }
-
-            NetworkClient.Send(new AuthRequestMessage
-            {
-                steamId = steamId,
-                playerName = name,
-                version = Application.version,
-                clientId = ConnectionPlayerIdentityService.GetOrCreateClientId()
-            });
         }
 
         void OnAuthResponseMessage(AuthResponseMessage msg)
