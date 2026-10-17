@@ -21,10 +21,13 @@ namespace Features.FlightFieldModule.Scripts.Debris {
 
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
         private readonly FieldStructureCatalog _fieldStructureCatalog;
+        // The catalog does not change while the game runs, so the widest debris reach is read once.
+        private readonly float _largestRadius;
 
         public FieldDebrisLayout(FlightFieldConfiguration flightFieldConfiguration, FieldStructureCatalog fieldStructureCatalog) {
             _flightFieldConfiguration = flightFieldConfiguration;
             _fieldStructureCatalog = fieldStructureCatalog;
+            _largestRadius = LargestRadius();
         }
 
         public void Fill(int fieldSeed, Vector2Int cell, float cellSize, IFieldDebrisCells cells, FieldDebrisWorkspace workspace, List<FieldDebrisSpot> spots) {
@@ -34,7 +37,7 @@ namespace Features.FlightFieldModule.Scripts.Debris {
             Vector2 cellCenter = cellMin + Vector2.one * (cellSize * CELL_CENTER);
             Vector2Int first = new(Mathf.FloorToInt(cellMin.x / spacing), Mathf.FloorToInt(cellMin.y / spacing));
             Vector2Int last = new(Mathf.FloorToInt((cellMin.x + cellSize) / spacing), Mathf.FloorToInt((cellMin.y + cellSize) / spacing));
-            DebrisLayoutFrame frame = new(fieldSeed, cellSize, cells, workspace, LargestRadius());
+            DebrisLayoutFrame frame = new(fieldSeed, cellSize, cells, workspace, _largestRadius);
             for (int across = first.x; across <= last.x; across++) {
                 for (int along = first.y; along <= last.y; along++)
                     TryAddSpot(frame, new Vector2Int(across, along), cell, cellCenter, spots);

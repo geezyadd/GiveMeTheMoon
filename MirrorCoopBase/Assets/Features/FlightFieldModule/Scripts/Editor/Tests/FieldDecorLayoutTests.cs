@@ -211,7 +211,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         // The field with its decor layers is a box across the width, along the length and up to the layers' top above
         // and below the plane; the station pads stand on the route axis inside it, anywhere along its length.
         private void AssertClearOfFieldAndStations(List<FieldDecorPlanet> planets, Vector3 courseStart, float halfWidth, int seed) {
-            float layerTop = VolumeTop();
+            float layerTop = FieldDecorPlanetPicker.FindVolumeTop(_fieldConfiguration.Volume);
             Vector3 boxMin = new(courseStart.x - halfWidth, -layerTop, 0f);
             Vector3 boxMax = new(courseStart.x + halfWidth, layerTop, FIELD_LENGTH);
             foreach (FieldDecorPlanet planet in planets) {
@@ -256,14 +256,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
             Assert.Less(Vector3.Angle(planet.Position - _courseStart, lightTravel), LIT_SIDE_MAX_ANGLE_DEGREES,
                 $"Seed {seed}, light {lightTravel}: the {planet.Side.Name} planet shows little more than its night side.");
-        }
-
-        private float VolumeTop() {
-            float top = 0f;
-            foreach (FieldVolumeConfiguration.Band band in _fieldConfiguration.Volume.Bands)
-                top = Mathf.Max(top, band.HeightMeters.y);
-
-            return top;
         }
     }
 }
