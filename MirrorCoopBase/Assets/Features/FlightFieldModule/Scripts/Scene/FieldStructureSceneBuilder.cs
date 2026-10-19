@@ -108,7 +108,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             Quaternion toTrigger = Quaternion.Inverse(trigger.localRotation);
             float triggerScale = trigger.localScale.x;
             foreach (FieldClusterRockPose rockPose in _clusterRocks) {
-                FieldRockVisual rock = _fieldStructurePool.TakeRock(rockPose.Prefab, trigger);
+                FieldRockVisual rock = _fieldStructurePool.Take(rockPose.Prefab, trigger);
                 objects.Add(rock.gameObject);
                 rock.transform.SetLocalPositionAndRotation(toTrigger * rockPose.Offset / triggerScale, toTrigger * rockPose.Rotation);
                 rock.transform.localScale = rockPose.Scale / triggerScale;

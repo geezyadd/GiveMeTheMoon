@@ -80,7 +80,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         // The diameter bounds the rock however it is turned: its size keeps the farthest vertex within the radius at
         // the largest axis stretch.
         private GameObject BuildRock(Transform root, FieldDebrisRecipe recipe, Vector3 position, float diameter) {
-            FieldRockVisual rock = _fieldStructurePool.TakeRock(FieldClusterLayout.PickRock(recipe.Rocks, _lookRandom), root);
+            FieldRockVisual rock = _fieldStructurePool.Take(FieldClusterLayout.PickRock(recipe.Rocks, _lookRandom), root);
             float size = diameter * HALF / (FieldRockVisual.MESH_REACH * recipe.AxisScale.y);
             rock.transform.SetLocalPositionAndRotation(position, FieldClusterLayout.RandomRotation(_lookRandom));
             rock.transform.localScale = new Vector3(AxisScale(recipe) * size, AxisScale(recipe) * size, AxisScale(recipe) * size);

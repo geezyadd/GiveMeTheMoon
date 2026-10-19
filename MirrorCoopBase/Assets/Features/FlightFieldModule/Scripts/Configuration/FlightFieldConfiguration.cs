@@ -59,6 +59,8 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [SerializeField] private FieldDifficultyProfile[] _difficultyProfiles = Array.Empty<FieldDifficultyProfile>();
         [Tooltip("The visual-only volume of big rocks above and below the flight plane.")]
         [SerializeField] private FieldVolumeConfiguration _volume;
+        [Tooltip("The beacons on the walls beside the passable lanes.")]
+        [SerializeField] private FieldBeaconConfiguration _beacons;
 
         [Header("Ship gaps")]
         [Tooltip("Width of the ship, meters (the ship is about 10 x 19 m).")]
@@ -118,6 +120,7 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public IReadOnlyList<LoopRoutes> RoutesByLoop => _routesByLoop;
         public IReadOnlyList<FieldDifficultyProfile> DifficultyProfiles => _difficultyProfiles;
         public FieldVolumeConfiguration Volume => _volume;
+        public FieldBeaconConfiguration Beacons => _beacons;
         public float ShipWidthMeters => _shipWidthMeters;
         public float DebrisGapMarginMeters => _debrisGapMarginMeters;
         public float DebrisMinGapMeters => _shipWidthMeters + _debrisGapMarginMeters;

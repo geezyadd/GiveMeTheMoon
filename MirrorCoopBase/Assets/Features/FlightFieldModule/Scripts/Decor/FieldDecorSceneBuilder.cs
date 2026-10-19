@@ -46,7 +46,7 @@ namespace Features.FlightFieldModule.Scripts.Decor {
             _objectsByChunk.Add(chunk, objects);
             _fieldDecorChunkLayout.Fill(fieldSeed, chunk, _decorRandom, _chunkRocks);
             foreach (FieldClusterRockPose rockPose in _chunkRocks) {
-                FieldRockVisual rock = _fieldStructurePool.TakeRock(rockPose.Prefab, root);
+                FieldRockVisual rock = _fieldStructurePool.Take(rockPose.Prefab, root);
                 objects.Add(rock.gameObject);
                 rock.transform.SetLocalPositionAndRotation(rockPose.Offset, rockPose.Rotation);
                 rock.transform.localScale = rockPose.Scale;
