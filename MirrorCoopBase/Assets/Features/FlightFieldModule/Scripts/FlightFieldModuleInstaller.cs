@@ -85,11 +85,12 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldNetworkedStructures>().To<FieldNetworkedStructures>().AsSingle();
             Container.Bind<IFieldNetworkedPrefabRegistration>().To<FieldNetworkedPrefabRegistration>().AsSingle();
             Container.BindInterfacesTo<FlightFieldService>().AsSingle();
+            Container.BindInterfacesTo<FlightFieldLaunchSystem>().AsSingle();
             Container.Bind<IFieldStructurePool>().To<FieldStructurePool>().AsSingle();
             Container.Bind<IFieldStructureSceneBuilder>().To<FieldStructureSceneBuilder>().AsSingle();
             Container.Bind<IFieldDebrisSceneBuilder>().To<FieldDebrisSceneBuilder>().AsSingle().WithArguments(new FieldStructurePool());
             Container.Bind<IFieldDebrisStreamer>().To<FieldDebrisStreamer>().AsSingle();
-            Container.Bind<IFieldStreamingViewpoint>().To<CameraFieldStreamingViewpoint>().AsSingle();
+            Container.Bind<IFieldStreamingRule>().To<FieldStreamingRule>().AsSingle();
             Container.BindInterfacesTo<LiveFieldBuildSystem>().AsSingle();
         }
 

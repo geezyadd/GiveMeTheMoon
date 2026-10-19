@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Configuration;
+using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
+using Features.GameCoreModule.Contracts;
 using UnityEngine;
 using Zenject;
 
@@ -15,35 +17,28 @@ namespace Features.FlightFieldModule.Scripts.Scene {
     // a world shift moves the structures in the frame the ship moves. The small debris of passable cells streams the
     // same way through IFieldDebrisStreamer under its own root.
     public sealed class LiveFieldBuildSystem : IInitializable, IDisposable, ITickable {
-        private const float CELL_CENTER = 0.5f;
-
-        private enum PlacementState {
-            NotBuilt,
-            Built,
-            NotLocal,
-        }
-
         private readonly IReadOnlyLiveFieldModel _liveFieldModel;
         private readonly FlightFieldSceneModel _flightFieldSceneModel;
         private readonly IFieldStructureSceneBuilder _fieldStructureSceneBuilder;
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
-        private readonly IFieldStreamingViewpoint _fieldStreamingViewpoint;
+        private readonly ILocalViewpointSource _localViewpointSource;
+        private readonly IFieldStreamingRule _fieldStreamingRule;
         private readonly IFieldDebrisSceneBuilder _fieldDebrisSceneBuilder;
         private readonly IFieldDebrisStreamer _fieldDebrisStreamer;
-        private readonly List<PlacementState> _placementStates = new();
 
         private bool _isDirty;
 
         private bool IsShowingLiveField => _flightFieldSceneModel.BuiltNumber != LiveFieldNumbers.NO_FIELD && _flightFieldSceneModel.BuiltNumber == _liveFieldModel.Number;
 
         public LiveFieldBuildSystem(IReadOnlyLiveFieldModel liveFieldModel, FlightFieldSceneModel flightFieldSceneModel, IFieldStructureSceneBuilder fieldStructureSceneBuilder,
-                                    FlightFieldConfiguration flightFieldConfiguration, IFieldStreamingViewpoint fieldStreamingViewpoint,
+                                    FlightFieldConfiguration flightFieldConfiguration, ILocalViewpointSource localViewpointSource, IFieldStreamingRule fieldStreamingRule,
                                     IFieldDebrisSceneBuilder fieldDebrisSceneBuilder, IFieldDebrisStreamer fieldDebrisStreamer) {
             _liveFieldModel = liveFieldModel;
             _flightFieldSceneModel = flightFieldSceneModel;
             _fieldStructureSceneBuilder = fieldStructureSceneBuilder;
             _flightFieldConfiguration = flightFieldConfiguration;
-            _fieldStreamingViewpoint = fieldStreamingViewpoint;
+            _localViewpointSource = localViewpointSource;
+            _fieldStreamingRule = fieldStreamingRule;
             _fieldDebrisSceneBuilder = fieldDebrisSceneBuilder;
             _fieldDebrisStreamer = fieldDebrisStreamer;
         }
@@ -71,7 +66,6 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             _fieldStructureSceneBuilder.ReleaseAll();
             _fieldDebrisStreamer.Clear();
             _flightFieldSceneModel.Clear();
-            _placementStates.Clear();
             if (liveNumber == LiveFieldNumbers.NO_FIELD)
                 return;
 
@@ -89,35 +83,34 @@ namespace Features.FlightFieldModule.Scripts.Scene {
                 return;
 
             IReadOnlyList<FieldPlacementEntry> placements = _liveFieldModel.Placements;
-            while (_placementStates.Count < placements.Count)
-                _placementStates.Add(PlacementState.NotBuilt);
-
-            Vector3 viewpoint = _flightFieldSceneModel.Root.InverseTransformPoint(_fieldStreamingViewpoint.GetPosition());
-            Vector2 viewpointOnPlane = new(viewpoint.x, viewpoint.z);
-            float buildRadiusSquared = _flightFieldConfiguration.BuildRadius * _flightFieldConfiguration.BuildRadius;
-            float releaseRadiusSquared = _flightFieldConfiguration.ReleaseRadius * _flightFieldConfiguration.ReleaseRadius;
+            _flightFieldSceneModel.TrackPlacements(placements.Count);
+            FieldFrame frame = _flightFieldSceneModel.Frame;
+            Vector2 viewpointOnPlane = frame.WorldToPlane(_localViewpointSource.GetPosition());
             int buildBudget = _flightFieldConfiguration.StructuresBuiltPerFrame;
             bool isWaitingForBudget = false;
             for (int i = 0; i < placements.Count; i++) {
-                PlacementState state = _placementStates[i];
-                if (state == PlacementState.NotLocal)
+                FieldPlacementState state = _flightFieldSceneModel.PlacementStates[i];
+                if (state == FieldPlacementState.NotLocal)
                     continue;
 
-                float distanceSquared = (PlacementOnPlane(placements[i]) - viewpointOnPlane).sqrMagnitude;
-                if (state == PlacementState.Built && distanceSquared > releaseRadiusSquared) {
-                    _fieldStructureSceneBuilder.ReleaseLocalStructure(_flightFieldSceneModel.Root, i);
-                    _placementStates[i] = PlacementState.NotBuilt;
+                // A structure of up to 4 cells is measured from its anchor cell: off by at most two cells, small
+                // against the build radius.
+                float distanceSquared = (frame.CellToPlane(placements[i].Anchor) - viewpointOnPlane).sqrMagnitude;
+                if (state == FieldPlacementState.Built && _fieldStreamingRule.ShouldRelease(distanceSquared)) {
+                    ReleaseStructure(i);
+                    continue;
                 }
-                else if (state == PlacementState.NotBuilt && distanceSquared <= buildRadiusSquared) {
-                    if (buildBudget == 0) {
-                        isWaitingForBudget = true;
-                        continue;
-                    }
 
-                    buildBudget--;
-                    bool isBuilt = _fieldStructureSceneBuilder.BuildLocalStructure(_flightFieldSceneModel.Root, _liveFieldModel, i);
-                    _placementStates[i] = isBuilt ? PlacementState.Built : PlacementState.NotLocal;
+                if (state != FieldPlacementState.NotBuilt || !_fieldStreamingRule.ShouldBuild(distanceSquared))
+                    continue;
+
+                if (buildBudget == 0) {
+                    isWaitingForBudget = true;
+                    continue;
                 }
+
+                buildBudget--;
+                BuildStructure(i);
             }
 
             if (!isWaitingForBudget && !_flightFieldSceneModel.IsBuilt)
@@ -126,16 +119,21 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             _fieldDebrisStreamer.Stream(_flightFieldSceneModel.DebrisRoot, _liveFieldModel, viewpointOnPlane);
         }
 
+        private void BuildStructure(int placementIndex) {
+            bool isBuilt = _fieldStructureSceneBuilder.BuildLocalStructure(_flightFieldSceneModel.Root, _liveFieldModel, placementIndex);
+            _flightFieldSceneModel.SetPlacementState(placementIndex, isBuilt ? FieldPlacementState.Built : FieldPlacementState.NotLocal);
+        }
+
+        private void ReleaseStructure(int placementIndex) {
+            _fieldStructureSceneBuilder.ReleaseLocalStructure(placementIndex);
+            _flightFieldSceneModel.SetPlacementState(placementIndex, FieldPlacementState.NotBuilt);
+        }
+
         private void PlaceRoots() {
             _fieldStructureSceneBuilder.PlaceRoot(_flightFieldSceneModel.Root, _liveFieldModel);
             _fieldStructureSceneBuilder.PlaceRoot(_flightFieldSceneModel.DebrisRoot, _liveFieldModel);
-        }
-
-        // The center of the anchor cell in root space (x along Right, z along Forward); a structure of up to 4 cells
-        // is off by at most two cells, small against the build radius.
-        private Vector2 PlacementOnPlane(FieldPlacementEntry placement) {
-            float cellSize = _liveFieldModel.CellSize;
-            return new Vector2((placement.Anchor.y + CELL_CENTER) * cellSize, (placement.Anchor.x + CELL_CENTER) * cellSize);
+            _flightFieldSceneModel.SetFrame(new FieldFrame(_liveFieldModel.Origin, _liveFieldModel.Forward, _liveFieldModel.CellSize, _liveFieldModel.LengthCells,
+                _liveFieldModel.WidthCells));
         }
 
         private void OnLiveFieldChanged() {

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using Features.FlightFieldModule.Scripts.Model;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Scene {
@@ -11,5 +13,9 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         public int BuiltNumber { get; }
         // Every placement of BuiltNumber within the build radius of the viewpoint stands; building runs over several frames.
         public bool IsBuilt { get; }
+        // The live field's frame as the roots stand now: placements and the viewpoint are measured in it.
+        public FieldFrame Frame { get; }
+        // By placement index of the live field; the one record of which placements stand on this peer.
+        public IReadOnlyList<FieldPlacementState> PlacementStates { get; }
     }
 }

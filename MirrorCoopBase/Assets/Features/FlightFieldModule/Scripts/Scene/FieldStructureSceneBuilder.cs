@@ -70,7 +70,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             return true;
         }
 
-        public void ReleaseLocalStructure(Transform root, int placementIndex) {
+        public void ReleaseLocalStructure(int placementIndex) {
             if (!_objectsByPlacement.Remove(placementIndex, out List<GameObject> objects))
                 return;
 

@@ -2,11 +2,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Configuration;
+using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
 using Features.FlightFieldModule.Scripts.Scene;
 using Features.FlightFieldModule.Scripts.Server;
 using Features.FlightFieldModule.Scripts.Structures;
+using Features.GameCoreModule.Contracts;
 using Features.ShipModule.Scripts;
 using Mirror;
 using Tests.Shared;
@@ -30,7 +32,6 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float MIN_SHIFT = 1f;
         // The camera moves between the last streaming pass and the check; the system measures from the anchor cell.
         private const float STREAMING_EDGE_METERS = 50f;
-        private const float CELL_CENTER = 0.5f;
 #if UNITY_EDITOR
         private const string DEBUG_NETWORKED_STRUCTURE_PATH = "Assets/Features/FlightFieldModule/GameResources/Debug/Debug_NetworkBeacon.asset";
         private const string STRUCTURES_PROPERTY = "_structures";
@@ -52,7 +53,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private readonly IReadOnlyFlightFieldServerModel _flightFieldServerModel;
         private readonly FieldStructureCatalog _fieldStructureCatalog;
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
-        private readonly IFieldStreamingViewpoint _fieldStreamingViewpoint;
+        private readonly ILocalViewpointSource _localViewpointSource;
 
         private int _lastFieldNumber;
         private int _networkedPlacementsSeen;
@@ -69,7 +70,7 @@ namespace Tests.PlayMode.LoopSmoke {
             _flightFieldServerModel = container.Resolve<IReadOnlyFlightFieldServerModel>();
             _fieldStructureCatalog = container.Resolve<FieldStructureCatalog>();
             _flightFieldConfiguration = SessionQueries.Resolve<FlightFieldConfiguration>();
-            _fieldStreamingViewpoint = SessionQueries.Resolve<IFieldStreamingViewpoint>();
+            _localViewpointSource = SessionQueries.Resolve<ILocalViewpointSource>();
         }
 
         // A copy of the game's catalog with the debug networked beacon, which the shipped catalog does not have.
@@ -194,16 +195,14 @@ namespace Tests.PlayMode.LoopSmoke {
             _liveFieldModel.Number != LiveFieldNumbers.NO_FIELD && _flightFieldSceneModel.BuiltNumber == _liveFieldModel.Number && _flightFieldSceneModel.IsBuilt;
 
         private int CountLocalPlacementsWithin(float radius) {
-            Vector3 viewpoint = _flightFieldSceneModel.Root.InverseTransformPoint(_fieldStreamingViewpoint.GetPosition());
-            Vector2 viewpointOnPlane = new Vector2(viewpoint.x, viewpoint.z);
-            float cellSize = _liveFieldModel.CellSize;
+            FieldFrame frame = _flightFieldSceneModel.Frame;
+            Vector2 viewpointOnPlane = frame.WorldToPlane(_localViewpointSource.GetPosition());
             int count = 0;
             foreach (FieldPlacementEntry placement in _liveFieldModel.Placements) {
                 if (_fieldStructureCatalog.GetRequired(placement.StructureId).IsNetworked)
                     continue;
 
-                Vector2 placementOnPlane = new Vector2((placement.Anchor.y + CELL_CENTER) * cellSize, (placement.Anchor.x + CELL_CENTER) * cellSize);
-                if ((placementOnPlane - viewpointOnPlane).sqrMagnitude <= radius * radius)
+                if ((frame.CellToPlane(placement.Anchor) - viewpointOnPlane).sqrMagnitude <= radius * radius)
                     count++;
             }
 
