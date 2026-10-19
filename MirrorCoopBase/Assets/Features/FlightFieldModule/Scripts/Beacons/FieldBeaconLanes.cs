@@ -11,7 +11,7 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
     // closed alternative is told by a closed cell on its centerline: the ridge that closes it.
     public sealed class FieldBeaconLanes {
         // One bit per lane; the last bit marks the corridors of the routes that are no lane.
-        public const int MAX_LANES = 63;
+        private const int MAX_LANES = 63;
         private const ulong NO_LANE_BIT = 1UL << MAX_LANES;
 
         private readonly List<FieldBeaconRoute> _lanes = new();
@@ -73,13 +73,14 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
         }
 
         private void AddCorridor(FieldBeaconRoute route, ulong bit) {
-            for (int i = 0; i < route.Centerline.Count; i++) {
-                Vector2Int center = route.Centerline[i];
-                int halfWidth = route.HalfWidths[i];
-                for (int x = center.x - halfWidth; x <= center.x + halfWidth; x++) {
-                    for (int y = center.y - halfWidth; y <= center.y + halfWidth; y++)
-                        AddCorridorCell(new Vector2Int(x, y), bit);
-                }
+            for (int i = 0; i < route.Centerline.Count; i++)
+                AddCorridorSquare(route.Centerline[i], route.HalfWidths[i], bit);
+        }
+
+        private void AddCorridorSquare(Vector2Int center, int halfWidth, ulong bit) {
+            for (int x = center.x - halfWidth; x <= center.x + halfWidth; x++) {
+                for (int y = center.y - halfWidth; y <= center.y + halfWidth; y++)
+                    AddCorridorCell(new Vector2Int(x, y), bit);
             }
         }
 

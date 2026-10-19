@@ -12,9 +12,6 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
     // rejoins) gets no turn, spacing or entrance beacons of its own. Dead ends and closed alternatives get none at all,
     // and no beacon enters their corridor either. Touches no Unity object: it runs on any thread.
     public sealed class FieldBeaconLayout : IFieldBeaconLayout {
-        private const int RIGHT = 1;
-        private const int LEFT = -1;
-
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
 
         public FieldBeaconLayout(FlightFieldConfiguration flightFieldConfiguration) =>
@@ -67,7 +64,7 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
                 if (!isSharpTurn || isShared[i])
                     continue;
 
-                placer.TryAddEitherSide(lane, i, turn > 0f ? LEFT : RIGHT, FieldBeaconReason.Turn);
+                placer.TryAddEitherSide(lane, i, turn > 0f ? FieldBeaconSides.LEFT : FieldBeaconSides.RIGHT, FieldBeaconReason.Turn);
             }
         }
 
@@ -76,7 +73,7 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
             FillShared(lanes, lane, isShared);
             float spacing = _flightFieldConfiguration.Beacons.BeaconSpacingMeters;
             float travelled = 0f;
-            int side = RIGHT;
+            int side = FieldBeaconSides.RIGHT;
             for (int i = 1; i < route.Centerline.Count; i++) {
                 if (isShared[i]) {
                     travelled = 0f;

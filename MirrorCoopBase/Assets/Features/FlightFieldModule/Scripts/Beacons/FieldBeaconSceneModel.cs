@@ -13,7 +13,6 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
         public bool HasRoot => Root != null;
         public int BuiltNumber { get; private set; } = LiveFieldNumbers.NO_FIELD;
         public IReadOnlyList<FieldBeacon> Beacons => _beacons;
-        public IReadOnlyCollection<int> BuiltBeacons => _builtBeacons;
 
         public void SetRoot(Transform root) =>
             Root = root;

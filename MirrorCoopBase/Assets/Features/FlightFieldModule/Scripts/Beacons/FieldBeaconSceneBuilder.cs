@@ -22,8 +22,6 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
         private readonly IFieldStructurePool _fieldStructurePool;
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
         private readonly Dictionary<int, GameObject> _objectsByIndex = new();
-        // Read once when a beacon is made, so taking a pooled one does not look its component up again.
-        private readonly Dictionary<GameObject, FieldBeaconVisual> _visualByInstance = new();
 
         private Material _mainMaterial;
         private Material _alternativeMaterial;
@@ -45,16 +43,11 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
         }
 
         public void Build(Transform root, int index, FieldBeacon beacon) {
-            GameObject instance = _fieldStructurePool.Take(Configuration.Prefab.gameObject, root);
-            if (!_visualByInstance.TryGetValue(instance, out FieldBeaconVisual visual)) {
-                visual = instance.GetComponent<FieldBeaconVisual>();
-                _visualByInstance.Add(instance, visual);
-            }
-
+            FieldBeaconVisual visual = _fieldStructurePool.Take(Configuration.Prefab, root);
             visual.SetMaterial(MaterialOf(beacon.Lane));
-            instance.transform.SetLocalPositionAndRotation(beacon.Position, Quaternion.identity);
-            instance.SetActive(true);
-            _objectsByIndex.Add(index, instance);
+            visual.transform.SetLocalPositionAndRotation(beacon.Position, Quaternion.identity);
+            visual.gameObject.SetActive(true);
+            _objectsByIndex.Add(index, visual.gameObject);
         }
 
         public void Release(int index) {

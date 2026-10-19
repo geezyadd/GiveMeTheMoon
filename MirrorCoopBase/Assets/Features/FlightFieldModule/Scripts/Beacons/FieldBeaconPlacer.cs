@@ -29,7 +29,7 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
             _beacons = beacons;
         }
 
-        // The side is +1 to the right of the lane's heading, -1 to the left.
+        // The side is FieldBeaconSides.RIGHT or LEFT of the lane's heading.
         public bool TryAdd(int laneIndex, int centerlineIndex, int side, FieldBeaconReason reason) {
             FieldBeaconRoute lane = _fieldBeaconLanes.Lanes[laneIndex];
             Vector2Int cell = lane.Centerline[centerlineIndex];
@@ -44,8 +44,8 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
         }
 
         public void TryAddBothSides(int laneIndex, int centerlineIndex, FieldBeaconReason reason) {
-            TryAdd(laneIndex, centerlineIndex, 1, reason);
-            TryAdd(laneIndex, centerlineIndex, -1, reason);
+            TryAdd(laneIndex, centerlineIndex, FieldBeaconSides.RIGHT, reason);
+            TryAdd(laneIndex, centerlineIndex, FieldBeaconSides.LEFT, reason);
         }
 
         // Tries the side first, then the other one.

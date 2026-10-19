@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Scene {
@@ -8,8 +7,8 @@ namespace Features.FlightFieldModule.Scripts.Scene {
     public sealed class FieldStructurePool : IFieldStructurePool {
         private readonly Dictionary<GameObject, Stack<GameObject>> _freeByPrefab = new();
         private readonly Dictionary<GameObject, GameObject> _activePrefabByInstance = new();
-        // Read once when a rock is made, so taking a pooled rock does not look its component up again.
-        private readonly Dictionary<GameObject, FieldRockVisual> _rockVisualByInstance = new();
+        // Read once when an object is made, so taking a pooled one does not look its root component up again.
+        private readonly Dictionary<GameObject, Component> _componentByInstance = new();
 
         // A free instance is moved under the given parent, so it ends up where a new one would be made.
         public GameObject Take(GameObject prefab, Transform parent) {
@@ -23,14 +22,14 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             return instance;
         }
 
-        public FieldRockVisual TakeRock(FieldRockVisual prefab, Transform parent) {
+        public T Take<T>(T prefab, Transform parent) where T : Component {
             GameObject instance = Take(prefab.gameObject, parent);
-            if (!_rockVisualByInstance.TryGetValue(instance, out FieldRockVisual rockVisual)) {
-                rockVisual = instance.GetComponent<FieldRockVisual>();
-                _rockVisualByInstance.Add(instance, rockVisual);
+            if (!_componentByInstance.TryGetValue(instance, out Component component)) {
+                component = instance.GetComponent<T>();
+                _componentByInstance.Add(instance, component);
             }
 
-            return rockVisual;
+            return (T)component;
         }
 
         public void Return(GameObject instance) {

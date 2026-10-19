@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Beacons {
@@ -6,6 +7,7 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
     public sealed class FieldBeaconVisual : MonoBehaviour {
         [SerializeField] private Renderer[] _lights;
 
+        public IReadOnlyList<Renderer> Lights => _lights;
         // The material the colour materials are made from.
         public Material LightMaterial => _lights[0].sharedMaterial;
 
