@@ -13,6 +13,7 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipRadarService>().AsSingle();
             Container.BindInterfacesTo<ShipStationPads>().AsSingle();
             Container.BindInterfacesTo<ShipStationDropService>().AsSingle();
+            InstallFlightLength();
             Container.BindInterfacesTo<ShipFlightStatService>().AsSingle();
             Container.BindInterfacesTo<ShipRoute>().AsSingle();
             Container.BindInterfacesTo<ShipWorldShiftService>().AsSingle();
@@ -22,9 +23,19 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipDeckJoinSpawn>().AsSingle();
             Container.BindInterfacesTo<ShipPositionSource>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Container.BindInterfacesAndSelfTo<ShipFlightLengthDebugModel>().AsSingle();
             Container.BindInterfacesTo<Debug.DeckFeelHarness>().AsSingle();
             Container.Bind<Debug.ShipStatsDebugOverlay>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
+#endif
+        }
+
+        // Editor / development builds decorate the config's flight length with the debug length the harness sets.
+        private void InstallFlightLength() {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Container.BindInterfacesAndSelfTo<Debug.ShipFlightLengthDebugModel>().AsSingle();
+            Container.Bind<IShipFlightLengthSource>().To<ShipRunConfigFlightLengthSource>().AsSingle().WhenInjectedInto<Debug.ShipDebugFlightLengthSource>();
+            Container.Bind<IShipFlightLengthSource>().To<Debug.ShipDebugFlightLengthSource>().AsSingle().WhenNotInjectedInto<Debug.ShipDebugFlightLengthSource>();
+#else
+            Container.Bind<IShipFlightLengthSource>().To<ShipRunConfigFlightLengthSource>().AsSingle();
 #endif
         }
     }

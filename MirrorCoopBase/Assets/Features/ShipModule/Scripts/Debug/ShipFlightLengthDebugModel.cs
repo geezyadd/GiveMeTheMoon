@@ -1,7 +1,7 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using UnityEngine;
 
-namespace Features.ShipModule.Scripts {
+namespace Features.ShipModule.Scripts.Debug {
     // Editor / development only: a fixed flight length in cruise seconds for every loop while above 0.
     public sealed class ShipFlightLengthDebugModel : IShipFlightLengthDebug {
         public float FlightSeconds { get; private set; }
