@@ -28,6 +28,15 @@ namespace Features.FlightFieldModule.Scripts.Model {
         public Vector3 CellToWorld(Vector2Int cell) =>
             Origin + Forward * ((cell.x + CELL_CENTER) * CellSize) + Right * ((cell.y + CELL_CENTER) * CellSize);
 
+        // The flight plane in field space: x along Right, y along Forward (the field root's local x and z).
+        public Vector2 CellToPlane(Vector2Int cell) =>
+            new((cell.y + CELL_CENTER) * CellSize, (cell.x + CELL_CENTER) * CellSize);
+
+        public Vector2 WorldToPlane(Vector3 point) {
+            Vector3 offset = point - Origin;
+            return new Vector2(Vector3.Dot(offset, Right), Vector3.Dot(offset, Forward));
+        }
+
         public Vector2Int WorldToCell(Vector3 point) {
             Vector3 offset = point - Origin;
             return new Vector2Int(Mathf.FloorToInt(Vector3.Dot(offset, Forward) / CellSize), Mathf.FloorToInt(Vector3.Dot(offset, Right) / CellSize));

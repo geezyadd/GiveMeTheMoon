@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
 using Features.FlightFieldModule.Scripts.Scene;
+using Features.GameCoreModule.Contracts;
 using UnityEngine;
 using Zenject;
 
@@ -19,8 +19,8 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
         private readonly IFieldBeaconSceneBuilder _fieldBeaconSceneBuilder;
         private readonly IFieldBeaconSource _fieldBeaconSource;
         private readonly IFieldStructureSceneBuilder _fieldStructureSceneBuilder;
-        private readonly IFieldStreamingViewpoint _fieldStreamingViewpoint;
-        private readonly FlightFieldConfiguration _flightFieldConfiguration;
+        private readonly ILocalViewpointSource _localViewpointSource;
+        private readonly IFieldStreamingRule _fieldStreamingRule;
         private readonly List<FieldBeacon> _layout = new();
 
         private bool _isDirty;
@@ -29,14 +29,14 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
 
         public FieldBeaconBuildSystem(IReadOnlyLiveFieldModel liveFieldModel, FieldBeaconSceneModel fieldBeaconSceneModel, IFieldBeaconSceneBuilder fieldBeaconSceneBuilder,
                                       IFieldBeaconSource fieldBeaconSource, IFieldStructureSceneBuilder fieldStructureSceneBuilder,
-                                      IFieldStreamingViewpoint fieldStreamingViewpoint, FlightFieldConfiguration flightFieldConfiguration) {
+                                      ILocalViewpointSource localViewpointSource, IFieldStreamingRule fieldStreamingRule) {
             _liveFieldModel = liveFieldModel;
             _fieldBeaconSceneModel = fieldBeaconSceneModel;
             _fieldBeaconSceneBuilder = fieldBeaconSceneBuilder;
             _fieldBeaconSource = fieldBeaconSource;
             _fieldStructureSceneBuilder = fieldStructureSceneBuilder;
-            _fieldStreamingViewpoint = fieldStreamingViewpoint;
-            _flightFieldConfiguration = flightFieldConfiguration;
+            _localViewpointSource = localViewpointSource;
+            _fieldStreamingRule = fieldStreamingRule;
         }
 
         public void Initialize() =>
@@ -78,20 +78,18 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
 
         // Few beacons per field (tens to a few hundred), all checked every frame without a build budget.
         private void StreamBeacons() {
-            Vector3 viewpoint = _fieldBeaconSceneModel.Root.InverseTransformPoint(_fieldStreamingViewpoint.GetPosition());
+            Vector3 viewpoint = _fieldBeaconSceneModel.Root.InverseTransformPoint(_localViewpointSource.GetPosition());
             Vector2 viewpointOnPlane = new(viewpoint.x, viewpoint.z);
-            float buildRadiusSquared = _flightFieldConfiguration.BuildRadius * _flightFieldConfiguration.BuildRadius;
-            float releaseRadiusSquared = _flightFieldConfiguration.ReleaseRadius * _flightFieldConfiguration.ReleaseRadius;
             IReadOnlyList<FieldBeacon> beacons = _fieldBeaconSceneModel.Beacons;
             for (int i = 0; i < beacons.Count; i++) {
                 Vector3 position = beacons[i].Position;
                 float distanceSquared = (new Vector2(position.x, position.z) - viewpointOnPlane).sqrMagnitude;
                 bool isBuilt = _fieldBeaconSceneModel.IsBeaconBuilt(i);
-                if (isBuilt && distanceSquared > releaseRadiusSquared) {
+                if (isBuilt && _fieldStreamingRule.ShouldRelease(distanceSquared)) {
                     _fieldBeaconSceneBuilder.Release(i);
                     _fieldBeaconSceneModel.RemoveBeacon(i);
                 }
-                else if (!isBuilt && distanceSquared <= buildRadiusSquared) {
+                else if (!isBuilt && _fieldStreamingRule.ShouldBuild(distanceSquared)) {
                     _fieldBeaconSceneBuilder.Build(_fieldBeaconSceneModel.Root, i, beacons[i]);
                     _fieldBeaconSceneModel.AddBeacon(i);
                 }

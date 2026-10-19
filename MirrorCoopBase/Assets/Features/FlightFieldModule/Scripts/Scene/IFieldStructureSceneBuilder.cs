@@ -8,7 +8,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         // False when the placement is not built locally (a networked structure comes through Mirror).
         public bool BuildLocalStructure(Transform root, IReadOnlyLiveFieldModel liveFieldModel, int placementIndex);
         // Returns the objects built for the placement to the pool; nothing happens when none were built.
-        public void ReleaseLocalStructure(Transform root, int placementIndex);
+        public void ReleaseLocalStructure(int placementIndex);
         public void ReleaseAll();
     }
 }

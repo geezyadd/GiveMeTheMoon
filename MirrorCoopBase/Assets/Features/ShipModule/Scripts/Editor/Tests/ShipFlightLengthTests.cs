@@ -1,4 +1,5 @@
 using System;
+using Features.ShipModule.Scripts.Debug;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -19,22 +20,23 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
         [TestCase(2, 360f)]
         [TestCase(9, 1200f)]
         public void WhenNoCap_ThenFlightSecondsGrowByThePerLoopSeconds(int loop, float expectedSeconds) =>
-            WithConfig(NO_CAP_JSON, config => Assert.AreEqual(expectedSeconds, new ShipFlightStatService(config).EvaluateRouteWork(loop), TOLERANCE));
+            WithConfig(NO_CAP_JSON, config => Assert.AreEqual(expectedSeconds, new ShipFlightStatService(new ShipRunConfigFlightLengthSource(config)).EvaluateRouteWork(loop), TOLERANCE));
 
         [TestCase(0, 120f)]
         [TestCase(1, 240f)]
         [TestCase(2, 300f)]
         [TestCase(9, 300f)]
         public void WhenCapped_ThenFlightSecondsStopAtTheCap(int loop, float expectedSeconds) =>
-            WithConfig(CAPPED_JSON, config => Assert.AreEqual(expectedSeconds, new ShipFlightStatService(config).EvaluateRouteWork(loop), TOLERANCE));
+            WithConfig(CAPPED_JSON, config => Assert.AreEqual(expectedSeconds, new ShipFlightStatService(new ShipRunConfigFlightLengthSource(config)).EvaluateRouteWork(loop), TOLERANCE));
 
         [Test]
         public void WhenDebugFlightSecondsAreSet_ThenEveryLoopUsesThemUntilCleared() =>
             WithConfig(NO_CAP_JSON, config => {
-                ShipFlightStatService service = new(config);
-                service.DebugUseFlightSeconds(20f);
+                ShipFlightLengthDebugModel debugModel = new();
+                ShipFlightStatService service = new(new ShipDebugFlightLengthSource(new ShipRunConfigFlightLengthSource(config), debugModel));
+                debugModel.DebugUseFlightSeconds(20f);
                 Assert.AreEqual(20f, service.EvaluateRouteWork(4), TOLERANCE);
-                service.DebugClearFlightSeconds();
+                debugModel.DebugClearFlightSeconds();
                 Assert.AreEqual(600f, service.EvaluateRouteWork(4), TOLERANCE);
             });
 

@@ -1,7 +1,5 @@
-using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Network;
-using Features.FlightFieldModule.Scripts.Network.Generated;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -31,7 +29,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [Test]
         public void WhenLongFieldIsPublished_ThenBatchesStayInSizeAndStateComesAloneAfterEveryEntry() {
             FieldPublishJob job = new(_field, NUMBER, ENTRIES_PER_BATCH);
-            RecordingTarget target = new();
+            RecordingFieldPublishTarget target = new();
             int batches = 0;
             while (!job.IsDone && batches < MAX_BATCHES) {
                 target.BeginBatch();
@@ -65,7 +63,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [Test]
         public void WhenPublishIsDroppedHalfway_ThenNoStateWasWritten() {
             FieldPublishJob job = new(_field, NUMBER, ENTRIES_PER_BATCH);
-            RecordingTarget target = new();
+            RecordingFieldPublishTarget target = new();
             job.WriteNextBatch(target);
             job.WriteNextBatch(target);
 
@@ -77,7 +75,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         public void WhenWorldShiftsDuringThePublish_ThenTheStateCarriesTheShiftedOrigin() {
             Vector3 shift = new(-800f, 0f, 300f);
             FieldPublishJob job = new(_field, NUMBER, ENTRIES_PER_BATCH);
-            RecordingTarget target = new();
+            RecordingFieldPublishTarget target = new();
             job.WriteNextBatch(target);
             job.ShiftOrigin(shift);
             for (int batch = 0; batch < MAX_BATCHES && !job.IsDone; batch++)
@@ -95,44 +93,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 cells += route.Centerline.Count;
 
             return cells;
-        }
-
-        private sealed class RecordingTarget : IFieldPublishTarget {
-            public List<FieldPlacementEntry> Placements { get; } = new();
-            public int Routes { get; private set; }
-            public int RouteCells { get; private set; }
-            public int DebrisCells { get; private set; }
-            public int StateWrites { get; private set; }
-            public LiveFieldState State { get; private set; }
-            public int EntriesInBatch { get; private set; }
-
-            public void BeginBatch() =>
-                EntriesInBatch = 0;
-
-            public void AddPlacement(FieldPlacementEntry placement) {
-                Placements.Add(placement);
-                EntriesInBatch++;
-            }
-
-            public void AddRoute(FieldRouteEntry route) {
-                Routes++;
-                EntriesInBatch++;
-            }
-
-            public void AddRouteCell(FieldRouteCellEntry routeCell) {
-                RouteCells++;
-                EntriesInBatch++;
-            }
-
-            public void AddDebrisRun(FieldDebrisRunEntry debrisRun) {
-                DebrisCells += debrisRun.Length;
-                EntriesInBatch++;
-            }
-
-            public void SetState(LiveFieldState state) {
-                State = state;
-                StateWrites++;
-            }
         }
     }
 }

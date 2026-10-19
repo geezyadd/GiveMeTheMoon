@@ -1,5 +1,6 @@
 using Features.CameraModule.Scripts.Models;
 using Features.CameraModule.Scripts.Services;
+using Features.GameCoreModule.Contracts;
 using Zenject;
 
 namespace Features.CameraModule.Scripts {
@@ -9,6 +10,7 @@ namespace Features.CameraModule.Scripts {
             Container.BindInterfacesTo<GameCameraService>().AsSingle();
             Container.BindInterfacesTo<CameraLookDriver>().AsSingle();
             Container.BindInterfacesTo<CameraSwitchBinder>().AsSingle();
+            Container.Bind<ILocalViewpointSource>().To<CameraViewpointSource>().AsSingle();
         }
     }
 }
