@@ -211,7 +211,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         // The field with its decor layers is a box across the width, along the length and up to the layers' top above
         // and below the plane; the station pads stand on the route axis inside it, anywhere along its length.
         private void AssertClearOfFieldAndStations(List<FieldDecorPlanet> planets, Vector3 courseStart, float halfWidth, int seed) {
-            float layerTop = FieldDecorPlanetPicker.FindVolumeTop(_fieldConfiguration.Volume);
+            float layerTop = FieldVolumeHeights.FindTop(_fieldConfiguration.Volume);
             Vector3 boxMin = new(courseStart.x - halfWidth, -layerTop, 0f);
             Vector3 boxMax = new(courseStart.x + halfWidth, layerTop, FIELD_LENGTH);
             foreach (FieldDecorPlanet planet in planets) {

@@ -1,5 +1,4 @@
 using System;
-using Features.FlightFieldModule.Scripts.Decor;
 using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 using Zenject;
@@ -20,13 +19,13 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
                 throw new InvalidOperationException($"{_flightFieldConfiguration.name}: no volume configuration.");
 
             ValidateVolume(volume);
-            float top = FieldDecorPlanetPicker.FindVolumeTop(volume);
+            float top = FieldVolumeHeights.FindTop(volume);
             foreach (FieldDifficultyProfile profile in _flightFieldConfiguration.DifficultyProfiles) {
                 if (profile == null || !profile.HasOwnVolume)
                     continue;
 
                 ValidateVolume(profile.Volume);
-                if (FieldDecorPlanetPicker.FindVolumeTop(profile.Volume) > top)
+                if (FieldVolumeHeights.FindTop(profile.Volume) > top)
                     throw new InvalidOperationException($"{profile.Volume.name}: the volume of {profile.name} reaches above {top} m, the top of {volume.name} the planets keep clear of.");
             }
         }

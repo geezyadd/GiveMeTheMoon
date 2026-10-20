@@ -15,7 +15,6 @@ namespace Features.FlightFieldModule.Scripts.Decor {
     // for every decor chunk.
     public sealed class LiveFieldVolumeSourceReader : IFieldVolumeSourceReader {
         private const float CELL_CENTER = 0.5f;
-        private const float HALF = 0.5f;
         private const int NO_ROUTE = -1;
 
         private readonly IReadOnlyLiveFieldModel _liveFieldModel;
@@ -70,15 +69,11 @@ namespace Features.FlightFieldModule.Scripts.Decor {
                 _giants.Add(ToGiant(placement));
         }
 
-        // The main rock stays within half the footprint's shorter side of its middle, which moves off the plane by up
-        // to its recipe's height jitter of its size.
         private FieldVolumeGiant ToGiant(FieldPlacementEntry placement) {
             FieldStructureDefinition structure = _fieldStructureCatalog.GetRequired(placement.StructureId);
             FieldFootprint footprint = _fieldFootprintReader.Read(structure, placement.Rotation);
             Pose pose = _fieldStructureLayout.GetFieldPose(footprint, placement.Anchor, placement.Rotation, _liveFieldModel.CellSize);
-            float radius = Mathf.Min(footprint.Width, footprint.Height) * _liveFieldModel.CellSize * HALF;
-            float heightJitter = structure.HasClusterRecipe ? structure.ClusterRecipe.MainHeightJitter : 0f;
-            return new FieldVolumeGiant(new Vector2(pose.position.x, pose.position.z), radius * (1f + 2f * heightJitter));
+            return FieldVolumeGiant.Of(structure, footprint, pose, _liveFieldModel.CellSize);
         }
 
         private int FindFirstMainRouteId(out float hardestDifficulty) {

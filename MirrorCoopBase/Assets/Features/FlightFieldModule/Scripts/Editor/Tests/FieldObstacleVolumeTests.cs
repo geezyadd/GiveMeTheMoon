@@ -19,7 +19,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const int FIRST_SEED = 1;
         private const float TOLERANCE = 0.01f;
         private const float SLAB_METERS = 100f;
-        private const float HALF = 0.5f;
 
         private readonly FieldRandomFactory _randomFactory = new();
         private readonly FieldTestVolumeSourceReader _sourceReader = new();
@@ -28,10 +27,12 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private FlightFieldEditorComposition _composition;
         private FlightFieldDecorConfiguration _decor;
         private FieldDecorChunkLayout _chunkLayout;
+        private FieldStructureLayout _structureLayout;
 
         [OneTimeSetUp]
         public void OneTimeSetUp() {
             _composition = new FlightFieldEditorCompositionFactory().Create();
+            _structureLayout = new FieldStructureLayout(_composition.FootprintReader);
             _decor = FlightFieldEditorCompositionFactory.LoadConfiguration<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default);
             FieldVolumeCandidates candidates = new(new FieldRidgeNoise(new FieldValueNoise()), _randomFactory);
             _chunkLayout = new FieldDecorChunkLayout(_decor, candidates, _sourceReader);
@@ -64,7 +65,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [Test]
         public void WhenTheVolumeOfAnObstacleFieldIsLaidOut_ThenEveryHeightSlabHoldsRocks() {
             foreach ((FlightField field, FieldVolumeSource source, List<FieldClusterRockPose> rocks) in LayOutFields()) {
-                float top = FieldDecorPlanetPicker.FindVolumeTop(source.Volume);
+                float top = FieldVolumeHeights.FindTop(source.Volume);
                 int[] counts = new int[Mathf.CeilToInt(top / SLAB_METERS)];
                 foreach (FieldClusterRockPose rock in rocks)
                     counts[Mathf.Min(counts.Length - 1, Mathf.FloorToInt(Mathf.Abs(rock.Offset.y) / SLAB_METERS))]++;
@@ -108,9 +109,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             foreach (FieldPlacement placement in field.Placements) {
                 FieldStructureDefinition structure = _composition.Catalog.GetRequired(placement.StructureId);
                 FieldFootprint footprint = _composition.FootprintReader.Read(structure, placement.Rotation);
-                Vector2 center = new((placement.Anchor.y + footprint.Height * HALF) * cellSize, (placement.Anchor.x + footprint.Width * HALF) * cellSize);
-                float radius = Mathf.Min(footprint.Width, footprint.Height) * cellSize * HALF * (1f + 2f * structure.ClusterRecipe.MainHeightJitter);
-                giants.Add(new FieldVolumeGiant(center, radius));
+                Pose pose = _structureLayout.GetFieldPose(footprint, placement.Anchor, placement.Rotation, cellSize);
+                giants.Add(FieldVolumeGiant.Of(structure, footprint, pose, cellSize));
             }
 
             IReadOnlyList<Vector2Int> centerline = field.Routes[0].Centerline;

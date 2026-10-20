@@ -24,8 +24,6 @@ namespace Features.FlightFieldModule.Scripts.Editor {
         private const double LIVE_REFRESH_SECONDS = 0.5;
         private const float METERS_PER_KILOMETER = 1000f;
         private const string NO_LIVE_FIELD = "No live field: enter Play mode as host and launch the ship.";
-        // The upper diameters of the small, medium and large rocks in the size line; above them the massive ones.
-        private static readonly float[] _sizeLimitsMeters = { 35f, 150f, 350f };
 
         [SerializeField] private int _seed = 1;
         [SerializeField] private int _loopIndex;
@@ -183,9 +181,10 @@ namespace Features.FlightFieldModule.Scripts.Editor {
                 : "NO WAY for the ship";
             _summaryLines.Add($"Slalom: {way}; rocks {report.Rocks.Count}, in main channels {report.ChannelRocks} over {report.ChannelLengthMeters / METERS_PER_KILOMETER:0.0} km "
                 + $"= {report.RocksPerKilometer:0} per km");
-            int[] sizes = report.CountBySize(_sizeLimitsMeters);
+            IReadOnlyList<float> limits = FieldRockSizeLimits.UpperDiametersMeters;
+            int[] sizes = report.CountBySize(limits);
             _summaryLines.Add($"Flight plane: {report.PlaneRocksPerSquareKilometer():0} rocks per km2 (giants {report.Plane.GiantDiametersMeters.Count}), largest {report.LargestRockMeters():0} m; "
-                + $"sizes up to {_sizeLimitsMeters[0]:0} m: {sizes[0]}, up to {_sizeLimitsMeters[1]:0} m: {sizes[1]}, up to {_sizeLimitsMeters[2]:0} m: {sizes[2]}, "
+                + $"sizes up to {limits[0]:0} m: {sizes[0]}, up to {limits[1]:0} m: {sizes[1]}, up to {limits[2]:0} m: {sizes[2]}, "
                 + $"above: {sizes[3]}");
         }
 

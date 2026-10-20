@@ -23,8 +23,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const float GAP_TOLERANCE = 0.01f;
 
         private static readonly int[] _loops = { 0, 5, 10 };
-        // The upper diameters of the small, medium and large rocks in the table; above them the massive ones.
-        private static readonly float[] _sizeLimitsMeters = { 35f, 150f, 350f };
 
         private readonly Dictionary<(string profile, int loop), List<FieldObstacleSummary>> _results = new();
         private readonly FieldDebugScenario _scenario = new();
@@ -107,7 +105,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             FieldSlalomReport report = Analyze(field);
             float planeGap = new FieldPlaneGapMeter().Measure(field, report.Rocks);
             bool areAllInPlane = report.Rocks.All(rock => rock.IsInPlane);
-            return new FieldObstacleSummary(seed, report, planeGap, areAllInPlane, report.CountBySize(_sizeLimitsMeters), field.Metrics.DodgesPerMinute);
+            return new FieldObstacleSummary(seed, report, planeGap, areAllInPlane, report.CountBySize(FieldRockSizeLimits.UpperDiametersMeters), field.Metrics.DodgesPerMinute);
         }
 
         private FieldSlalomReport Analyze(FlightField field) =>
@@ -145,7 +143,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             List<FieldObstacleSummary> found = summaries.Where(summary => summary.IsPathFound).ToList();
             string ratio = found.Count > 0 ? found.Average(summary => summary.PathToStraightRatio).ToString("0.00") : "-";
             string gaps = found.Count > 0 ? $"{found.Min(summary => summary.PathGapMeters):0.0} / {found.Average(summary => summary.PathGapMeters):0.0}" : "-";
-            string sizes = string.Join(" / ", Enumerable.Range(0, _sizeLimitsMeters.Length + 1).Select(index => summaries.Average(summary => summary.SizeCounts[index]).ToString("0")));
+            string sizes = string.Join(" / ", Enumerable.Range(0, FieldRockSizeLimits.UpperDiametersMeters.Count + 1).Select(index => summaries.Average(summary => summary.SizeCounts[index]).ToString("0")));
             return $"[FieldObstacles] {key.profile} | {key.loop} | {found.Count}/{summaries.Count} | {ratio} | {summaries.Average(summary => summary.RocksPerSquareKilometer):0} | {sizes} "
                 + $"| {gaps} | {summaries.Min(summary => summary.PlaneGapMeters):0.0} | {summaries.Average(summary => summary.DodgesPerMinute):0.0} "
                 + $"| {summaries.Average(summary => summary.LargestRockMeters):0} ({summaries.Max(summary => summary.LargestRockMeters):0}) | {summaries.Average(summary => summary.Giants):0.0}";

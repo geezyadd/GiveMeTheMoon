@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // What the obstacle field tests keep of one analysed field: the slalom way, the plane gap rule, the clearance of the
     // plane rocks and the numbers of the variant table. The rocks themselves are not kept: 2 400 fields would not fit.
@@ -11,11 +13,11 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         public bool AreAllRocksInPlane { get; }
         public float RocksPerSquareKilometer { get; }
         public float LargestRockMeters { get; }
-        public int[] SizeCounts { get; }
+        public IReadOnlyList<int> SizeCounts { get; }
         public float DodgesPerMinute { get; }
         public int Giants { get; }
 
-        public FieldObstacleSummary(int seed, FieldSlalomReport report, float planeGapMeters, bool areAllRocksInPlane, int[] sizeCounts, float dodgesPerMinute) {
+        public FieldObstacleSummary(int seed, FieldSlalomReport report, float planeGapMeters, bool areAllRocksInPlane, IReadOnlyList<int> sizeCounts, float dodgesPerMinute) {
             Seed = seed;
             IsPathFound = report.IsPathFound;
             PathGapMeters = report.MinGapMeters;
