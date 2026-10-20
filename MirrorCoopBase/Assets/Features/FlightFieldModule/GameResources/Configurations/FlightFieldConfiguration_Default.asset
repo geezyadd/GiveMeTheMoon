@@ -74,7 +74,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ce43379fbabf475785ab698bed9504d0, type: 2}
   - {fileID: 11400000, guid: cde83282d9114df0927e077618909d1a, type: 2}
   _volume: {fileID: 11400000, guid: 0c6065115c5c09742ab403520b4e8ebf, type: 2}
-  _beacons: {fileID: 11400000, guid: 79280a2f14262c14c96c45653c8a3083, type: 2}
   _shipWidthMeters: 10
   _debrisGapMarginMeters: 6
   _debrisGridSpacingMeters: 25

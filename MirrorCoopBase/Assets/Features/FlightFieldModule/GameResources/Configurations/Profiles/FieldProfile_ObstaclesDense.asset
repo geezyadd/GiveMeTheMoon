@@ -35,19 +35,19 @@ MonoBehaviour:
   _obstacleDensity:
     _easy: 1
     _hard: 1
-  _obstacleDensityVariation: 0.2
+  _obstacleDensityVariation: 0
   _edgeRampCells: 6
   _edgeDensityShare: 0.4
   _debrisSizeClasses:
   - _name: Small
-    _diameterMeters: {x: 10, y: 24}
-    _weight: 0.93
+    _diameterMeters: {x: 10, y: 16}
+    _weight: 0.97
   - _name: Medium
     _diameterMeters: {x: 40, y: 150}
-    _weight: 0.07
+    _weight: 0.03
   _giantsPerSquareKilometer:
-    _easy: 1.4
-    _hard: 1.7
+    _easy: 0.8
+    _hard: 1
   _giantClasses:
   - _name: Large
     _weight: 0.88

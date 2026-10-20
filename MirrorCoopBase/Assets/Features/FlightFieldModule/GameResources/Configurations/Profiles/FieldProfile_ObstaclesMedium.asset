@@ -33,21 +33,21 @@ MonoBehaviour:
   - _debris: {fileID: 11400000, guid: e1055d45b36e4275beba7e6c2748d9cc, type: 2}
     _weight: 1
   _obstacleDensity:
-    _easy: 0.85
-    _hard: 0.95
-  _obstacleDensityVariation: 0.35
+    _easy: 1
+    _hard: 1
+  _obstacleDensityVariation: 0.2
   _edgeRampCells: 6
   _edgeDensityShare: 0.4
   _debrisSizeClasses:
   - _name: Small
-    _diameterMeters: {x: 10, y: 30}
-    _weight: 0.94
+    _diameterMeters: {x: 10, y: 18}
+    _weight: 0.96
   - _name: Medium
     _diameterMeters: {x: 40, y: 150}
-    _weight: 0.06
+    _weight: 0.04
   _giantsPerSquareKilometer:
-    _easy: 1.2
-    _hard: 1.5
+    _easy: 0.8
+    _hard: 1.0
   _giantClasses:
   - _name: Large
     _weight: 0.88

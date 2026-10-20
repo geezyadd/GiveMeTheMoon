@@ -26,9 +26,9 @@ MonoBehaviour:
   - _prefab: {fileID: 4032994201507482594, guid: eaf29583ee60a434e8dff9c72054ace1, type: 3}
     _weight: 1
   _materials:
-  - {fileID: 2100000, guid: 6c0c82f39238a074daee4db9a5babb0a, type: 2}
-  - {fileID: 2100000, guid: e996aa373ca5ee54e8c3410147ba1add, type: 2}
-  - {fileID: 2100000, guid: d0893f6cec687c34f976ceef3786efaf, type: 2}
+  - {fileID: 2100000, guid: 01eabe4719924c2dbca25dab72d7cbc2, type: 2}
+  - {fileID: 2100000, guid: db805820543140e69a7d8adcd74573c0, type: 2}
+  - {fileID: 2100000, guid: 2dd3f03d50c74f8484a61d5a815a3437, type: 2}
   _mainSize: 1.2
   _mainHeightJitter: 0.08
   _axisScale: {x: 0.85, y: 1.15}

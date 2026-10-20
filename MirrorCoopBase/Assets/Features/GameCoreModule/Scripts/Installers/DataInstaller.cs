@@ -2,7 +2,6 @@ using Features.CameraModule.Scripts.Models;
 using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.CrewInviteModule.Data.Generated;
-using Features.FlightFieldModule.Scripts.Beacons;
 using Features.FlightFieldModule.Scripts.Decor;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
@@ -51,7 +50,6 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindInterfacesAndSelfTo<FlightFieldServerModel>().AsSingle();
             Container.BindInterfacesAndSelfTo<FlightFieldSceneModel>().AsSingle();
             Container.Bind<FieldDecorSceneModel>().AsSingle();
-            Container.Bind<FieldBeaconSceneModel>().AsSingle();
         }
     }
 }

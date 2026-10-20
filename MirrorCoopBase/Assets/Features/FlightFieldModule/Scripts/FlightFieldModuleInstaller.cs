@@ -1,4 +1,3 @@
-using Features.FlightFieldModule.Scripts.Beacons;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Debris;
 using Features.FlightFieldModule.Scripts.Decor;
@@ -25,7 +24,6 @@ namespace Features.FlightFieldModule.Scripts {
             Container.BindInterfacesTo<FieldDifficultyProfileValidator>().AsSingle();
             Container.BindInterfacesTo<FlightFieldDecorConfigurationValidator>().AsSingle();
             Container.BindInterfacesTo<FieldVolumeConfigurationValidator>().AsSingle();
-            Container.BindInterfacesTo<FieldBeaconConfigurationValidator>().AsSingle();
             Container.Bind<IMatrixFactory>().To<MatrixFactory>().AsSingle();
             Container.Bind<IFieldRandomFactory>().To<FieldRandomFactory>().AsSingle();
             Container.Bind<IFieldFootprintReader>().To<FieldFootprintReader>().AsSingle();
@@ -53,16 +51,6 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldProfileLookup>().To<FieldProfileLookup>().AsSingle();
             InstallLiveField();
             InstallDecor();
-            InstallBeacons();
-        }
-
-        // The beacons every peer lays out from the live field's routes; their own pool, because the field's pool is
-        // emptied whenever the field changes.
-        private void InstallBeacons() {
-            Container.Bind<IFieldBeaconLayout>().To<FieldBeaconLayout>().AsSingle();
-            Container.Bind<IFieldBeaconSource>().To<LiveFieldBeaconSource>().AsSingle();
-            Container.Bind<IFieldBeaconSceneBuilder>().To<FieldBeaconSceneBuilder>().AsSingle().WithArguments(new FieldStructurePool());
-            Container.BindInterfacesTo<FieldBeaconBuildSystem>().AsSingle();
         }
 
         // The visual-only decor every peer builds around its ship; its own pool, because the field's pool is emptied
