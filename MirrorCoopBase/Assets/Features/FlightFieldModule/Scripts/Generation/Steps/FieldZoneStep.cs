@@ -21,6 +21,9 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             _fieldDebrisPicker = fieldDebrisPicker;
         }
 
+        public bool IsUsedBy(FieldLayoutKind layout) =>
+            layout == FieldLayoutKind.Corridors;
+
         public void Execute(FieldGenerationContext context) {
             int total = context.Frame.LengthCells * context.Frame.WidthCells;
             FillCorridors(context);

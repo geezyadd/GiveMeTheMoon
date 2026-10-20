@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.FlightFieldModule.Scripts.Configuration;
@@ -32,8 +33,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         public void OneTimeSetUp() {
             _configuration = FlightFieldEditorCompositionFactory.LoadConfiguration<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default);
             FlightFieldDecorConfiguration decor = FlightFieldEditorCompositionFactory.LoadConfiguration<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default);
-            FieldVolumeCandidates candidates = new(_configuration, new FieldRidgeNoise(new FieldValueNoise()), _randomFactory);
-            _chunkLayout = new FieldDecorChunkLayout(decor, _configuration, candidates, _sourceReader);
+            FieldVolumeCandidates candidates = new(new FieldRidgeNoise(new FieldValueNoise()), _randomFactory);
+            _chunkLayout = new FieldDecorChunkLayout(decor, candidates, _sourceReader);
             UseSource(_configuration.DifficultyProfiles[0], Vector2.one * FAR_AWAY);
         }
 
@@ -111,7 +112,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         }
 
         private void UseSource(FieldDifficultyProfile profile, Vector2 routeEnds) =>
-            _sourceReader.Source = new FieldVolumeSource(profile, 0f, CELL_SIZE, routeEnds, routeEnds);
+            _sourceReader.Source = new FieldVolumeSource(profile, profile.HasOwnVolume ? profile.Volume : _configuration.Volume, 0f, CELL_SIZE, routeEnds, routeEnds,
+                Array.Empty<FieldVolumeGiant>());
 
         private List<FieldClusterRockPose> LayChunk(IFieldRandom random, int seed, Vector2Int chunk) {
             List<FieldClusterRockPose> rocks = new();

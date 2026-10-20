@@ -1,3 +1,4 @@
+using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Model;
 using UnityEngine;
 
@@ -5,6 +6,9 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
     // Wall: a band of the profile's thickness along the border is closed; reserved cells (station zones, takeoff and
     // route corridors) stay open. The giant rocks that close it are laid by FieldGiantPlacementStep.
     public sealed class FieldWallStep : IFieldGenerationStep {
+        public bool IsUsedBy(FieldLayoutKind layout) =>
+            layout == FieldLayoutKind.Corridors;
+
         public void Execute(FieldGenerationContext context) {
             Vector2Int size = context.Frame.Size;
             int thickness = context.Profile.WallThicknessCells;

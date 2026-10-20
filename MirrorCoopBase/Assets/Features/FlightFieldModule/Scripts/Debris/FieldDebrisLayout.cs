@@ -11,7 +11,9 @@ namespace Features.FlightFieldModule.Scripts.Debris {
     // closer than the ship gap to a kept neighbour with a higher priority gives way (sequential Matern thinning: a
     // neighbour that gave way itself does not push anyone out), so any two rocks of the field leave the ship room and
     // nothing clumps. A point depends only on the field seed, its grid coordinates and the cells around it, so every
-    // peer gets the same rocks whatever order the cells are built in.
+    // peer gets the same rocks whatever order the cells are built in. An obstacle field sizes its rocks by its profile's
+    // size classes, lets the bigger rock win a conflict (so the rare big ones are not thinned away by the many small
+    // ones) and keeps the full ship gap from its giants, so no gap between a rock and a giant is one the ship almost fits.
     public sealed class FieldDebrisLayout : IFieldDebrisLayout {
         private const float HALF = 0.5f;
         private const uint POINT_X_PRIME = 0x8DA6B343u;
@@ -143,12 +145,24 @@ namespace Features.FlightFieldModule.Scripts.Debris {
             if (!frame.Cells.TryGetDebris(ToCell(position, frame.CellSize), out float density, out FieldDebrisRecipe recipe))
                 return new FieldDebrisCandidate(position, 0f, 0f, priority, false, lookSeed);
 
-            Vector2 range = bigRoll < recipe.BigShare ? recipe.BigDiameterMeters : recipe.SmallDiameterMeters;
+            FieldDifficultyProfile profile = frame.Cells.Profile;
+            Vector2 range = GetDiameterRange(profile, recipe, bigRoll);
             float diameter = Mathf.Lerp(range.x, range.y, sizeRoll);
             float height = GetHeight(recipe, diameter * HALF, offPlaneRoll, heightRoll);
-            bool exists = presence < density && IsClearOfWalls(frame, position, diameter * HALF);
-            return new FieldDebrisCandidate(position, height, diameter, priority, exists, lookSeed);
+            bool exists = presence < density && IsClearOfWalls(frame, position, diameter * HALF, GetWallClearance(profile));
+            float rank = profile.HasDebrisSizeClasses ? diameter + priority : priority;
+            return new FieldDebrisCandidate(position, height, diameter, rank, exists, lookSeed);
         }
+
+        private static Vector2 GetDiameterRange(FieldDifficultyProfile profile, FieldDebrisRecipe recipe, float classRoll) {
+            if (profile.HasDebrisSizeClasses)
+                return FieldWeightedPick.Pick(profile.DebrisSizeClasses, classRoll).DiameterMeters;
+
+            return classRoll < recipe.BigShare ? recipe.BigDiameterMeters : recipe.SmallDiameterMeters;
+        }
+
+        private float GetWallClearance(FieldDifficultyProfile profile) =>
+            profile.Layout == FieldLayoutKind.Obstacles ? _flightFieldConfiguration.DebrisMinGapMeters : _flightFieldConfiguration.DebrisWallClearanceMeters;
 
         // In the plane the middle stays within the cross share of the radius; off the plane the surface stands clear.
         private static float GetHeight(FieldDebrisRecipe recipe, float radius, float offPlaneRoll, float heightRoll) {
@@ -162,8 +176,8 @@ namespace Features.FlightFieldModule.Scripts.Debris {
 
         // No closed cell within the radius and the wall clearance, no empty cell (station zone, takeoff corridor, open
         // space, outside the field) under the rock.
-        private bool IsClearOfWalls(DebrisLayoutFrame frame, Vector2 position, float radius) {
-            float wallClearance = radius + _flightFieldConfiguration.DebrisWallClearanceMeters;
+        private static bool IsClearOfWalls(DebrisLayoutFrame frame, Vector2 position, float radius, float clearance) {
+            float wallClearance = radius + clearance;
             Vector2Int center = ToCell(position, frame.CellSize);
             int reach = Mathf.CeilToInt(Mathf.Max(wallClearance, radius) / frame.CellSize);
             for (int along = center.x - reach; along <= center.x + reach; along++) {
@@ -183,6 +197,11 @@ namespace Features.FlightFieldModule.Scripts.Debris {
             float largest = 0f;
             foreach (FieldDebrisDefinition debris in _fieldStructureCatalog.Debris)
                 largest = Mathf.Max(largest, Mathf.Max(debris.Recipe.BigDiameterMeters.y, debris.Recipe.SmallDiameterMeters.y) * HALF);
+
+            foreach (FieldDifficultyProfile profile in _flightFieldConfiguration.DifficultyProfiles) {
+                foreach (FieldRockSizeClass sizeClass in profile.DebrisSizeClasses)
+                    largest = Mathf.Max(largest, sizeClass.DiameterMeters.y * HALF);
+            }
 
             return largest;
         }

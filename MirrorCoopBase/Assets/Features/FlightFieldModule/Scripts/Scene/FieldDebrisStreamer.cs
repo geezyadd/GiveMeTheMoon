@@ -3,6 +3,7 @@ using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Debris;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
+using Features.FlightFieldModule.Scripts.Requests;
 using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
@@ -18,20 +19,22 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         private readonly LiveFieldDebrisCells _debrisCells = new();
         private readonly FieldStructureCatalog _fieldStructureCatalog;
         private readonly IFieldFootprintReader _fieldFootprintReader;
+        private readonly IFieldProfileLookup _fieldProfileLookup;
         private readonly List<Vector2Int> _cells = new();
         private readonly List<bool> _isBuilt = new();
 
         public FieldDebrisStreamer(IFieldDebrisSceneBuilder fieldDebrisSceneBuilder, FlightFieldConfiguration flightFieldConfiguration, FieldStructureCatalog fieldStructureCatalog,
-                                   IFieldFootprintReader fieldFootprintReader) {
+                                   IFieldFootprintReader fieldFootprintReader, IFieldProfileLookup fieldProfileLookup) {
             _fieldDebrisSceneBuilder = fieldDebrisSceneBuilder;
             _flightFieldConfiguration = flightFieldConfiguration;
             _fieldStructureCatalog = fieldStructureCatalog;
             _fieldFootprintReader = fieldFootprintReader;
+            _fieldProfileLookup = fieldProfileLookup;
         }
 
         public void Restart(IReadOnlyLiveFieldModel liveFieldModel) {
             Clear();
-            _debrisCells.Read(liveFieldModel, _fieldStructureCatalog, _fieldFootprintReader);
+            _debrisCells.Read(liveFieldModel, _fieldStructureCatalog, _fieldFootprintReader, _fieldProfileLookup.GetRequired(liveFieldModel.ProfileId));
             foreach (FieldDebrisRunEntry run in liveFieldModel.DebrisRuns)
                 AddRunCells(run);
         }

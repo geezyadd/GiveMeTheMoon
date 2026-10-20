@@ -8,7 +8,8 @@ using UnityEngine;
 namespace Features.FlightFieldModule.Scripts.Generation.Steps {
     // Balance numbers of the finished field: the zone shares, the smallest gap between two debris rocks in the main
     // and alternative corridors (laid out exactly as the peers will build them) and the dodges per minute: the debris
-    // rocks a ship flying the first main centerline at cruise speed would hit, per minute of that flight.
+    // rocks a ship flying the first main centerline at cruise speed would hit, per minute of that flight. An obstacle
+    // field has no corridors: its rocks around the straight main line count, and every giant on the line is a dodge.
     public sealed class FieldBalanceMetricStep : IFieldGenerationStep {
         private const float SECONDS_PER_MINUTE = 60f;
         private const float HALF = 0.5f;
@@ -29,11 +30,34 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             _fieldRandomFactory = fieldRandomFactory;
         }
 
+        public bool IsUsedBy(FieldLayoutKind layout) =>
+            true;
+
         public void Execute(FieldGenerationContext context) {
             MeasureShares(context);
-            Dictionary<Vector2Int, List<FieldDebrisSpot>> corridorDebris = LayOutCorridorDebris(context);
+            HashSet<Vector2Int> lineCells = CollectMainLineCells(context);
+            Dictionary<Vector2Int, List<FieldDebrisSpot>> corridorDebris = LayOutCorridorDebris(context, lineCells);
             context.Metrics.MinCorridorGapMeters = MeasureMinGap(corridorDebris, context.Frame.CellSize);
             context.Metrics.DodgesPerMinute = MeasureDodges(context, corridorDebris);
+        }
+
+        // The cells the dodges of an obstacle field are counted in: the main centerline and its neighbours.
+        private static HashSet<Vector2Int> CollectMainLineCells(FieldGenerationContext context) {
+            HashSet<Vector2Int> cells = new();
+            if (context.Profile.Layout != FieldLayoutKind.Obstacles)
+                return cells;
+
+            foreach (Vector2Int cell in context.Routes[0].Centerline)
+                AddWithNeighbours(cells, cell);
+
+            return cells;
+        }
+
+        private static void AddWithNeighbours(HashSet<Vector2Int> cells, Vector2Int center) {
+            for (int y = -1; y <= 1; y++) {
+                for (int x = -1; x <= 1; x++)
+                    cells.Add(center + new Vector2Int(x, y));
+            }
         }
 
         private static void MeasureShares(FieldGenerationContext context) {
@@ -53,16 +77,16 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             context.Metrics.EmptyShare = 1f - context.Metrics.BlockedShare - context.Metrics.DebrisShare;
         }
 
-        private Dictionary<Vector2Int, List<FieldDebrisSpot>> LayOutCorridorDebris(FieldGenerationContext context) {
+        private Dictionary<Vector2Int, List<FieldDebrisSpot>> LayOutCorridorDebris(FieldGenerationContext context, HashSet<Vector2Int> lineCells) {
             Dictionary<Vector2Int, List<FieldDebrisSpot>> spotsByCell = new();
-            MatrixFieldDebrisCells cells = new(context.Cells, _fieldStructureCatalog);
+            MatrixFieldDebrisCells cells = new(context.Cells, _fieldStructureCatalog, context.Profile);
             FieldDebrisWorkspace workspace = new(_fieldRandomFactory.Create(0));
             Vector2Int size = context.Frame.Size;
             for (int y = 0; y < size.y; y++) {
                 for (int x = 0; x < size.x; x++) {
                     FieldCell cell = context.Cells[x, y];
-                    bool isCorridorDebris = cell.HasDebris && cell.Reserve is FieldReserveKind.RouteCorridor or FieldReserveKind.AlternativeCorridor;
-                    if (isCorridorDebris)
+                    bool isMeasured = cell.Reserve is FieldReserveKind.RouteCorridor or FieldReserveKind.AlternativeCorridor || lineCells.Contains(new Vector2Int(x, y));
+                    if (cell.HasDebris && isMeasured)
                         spotsByCell.Add(new Vector2Int(x, y), LayOut(context, new Vector2Int(x, y), cells, workspace));
                 }
             }
@@ -113,11 +137,23 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             float cellSize = context.Frame.CellSize;
             float halfShip = _flightFieldConfiguration.ShipWidthMeters * HALF;
             HashSet<(Vector2Int cell, int index)> dodged = new();
-            for (int i = 1; i < centerline.Count; i++)
+            HashSet<int> dodgedGiants = new();
+            float length = 0f;
+            for (int i = 1; i < centerline.Count; i++) {
                 CollectDodges(centerline[i - 1], centerline[i], spotsByCell, cellSize, halfShip, dodged);
+                CollectGiantDodges(context, centerline[i], dodgedGiants);
+                length += Vector2Int.Distance(centerline[i - 1], centerline[i]) * cellSize;
+            }
 
-            float minutes = (centerline.Count - 1) * cellSize / _flightFieldConfiguration.MetricCruiseSpeed / SECONDS_PER_MINUTE;
-            return minutes > 0f ? dodged.Count / minutes : 0f;
+            float minutes = length / _flightFieldConfiguration.MetricCruiseSpeed / SECONDS_PER_MINUTE;
+            return minutes > 0f ? (dodged.Count + dodgedGiants.Count) / minutes : 0f;
+        }
+
+        // A giant of an obstacle field standing on the line; a corridor field keeps its giants off its centerlines.
+        private static void CollectGiantDodges(FieldGenerationContext context, Vector2Int cell, HashSet<int> dodgedGiants) {
+            bool isGiantOnLine = context.Profile.Layout == FieldLayoutKind.Obstacles && context.Cells[cell].IsOccupied;
+            if (isGiantOnLine)
+                dodgedGiants.Add(context.Cells[cell].PlacementId);
         }
 
         private static void CollectDodges(Vector2Int from, Vector2Int to, Dictionary<Vector2Int, List<FieldDebrisSpot>> spotsByCell, float cellSize, float halfShip,

@@ -14,10 +14,11 @@ namespace Features.FlightFieldModule.Scripts.Editor {
         public IFieldFootprintReader FootprintReader { get; }
         public IFieldDebrisLayout DebrisLayout { get; }
         public IFieldRandomFactory RandomFactory { get; }
+        public IFieldProfileLookup ProfileLookup { get; }
 
         public FlightFieldEditorComposition(FlightFieldConfiguration configuration, FieldStructureCatalog catalog, IFlightFieldGenerator generator,
                                             IFieldRequestFactory requestFactory, IFieldFootprintReader footprintReader, IFieldDebrisLayout debrisLayout,
-                                            IFieldRandomFactory randomFactory) {
+                                            IFieldRandomFactory randomFactory, IFieldProfileLookup profileLookup) {
             Configuration = configuration;
             Catalog = catalog;
             Generator = generator;
@@ -25,6 +26,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             FootprintReader = footprintReader;
             DebrisLayout = debrisLayout;
             RandomFactory = randomFactory;
+            ProfileLookup = profileLookup;
         }
     }
 }

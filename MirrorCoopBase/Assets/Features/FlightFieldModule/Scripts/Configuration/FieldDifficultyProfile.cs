@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Configuration {
-    // A preset of the field's structure (Open, Belt, Canyon, Maze, ...): every number that makes a field easy or hard
-    // to cross, each read at the field's difficulty 0..1. A new preset is a new asset in the configuration's list.
+    // A preset of the field's structure (Open, Belt, Canyon, Maze, Obstacles ...): every number that makes a field easy
+    // or hard to cross, each read at the field's difficulty 0..1. A new preset is a new asset in the configuration's list.
     [CreateAssetMenu(menuName = "Game/Flight Field/Difficulty Profile", fileName = "FieldDifficultyProfile")]
     public sealed class FieldDifficultyProfile : ScriptableObject {
         [Tooltip("Stable id sent with the field to every peer: never rename it once it is used.")]
         [SerializeField] private string _id;
+        [Tooltip("Corridors: walls, ridges and winding channels. Obstacles: one open asteroid field (the Obstacle field section); the corridor sections are not used.")]
+        [SerializeField] private FieldLayoutKind _layout = FieldLayoutKind.Corridors;
+        [Tooltip("The volume of rocks above and below the flight plane for this profile; empty = the configuration's volume.")]
+        [SerializeField] private FieldVolumeConfiguration _volume;
 
         [Header("Zone shares (of all field cells)")]
         [Tooltip("Share of cells closed by giant rocks: the border wall, ridges, corridor shoulders.")]
@@ -109,7 +113,30 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [Tooltip("Small debris of corridors and glades.")]
         [SerializeField] private FieldDebrisOption[] _debrisTypes = Array.Empty<FieldDebrisOption>();
 
+        [Header("Obstacle field (layout Obstacles)")]
+        [Tooltip("Chance that a point of the debris grid holds a rock, before the density noise and the edge ramp.")]
+        [SerializeField] private FieldDifficultyRange _obstacleDensity = new(0.3f, 0.45f);
+        [Tooltip("How far the density noise moves the density either way, as a share of it: 0 = even everywhere.")]
+        [SerializeField, Range(0f, 1f)] private float _obstacleDensityVariation = 0.6f;
+        [Tooltip("Cells from the field border over which the density ramps up to the full one; 0 = no ramp.")]
+        [SerializeField, Min(0)] private int _edgeRampCells;
+        [Tooltip("Share of the density (debris and giants) right at the border when the ramp is on.")]
+        [SerializeField, Range(0f, 1f)] private float _edgeDensityShare = 0.5f;
+        [Tooltip("Size classes of the rocks on the debris grid (small, medium), laid out locally by every peer from the field seed.")]
+        [SerializeField] private FieldRockSizeClass[] _debrisSizeClasses = Array.Empty<FieldRockSizeClass>();
+        [Tooltip("Giant rocks per square kilometer of field the generator tries to place.")]
+        [SerializeField] private FieldDifficultyRange _giantsPerSquareKilometer = new(4f, 6f);
+        [Tooltip("Size classes of the giant rocks (large, massive): synced placements in the matrix.")]
+        [SerializeField] private FieldGiantClass[] _giantClasses = Array.Empty<FieldGiantClass>();
+        [Tooltip("Free cells kept between the footprints of two giants: at least the ship gap.")]
+        [SerializeField, Min(1)] private int _giantGapCells = 1;
+        [Tooltip("Random spots tried per giant before it is dropped.")]
+        [SerializeField, Min(1)] private int _giantPlacementTries = 12;
+
         public string Id => _id;
+        public FieldLayoutKind Layout => _layout;
+        public bool HasOwnVolume => _volume != null;
+        public FieldVolumeConfiguration Volume => _volume;
         public FieldDifficultyRange BlockedShare => _blockedShare;
         public FieldDifficultyRange DebrisShare => _debrisShare;
         public FieldDifficultyRange NoiseScaleCells => _noiseScaleCells;
@@ -152,5 +179,15 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public IReadOnlyList<FieldObstacleOption> WallObstacles => _wallObstacles;
         public IReadOnlyList<FieldObstacleOption> RidgeObstacles => _ridgeObstacles;
         public IReadOnlyList<FieldDebrisOption> DebrisTypes => _debrisTypes;
+        public FieldDifficultyRange ObstacleDensity => _obstacleDensity;
+        public float ObstacleDensityVariation => _obstacleDensityVariation;
+        public int EdgeRampCells => _edgeRampCells;
+        public float EdgeDensityShare => _edgeDensityShare;
+        public IReadOnlyList<FieldRockSizeClass> DebrisSizeClasses => _debrisSizeClasses;
+        public bool HasDebrisSizeClasses => _debrisSizeClasses.Length > 0;
+        public FieldDifficultyRange GiantsPerSquareKilometer => _giantsPerSquareKilometer;
+        public IReadOnlyList<FieldGiantClass> GiantClasses => _giantClasses;
+        public int GiantGapCells => _giantGapCells;
+        public int GiantPlacementTries => _giantPlacementTries;
     }
 }

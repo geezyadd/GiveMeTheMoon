@@ -7,6 +7,9 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
     // merge. Every peer lays them out from the live field's routes; visual only, never in a lane.
     [CreateAssetMenu(menuName = "Game/Flight Field/Beacon Configuration", fileName = "FieldBeaconConfiguration_Default")]
     public sealed class FieldBeaconConfiguration : ScriptableObject {
+        [Tooltip("Off: no peer lays out or builds beacons; the layout code stays for when they come back.")]
+        [SerializeField] private bool _isEnabled;
+
         [Header("Placement")]
         [Tooltip("Distance between two beacons along a lane's centerline, meters; their side alternates.")]
         [SerializeField, Min(1f)] private float _beaconSpacingMeters = 320f;
@@ -45,6 +48,7 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [Tooltip("Brightness of the colour at the dim and at the bright point of a blink.")]
         [SerializeField] private Vector2 _blinkIntensity = new(0.35f, 1.6f);
 
+        public bool IsEnabled => _isEnabled;
         public float BeaconSpacingMeters => _beaconSpacingMeters;
         public int EntranceOffsetCells => _entranceOffsetCells;
         public float TurnAngleDegrees => _turnAngleDegrees;

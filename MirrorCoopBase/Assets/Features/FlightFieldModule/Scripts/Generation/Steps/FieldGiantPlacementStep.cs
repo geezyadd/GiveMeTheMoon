@@ -1,3 +1,4 @@
+using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Generation.Placement;
 using Features.FlightFieldModule.Scripts.Model;
 
@@ -9,6 +10,9 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
 
         public FieldGiantPlacementStep(IFieldGiantPacker fieldGiantPacker) =>
             _fieldGiantPacker = fieldGiantPacker;
+
+        public bool IsUsedBy(FieldLayoutKind layout) =>
+            layout == FieldLayoutKind.Corridors;
 
         public void Execute(FieldGenerationContext context) {
             _fieldGiantPacker.Pack(context, FieldCellClass.Wall, context.Profile.WallObstacles);

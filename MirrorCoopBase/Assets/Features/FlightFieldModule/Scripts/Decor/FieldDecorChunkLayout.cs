@@ -7,10 +7,12 @@ using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Decor {
     // The volume rocks of one decor chunk, in field space (x across the field, z along it, y up from the flight
-    // plane): the grid points of every band whose middle lies in the chunk, on both sides of the plane. A point that
-    // comes closer than the band's gap to a neighbour with a higher priority gives way (Matern thinning), so two
-    // rocks never fuse; every point and its neighbours come from the field seed and their grid coordinates only, so
-    // every peer and a rejoining player see the same rocks whatever order the chunks are built in.
+    // plane): the grid points of every band of the field's volume whose middle lies in the chunk, on both sides of the
+    // plane. A point that comes closer than the band's gap to a neighbour with a higher priority gives way (Matern
+    // thinning), and so does a point that comes too close to any rock of a later band (the bands go from small rocks
+    // to big ones, so a small rock never sticks into a big one); no rock comes into a giant of an obstacle field. So
+    // two rocks never fuse; every point and its neighbours come from the field seed and their grid coordinates only,
+    // so every peer and a rejoining player see the same rocks whatever order the chunks are built in.
     public sealed class FieldDecorChunkLayout : IFieldDecorChunkLayout {
         private const float HALF = 0.5f;
         private const float UP = 1f;
@@ -18,14 +20,14 @@ namespace Features.FlightFieldModule.Scripts.Decor {
         private static readonly int[] _sides = { (int)UP, (int)DOWN };
 
         private readonly FlightFieldDecorConfiguration _flightFieldDecorConfiguration;
-        private readonly FlightFieldConfiguration _flightFieldConfiguration;
         private readonly IFieldVolumeCandidates _fieldVolumeCandidates;
         private readonly IFieldVolumeSourceReader _fieldVolumeSourceReader;
+        // The giants that can reach into the chunk being laid out: a field has up to a few hundred.
+        private readonly List<FieldVolumeGiant> _chunkGiants = new();
 
-        public FieldDecorChunkLayout(FlightFieldDecorConfiguration flightFieldDecorConfiguration, FlightFieldConfiguration flightFieldConfiguration,
-                                     IFieldVolumeCandidates fieldVolumeCandidates, IFieldVolumeSourceReader fieldVolumeSourceReader) {
+        public FieldDecorChunkLayout(FlightFieldDecorConfiguration flightFieldDecorConfiguration, IFieldVolumeCandidates fieldVolumeCandidates,
+                                     IFieldVolumeSourceReader fieldVolumeSourceReader) {
             _flightFieldDecorConfiguration = flightFieldDecorConfiguration;
-            _flightFieldConfiguration = flightFieldConfiguration;
             _fieldVolumeCandidates = fieldVolumeCandidates;
             _fieldVolumeSourceReader = fieldVolumeSourceReader;
         }
@@ -35,10 +37,23 @@ namespace Features.FlightFieldModule.Scripts.Decor {
             if (!_fieldVolumeSourceReader.TryRead(out FieldVolumeSource source))
                 return;
 
-            IReadOnlyList<FieldVolumeConfiguration.Band> bands = _flightFieldConfiguration.Volume.Bands;
+            CollectChunkGiants(chunk, source);
+            IReadOnlyList<FieldVolumeConfiguration.Band> bands = source.Volume.Bands;
             for (int bandIndex = 0; bandIndex < bands.Count; bandIndex++) {
                 foreach (int side in _sides)
                     FillBand(new FieldVolumeBandKey(bands[bandIndex], bandIndex, side), fieldSeed, chunk, source, random, rocks);
+            }
+        }
+
+        private void CollectChunkGiants(Vector2Int chunk, FieldVolumeSource source) {
+            _chunkGiants.Clear();
+            float chunkSize = _flightFieldDecorConfiguration.ChunkSize;
+            Vector2 min = (Vector2)chunk * chunkSize;
+            float reach = LargestReach(source.Volume);
+            foreach (FieldVolumeGiant giant in source.Giants) {
+                Vector2 nearest = new(Mathf.Clamp(giant.Center.x, min.x, min.x + chunkSize), Mathf.Clamp(giant.Center.y, min.y, min.y + chunkSize));
+                if (Vector2.Distance(nearest, giant.Center) < giant.Radius + reach)
+                    _chunkGiants.Add(giant);
             }
         }
 
@@ -59,8 +74,11 @@ namespace Features.FlightFieldModule.Scripts.Decor {
             for (int layer = 0; layer < layers; layer++) {
                 Vector3Int point = new(column.x, layer, column.y);
                 FieldVolumeCandidate candidate = _fieldVolumeCandidates.Get(key.Band, key.Index, key.Side, point, fieldSeed, source);
-                if (candidate.Exists && !IsBeaten(key, point, candidate, layers, fieldSeed, source))
-                    rocks.Add(CreateRock(key.Band, candidate, random));
+                if (!candidate.Exists || IsBeaten(key, point, candidate, layers, fieldSeed, source))
+                    continue;
+
+                if (!IsBeatenByLaterBand(key, candidate, fieldSeed, source) && !TouchesGiant(candidate, key.Band.GapMeters))
+                    rocks.Add(CreateRock(source.Volume, key.Band, candidate, random));
             }
         }
 
@@ -95,14 +113,70 @@ namespace Features.FlightFieldModule.Scripts.Decor {
             return false;
         }
 
-        private FieldClusterRockPose CreateRock(FieldVolumeConfiguration.Band band, FieldVolumeCandidate candidate, IFieldRandom random) {
-            FieldVolumeConfiguration volume = _flightFieldConfiguration.Volume;
+        // Any rock of a later band on the same side wins, with the wider of the two gaps.
+        private bool IsBeatenByLaterBand(FieldVolumeBandKey key, FieldVolumeCandidate candidate, int fieldSeed, FieldVolumeSource source) {
+            IReadOnlyList<FieldVolumeConfiguration.Band> bands = source.Volume.Bands;
+            for (int index = key.Index + 1; index < bands.Count; index++) {
+                float gap = Mathf.Max(key.Band.GapMeters, bands[index].GapMeters);
+                if (IsBeatenByBand(new FieldVolumeBandKey(bands[index], index, key.Side), candidate, gap, fieldSeed, source))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private bool IsBeatenByBand(FieldVolumeBandKey other, FieldVolumeCandidate candidate, float gap, int fieldSeed, FieldVolumeSource source) {
+            float spacing = other.Band.SpacingMeters;
+            float conflict = candidate.Radius + other.Band.DiameterMeters.y * HALF + gap;
+            Vector2Int first = new(Mathf.FloorToInt((candidate.Position.x - conflict) / spacing), Mathf.FloorToInt((candidate.Position.z - conflict) / spacing));
+            Vector2Int last = new(Mathf.FloorToInt((candidate.Position.x + conflict) / spacing), Mathf.FloorToInt((candidate.Position.z + conflict) / spacing));
+            int layers = _fieldVolumeCandidates.CountLayers(other.Band);
+            for (int x = first.x; x <= last.x; x++) {
+                for (int z = first.y; z <= last.y; z++) {
+                    if (IsBeatenInOtherColumn(other, new Vector2Int(x, z), layers, candidate, gap, fieldSeed, source))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsBeatenInOtherColumn(FieldVolumeBandKey other, Vector2Int column, int layers, FieldVolumeCandidate candidate, float gap, int fieldSeed,
+                                           FieldVolumeSource source) {
+            for (int layer = 0; layer < layers; layer++) {
+                FieldVolumeCandidate neighbour = _fieldVolumeCandidates.Get(other.Band, other.Index, other.Side, new Vector3Int(column.x, layer, column.y), fieldSeed, source);
+                if (neighbour.Exists && IsTooClose(neighbour, candidate, gap))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private bool TouchesGiant(FieldVolumeCandidate candidate, float gap) {
+            foreach (FieldVolumeGiant giant in _chunkGiants) {
+                if (Vector3.Distance(candidate.Position, new Vector3(giant.Center.x, 0f, giant.Center.y)) < giant.Radius + candidate.Radius + gap)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static FieldClusterRockPose CreateRock(FieldVolumeConfiguration volume, FieldVolumeConfiguration.Band band, FieldVolumeCandidate candidate, IFieldRandom random) {
             random.Reseed(candidate.LookSeed);
             FieldRockVisual prefab = FieldClusterLayout.PickRock(volume.Rocks, random);
             Material material = band.Materials[random.Range(0, band.Materials.Count)];
             float size = candidate.Radius / (FieldRockVisual.MESH_REACH * volume.AxisScale.y);
             Vector3 scale = new(AxisScale(volume, random) * size, AxisScale(volume, random) * size, AxisScale(volume, random) * size);
             return new FieldClusterRockPose(prefab, material, candidate.Position, FieldClusterLayout.RandomRotation(random), scale);
+        }
+
+        // The farthest a rock of the volume reaches from its middle, with its gap.
+        private static float LargestReach(FieldVolumeConfiguration volume) {
+            float reach = 0f;
+            foreach (FieldVolumeConfiguration.Band band in volume.Bands)
+                reach = Mathf.Max(reach, band.DiameterMeters.y * HALF + band.GapMeters);
+
+            return reach;
         }
 
         // The first grid point whose middle lies at or past the chunk edge.

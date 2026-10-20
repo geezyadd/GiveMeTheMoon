@@ -9,7 +9,8 @@ using UnityEngine;
 using Debug = UnityEngine.Debug;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
-    // Generation rules on 200 seeds at loops 0, 5 and 10 for every difficulty profile, with the game's configuration
+    // Generation rules on 200 seeds at loops 0, 5 and 10 for every corridor profile (FieldObstacleFieldTests check the
+    // obstacle ones), with the game's configuration
     // and catalog. Every check rebuilds the occupied cells from the placement list, the way a participant builds the
     // field. The fields are generated in parallel (the generation touches no Unity object and keeps no state); the
     // generation time is measured on its own, one field after another. The balance table of every profile goes to
@@ -39,7 +40,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [OneTimeSetUp]
         public void OneTimeSetUp() {
             _composition = new FlightFieldEditorCompositionFactory().Create();
-            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
+            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Corridors(_composition.Configuration)) {
                 foreach (int loop in _loops)
                     GenerateAll(profile, loop);
             }
@@ -107,7 +108,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [TestCaseSource(nameof(Loops))]
         public void WhenFieldsAreGenerated_ThenTheRouteMattersOnAlmostEveryField(int loop) {
-            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
+            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Corridors(_composition.Configuration)) {
                 List<FlightField> fields = _fields[(profile.Id, loop)];
                 float failureShare = fields.Count(field => !field.Metrics.IsPathMetricMet) / (float)fields.Count;
 
@@ -118,7 +119,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [TestCaseSource(nameof(Loops))]
         public void WhenFieldsAreGenerated_ThenZoneSharesStayNearTheProfile(int loop) {
             float tolerance = _composition.Configuration.ZoneShareTolerance;
-            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
+            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Corridors(_composition.Configuration)) {
                 List<FlightField> fields = _fields[(profile.Id, loop)];
                 float blocked = fields.Average(field => field.Metrics.BlockedShare);
                 float debris = fields.Average(field => field.Metrics.DebrisShare);
@@ -140,7 +141,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenSameSeedIsGeneratedTwice_ThenPlacementsAndDebrisAreEqual() {
-            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
+            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Corridors(_composition.Configuration)) {
                 foreach (int loop in _loops) {
                     FlightField first = _fields[(profile.Id, loop)][0];
                     FlightField again = Generate(profile, FIRST_SEED, loop);
@@ -153,7 +154,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenSeedsDiffer_ThenPlacementsDiffer() {
-            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
+            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Corridors(_composition.Configuration)) {
                 List<FlightField> fields = _fields[(profile.Id, _loops[0])];
                 for (int i = 1; i < fields.Count; i++)
                     CollectionAssert.AreNotEqual(fields[i - 1].Placements, fields[i].Placements, $"{profile.Id}: seeds {fields[i - 1].Seed} and {fields[i].Seed} gave the same field.");
@@ -179,7 +180,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             _scenario.CreateRequest(_composition.RequestFactory, seed, loop);
 
         private IEnumerable<FlightField> FieldsOfLoop(int loop) =>
-            _composition.Configuration.DifficultyProfiles.SelectMany(profile => _fields[(profile.Id, loop)]);
+            FieldTestProfiles.Corridors(_composition.Configuration).SelectMany(profile => _fields[(profile.Id, loop)]);
 
         private FieldTestOccupancy CreateOccupancy(FlightField field) =>
             new(field, _composition.Catalog, _composition.FootprintReader);

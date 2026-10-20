@@ -23,6 +23,9 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             _fieldGiantPacker = fieldGiantPacker;
         }
 
+        public bool IsUsedBy(FieldLayoutKind layout) =>
+            layout == FieldLayoutKind.Corridors;
+
         public void Execute(FieldGenerationContext context) {
             FieldRoute main = FindFirstMain(context.Routes);
             FieldMetrics metrics = context.Metrics;

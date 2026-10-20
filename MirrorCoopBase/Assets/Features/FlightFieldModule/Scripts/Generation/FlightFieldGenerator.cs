@@ -38,8 +38,10 @@ namespace Features.FlightFieldModule.Scripts.Generation {
 
         private FieldGenerationContext Run(FieldRequest request, int seed) {
             FieldGenerationContext context = new(request, seed, _fieldRandomFactory.Create(seed));
-            foreach (IFieldGenerationStep step in _steps)
-                step.Execute(context);
+            foreach (IFieldGenerationStep step in _steps) {
+                if (step.IsUsedBy(request.Profile.Layout))
+                    step.Execute(context);
+            }
 
             return context;
         }

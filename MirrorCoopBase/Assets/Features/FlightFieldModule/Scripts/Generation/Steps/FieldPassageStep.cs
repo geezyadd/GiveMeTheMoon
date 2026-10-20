@@ -17,6 +17,9 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             _fieldCorridorClearer = fieldCorridorClearer;
         }
 
+        public bool IsUsedBy(FieldLayoutKind layout) =>
+            layout == FieldLayoutKind.Corridors;
+
         public void Execute(FieldGenerationContext context) {
             for (int round = 0; round < _flightFieldConfiguration.MaxRepairRounds; round++) {
                 if (AreAllRoutesPassable(context)) {

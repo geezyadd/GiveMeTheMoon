@@ -37,7 +37,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             _composition = new FlightFieldEditorCompositionFactory().Create();
             _layout = new FieldBeaconLayout(_composition.Configuration);
             List<(FieldDifficultyProfile profile, int seed, int loop)> cases = new();
-            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
+            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Corridors(_composition.Configuration)) {
                 foreach (int loop in _loops) {
                     for (int seed = FIRST_SEED; seed < FIRST_SEED + SEED_COUNT; seed++)
                         cases.Add((profile, seed, loop));
@@ -158,7 +158,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         }
 
         private MatrixFieldDebrisCells Cells(FlightField field) =>
-            new(field.Cells, _composition.Catalog);
+            new(field.Cells, _composition.Catalog, _composition.ProfileLookup.GetRequired(field.ProfileId));
 
         // The routes as a peer gets them: kind, centerline and half widths, no closed flag.
         private static List<FieldBeaconRoute> BeaconRoutes(FlightField field) =>

@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02d0199b2bfd97b46bc5ddcf98b4eedc, type: 3}
+  m_Name: FieldProfile_ObstaclesMedium
+  m_EditorClassIdentifier: 
+  _id: obstacles_medium
+  _layout: 2
+  _volume: {fileID: 11400000, guid: 22c21882c3d44bd688f6a25115809a97, type: 2}
+  _noiseScaleCells:
+    _easy: 10
+    _hard: 8
+  _noiseStretchAcross: 1
+  _contrast:
+    _easy: 1.2
+    _hard: 1.4
+  _gladeThreshold:
+    _easy: 0
+    _hard: 0
+  _voidCount:
+    _easy: 0
+    _hard: 0
+  _voidRadiusCells: {x: 4, y: 8}
+  _debrisTypes:
+  - _debris: {fileID: 11400000, guid: e1055d45b36e4275beba7e6c2748d9cc, type: 2}
+    _weight: 1
+  _obstacleDensity:
+    _easy: 0.85
+    _hard: 0.95
+  _obstacleDensityVariation: 0.35
+  _edgeRampCells: 6
+  _edgeDensityShare: 0.4
+  _debrisSizeClasses:
+  - _name: Small
+    _diameterMeters: {x: 10, y: 30}
+    _weight: 0.94
+  - _name: Medium
+    _diameterMeters: {x: 40, y: 150}
+    _weight: 0.06
+  _giantsPerSquareKilometer:
+    _easy: 1.2
+    _hard: 1.5
+  _giantClasses:
+  - _name: Large
+    _weight: 0.88
+    _obstacles:
+    - _structure: {fileID: 11400000, guid: f1e24680a74b4059ab8f58bd7c4104ef, type: 2}
+      _weight: 1
+    - _structure: {fileID: 11400000, guid: 205a5cf053d743dfac3d5a7fc262292a, type: 2}
+      _weight: 1
+    - _structure: {fileID: 11400000, guid: 0b0a0eebeeae4e928652e1dd9e277005, type: 2}
+      _weight: 0.8
+    - _structure: {fileID: 11400000, guid: 6fb857d25aa74117b5262d059451c3de, type: 2}
+      _weight: 0.6
+  - _name: Massive
+    _weight: 0.12
+    _obstacles:
+    - _structure: {fileID: 11400000, guid: d05049b1776c4a2d8b9be0b772dadb8d, type: 2}
+      _weight: 1
+    - _structure: {fileID: 11400000, guid: a4a1f813a292482e9baeed368942de3e, type: 2}
+      _weight: 1
+    - _structure: {fileID: 11400000, guid: 129dc18e2322412aaf8a76a4e7bcb01a, type: 2}
+      _weight: 0.8
+    - _structure: {fileID: 11400000, guid: 5634fa38bdf044198143cb8a944ccd0f, type: 2}
+      _weight: 0.5
+  _giantGapCells: 1
+  _giantPlacementTries: 12

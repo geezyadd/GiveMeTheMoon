@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Generation;
 using Features.FlightFieldModule.Scripts.Model;
@@ -40,7 +41,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenRecipesAreRead_ThenPlaneRocksAreAsWideAndThickAsTheRecipesSay() {
-            foreach (FieldStructureDefinition structure in _composition.Catalog.Structures) {
+            foreach (FieldStructureDefinition structure in CorridorObstacles()) {
                 FieldClusterRecipe recipe = structure.ClusterRecipe;
                 Assert.IsTrue(recipe.HasPlaneCover, $"{recipe.name} does not close the flight plane.");
                 foreach (FieldClusterRockOption option in recipe.PlaneRocks)
@@ -50,7 +51,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenFieldsAreLaidOut_ThenTheFlightPlaneIsClosedInAndBetweenOccupiedCells() {
-            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
+            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Corridors(_composition.Configuration)) {
                 for (int seed = FIRST_SEED; seed < FIRST_SEED + SEEDS; seed++) {
                     FlightField field = Generate(profile, seed);
                     FieldRockBoundsIndex rocks = LayOutRocks(field);
@@ -62,7 +63,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [Test]
         public void WhenFieldsAreLaidOut_ThenTheMainCenterlineIsClearOfRocks() {
             float halfShip = _composition.Configuration.ShipWidthMeters / 2f;
-            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
+            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Corridors(_composition.Configuration)) {
                 FlightField field = Generate(profile, FIRST_SEED);
                 FieldRockBoundsIndex rocks = LayOutRocks(field);
                 foreach (Vector2Int cell in field.Routes[0].Centerline) {
@@ -72,6 +73,11 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 }
             }
         }
+
+        // The wall and ridge rocks of the corridor profiles close the plane; an obstacle field's giants are single rocks.
+        private IEnumerable<FieldStructureDefinition> CorridorObstacles() =>
+            FieldTestProfiles.Corridors(_composition.Configuration).SelectMany(profile => profile.WallObstacles.Concat(profile.RidgeObstacles))
+                .Select(option => option.Structure).Distinct();
 
         private FlightField Generate(FieldDifficultyProfile profile, int seed) =>
             _composition.Generator.Generate(FieldTestRequests.WithProfile(_scenario.CreateRequest(_composition.RequestFactory, seed, LOOP), profile));

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
 using Features.FlightFieldModule.Scripts.Scene;
@@ -12,7 +13,8 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
     // beacons and lays out the new ones from the field's routes and cells; then every frame the beacons within the
     // field's build radius are built and the ones beyond its release radius go back to the pool, and both colours
     // blink. The layout waits for the next tick, so the order in which the field's state and lists arrive does not
-    // matter; the root follows the field's pose at once, so a world shift moves the beacons with the field.
+    // matter; the root follows the field's pose at once, so a world shift moves the beacons with the field. Beacons
+    // switched off in the configuration are never laid out.
     public sealed class FieldBeaconBuildSystem : IInitializable, IDisposable, ITickable {
         private readonly IReadOnlyLiveFieldModel _liveFieldModel;
         private readonly FieldBeaconSceneModel _fieldBeaconSceneModel;
@@ -21,6 +23,7 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
         private readonly IFieldStructureSceneBuilder _fieldStructureSceneBuilder;
         private readonly ILocalViewpointSource _localViewpointSource;
         private readonly IFieldStreamingRule _fieldStreamingRule;
+        private readonly FlightFieldConfiguration _flightFieldConfiguration;
         private readonly List<FieldBeacon> _layout = new();
 
         private bool _isDirty;
@@ -29,7 +32,7 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
 
         public FieldBeaconBuildSystem(IReadOnlyLiveFieldModel liveFieldModel, FieldBeaconSceneModel fieldBeaconSceneModel, IFieldBeaconSceneBuilder fieldBeaconSceneBuilder,
                                       IFieldBeaconSource fieldBeaconSource, IFieldStructureSceneBuilder fieldStructureSceneBuilder,
-                                      ILocalViewpointSource localViewpointSource, IFieldStreamingRule fieldStreamingRule) {
+                                      ILocalViewpointSource localViewpointSource, IFieldStreamingRule fieldStreamingRule, FlightFieldConfiguration flightFieldConfiguration) {
             _liveFieldModel = liveFieldModel;
             _fieldBeaconSceneModel = fieldBeaconSceneModel;
             _fieldBeaconSceneBuilder = fieldBeaconSceneBuilder;
@@ -37,6 +40,7 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
             _fieldStructureSceneBuilder = fieldStructureSceneBuilder;
             _localViewpointSource = localViewpointSource;
             _fieldStreamingRule = fieldStreamingRule;
+            _flightFieldConfiguration = flightFieldConfiguration;
         }
 
         public void Initialize() =>
@@ -65,7 +69,7 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
 
             _fieldBeaconSceneBuilder.ReleaseAll();
             _fieldBeaconSceneModel.Clear();
-            if (liveNumber == LiveFieldNumbers.NO_FIELD)
+            if (liveNumber == LiveFieldNumbers.NO_FIELD || !_flightFieldConfiguration.Beacons.IsEnabled)
                 return;
 
             if (!_fieldBeaconSceneModel.HasRoot)

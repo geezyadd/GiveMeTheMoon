@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Debris;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
+using Features.FlightFieldModule.Scripts.Requests;
 using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
@@ -13,18 +14,21 @@ namespace Features.FlightFieldModule.Scripts.Beacons {
         private readonly IFieldBeaconLayout _fieldBeaconLayout;
         private readonly FieldStructureCatalog _fieldStructureCatalog;
         private readonly IFieldFootprintReader _fieldFootprintReader;
+        private readonly IFieldProfileLookup _fieldProfileLookup;
         private readonly LiveFieldDebrisCells _cells = new();
         private readonly List<FieldBeaconRoute> _routes = new();
         private readonly Dictionary<int, (List<Vector2Int> centerline, List<int> halfWidths)> _cellsByRoute = new();
 
-        public LiveFieldBeaconSource(IFieldBeaconLayout fieldBeaconLayout, FieldStructureCatalog fieldStructureCatalog, IFieldFootprintReader fieldFootprintReader) {
+        public LiveFieldBeaconSource(IFieldBeaconLayout fieldBeaconLayout, FieldStructureCatalog fieldStructureCatalog, IFieldFootprintReader fieldFootprintReader,
+                                     IFieldProfileLookup fieldProfileLookup) {
             _fieldBeaconLayout = fieldBeaconLayout;
             _fieldStructureCatalog = fieldStructureCatalog;
             _fieldFootprintReader = fieldFootprintReader;
+            _fieldProfileLookup = fieldProfileLookup;
         }
 
         public void Read(IReadOnlyLiveFieldModel liveFieldModel, List<FieldBeacon> beacons) {
-            _cells.Read(liveFieldModel, _fieldStructureCatalog, _fieldFootprintReader);
+            _cells.Read(liveFieldModel, _fieldStructureCatalog, _fieldFootprintReader, _fieldProfileLookup.GetRequired(liveFieldModel.ProfileId));
             ReadRoutes(liveFieldModel);
             _fieldBeaconLayout.Fill(_routes, liveFieldModel.CellSize, _cells, beacons);
         }

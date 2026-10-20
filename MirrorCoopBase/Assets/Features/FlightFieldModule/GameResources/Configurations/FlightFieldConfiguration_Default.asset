@@ -26,39 +26,39 @@ MonoBehaviour:
     _routeDifficulties:
     - 0
     _profiles:
-    - _profile: {fileID: 11400000, guid: 4d90c480f061d0e4a9ffe0eec0e8a7c3, type: 2}
+    - _profile: {fileID: 11400000, guid: 0ef421e4b3e2434095ef8b228caf5aff, type: 2}
       _weight: 3
-    - _profile: {fileID: 11400000, guid: de460ba1713a5774589405e0ca382a66, type: 2}
+    - _profile: {fileID: 11400000, guid: 20944875f1ef4239ab09f4a43a9a923c, type: 2}
       _weight: 1
   - _fromLoop: 1
     _routeDifficulties:
     - 0.15
     _profiles:
-    - _profile: {fileID: 11400000, guid: 9e30c59982ca059488e05977ad0f462d, type: 2}
+    - _profile: {fileID: 11400000, guid: 20944875f1ef4239ab09f4a43a9a923c, type: 2}
       _weight: 3
-    - _profile: {fileID: 11400000, guid: de460ba1713a5774589405e0ca382a66, type: 2}
+    - _profile: {fileID: 11400000, guid: 0ef421e4b3e2434095ef8b228caf5aff, type: 2}
       _weight: 1
-    - _profile: {fileID: 11400000, guid: 161a9e51794c3214fbe3ecf1216c7a14, type: 2}
+    - _profile: {fileID: 11400000, guid: cde83282d9114df0927e077618909d1a, type: 2}
       _weight: 1
   - _fromLoop: 3
     _routeDifficulties:
     - 0.35
     _profiles:
-    - _profile: {fileID: 11400000, guid: 1fea97a82938598499b3c68e5edc373f, type: 2}
-      _weight: 3
-    - _profile: {fileID: 11400000, guid: 161a9e51794c3214fbe3ecf1216c7a14, type: 2}
-      _weight: 1
-    - _profile: {fileID: 11400000, guid: bf2d44d4f5473394fb8047bd7b3ce734, type: 2}
+    - _profile: {fileID: 11400000, guid: 20944875f1ef4239ab09f4a43a9a923c, type: 2}
+      _weight: 2
+    - _profile: {fileID: 11400000, guid: ce43379fbabf475785ab698bed9504d0, type: 2}
+      _weight: 2
+    - _profile: {fileID: 11400000, guid: cde83282d9114df0927e077618909d1a, type: 2}
       _weight: 1
   - _fromLoop: 6
     _routeDifficulties:
     - 0.7
     _profiles:
-    - _profile: {fileID: 11400000, guid: fbd000f9c953a8146a5e97f83c9a82fb, type: 2}
+    - _profile: {fileID: 11400000, guid: ce43379fbabf475785ab698bed9504d0, type: 2}
       _weight: 3
-    - _profile: {fileID: 11400000, guid: bf2d44d4f5473394fb8047bd7b3ce734, type: 2}
-      _weight: 1
-    - _profile: {fileID: 11400000, guid: 2c2fc55148917af4c82cd89af7946de1, type: 2}
+    - _profile: {fileID: 11400000, guid: cde83282d9114df0927e077618909d1a, type: 2}
+      _weight: 2
+    - _profile: {fileID: 11400000, guid: 20944875f1ef4239ab09f4a43a9a923c, type: 2}
       _weight: 1
   _difficultyProfiles:
   - {fileID: 11400000, guid: de460ba1713a5774589405e0ca382a66, type: 2}
@@ -69,6 +69,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9e30c59982ca059488e05977ad0f462d, type: 2}
   - {fileID: 11400000, guid: 1fea97a82938598499b3c68e5edc373f, type: 2}
   - {fileID: 11400000, guid: fbd000f9c953a8146a5e97f83c9a82fb, type: 2}
+  - {fileID: 11400000, guid: 0ef421e4b3e2434095ef8b228caf5aff, type: 2}
+  - {fileID: 11400000, guid: 20944875f1ef4239ab09f4a43a9a923c, type: 2}
+  - {fileID: 11400000, guid: ce43379fbabf475785ab698bed9504d0, type: 2}
+  - {fileID: 11400000, guid: cde83282d9114df0927e077618909d1a, type: 2}
   _volume: {fileID: 11400000, guid: 0c6065115c5c09742ab403520b4e8ebf, type: 2}
   _beacons: {fileID: 11400000, guid: 79280a2f14262c14c96c45653c8a3083, type: 2}
   _shipWidthMeters: 10

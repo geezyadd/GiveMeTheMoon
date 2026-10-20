@@ -19,6 +19,9 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             _matrixFactory = matrixFactory;
         }
 
+        public bool IsUsedBy(FieldLayoutKind layout) =>
+            true;
+
         public void Execute(FieldGenerationContext context) {
             FieldRequest request = context.Request;
             FieldFrame frame = CreateFrame(request);

@@ -28,7 +28,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [TestCase(FIRST_FLIGHT_DISTANCE)]
         [TestCase(FIFTH_FLIGHT_DISTANCE)]
         public void WhenFlightIsLong_ThenFrameIsAsLongAsTheFlightAndAsWideAsConfigured(float distance) {
-            FlightField field = _composition.Generator.Generate(CreateRequest(distance, 0f, EASY, _composition.Configuration.DifficultyProfiles[0]));
+            FlightField field = _composition.Generator.Generate(CreateRequest(distance, 0f, EASY, FieldTestProfiles.Corridors(_composition.Configuration)[0]));
 
             int expectedLength = Mathf.CeilToInt(distance / _composition.Configuration.CellSize) + _composition.Configuration.MarginBehindACells
                 + _composition.Configuration.MarginBehindBCells;
@@ -41,7 +41,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [TestCase(-CONE_EDGE_DEGREES, HARD)]
         [TestCase(CONE_EDGE_DEGREES, HARD)]
         public void WhenShipStartsAtTheConeEdge_ThenCruiseStartHasSideRoomAndTheRouteHasAPassage(float launchYaw, float difficulty) {
-            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles)
+            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Corridors(_composition.Configuration))
                 AssertSideRoomAndPassage(_composition.Generator.Generate(CreateRequest(FIFTH_FLIGHT_DISTANCE, launchYaw, difficulty, profile)), profile);
         }
 

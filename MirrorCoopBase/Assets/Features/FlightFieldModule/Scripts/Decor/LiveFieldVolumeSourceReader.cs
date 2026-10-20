@@ -1,36 +1,84 @@
+using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
+using Features.FlightFieldModule.Scripts.Requests;
+using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Decor {
-    // Reads the volume source from the live field model, the same on every peer: the profile by its synced id, the
-    // field's difficulty (the hardest route) and the ends of the first main route's centerline.
+    // Reads the volume source from the live field model, the same on every peer: the profile by its synced id and its
+    // volume (its own or the configuration's), the field's difficulty (the hardest route), the ends of the first main
+    // route's centerline and, for an obstacle field, the spheres of its giants. The giants are read again only when the
+    // field number or the placement count changes (a client may get the lists after the state): the source is read
+    // for every decor chunk.
     public sealed class LiveFieldVolumeSourceReader : IFieldVolumeSourceReader {
         private const float CELL_CENTER = 0.5f;
+        private const float HALF = 0.5f;
         private const int NO_ROUTE = -1;
 
         private readonly IReadOnlyLiveFieldModel _liveFieldModel;
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
+        private readonly IFieldProfileLookup _fieldProfileLookup;
+        private readonly FieldStructureCatalog _fieldStructureCatalog;
+        private readonly IFieldFootprintReader _fieldFootprintReader;
+        private readonly IFieldStructureLayout _fieldStructureLayout;
+        private readonly List<FieldVolumeGiant> _giants = new();
 
-        public LiveFieldVolumeSourceReader(IReadOnlyLiveFieldModel liveFieldModel, FlightFieldConfiguration flightFieldConfiguration) {
+        private int _giantsFieldNumber = LiveFieldNumbers.NO_FIELD;
+        private int _giantsPlacementCount;
+
+        public LiveFieldVolumeSourceReader(IReadOnlyLiveFieldModel liveFieldModel, FlightFieldConfiguration flightFieldConfiguration, IFieldProfileLookup fieldProfileLookup,
+                                           FieldStructureCatalog fieldStructureCatalog, IFieldFootprintReader fieldFootprintReader, IFieldStructureLayout fieldStructureLayout) {
             _liveFieldModel = liveFieldModel;
             _flightFieldConfiguration = flightFieldConfiguration;
+            _fieldProfileLookup = fieldProfileLookup;
+            _fieldStructureCatalog = fieldStructureCatalog;
+            _fieldFootprintReader = fieldFootprintReader;
+            _fieldStructureLayout = fieldStructureLayout;
         }
 
         public bool TryRead(out FieldVolumeSource source) {
             source = default;
             int mainRouteId = FindFirstMainRouteId(out float difficulty);
-            if (mainRouteId == NO_ROUTE || !TryFindProfile(_liveFieldModel.ProfileId, out FieldDifficultyProfile profile))
+            if (mainRouteId == NO_ROUTE || !_fieldProfileLookup.TryFind(_liveFieldModel.ProfileId, out FieldDifficultyProfile profile))
                 return false;
 
             if (!TryFindRouteEnds(mainRouteId, out Vector2Int start, out Vector2Int end))
                 return false;
 
             float cellSize = _liveFieldModel.CellSize;
-            source = new FieldVolumeSource(profile, difficulty, cellSize, OnPlane(start, cellSize), OnPlane(end, cellSize));
+            FieldVolumeConfiguration volume = profile.HasOwnVolume ? profile.Volume : _flightFieldConfiguration.Volume;
+            ReadGiants(profile);
+            source = new FieldVolumeSource(profile, volume, difficulty, cellSize, OnPlane(start, cellSize), OnPlane(end, cellSize), _giants);
             return true;
+        }
+
+        private void ReadGiants(FieldDifficultyProfile profile) {
+            bool isRead = _giantsFieldNumber == _liveFieldModel.Number && _giantsPlacementCount == _liveFieldModel.Placements.Count;
+            if (isRead)
+                return;
+
+            _giantsFieldNumber = _liveFieldModel.Number;
+            _giantsPlacementCount = _liveFieldModel.Placements.Count;
+            _giants.Clear();
+            if (profile.Layout != FieldLayoutKind.Obstacles)
+                return;
+
+            foreach (FieldPlacementEntry placement in _liveFieldModel.Placements)
+                _giants.Add(ToGiant(placement));
+        }
+
+        // The main rock stays within half the footprint's shorter side of its middle, which moves off the plane by up
+        // to its recipe's height jitter of its size.
+        private FieldVolumeGiant ToGiant(FieldPlacementEntry placement) {
+            FieldStructureDefinition structure = _fieldStructureCatalog.GetRequired(placement.StructureId);
+            FieldFootprint footprint = _fieldFootprintReader.Read(structure, placement.Rotation);
+            Pose pose = _fieldStructureLayout.GetFieldPose(footprint, placement.Anchor, placement.Rotation, _liveFieldModel.CellSize);
+            float radius = Mathf.Min(footprint.Width, footprint.Height) * _liveFieldModel.CellSize * HALF;
+            float heightJitter = structure.HasClusterRecipe ? structure.ClusterRecipe.MainHeightJitter : 0f;
+            return new FieldVolumeGiant(new Vector2(pose.position.x, pose.position.z), radius * (1f + 2f * heightJitter));
         }
 
         private int FindFirstMainRouteId(out float hardestDifficulty) {
@@ -62,19 +110,6 @@ namespace Features.FlightFieldModule.Scripts.Decor {
             }
 
             return isFound;
-        }
-
-        private bool TryFindProfile(string id, out FieldDifficultyProfile found) {
-            found = null;
-            foreach (FieldDifficultyProfile profile in _flightFieldConfiguration.DifficultyProfiles) {
-                if (profile.Id != id)
-                    continue;
-
-                found = profile;
-                return true;
-            }
-
-            return false;
         }
 
         // Field space: x across (matrix y), y along (matrix x).
