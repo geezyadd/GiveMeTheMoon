@@ -108,8 +108,8 @@ namespace Features.FlightFieldModule.Scripts.Network {
 
         private void AddRoute(FieldRoute route) {
             _routes.Add(new FieldRouteEntry { Id = route.Id, Kind = route.Kind, Difficulty = route.Difficulty, CorridorWidthCells = route.CorridorWidthCells });
-            for (int i = 0; i < route.Centerline.Count; i++)
-                _routeCells.Add(new FieldRouteCellEntry { RouteId = route.Id, Cell = route.Centerline[i], HalfWidth = route.HalfWidths[i] });
+            foreach (Vector2Int cell in route.Centerline)
+                _routeCells.Add(new FieldRouteCellEntry { RouteId = route.Id, Cell = cell });
         }
     }
 }
