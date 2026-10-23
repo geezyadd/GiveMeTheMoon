@@ -110,7 +110,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 FieldStructureDefinition structure = _composition.Catalog.GetRequired(placement.StructureId);
                 FieldFootprint footprint = _composition.FootprintReader.Read(structure, placement.Rotation);
                 Pose pose = _structureLayout.GetFieldPose(footprint, placement.Anchor, placement.Rotation, cellSize);
-                giants.Add(FieldVolumeGiant.Of(structure, footprint, pose, cellSize));
+                giants.Add(FieldVolumeGiant.CreateFromPlacement(structure, footprint, pose, cellSize));
             }
 
             IReadOnlyList<Vector2Int> centerline = field.Routes[0].Centerline;

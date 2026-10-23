@@ -17,7 +17,7 @@ namespace Features.FlightFieldModule.Scripts.Decor {
 
         // The main rock stays within half the footprint's shorter side of its middle, which moves off the plane by up
         // to its recipe's height jitter of its size. The pose is the placement's field pose (FieldStructureLayout).
-        public static FieldVolumeGiant Of(FieldStructureDefinition structure, FieldFootprint footprint, Pose fieldPose, float cellSize) {
+        public static FieldVolumeGiant CreateFromPlacement(FieldStructureDefinition structure, FieldFootprint footprint, Pose fieldPose, float cellSize) {
             float radius = Mathf.Min(footprint.Width, footprint.Height) * cellSize * HALF;
             float heightJitter = structure.HasClusterRecipe ? structure.ClusterRecipe.MainHeightJitter : 0f;
             return new FieldVolumeGiant(new Vector2(fieldPose.position.x, fieldPose.position.z), radius * (1f + 2f * heightJitter));

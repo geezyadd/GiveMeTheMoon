@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Model;
+using Features.FlightFieldModule.Scripts.Requests;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
@@ -21,13 +22,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             return new FieldRequest(Vector3.zero, Vector3.forward * distance, cruiseStart, 0, seed, routeRequests, profile);
         }
 
-        public static FieldDifficultyProfile FindProfile(FlightFieldConfiguration configuration, string id) {
-            foreach (FieldDifficultyProfile profile in configuration.DifficultyProfiles) {
-                if (profile.Id == id)
-                    return profile;
-            }
-
-            throw new KeyNotFoundException($"No profile '{id}' in {configuration.name}.");
-        }
+        public static FieldDifficultyProfile FindProfile(FlightFieldConfiguration configuration, string id) =>
+            new FieldProfileLookup(configuration).GetRequired(id);
     }
 }

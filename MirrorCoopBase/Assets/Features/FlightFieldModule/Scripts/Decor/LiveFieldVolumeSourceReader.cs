@@ -73,7 +73,7 @@ namespace Features.FlightFieldModule.Scripts.Decor {
             FieldStructureDefinition structure = _fieldStructureCatalog.GetRequired(placement.StructureId);
             FieldFootprint footprint = _fieldFootprintReader.Read(structure, placement.Rotation);
             Pose pose = _fieldStructureLayout.GetFieldPose(footprint, placement.Anchor, placement.Rotation, _liveFieldModel.CellSize);
-            return FieldVolumeGiant.Of(structure, footprint, pose, _liveFieldModel.CellSize);
+            return FieldVolumeGiant.CreateFromPlacement(structure, footprint, pose, _liveFieldModel.CellSize);
         }
 
         private int FindFirstMainRouteId(out float hardestDifficulty) {

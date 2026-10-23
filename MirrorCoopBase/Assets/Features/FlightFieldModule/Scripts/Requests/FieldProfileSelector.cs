@@ -12,17 +12,14 @@ namespace Features.FlightFieldModule.Scripts.Requests {
         private const int PROFILE_SEED_SALT = 0x7F4A7C15;
 
         private readonly IFieldRandomFactory _fieldRandomFactory;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
         private readonly IFieldProfileLookup _fieldProfileLookup;
-
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         private FieldDifficultyProfile _debugProfile;
 #endif
 
         public FieldProfileSelector(IFieldRandomFactory fieldRandomFactory, IFieldProfileLookup fieldProfileLookup) {
             _fieldRandomFactory = fieldRandomFactory;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             _fieldProfileLookup = fieldProfileLookup;
-#endif
         }
 
         public FieldDifficultyProfile Select(FlightFieldConfiguration.LoopRoutes loopRoutes, int seed) {
