@@ -1,3 +1,4 @@
+using Features.ShipModule.Scripts.Hull;
 using Features.StatsModule.EntityStatsModule.Scripts.StatsEntity.Factories;
 using Zenject;
 
@@ -10,6 +11,7 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipStatsConfigurationValidator>().AsSingle();
             Container.BindInterfacesTo<ModuleCatalogValidator>().AsSingle();
             Container.BindInterfacesTo<ShipRunConfigValidator>().AsSingle();
+            Container.BindInterfacesTo<ShipHullConfigurationValidator>().AsSingle();
             Container.BindInterfacesTo<ShipRadarService>().AsSingle();
             Container.BindInterfacesTo<ShipStationPads>().AsSingle();
             Container.BindInterfacesTo<ShipStationDropService>().AsSingle();
@@ -17,6 +19,10 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipFlightStatService>().AsSingle();
             Container.BindInterfacesTo<ShipRoute>().AsSingle();
             Container.BindInterfacesTo<ShipWorldShiftService>().AsSingle();
+            Container.BindInterfacesTo<ShipHullStatSource>().AsSingle();
+            Container.BindInterfacesTo<ShipHullDamageRule>().AsSingle();
+            Container.BindInterfacesTo<ShipHullEventBus>().AsSingle();
+            Container.BindInterfacesTo<ShipHullService>().AsSingle();
             Container.BindInterfacesTo<ShipRunRiderService>().AsSingle();
             Container.BindInterfacesTo<ShipRunService>().AsSingle();
             Container.BindInterfacesTo<ShipRunJoinGate>().AsSingle();
@@ -24,6 +30,7 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipPositionSource>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.BindInterfacesTo<Debug.DeckFeelHarness>().AsSingle();
+            Container.BindInterfacesTo<Debug.ShipHullDebugSystem>().AsSingle();
             Container.Bind<Debug.ShipStatsDebugOverlay>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
 #endif
         }

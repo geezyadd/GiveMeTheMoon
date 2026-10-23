@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Features.AddressablesConstantGeneratorModule.EditorLoading;
@@ -15,7 +14,6 @@ namespace Features.WeaponModule.Editor.Tests {
     // the weapon code never branches on a concrete weapon.
     public sealed class WeaponCatalogGuardTests {
         private const string WEAPON_CODE_FOLDER = "Assets/Features/WeaponModule/Scripts";
-        private const string SOURCE_PATTERN = "*.cs";
         private const string TESTS_FOLDER = "/Editor/Tests/";
         private const string CONCRETE_WEAPON_PATTERN =
             @"switch\s*\([^)]*([Ww]eapon[Tt]ype|\.Id)\)"
@@ -69,13 +67,12 @@ namespace Features.WeaponModule.Editor.Tests {
 
         [Test]
         public void WhenWeaponSourcesAreScanned_ThenNoneBranchesOnAConcreteWeapon() {
-            string[] offenders = Directory.GetFiles(WEAPON_CODE_FOLDER, SOURCE_PATTERN, SearchOption.AllDirectories)
-                .Select(path => path.Replace('\\', '/'))
-                .Where(path => path.Contains(TESTS_FOLDER) == false)
-                .Where(path => Regex.IsMatch(File.ReadAllText(path), CONCRETE_WEAPON_PATTERN))
-                .ToArray();
+            string[] offenders = SourceScan.FindFilesMatching(WEAPON_CODE_FOLDER, TESTS_FOLDER, BranchesOnAConcreteWeapon);
 
             Assert.IsEmpty(offenders, $"Weapon behaviour comes from parts in the definition, not from checks on a concrete weapon: {string.Join(", ", offenders)}");
         }
+
+        private static bool BranchesOnAConcreteWeapon(string source) =>
+            Regex.IsMatch(source, CONCRETE_WEAPON_PATTERN);
     }
 }

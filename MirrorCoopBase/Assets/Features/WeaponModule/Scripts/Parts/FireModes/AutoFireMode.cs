@@ -14,14 +14,14 @@ namespace Features.WeaponModule.Scripts.Parts.FireModes {
 
         private float _shotProgress;
 
+        public float Readiness { get; private set; }
+        public bool IsFiring { get; private set; }
+
         public AutoFireMode(float spinUpSeconds, float spinDownSeconds, float shotsPerSecond) {
             _spinUpSeconds = spinUpSeconds;
             _spinDownSeconds = spinDownSeconds;
             _shotsPerSecond = shotsPerSecond;
         }
-
-        public float Readiness { get; private set; }
-        public bool IsFiring { get; private set; }
 
         public int Advance(bool isTriggerHeld, float deltaTime) {
             if (isTriggerHeld == false) {

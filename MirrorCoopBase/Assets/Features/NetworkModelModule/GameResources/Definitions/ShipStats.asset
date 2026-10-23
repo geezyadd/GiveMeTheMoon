@@ -33,3 +33,9 @@ MonoBehaviour:
   - _name: FlightSpeed
     _typeName: float
     _defaultValue: 
+  - _name: Hull
+    _typeName: float
+    _defaultValue: 
+  - _name: HullMax
+    _typeName: float
+    _defaultValue: 

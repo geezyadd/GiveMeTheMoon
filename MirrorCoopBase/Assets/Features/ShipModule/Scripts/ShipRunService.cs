@@ -1,5 +1,6 @@
 using Features.GameCoreModule.Contracts;
 using Features.ShipModule.Scripts.Generated;
+using Features.ShipModule.Scripts.Hull;
 using Game.Connection;
 using Mirror;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace Features.ShipModule.Scripts {
         private readonly ConnectionSpawnModel _spawn;
         private readonly IFlightRouteListener _flightRouteListener;
         private readonly IShipRunStage _runStage;
+        private readonly IShipHullRepair _shipHullRepair;
 
         private float _wreckUntil;
 
@@ -41,7 +43,8 @@ namespace Features.ShipModule.Scripts {
             IShipRoute route,
             IShipWorldShiftService worldShift,
             IFlightRouteListener flightRouteListener,
-            IShipRunStage runStage) {
+            IShipRunStage runStage,
+            IShipHullRepair shipHullRepair) {
             _model = model;
             _config = config;
             _radar = radar;
@@ -54,6 +57,7 @@ namespace Features.ShipModule.Scripts {
             _worldShift = worldShift;
             _flightRouteListener = flightRouteListener;
             _runStage = runStage;
+            _shipHullRepair = shipHullRepair;
         }
 
         public void CleanupGameplay() {
@@ -247,6 +251,7 @@ namespace Features.ShipModule.Scripts {
 
         private void FinishLanded() {
             Ship.ServerSettleAfterLanding();
+            _shipHullRepair.ServerRepairAfterLanding();
             EnterStation(CurrentPad, ShipRunPhase.Build, _model.LastAbortReason);
             // After EnterStation's origin shift: riders still bound are carried by it, released ones would stay behind.
             Ship.Riders.ServerReleaseRiders();

@@ -57,9 +57,11 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return new LoopSmokeHandCheck(_session.Ship).ReinstallRadarByHandCoroutine();
 
             ShipLandingPad startPad = _flight.FindPadUnderShip();
-            yield return _flight.FlyLoopCoroutine(1);
+            LoopSmokeHullCheck hullCheck = new LoopSmokeHullCheck();
+            yield return _flight.FlyLoopCoroutine(1, hullCheck.HitInCruiseCoroutine);
             ShipLandingPad firstPad = _flight.FindPadUnderShip();
             yield return _flight.AssertLandedSafelyCoroutine(1, startPad, firstPad);
+            hullCheck.AssertRepairedAfterLanding(1);
             int firstLandingSpawns = LoopSmokeSpawnCounts.CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values);
             LoopSmokeSpawnCounts.Log("run 1 after the first landing");
             Assert.Greater(firstLandingSpawns, 0, "Run 1 spawned no pad or drops on landing.");
@@ -93,6 +95,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return FlyMoreLoopsCoroutine(2, RUN_TWO_LOOPS);
             _fieldCheck.AssertNetworkedPathWasChecked();
             yield return new LoopSmokeShopCheck().BuyAtKioskAndWalkAwayCoroutine(_flight.FindPadUnderShip());
+            yield return _session.ReturnToLobbyByHullLossCoroutine();
 
             yield return _session.ReturnToLobbyByAllDeadCoroutine();
             yield return new LoopSmokeStagePresetCheck(_session, _flight).PlayLateRunAndReturnToLobbyCoroutine();

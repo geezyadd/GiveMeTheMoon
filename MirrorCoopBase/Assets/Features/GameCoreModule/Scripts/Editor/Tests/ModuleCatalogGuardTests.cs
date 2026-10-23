@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Features.AddressablesConstantGeneratorModule.EditorLoading;
@@ -18,7 +17,6 @@ namespace Features.GameCoreModule.Editor.Tests {
     // spawned and taken off a slot again, and ship and shop code never branches on a concrete module.
     public sealed class ModuleCatalogGuardTests {
         private const string GLOBAL_SCENE_PATH = "Assets/Features/GameCoreModule/GameResources/Scenes/GlobalScene.unity";
-        private const string SOURCE_PATTERN = "*.cs";
         private const string TESTS_FOLDER = "/Editor/Tests/";
         // ItemViewId, or a category compared with or switched on a concrete value to pick behaviour (the former
         // "Engine and Radar are removable" and "the Control slot steers" rules). Declaring a slot category, passing it
@@ -91,10 +89,7 @@ namespace Features.GameCoreModule.Editor.Tests {
         [Test]
         public void WhenShipAndShopSourcesAreScanned_ThenNoneChecksAConcreteModule() {
             string[] offenders = _moduleCodeFolders
-                .SelectMany(folder => Directory.GetFiles(folder, SOURCE_PATTERN, SearchOption.AllDirectories))
-                .Select(ToAssetPath)
-                .Where(path => path.Contains(TESTS_FOLDER) == false)
-                .Where(path => Regex.IsMatch(File.ReadAllText(path), CONCRETE_MODULE_PATTERN))
+                .SelectMany(folder => SourceScan.FindFilesMatching(folder, TESTS_FOLDER, ChecksAConcreteModule))
                 .ToArray();
 
             Assert.IsEmpty(offenders, $"Module behaviour comes from ModuleDefinition, not from checks of a module type: {string.Join(", ", offenders)}");
@@ -127,7 +122,7 @@ namespace Features.GameCoreModule.Editor.Tests {
             }
         }
 
-        private static string ToAssetPath(string path) =>
-            path.Replace('\\', '/');
+        private static bool ChecksAConcreteModule(string source) =>
+            Regex.IsMatch(source, CONCRETE_MODULE_PATTERN);
     }
 }

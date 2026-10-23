@@ -15,6 +15,7 @@ namespace Features.WeaponModule.Editor.Tests {
         private const float FIRE_RATE_TOLERANCE = 0.25f;
         private const float BURST_SECONDS = 1f;
         private const float RANGE_TOLERANCE_METERS = 25f;
+        private const float IN_RANGE_DISTANCE_METERS = 100f;
         private const double START_SECONDS = 100d;
 
         private static readonly WeaponHitLimits _limits = new WeaponHitLimits(SHOTS_PER_SECOND, RANGE_METERS, maxHitsPerShot: 1);
@@ -36,19 +37,19 @@ namespace Features.WeaponModule.Editor.Tests {
 
         [Test]
         public void WhenShooterHoldsThisWeaponAndAllIsFine_ThenHitIsAccepted() =>
-            Assert.AreEqual(WeaponHitVerdict.Accepted, Evaluate(CreateHit(WEAPON_ID, 100f), WEAPON_ID, isTargetAlive: true, START_SECONDS));
+            Assert.AreEqual(WeaponHitVerdict.Accepted, Evaluate(CreateHit(WEAPON_ID, IN_RANGE_DISTANCE_METERS), WEAPON_ID, isTargetAlive: true, START_SECONDS));
 
         [Test]
         public void WhenShooterHoldsAnotherWeapon_ThenHitIsRejected() =>
-            Assert.AreEqual(WeaponHitVerdict.WeaponNotHeld, Evaluate(CreateHit(WEAPON_ID, 100f), OTHER_WEAPON_ID, isTargetAlive: true, START_SECONDS));
+            Assert.AreEqual(WeaponHitVerdict.WeaponNotHeld, Evaluate(CreateHit(WEAPON_ID, IN_RANGE_DISTANCE_METERS), OTHER_WEAPON_ID, isTargetAlive: true, START_SECONDS));
 
         [Test]
         public void WhenShooterHoldsNoWeapon_ThenHitIsRejected() =>
-            Assert.AreEqual(WeaponHitVerdict.WeaponNotHeld, Evaluate(CreateHit(WEAPON_ID, 100f), string.Empty, isTargetAlive: true, START_SECONDS));
+            Assert.AreEqual(WeaponHitVerdict.WeaponNotHeld, Evaluate(CreateHit(WEAPON_ID, IN_RANGE_DISTANCE_METERS), string.Empty, isTargetAlive: true, START_SECONDS));
 
         [Test]
         public void WhenTargetIsNoLongerAlive_ThenHitIsRejected() =>
-            Assert.AreEqual(WeaponHitVerdict.TargetNotAlive, Evaluate(CreateHit(WEAPON_ID, 100f), WEAPON_ID, isTargetAlive: false, START_SECONDS));
+            Assert.AreEqual(WeaponHitVerdict.TargetNotAlive, Evaluate(CreateHit(WEAPON_ID, IN_RANGE_DISTANCE_METERS), WEAPON_ID, isTargetAlive: false, START_SECONDS));
 
         [Test]
         public void WhenHitIsBeyondRangeWithinTolerance_ThenHitIsAccepted() =>
@@ -87,17 +88,17 @@ namespace Features.WeaponModule.Editor.Tests {
             int burst = Mathf.FloorToInt(SHOTS_PER_SECOND * (1f + FIRE_RATE_TOLERANCE) * BURST_SECONDS);
 
             for (int i = 0; i < burst; i++)
-                Assert.AreEqual(WeaponHitVerdict.Accepted, Evaluate(CreateHit(WEAPON_ID, 100f), WEAPON_ID, isTargetAlive: true, START_SECONDS), $"hit {i}");
+                Assert.AreEqual(WeaponHitVerdict.Accepted, Evaluate(CreateHit(WEAPON_ID, IN_RANGE_DISTANCE_METERS), WEAPON_ID, isTargetAlive: true, START_SECONDS), $"hit {i}");
 
-            Assert.AreEqual(WeaponHitVerdict.FireRateExceeded, Evaluate(CreateHit(WEAPON_ID, 100f), WEAPON_ID, isTargetAlive: true, START_SECONDS));
+            Assert.AreEqual(WeaponHitVerdict.FireRateExceeded, Evaluate(CreateHit(WEAPON_ID, IN_RANGE_DISTANCE_METERS), WEAPON_ID, isTargetAlive: true, START_SECONDS));
         }
 
         [Test]
         public void WhenARejectedHitIsReported_ThenTheBudgetIsNotSpent() {
-            Evaluate(CreateHit(WEAPON_ID, 100f), WEAPON_ID, isTargetAlive: true, START_SECONDS);
+            Evaluate(CreateHit(WEAPON_ID, IN_RANGE_DISTANCE_METERS), WEAPON_ID, isTargetAlive: true, START_SECONDS);
             float available = _budget.AvailableHits;
 
-            Evaluate(CreateHit(WEAPON_ID, 100f), WEAPON_ID, isTargetAlive: false, START_SECONDS);
+            Evaluate(CreateHit(WEAPON_ID, IN_RANGE_DISTANCE_METERS), WEAPON_ID, isTargetAlive: false, START_SECONDS);
 
             Assert.AreEqual(available, _budget.AvailableHits);
         }
@@ -107,7 +108,7 @@ namespace Features.WeaponModule.Editor.Tests {
             int count = Mathf.FloorToInt(hitsPerSecond * seconds);
             for (int i = 0; i < count; i++) {
                 double now = START_SECONDS + i / (double)hitsPerSecond;
-                if (Evaluate(CreateHit(WEAPON_ID, 100f), WEAPON_ID, isTargetAlive: true, now) == WeaponHitVerdict.FireRateExceeded)
+                if (Evaluate(CreateHit(WEAPON_ID, IN_RANGE_DISTANCE_METERS), WEAPON_ID, isTargetAlive: true, now) == WeaponHitVerdict.FireRateExceeded)
                     rejected++;
             }
 
