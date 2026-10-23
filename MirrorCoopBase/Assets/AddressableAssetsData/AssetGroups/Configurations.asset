@@ -65,6 +65,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a818313b2919db44d8ced6b58d83c4e3
+    m_Address: ShipHullConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a9e63c1d4f0b4e8a1c2d3e4f5a6b7c8d
     m_Address: PlayerDamageConfiguration_Default
     m_ReadOnly: 0

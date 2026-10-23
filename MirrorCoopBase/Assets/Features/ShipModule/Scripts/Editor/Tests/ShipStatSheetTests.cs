@@ -14,7 +14,8 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
         private const string LEFT_ENGINE_SOCKET = "engine-left";
         private const string RIGHT_ENGINE_SOCKET = "engine-right";
 
-        // The values ShipModules.ApplyDefaultStats had in code before they moved to the configuration.
+        // The values ShipModules.ApplyDefaultStats had in code before they moved to the configuration; Armor is a
+        // damage reduction since the hull got its own Hull stat, so it starts at 0.
         private const float THRUST_MAX = 999f;
         private const float THRUST = 0f;
         private const float FLIGHT_SPEED_MAX = 99f;
@@ -24,11 +25,17 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
         private const float HANDLING_MAX = 20f;
         private const float HANDLING = 1f;
         private const float ARMOR_MAX = 100f;
-        private const float ARMOR = 100f;
+        private const float ARMOR = 0f;
+        private const float HULL_MAX = 100f;
+        private const float HULL = 100f;
 
         private const float ENGINE_FLIGHT_SPEED = 1f;
         private const float SMALL_ENGINE_FLIGHT_SPEED = 0.5f;
         private const float HANDLING_PERCENT = 0.1f;
+        private const float HULL_BONUS = 50f;
+        private const float HIT = 30f;
+        private const float LETHAL_HIT = 1000f;
+        private const string HULL_SOCKET = "hull-plate";
 
         private GameObject _host;
         private ShipStatEntity _entity;
@@ -60,6 +67,57 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
             AssertStat(ShipStatType.DodgeRange, DODGE_RANGE_MAX, DODGE_RANGE);
             AssertStat(ShipStatType.Handling, HANDLING_MAX, HANDLING);
             AssertStat(ShipStatType.Armor, ARMOR_MAX, ARMOR);
+            AssertStat(ShipStatType.Hull, HULL_MAX, HULL);
+        }
+
+        [Test]
+        public void WhenDefaultsApplied_ThenSnapshotHasFullHull() {
+            ShipStatsState state = _sheet.CreateState();
+
+            Assert.AreEqual(HULL, state.Hull, TOLERANCE);
+            Assert.AreEqual(HULL_MAX, state.HullMax, TOLERANCE);
+        }
+
+        [Test]
+        public void WhenHullHitHarderThanItHas_ThenItStopsAtZero_AndRefillTakesItToMax() {
+            _sheet.Subtract(ShipStatType.Hull, LETHAL_HIT);
+            Assert.AreEqual(0f, _sheet.GetFull(ShipStatType.Hull), TOLERANCE);
+
+            _sheet.Refill(ShipStatType.Hull);
+
+            Assert.AreEqual(HULL_MAX, _sheet.GetFull(ShipStatType.Hull), TOLERANCE);
+        }
+
+        [Test]
+        public void WhenHullModuleInstalled_ThenMaxAndCurrentRiseByTheBonus() {
+            _sheet.Subtract(ShipStatType.Hull, HIT);
+
+            _sheet.AddModule(HULL_SOCKET, HullModifiers(HULL_BONUS));
+
+            Assert.AreEqual(HULL_MAX + HULL_BONUS, _sheet.GetMax(ShipStatType.Hull), TOLERANCE);
+            Assert.AreEqual(HULL - HIT + HULL_BONUS, _sheet.GetFull(ShipStatType.Hull), TOLERANCE);
+        }
+
+        [Test]
+        public void WhenHullModuleRemovedFromAFullHull_ThenHullIsClampedToTheNewMax() {
+            _sheet.AddModule(HULL_SOCKET, HullModifiers(HULL_BONUS));
+
+            Assert.IsTrue(_sheet.RemoveModule(HULL_SOCKET));
+
+            Assert.AreEqual(HULL_MAX, _sheet.GetMax(ShipStatType.Hull), TOLERANCE);
+            Assert.AreEqual(HULL_MAX, _sheet.GetFull(ShipStatType.Hull), TOLERANCE);
+        }
+
+        [Test]
+        public void WhenHullModuleRemovedFromADamagedHull_ThenHullDoesNotHeal() {
+            _sheet.AddModule(HULL_SOCKET, HullModifiers(HULL_BONUS));
+            _sheet.Subtract(ShipStatType.Hull, HULL_BONUS + HIT);
+            float damaged = _sheet.GetFull(ShipStatType.Hull);
+
+            Assert.IsTrue(_sheet.RemoveModule(HULL_SOCKET));
+
+            Assert.AreEqual(damaged, _sheet.GetFull(ShipStatType.Hull), TOLERANCE);
+            Assert.LessOrEqual(_sheet.GetFull(ShipStatType.Hull), _sheet.GetMax(ShipStatType.Hull));
         }
 
         [Test]
@@ -121,6 +179,9 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
 
         private static ModuleDefinition.StatModifierEntry[] FlightSpeedModifiers(float value) =>
             new[] { Modifier(ShipStatType.FlightSpeed, value, ModifierType.Flat) };
+
+        private static ModuleDefinition.StatModifierEntry[] HullModifiers(float value) =>
+            new[] { Modifier(ShipStatType.Hull, value, ModifierType.Flat) };
 
         private static ModuleDefinition.StatModifierEntry Modifier(ShipStatType stat, float value, ModifierType type) =>
             new ModuleDefinition.StatModifierEntry { Stat = stat, Value = value, Type = type };

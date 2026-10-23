@@ -11,9 +11,11 @@ namespace Features.ShipModule.Scripts.Generated {
         public float Handling;
         public float Armor;
         public float FlightSpeed;
+        public float Hull;
+        public float HullMax;
 
         public bool Equals(ShipStatsState other) {
-            return EqualityComparer<float>.Default.Equals(Thrust, other.Thrust) && EqualityComparer<float>.Default.Equals(DodgeRange, other.DodgeRange) && EqualityComparer<float>.Default.Equals(Handling, other.Handling) && EqualityComparer<float>.Default.Equals(Armor, other.Armor) && EqualityComparer<float>.Default.Equals(FlightSpeed, other.FlightSpeed);
+            return EqualityComparer<float>.Default.Equals(Thrust, other.Thrust) && EqualityComparer<float>.Default.Equals(DodgeRange, other.DodgeRange) && EqualityComparer<float>.Default.Equals(Handling, other.Handling) && EqualityComparer<float>.Default.Equals(Armor, other.Armor) && EqualityComparer<float>.Default.Equals(FlightSpeed, other.FlightSpeed) && EqualityComparer<float>.Default.Equals(Hull, other.Hull) && EqualityComparer<float>.Default.Equals(HullMax, other.HullMax);
         }
 
         public override bool Equals(object obj) =>
@@ -26,6 +28,8 @@ namespace Features.ShipModule.Scripts.Generated {
             hash.Add(Handling);
             hash.Add(Armor);
             hash.Add(FlightSpeed);
+            hash.Add(Hull);
+            hash.Add(HullMax);
             return hash.ToHashCode();
         }
     }

@@ -7,6 +7,7 @@ using Features.GrabModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
 using Features.PlayerProfileModule.Scripts;
 using Features.ShipModule.Scripts;
+using Features.ShipModule.Scripts.Hull;
 using Features.ShopModule.Scripts.Configurations;
 using Features.Zenject.Zenject.Addons.AddressablesConfigurationsLoader;
 using Game.Connection;
@@ -24,6 +25,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<ShipAccumulativeStatsConfiguration>(
                     Address.Configurations.ShipAccumulativeStatsConfiguration_Default)
                 .AsSingle();
+            Container.BindConfigurationFromAddressables<ShipHullConfiguration>(Address.Configurations.ShipHullConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShopCatalog>(Address.Configurations.ShopCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WalletConfiguration>(Address.Configurations.WalletConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShopKioskConfiguration>(Address.Configurations.ShopKioskConfiguration_Default).AsSingle();

@@ -1,6 +1,7 @@
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.GameCoreModule.Contracts;
 using Features.ShipModule.Scripts.Generated;
+using Features.ShipModule.Scripts.Hull;
 using Mirror;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -26,6 +27,7 @@ namespace Features.ShipModule.Scripts {
         private ShipDeckCargo _cargo;
         private ShipDeckGeometry _deckGeometry;
         private ShipModules _modules;
+        private ShipHullStat _hull;
         private ShipRiders _riders;
         private ShipDeckRideRule _rideRule;
         private ShipSeats _seats;
@@ -48,6 +50,7 @@ namespace Features.ShipModule.Scripts {
         internal ShipSocketsSync SocketStates => _socketStates;
         public IShipDeckGeometry DeckGeometry => _deckGeometry;
         internal IShipModules Modules => _modules;
+        internal IShipHullStat Hull => _hull;
         internal IShipRiders Riders => _riders;
         internal IShipDeckRideRule RideRule => _rideRule;
         internal IShipSeats Seats => _seats;
@@ -104,7 +107,9 @@ namespace Features.ShipModule.Scripts {
                 _sockets != null && _stats != null && _socketStates != null && _statsSync != null,
                 name + " needs its sockets, socket states, stat entity and stats sync wired.");
             _deckGeometry = new ShipDeckGeometry(transform, _deck, _deckColliders);
-            _modules = new ShipModules(_sockets, new ShipStatSheet(_stats), _statsSync, ReadStatsConfiguration);
+            ShipStatSheet statSheet = new ShipStatSheet(_stats);
+            _modules = new ShipModules(_sockets, statSheet, _statsSync, ReadStatsConfiguration);
+            _hull = new ShipHullStat(statSheet, _modules);
             _rideRule = new ShipDeckRideRule(_deckGeometry, ReadFlightSettings);
             _riders = new ShipRiders(this, _rideRule, ReadCharacterMovables);
             _seats = new ShipSeats(this, _sockets, _riders);
@@ -189,8 +194,9 @@ namespace Features.ShipModule.Scripts {
             _riders.ServerReleaseRiders();
             _seats.ClearAllOccupants();
             _modules.ResetInstalledModules();
-            // A run starts with this reset: a ship with no stat modules publishes nothing on uninstall, so publish here.
-            _modules.ServerPublishStats();
+            // A run starts with this reset: full hull for the new max, and a ship with no stat modules publishes
+            // nothing on uninstall, so the repair's publish covers that too.
+            _hull.ServerRepair();
             _flightControl.UnlockControls();
             if (_lever != null)
                 _lever.ServerReset();

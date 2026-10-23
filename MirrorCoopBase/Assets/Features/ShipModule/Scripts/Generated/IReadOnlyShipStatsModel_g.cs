@@ -10,6 +10,8 @@ namespace Features.ShipModule.Scripts.Generated {
         public float Handling { get; }
         public float Armor { get; }
         public float FlightSpeed { get; }
+        public float Hull { get; }
+        public float HullMax { get; }
         public bool IsAvailable { get; }
 
         public event Action OnThrustChanged;
@@ -17,6 +19,8 @@ namespace Features.ShipModule.Scripts.Generated {
         public event Action OnHandlingChanged;
         public event Action OnArmorChanged;
         public event Action OnFlightSpeedChanged;
+        public event Action OnHullChanged;
+        public event Action OnHullMaxChanged;
         public event Action OnChanged;
         public event Action OnAvailableChanged;
     }

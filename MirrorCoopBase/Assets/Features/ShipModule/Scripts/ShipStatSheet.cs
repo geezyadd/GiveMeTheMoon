@@ -51,13 +51,27 @@ namespace Features.ShipModule.Scripts {
         public float GetFull(ShipStatType type) =>
             _stats.GetStat(type).FullValue;
 
+        public float GetMax(ShipStatType type) =>
+            _stats.GetStat(type).MaxValue;
+
+        // An accumulative stat stops at its minimum (0).
+        public void Subtract(ShipStatType type, float amount) =>
+            _stats.GetStat(type).Subtract(amount);
+
+        public void Refill(ShipStatType type) {
+            IStat stat = _stats.GetStat(type);
+            stat.OverrideValue(stat.MaxValue);
+        }
+
         public ShipStatsState CreateState() =>
             new ShipStatsState {
                 Thrust = GetFull(ShipStatType.Thrust),
                 DodgeRange = GetFull(ShipStatType.DodgeRange),
                 Handling = GetFull(ShipStatType.Handling),
                 Armor = GetFull(ShipStatType.Armor),
-                FlightSpeed = GetFull(ShipStatType.FlightSpeed)
+                FlightSpeed = GetFull(ShipStatType.FlightSpeed),
+                Hull = GetFull(ShipStatType.Hull),
+                HullMax = GetMax(ShipStatType.Hull)
             };
     }
 }
