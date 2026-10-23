@@ -11,6 +11,7 @@ using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Hull;
 using Features.ShopModule.Scripts.Configurations;
 using Features.StagePresetModule.Scripts.Configurations;
+using Features.WeaponModule.Scripts.Definitions;
 using Features.Zenject.Zenject.Addons.AddressablesConfigurationsLoader;
 using Game.Connection;
 using Zenject;
@@ -46,6 +47,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<FieldStructureCatalog>(Address.Configurations.FieldStructureCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<StagePresetCatalog>(Address.Configurations.StagePresetCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<WeaponCatalog>(Address.Configurations.WeaponCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<WeaponHitRuleConfiguration>(Address.Configurations.WeaponHitRuleConfiguration_Default).AsSingle();
         }
     }
 }
