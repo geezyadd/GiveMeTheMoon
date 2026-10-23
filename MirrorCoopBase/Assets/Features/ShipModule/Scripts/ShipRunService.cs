@@ -19,6 +19,7 @@ namespace Features.ShipModule.Scripts {
         private readonly IShipWorldShiftService _worldShift;
         private readonly IShipRadarBinding _radar;
         private readonly ConnectionSpawnModel _spawn;
+        private readonly IFlightRouteListener _flightRouteListener;
 
         private float _wreckUntil;
 
@@ -36,7 +37,8 @@ namespace Features.ShipModule.Scripts {
             IShipStationDropService drops,
             IShipFlightStatService flightStats,
             IShipRoute route,
-            IShipWorldShiftService worldShift) {
+            IShipWorldShiftService worldShift,
+            IFlightRouteListener flightRouteListener) {
             _model = model;
             _config = config;
             _radar = radar;
@@ -47,6 +49,7 @@ namespace Features.ShipModule.Scripts {
             _flightStats = flightStats;
             _route = route;
             _worldShift = worldShift;
+            _flightRouteListener = flightRouteListener;
         }
 
         public void CleanupGameplay() {
@@ -82,6 +85,7 @@ namespace Features.ShipModule.Scripts {
             if (NetworkServer.active && Director != null)
                 Director.ServerSetState(StartState());
 
+            _flightRouteListener.ServerOnFlightEnded();
             _binding.Clear();
             _pads.Reset(null);
             _wreckUntil = 0f;
@@ -111,17 +115,17 @@ namespace Features.ShipModule.Scripts {
             Vector3 hover = _route.PlanLaunch(from, ship.transform.forward);
             ShipFlightMode mode = _route.SelectedFlightMode;
             Quaternion heading = Quaternion.LookRotation(_route.LaunchForward, Vector3.up);
-            Quaternion routeHeading = Quaternion.LookRotation(_route.DestinationForward, Vector3.up);
             ship.BeginTakeoff(
                 from,
                 hover,
                 heading,
-                routeHeading,
                 _config.TakeoffSeconds,
                 stats.DodgeRangeScale,
                 mode);
-            if (mode == ShipFlightMode.TravelInSpace)
+            if (mode == ShipFlightMode.TravelInSpace) {
                 SpawnNextPad(_route.DestinationPoint, _route.DestinationForward, true);
+                _flightRouteListener.ServerOnFlightLaunched(new FlightLaunch(from, _route.DestinationPoint, hover, _model.LoopIndex));
+            }
 
             _route.BeginRoute(stats.CruiseSeconds);
             _route.ApplyFrame(false);
@@ -261,6 +265,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void EnterStation(ShipLandingPad pad, ShipRunPhase phase, ShipRunAbortReason reason) {
+            _flightRouteListener.ServerOnFlightEnded();
             _worldShift.RecenterIfFar();
             _drops.SpawnDrops(pad, _model.LoopIndex);
             if (pad != null)

@@ -29,12 +29,20 @@ namespace Game.Connection
         readonly HashSet<NetworkConnection> pendingDisconnects = new HashSet<NetworkConnection>();
 
         ConnectionSessionModel sessionModel;
+        IConnectionJoinPolicy joinPolicy;
+        ConnectionRejectModel rejectModel;
 
         public string PlayerName
         {
             get => playerName;
             set => playerName = value;
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Tests only: two processes on one PC share the Steam account, so a test that needs its own names per player
+        // authenticates with PlayerName and no Steam id, as without Steam.
+        public bool UsesSteamIdentity { get; set; } = true;
+#endif
 
         // The one place that knows how the server stores the accepted request on a connection.
         public static AuthRequestMessage GetAuthRequest(NetworkConnectionToClient connection)
@@ -46,9 +54,14 @@ namespace Game.Connection
         }
 
         [Inject]
-        void Construct(ConnectionSessionModel connectionSessionModel)
+        void Construct(
+            ConnectionSessionModel connectionSessionModel,
+            IConnectionJoinPolicy connectionJoinPolicy,
+            ConnectionRejectModel connectionRejectModel)
         {
             sessionModel = connectionSessionModel;
+            joinPolicy = connectionJoinPolicy;
+            rejectModel = connectionRejectModel;
         }
 
         public override void OnStartServer()
@@ -66,22 +79,11 @@ namespace Game.Connection
             if (pendingDisconnects.Contains(conn))
                 return;
 
-            if (Application.version != msg.version)
+            // Decided here, once: a player accepted at a station finishes joining even if the ship takes off meanwhile.
+            ConnectionRejectReason rejection = joinPolicy.EvaluateJoin(msg.version, msg.steamId);
+            if (rejection != ConnectionRejectReason.Accepted)
             {
-                Reject(conn, ConnectionRejectReason.VersionMismatch);
-                return;
-            }
-
-            ConnectionNetworkManager networkManager = sessionModel?.NetworkManager;
-            if (networkManager != null && networkManager.UsesSteamTransport && ((CSteamID)msg.steamId).IsValid() == false)
-            {
-                Reject(conn, ConnectionRejectReason.InvalidSteamId);
-                return;
-            }
-
-            if (networkManager != null && !networkManager.IsJoinable)
-            {
-                Reject(conn, ConnectionRejectReason.MapAlreadyStarted);
+                Reject(conn, rejection);
                 return;
             }
 
@@ -120,21 +122,8 @@ namespace Game.Connection
         {
             ulong steamId = 0;
             string name = string.IsNullOrWhiteSpace(playerName) ? "Player" : playerName;
-            try
-            {
-                CSteamID id = SteamUser.GetSteamID();
-                if (id.IsValid())
-                {
-                    steamId = id.m_SteamID;
-                    string personaName = SteamFriends.GetPersonaName();
-                    if (string.IsNullOrWhiteSpace(personaName) == false)
-                        name = personaName;
-                }
-            }
-            catch
-            {
-                // Direct IP still authenticates without Steam.
-            }
+            if (IsSteamIdentityUsed())
+                ReadSteamIdentity(ref steamId, ref name);
 
             NetworkClient.Send(new AuthRequestMessage
             {
@@ -143,6 +132,34 @@ namespace Game.Connection
                 version = Application.version,
                 clientId = ConnectionPlayerIdentityService.GetOrCreateClientId()
             });
+        }
+
+        private bool IsSteamIdentityUsed()
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            return UsesSteamIdentity;
+#else
+            return true;
+#endif
+        }
+
+        private static void ReadSteamIdentity(ref ulong steamId, ref string name)
+        {
+            try
+            {
+                CSteamID id = SteamUser.GetSteamID();
+                if (id.IsValid() == false)
+                    return;
+
+                steamId = id.m_SteamID;
+                string personaName = SteamFriends.GetPersonaName();
+                if (string.IsNullOrWhiteSpace(personaName) == false)
+                    name = personaName;
+            }
+            catch
+            {
+                // Direct IP still authenticates without Steam.
+            }
         }
 
         void OnAuthResponseMessage(AuthResponseMessage msg)
@@ -154,8 +171,9 @@ namespace Game.Connection
                 return;
             }
 
-            Debug.LogWarning($"Connection rejected: {reason}");
-            sessionModel?.NetworkManager?.StopSessionAndReturnToMenu();
+            // An expected answer, not a failure: the menu shows the reason.
+            rejectModel.Set(reason);
+            sessionModel.NetworkManager.StopSessionAndReturnToMenu();
             if (NetworkClient.connection != null)
                 ClientReject();
         }

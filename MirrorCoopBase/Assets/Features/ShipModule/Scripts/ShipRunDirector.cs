@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.GameCoreModule.Contracts;
 using Features.GrabModule.Scripts;
 using Features.ShipModule.Scripts.Generated;
 using Mirror;
@@ -19,9 +20,19 @@ namespace Features.ShipModule.Scripts {
         [Inject]
         private IShipRadarBinding _radar;
 
+        [Inject]
+        private IShipClientBindingModel _clientShip;
+
+        [Inject]
+        private List<IWorldShiftFollower> _worldShiftFollowers;
+
         private GameObject _localWreck;
         private GameObject _previousLocalWreck;
         private bool _clientStarted;
+
+        // Wreckage this peer placed and still keeps: the last two flights that ended as a wreck.
+        public bool HasWreck =>
+            _localWreck != null || _previousLocalWreck != null;
 
         private void LateUpdate() {
             if (isServer && _run != null && (_ship == null || _ship.IsFlying == false))
@@ -44,11 +55,13 @@ namespace Features.ShipModule.Scripts {
             base.OnStartClient();
             _clientStarted = true;
             _radar.BindShip(_ship);
+            _clientShip.Bind(_ship);
         }
 
         public override void OnStopClient() {
             _clientStarted = false;
             _radar.UnbindShip();
+            _clientShip.Clear();
             base.OnStopClient();
         }
 
@@ -87,6 +100,9 @@ namespace Features.ShipModule.Scripts {
             ShiftClientPad(previousPad, delta);
             foreach (NetworkIdentity identity in NetworkClient.spawned.Values)
                 ShiftClientItem(identity, delta);
+
+            foreach (IWorldShiftFollower follower in _worldShiftFollowers)
+                follower.FollowWorldShift(delta);
         }
 
         private static void ShiftClientPad(NetworkIdentity pad, Vector3 delta) {

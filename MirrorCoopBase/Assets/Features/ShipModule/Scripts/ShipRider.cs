@@ -1,6 +1,11 @@
 using Features.CameraModule.Scripts.Services;
 using Features.CharacterMovableModule.Scripts;
+using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.FloatingControllerModule;
+using Features.GameCoreModule.Contracts;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using Features.ShipModule.Scripts.Debug;
+#endif
 using Mirror;
 using UnityEngine;
 using Zenject;
@@ -12,7 +17,7 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private NetworkRigidbodyUnreliable _netBody;
         [SerializeField] private float _walkSpeed = 5f;
         [SerializeField] private float _sprintSpeed = 8f;
-        [SerializeField] private float _jumpHeight = 4f;
+        [SerializeField] private PlayerStatEntity _stats;
         [SerializeField] private float _deckInset = 0.08f;
 
         // Mirror runs hooks in declaration order: the offset hook sees its fresh stamp, a bind sees the fresh offset.
@@ -58,12 +63,16 @@ namespace Features.ShipModule.Scripts {
         private float _nextOffsetSend;
         private float _nextSteerSend;
         private float _rideRestY;
-        private float _rideJumpVel;
+        private float _rideFloorY;
+        private readonly RideVertical _vertical = new RideVertical();
         private Vector3 _rideVelocity;
         private float _reboardAt;
 
         internal Vector3 DebugLocalOffset => _localOffset;
         public bool IsRiding => _bound;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        internal ShipRideDiagnostics RideDiagnostics { get; } = new ShipRideDiagnostics();
+#endif
         public bool IsSeated => _seated;
         internal bool IsHelmSeat => _helmSeat;
         internal float CurrentSteer => _input != null ? _input.MoveStick.x : 0f;
@@ -73,31 +82,20 @@ namespace Features.ShipModule.Scripts {
                 _ship.ServerRemoveRider(this);
         }
 
-        internal bool WantsLand(ShipBase ship) {
-            if (isOwned == false || _bound || _rb == null || ship == null)
-                return false;
-
+        internal ShipRideRefusal CheckLanding(ShipBase ship) {
             // Right after a drop the interpolated body still trails the moving deck by a frame; without this it lands
             // back on the deck it just left.
             if (Time.time < _reboardAt)
-                return false;
+                return ShipRideRefusal.ReboardDelay;
 
-            Transform platform = ship.transform;
-            Vector3 local = Quaternion.Inverse(platform.rotation) * (transform.position - platform.position);
-            if (ship.DeckGeometry.ContainsDeckWalk(local, _deckInset) == false)
-                return false;
-
-            if (_rb.linearVelocity.y > 0.15f)
-                return false;
-
-            return local.y <= 1.75f && local.y >= 0.25f;
+            return ship.RideRule.CheckCatch(ship.ToShipLocal(transform.position), _rb.linearVelocity.y, _deckInset);
         }
 
         internal void BindToPlatform(ShipBase ship) {
             if (_rb == null || ship == null || _bound)
                 return;
 
-            Vector3 standingOffset = Quaternion.Inverse(ship.transform.rotation) * (transform.position - ship.transform.position);
+            Vector3 standingOffset = ship.ToShipLocal(transform.position);
             ship.DeckGeometry.ClampDeckWalk(ref standingOffset, _deckInset);
             // A seated rider keeps the server's seat offset; its own standing spot would overwrite it on the server.
             Bind(ship, _seated ? _syncedLocalOffset : standingOffset);
@@ -107,13 +105,16 @@ namespace Features.ShipModule.Scripts {
             if (_bound) {
                 _localOffset = seatOffset;
                 // A rider who sat down mid-jump would get the rest of the jump back when standing up.
-                _rideJumpVel = 0f;
+                ResetVertical(0f);
                 return;
             }
 
             if (_rb != null && ship != null) {
                 Bind(ship, seatOffset);
-                _rideJumpVel = 0f;
+                ResetVertical(0f);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                RideDiagnostics.LogBound(this, ship, ShipRideDiagnostics.CAUSE_SEAT);
+#endif
             }
         }
 
@@ -124,19 +125,19 @@ namespace Features.ShipModule.Scripts {
             float localVerticalSpeed = (toLocal * _rb.linearVelocity).y;
             _localOffset = localOffset;
             _rideRestY = ResolveRideRestY();
-            _rideJumpVel = isOwned && _localOffset.y > _rideRestY ? localVerticalSpeed : 0f;
-            _jumpHeldPrev = _input != null && _input.JumpHeld;
+            _rideFloorY = ResolveRideFloorY();
+            _jumpHeldPrev = _input.JumpHeld;
+            ResetVertical(isOwned && _localOffset.y > _rideRestY ? localVerticalSpeed : 0f);
             _remoteOffsets.Reset(_syncedOffsetTime, _localOffset);
             _lastPlatformPos = _platform.position;
             _lastPlatformRot = _platform.rotation;
             _bound = true;
             _wasKinematic = _rb.isKinematic;
             _wasInterpolation = _rb.interpolation;
+            _rb.StopIfDynamic();
             _rb.isKinematic = true;
             _rb.detectCollisions = false;
             _rb.interpolation = RigidbodyInterpolation.None;
-            _rb.linearVelocity = Vector3.zero;
-            _rb.angularVelocity = Vector3.zero;
             if (transform.parent != null)
                 transform.SetParent(null, true);
 
@@ -157,6 +158,9 @@ namespace Features.ShipModule.Scripts {
             ship.Riders.TrackRider(this);
             if (_bound == false) {
                 Bind(ship, _syncedLocalOffset);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                RideDiagnostics.LogBound(this, ship, ShipRideDiagnostics.CAUSE_OWNER_RIDE);
+#endif
                 return;
             }
 
@@ -165,7 +169,7 @@ namespace Features.ShipModule.Scripts {
 
         internal void DebugSetLocalOffset(Vector3 localOffset) {
             _localOffset = localOffset;
-            _rideJumpVel = 0f;
+            ResetVertical(0f);
             _remoteOffsets.Reset(NetworkTime.time, localOffset);
             if (_platform == null)
                 return;
@@ -180,6 +184,9 @@ namespace Features.ShipModule.Scripts {
             if (_bound == false && _syncedRideShip == null)
                 return;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            RideDiagnostics.LogReleased(this, _ship, ShipRideDiagnostics.CAUSE_SERVER_RELEASE);
+#endif
             _seated = false;
             _helmSeat = false;
             _syncedRideShip = null;
@@ -246,7 +253,10 @@ namespace Features.ShipModule.Scripts {
 
             if (isOwned) {
                 bool jumped = ConsumeJumpPress();
+                _vertical.ReadInput(_input.JumpHeld, dt);
                 if (_seated) {
+                    // The press that stands the rider up must not jump right after.
+                    _vertical.DropQueuedJump();
                     if (_helmSeat)
                         SendSteerIfNeeded();
 
@@ -255,10 +265,7 @@ namespace Features.ShipModule.Scripts {
                 }
                 else {
                     ApplyOwnedWalk(dt);
-                    if (jumped)
-                        BeginRideJump();
-
-                    SimulateRideJump(dt);
+                    SimulateRideVertical(dt);
                     SendOffsetIfNeeded();
                 }
             }
@@ -297,10 +304,15 @@ namespace Features.ShipModule.Scripts {
         // The server decides; an owning client releases at once so it does not walk on air for a round trip, and the
         // server's own check covers a lost or late end-ride command.
         private void DropOffDeck() {
-            if (isServer)
+            if (isServer) {
                 ServerRelease();
-            else
-                ReleaseFromPlatform();
+                return;
+            }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            RideDiagnostics.LogReleased(this, _ship, ShipRideDiagnostics.CAUSE_DECK_EDGE);
+#endif
+            ReleaseFromPlatform();
         }
 
         private void SnapToSyncedOffset() {
@@ -318,12 +330,11 @@ namespace Features.ShipModule.Scripts {
             if (_rb == null)
                 return;
 
+            _rb.StopIfDynamic();
             _rb.isKinematic = true;
             _rb.interpolation = RigidbodyInterpolation.None;
             _rb.position = world;
             _rb.rotation = rotation;
-            _rb.linearVelocity = Vector3.zero;
-            _rb.angularVelocity = Vector3.zero;
         }
 
         private bool ConsumeJumpPress() {
@@ -345,41 +356,27 @@ namespace Features.ShipModule.Scripts {
             SendOffsetIfNeeded();
         }
 
-        private void BeginRideJump() {
-            if (_localOffset.y > _rideRestY + 0.05f)
-                return;
-
-            _rideJumpVel = Mathf.Sqrt(2f * -Physics.gravity.y * Mathf.Max(0.1f, _jumpHeight));
-            _nextOffsetSend = 0f;
-            SendOffsetIfNeeded();
-        }
-
-        private void SimulateRideJump(float dt) {
+        // The station hover spring, jump and air gravity in ship space, from this player's own float and stats.
+        private void SimulateRideVertical(float dt) {
             if (dt <= 0f)
                 return;
 
-            bool grounded = _localOffset.y <= _rideRestY + 0.001f && _rideJumpVel <= 0f;
-            if (grounded) {
-                _localOffset.y = Mathf.MoveTowards(_localOffset.y, _rideRestY, _ship.StandUpSpeed * dt);
-                _rideJumpVel = 0f;
-                return;
-            }
-
-            float extra = 0f;
-            if (_rideJumpVel > 0.15f)
-                extra = _input != null && _input.JumpHeld ? 1.2f : 2f;
-            else if (_rideJumpVel < -0.15f)
-                extra = 3f;
-
-            _rideJumpVel += Physics.gravity.y * (1f + extra) * dt;
-            _localOffset.y += _rideJumpVel * dt;
-            if (_localOffset.y > _rideRestY)
-                return;
-
-            _localOffset.y = _rideRestY;
-            _rideJumpVel = 0f;
-            SendOffsetIfNeeded();
+            RideVerticalFrame frame = new RideVerticalFrame(
+                _floating.Spring,
+                JumpTuning.Read(_stats),
+                _rideRestY,
+                _rideFloorY,
+                Physics.gravity.y,
+                Time.fixedDeltaTime);
+            _localOffset.y = _vertical.Advance(_localOffset.y, dt, frame);
         }
+
+        private void ResetVertical(float velocity) =>
+            _vertical.Reset(
+                _localOffset.y,
+                velocity,
+                _input.JumpHeld,
+                JumpTuning.Read(_stats).ExtraAirJumps);
 
         private void SendOffsetIfNeeded() {
             if (Time.unscaledTime < _nextOffsetSend)
@@ -430,7 +427,7 @@ namespace Features.ShipModule.Scripts {
         private void OnSeatedChanged(bool previous, bool current) {
             if (isOwned && current == false) {
                 // Standing up starts from rest on the seat, never with a velocity left over from before sitting.
-                _rideJumpVel = 0f;
+                ResetVertical(0f);
                 return;
             }
 
@@ -442,6 +439,9 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             if (current == null) {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                RideDiagnostics.LogReleased(this, _ship, ShipRideDiagnostics.CAUSE_RIDE_ENDED);
+#endif
                 ReleaseFromPlatform();
                 return;
             }
@@ -456,6 +456,10 @@ namespace Features.ShipModule.Scripts {
 
             return deckSurfaceY + _floating.StandHeight;
         }
+
+        // The rider collider stands on the deck: the spring may sag the rider down to here, never lower.
+        private float ResolveRideFloorY() =>
+            _rideRestY - _floating.StandHeight + _floating.ContactHeight;
 
         private float CurrentSpeed() {
             if (_input != null && _input.SprintHeld)
@@ -514,6 +518,9 @@ namespace Features.ShipModule.Scripts {
             if (isServer)
                 return;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            RideDiagnostics.LogReleased(this, _ship, ShipRideDiagnostics.CAUSE_SERVER_RELEASE);
+#endif
             ReleaseFromPlatform();
         }
 

@@ -15,9 +15,10 @@ MonoBehaviour:
   _takeoffForward: 350
   _takeoffHeight: 100
   _takeoffSeconds: 9
-  _cruiseSeconds: 20
+  _firstFlightSeconds: 120
+  _perLoopFlightSeconds: 120
+  _maxFlightSeconds: 0
   _landingSeconds: 9
-  _perLoopCruiseSeconds: 8
   _thrustCruiseBonus: 1.5
   _stationSpacing: 48
   _destinationConeDegrees: 170

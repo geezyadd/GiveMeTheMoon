@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: df89428658decf8409024ad5f4e0fb74
+timeCreated: 1719323832
+AssetOrigin:
+  serializedVersion: 1
+  productId: 296362
+  packageName: Procedural Planet Generation - Lite Sample Pack
+  packageVersion: 3.0.1
+  assetPath: Assets/ParallelCascades/ProceduralShaders/Subgraphs/Uber Cloudy Noise.shadersubgraph
+  uploadId: 835338

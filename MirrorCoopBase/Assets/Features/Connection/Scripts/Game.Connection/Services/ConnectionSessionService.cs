@@ -9,17 +9,23 @@ namespace Game.Connection
         private readonly ConnectionSessionModel _model;
         private readonly ISteamLobbyService _steamLobby;
         private readonly ConnectionNetworkEvents _networkEvents;
+        private readonly ConnectionRejectModel _rejectModel;
+        private readonly ConnectionConfig _connectionConfig;
 
         public bool CanStartGame => RequireNetworkManager().CanStartGame();
 
         public ConnectionSessionService(
             ConnectionSessionModel model,
             ISteamLobbyService steamLobby,
-            ConnectionNetworkEvents networkEvents)
+            ConnectionNetworkEvents networkEvents,
+            ConnectionRejectModel rejectModel,
+            ConnectionConfig connectionConfig)
         {
             _model = model ?? throw new ArgumentNullException(nameof(model));
             _steamLobby = steamLobby ?? throw new ArgumentNullException(nameof(steamLobby));
             _networkEvents = networkEvents ?? throw new ArgumentNullException(nameof(networkEvents));
+            _rejectModel = rejectModel;
+            _connectionConfig = connectionConfig;
         }
 
         public bool IsInLobby =>
@@ -53,9 +59,10 @@ namespace Game.Connection
         public async Task HostSteamAsync()
         {
             ConnectionNetworkManager networkManager = RequireNetworkManager();
+            _rejectModel.Clear();
             try
             {
-                await _steamLobby.CreateFriendsLobbyAsync(networkManager.maxConnections);
+                await _steamLobby.CreateFriendsLobbyAsync(_connectionConfig.MaxConnections);
                 networkManager.SetUseSteamTransport(true);
                 networkManager.networkAddress = _steamLobby.HostSteamId.ToString();
                 await networkManager.PrepareLobbySceneAsync();
@@ -72,6 +79,7 @@ namespace Game.Connection
         public async Task JoinSteamAsync(ulong lobbyId)
         {
             ConnectionNetworkManager networkManager = RequireNetworkManager();
+            _rejectModel.Clear();
             try
             {
                 await _steamLobby.JoinLobbyAsync(lobbyId);
@@ -107,6 +115,7 @@ namespace Game.Connection
 
         void PrepareDirect(ConnectionNetworkManager networkManager)
         {
+            _rejectModel.Clear();
             ResetSteam(networkManager);
         }
 

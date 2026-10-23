@@ -22,13 +22,13 @@ namespace Features.NetworkModelModule.Scripts {
             // value still equals the field default, and SyncList/SyncDictionary/SyncHashSet full snapshots
             // never raise callbacks. Pushing here is the same path for host, client and late join.
             PushFullState();
-            _model.SetAvailable(true);
+            _model.AttachBridge(this);
         }
 
         public override void OnStopClient() {
             ReleaseCallbacksOnce();
-            _model.SetAvailable(false);
-            ClearLocal();
+            if (_model.TryDetachBridge(this))
+                ClearLocal();
         }
 
         protected abstract void PushFullState();

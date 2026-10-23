@@ -1,0 +1,16 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58ef13eaf4d484b428f1143b94c0e76d, type: 3}
+  m_Name: ObstacleDebris_Rocks
+  m_EditorClassIdentifier: 
+  _id: obstacle_debris_rocks
+  _recipe: {fileID: 11400000, guid: 5d3ab0d3685d454db92a3db4619d3fc6, type: 2}

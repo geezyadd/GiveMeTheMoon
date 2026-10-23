@@ -1,12 +1,12 @@
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    internal sealed class ShipFlightStatService : IShipFlightStatService {
-        private readonly ShipRunConfig _config;
+    // Flight stats of a launch: the route work (cruise seconds at flight speed 1) of a loop and the module stats.
+    public sealed class ShipFlightStatService : IShipFlightStatService {
+        private readonly IShipFlightLengthSource _shipFlightLengthSource;
 
-        public ShipFlightStatService(ShipRunConfig config) {
-            _config = config;
-        }
+        public ShipFlightStatService(IShipFlightLengthSource shipFlightLengthSource) =>
+            _shipFlightLengthSource = shipFlightLengthSource;
 
         public FlightRunStats Sample(ShipBase ship, int loopIndex) {
             FlightRunStats stats = new FlightRunStats {
@@ -26,7 +26,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         public float EvaluateRouteWork(int loopIndex) =>
-            _config.RouteWorkSeconds + loopIndex * _config.PerLoopCruiseSeconds;
+            _shipFlightLengthSource.GetFlightSeconds(loopIndex);
 
         public float ReadFlightSpeed(ShipBase ship) {
             float speed = ship != null ? ship.Modules.GetStatFull(ShipStatType.FlightSpeed) : 1f;

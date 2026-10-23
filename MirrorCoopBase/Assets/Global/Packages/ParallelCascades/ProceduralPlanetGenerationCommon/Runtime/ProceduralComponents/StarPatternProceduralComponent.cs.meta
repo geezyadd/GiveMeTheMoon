@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: ef992ee62a936264a9495b989496ce56
+timeCreated: 1758022444
+AssetOrigin:
+  serializedVersion: 1
+  productId: 296362
+  packageName: Procedural Planet Generation - Lite Sample Pack
+  packageVersion: 3.0.1
+  assetPath: Assets/ParallelCascades/ProceduralPlanetGenerationCommon/Runtime/ProceduralComponents/StarPatternProceduralComponent.cs
+  uploadId: 835338

@@ -1,20 +1,27 @@
 using System;
+using Features.GameCoreModule.Contracts;
 using Mirror;
 using UnityEngine;
 
 namespace Game.Connection
 {
-    // Where players appear: the map's spawn point, else a Mirror start position, else the origin.
+    // Where players appear: a running map's join place (the ship's deck), else the map's spawn point, else a Mirror
+    // start position, else the origin.
     internal sealed class ConnectionSpawnPlacement
     {
         private readonly ConnectionSpawnModel _spawn;
+        private readonly ISessionJoinSpawn _joinSpawn;
         private readonly Func<Transform> _getStartPosition;
 
-        public ConnectionSpawnPlacement(ConnectionSpawnModel spawn, Func<Transform> getStartPosition)
+        public ConnectionSpawnPlacement(ConnectionSpawnModel spawn, ISessionJoinSpawn joinSpawn, Func<Transform> getStartPosition)
         {
             _spawn = spawn;
+            _joinSpawn = joinSpawn;
             _getStartPosition = getStartPosition;
         }
+
+        public Pose GetPlayerPose() =>
+            _joinSpawn.TryTakeJoinPose(out Pose pose) ? pose : GetSpawnPose();
 
         public Pose GetSpawnPose()
         {
@@ -57,7 +64,7 @@ namespace Game.Connection
             ApplyTeleport(identity.transform, msg.position, msg.rotation);
         }
 
-        static void ApplyTeleport(Transform target, Vector3 position, Quaternion rotation)
+        private static void ApplyTeleport(Transform target, Vector3 position, Quaternion rotation)
         {
             CharacterController controller = target.GetComponent<CharacterController>();
             if (controller != null)
@@ -68,8 +75,7 @@ namespace Game.Connection
             {
                 rigidbody.position = position;
                 rigidbody.rotation = rotation;
-                rigidbody.linearVelocity = Vector3.zero;
-                rigidbody.angularVelocity = Vector3.zero;
+                rigidbody.StopIfDynamic();
             }
 
             target.SetPositionAndRotation(position, rotation);

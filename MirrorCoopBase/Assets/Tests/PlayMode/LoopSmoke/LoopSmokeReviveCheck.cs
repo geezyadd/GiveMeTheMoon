@@ -15,9 +15,9 @@ using Features.ShopModule.Scripts.Data;
 using Features.ShopModule.Scripts.Generated;
 using Features.ShopModule.Scripts.Network;
 using Features.ShopModule.Scripts.UI;
-using Game.Connection;
 using Mirror;
 using NUnit.Framework;
+using Tests.Shared;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -34,7 +34,6 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float SPECTATOR_SETTLE_SECONDS = 0.5f;
         private const float REVIVE_SETTLE_SECONDS = 1.5f;
         private const float SPAWN_TOLERANCE = 0.1f;
-        private const float DECK_TOLERANCE = 0.5f;
         private const float MAX_FRAME_STEP = 0.3f;
         private const float MIN_SPAWN_SPACING = 1f;
         private const string SCREENSHOT_FOLDER = "Temp/LoopSmoke";
@@ -42,9 +41,9 @@ namespace Tests.PlayMode.LoopSmoke {
         private const string DECK_SCREENSHOT = "revive-host-on-deck.png";
 
         private readonly ShipBase _ship;
-        private readonly IReadOnlyWalletModel _wallet = LoopSmokeShopCheck.Resolve<IReadOnlyWalletModel>();
-        private readonly IPlayerLifeQuery _lifeQuery = LoopSmokeShopCheck.Resolve<IPlayerLifeQuery>();
-        private readonly long _price = LoopSmokeShopCheck.Resolve<ReviveConfiguration>().RevivePrice;
+        private readonly IReadOnlyWalletModel _wallet = SessionQueries.Resolve<IReadOnlyWalletModel>();
+        private readonly IPlayerLifeQuery _lifeQuery = SessionQueries.Resolve<IPlayerLifeQuery>();
+        private readonly long _price = SessionQueries.Resolve<ReviveConfiguration>().RevivePrice;
 
         public LoopSmokeReviveCheck(ShipBase ship) =>
             _ship = ship;
@@ -52,10 +51,10 @@ namespace Tests.PlayMode.LoopSmoke {
         private static NetworkIdentity Player => NetworkClient.localPlayer;
         private static CrewWallet Wallet => Object.FindAnyObjectByType<CrewWallet>();
 
-        public IEnumerator BuyBackCrewCoroutine(ShipLandingPad pad, ConnectionNetworkManager manager) {
+        public IEnumerator BuyBackCrewCoroutine(ShipLandingPad pad) {
             ShopKioskInteractable kiosk = pad.GetComponentInChildren<ShopKioskInteractable>();
-            ShopModel shop = LoopSmokeShopCheck.Resolve<ShopModel>();
-            LoopSmokeBot bot = LoopSmokeBot.Join(manager);
+            ShopModel shop = SessionQueries.Resolve<ShopModel>();
+            LoopSmokeBot bot = LoopSmokeBot.Join();
             try {
                 CameraLookDriver.DebugPitchOverride = true;
                 yield return LoopSmokeShopCheck.WaitForCoroutine(() => bot.Identity != null && bot.Identity.isClient, "the bot player spawned on the host client");
@@ -118,7 +117,7 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         private IEnumerator BuyBackHostAsBotCoroutine(LoopSmokeBot bot, ShopKioskInteractable kiosk) {
-            SpectatorModel spectator = LoopSmokeShopCheck.Resolve<SpectatorModel>();
+            SpectatorModel spectator = SessionQueries.Resolve<SpectatorModel>();
             PlayerLifeBody host = Player.GetComponent<PlayerLifeBody>();
             host.CmdDebugKill();
             yield return LoopSmokeShopCheck.WaitForCoroutine(() => _lifeQuery.LocalState == PlayerLifeState.Dead, "the host dead");
@@ -128,16 +127,16 @@ namespace Tests.PlayMode.LoopSmoke {
             PlaceBeside(bot, kiosk);
             bot.Customer.ServerOpenShop(kiosk);
             long balance = _wallet.Balance;
-            LoopSmokeShopCheck.Resolve<IReviveShopSystem>().ServerRevive(Wallet, host.Key, bot.Customer);
+            SessionQueries.Resolve<IReviveShopSystem>().ServerRevive(Wallet, host.Key, bot.Customer);
             yield return LoopSmokeShopCheck.WaitForCoroutine(() => _lifeQuery.LocalState == PlayerLifeState.Alive, "the host bought back by the bot");
             Assert.AreEqual(balance - _price, _wallet.Balance, "Buying back the host did not take the price.");
 
             float largestStep = 0f;
             yield return TrackLargestStepCoroutine(step => largestStep = Mathf.Max(largestStep, step));
             Assert.Less(largestStep, MAX_FRAME_STEP, $"The revived host jumped {largestStep} m in one frame.");
-            Assert.IsTrue(IsOnDeck(Player.transform.position), $"The revived host at {Player.transform.position} is not on the deck {_ship.DeckGeometry.Bounds}.");
+            Assert.IsTrue(SessionQueries.IsOnDeck(_ship, Player.transform.position), $"The revived host at {Player.transform.position} is not on the deck {_ship.DeckGeometry.Bounds}.");
             Assert.IsFalse(spectator.IsSpectating, "The revived host still spectates.");
-            Assert.IsFalse(LoopSmokeShopCheck.Resolve<PlayerControlBlockModel>().IsBlocked, "The revived host cannot move.");
+            Assert.IsFalse(SessionQueries.Resolve<PlayerControlBlockModel>().IsBlocked, "The revived host cannot move.");
             yield return CaptureScreenshotCoroutine(DECK_SCREENSHOT);
         }
 
@@ -150,13 +149,6 @@ namespace Tests.PlayMode.LoopSmoke {
                 onStep(Vector3.Distance(previous, current));
                 previous = current;
             }
-        }
-
-        private bool IsOnDeck(Vector3 position) {
-            Bounds deck = _ship.DeckGeometry.Bounds;
-            return position.x >= deck.min.x - DECK_TOLERANCE && position.x <= deck.max.x + DECK_TOLERANCE
-                && position.z >= deck.min.z - DECK_TOLERANCE && position.z <= deck.max.z + DECK_TOLERANCE
-                && position.y > deck.max.y;
         }
 
         private static float DistanceToNearestSpawnPoint(Vector3 position) {
@@ -182,7 +174,7 @@ namespace Tests.PlayMode.LoopSmoke {
             body.transform.position = position;
         }
 
-        private static List<CrewReviveRow> FindCrewRows() {
+        internal static List<CrewReviveRow> FindCrewRows() {
             List<CrewReviveRow> active = new List<CrewReviveRow>();
             foreach (CrewReviveRow row in Object.FindObjectsByType<CrewReviveRow>(FindObjectsSortMode.None)) {
                 if (row.isActiveAndEnabled)
@@ -192,7 +184,7 @@ namespace Tests.PlayMode.LoopSmoke {
             return active;
         }
 
-        private static bool HasLabel(CrewReviveRow row, string text) {
+        internal static bool HasLabel(CrewReviveRow row, string text) {
             foreach (Text label in row.GetComponentsInChildren<Text>()) {
                 if (label.text == text)
                     return true;

@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: 41666f0c84da9b14396db8e8c904ac22
+timeCreated: 1760625579
+AssetOrigin:
+  serializedVersion: 1
+  productId: 296362
+  packageName: Procedural Planet Generation - Lite Sample Pack
+  packageVersion: 3.0.1
+  assetPath: Assets/ParallelCascades/ProceduralPlanetGenerationCommon/Runtime/ProceduralComponents/OceanProceduralComponent.cs
+  uploadId: 835338

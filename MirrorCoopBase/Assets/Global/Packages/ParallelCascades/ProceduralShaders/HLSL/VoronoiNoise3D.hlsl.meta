@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: 1c00f43c643264b4283d153dbba9ec0a
+timeCreated: 1719323809
+AssetOrigin:
+  serializedVersion: 1
+  productId: 296362
+  packageName: Procedural Planet Generation - Lite Sample Pack
+  packageVersion: 3.0.1
+  assetPath: Assets/ParallelCascades/ProceduralShaders/HLSL/VoronoiNoise3D.hlsl
+  uploadId: 835338

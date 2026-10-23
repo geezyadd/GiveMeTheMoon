@@ -1,0 +1,88 @@
+using System;
+using System.Collections.Generic;
+using Mirror;
+using Zenject;
+
+namespace Features.FlightFieldModule.Scripts.Structures {
+    // The one startup check of the structure catalog: every entry set, ids present and unique, a footprint of 'X' and
+    // '.' rows of one length with at least one occupied cell, a kind and a prefab; every debris kind set, with an id
+    // used once and a recipe. Which obstacles a field uses comes from its difficulty profile.
+    public sealed class FieldStructureCatalogValidator : IInitializable {
+        private readonly FieldStructureCatalog _fieldStructureCatalog;
+
+        public FieldStructureCatalogValidator(FieldStructureCatalog fieldStructureCatalog) =>
+            _fieldStructureCatalog = fieldStructureCatalog;
+
+        public void Initialize() {
+            HashSet<string> ids = new(StringComparer.Ordinal);
+            for (int i = 0; i < _fieldStructureCatalog.Structures.Count; i++)
+                ValidateStructure(_fieldStructureCatalog.Structures[i], i, ids);
+
+            HashSet<string> debrisIds = new(StringComparer.Ordinal);
+            for (int i = 0; i < _fieldStructureCatalog.Debris.Count; i++)
+                ValidateDebris(_fieldStructureCatalog.Debris[i], i, debrisIds);
+        }
+
+        private void ValidateDebris(FieldDebrisDefinition debris, int index, HashSet<string> ids) {
+            if (debris == null)
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: debris entry {index} is empty.");
+
+            if (string.IsNullOrEmpty(debris.Id) || !ids.Add(debris.Id))
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: debris {debris.name} has no id or its id is used twice.");
+
+            if (debris.Recipe == null)
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: debris {debris.Id} has no recipe.");
+        }
+
+        private void ValidateStructure(FieldStructureDefinition structure, int index, HashSet<string> ids) {
+            if (structure == null)
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: structure entry {index} is empty.");
+
+            if (string.IsNullOrEmpty(structure.Id))
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: structure {structure.name} has no id.");
+
+            if (!ids.Add(structure.Id))
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: structure id '{structure.Id}' is used twice (second: {structure.name}).");
+
+            if (structure.Kind == FieldStructureKind.None)
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: structure {structure.Id} has no kind.");
+
+            if (structure.Prefab == null)
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: structure {structure.Id} has no prefab.");
+
+            if (structure.IsNetworked && !structure.Prefab.TryGetComponent(out NetworkIdentity _))
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: networked structure {structure.Id} has no NetworkIdentity on its prefab.");
+
+            ValidateFootprint(structure);
+        }
+
+        private void ValidateFootprint(FieldStructureDefinition structure) {
+            IReadOnlyList<string> rows = structure.FootprintRows;
+            if (rows.Count == 0 || string.IsNullOrEmpty(rows[0]))
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: structure {structure.Id} has an empty footprint.");
+
+            bool hasOccupiedCell = false;
+            for (int y = 0; y < rows.Count; y++) {
+                if (rows[y].Length != rows[0].Length)
+                    throw new InvalidOperationException($"{_fieldStructureCatalog.name}: footprint rows of structure {structure.Id} differ in length.");
+
+                hasOccupiedCell |= ValidateFootprintRow(structure, rows[y]);
+            }
+
+            if (!hasOccupiedCell)
+                throw new InvalidOperationException($"{_fieldStructureCatalog.name}: footprint of structure {structure.Id} has no '{FieldFootprintSymbols.OCCUPIED_CELL}' cell.");
+        }
+
+        private bool ValidateFootprintRow(FieldStructureDefinition structure, string row) {
+            bool hasOccupiedCell = false;
+            foreach (char cell in row) {
+                if (cell != FieldFootprintSymbols.OCCUPIED_CELL && cell != FieldFootprintSymbols.FREE_CELL)
+                    throw new InvalidOperationException($"{_fieldStructureCatalog.name}: footprint of structure {structure.Id} has '{cell}', only '{FieldFootprintSymbols.OCCUPIED_CELL}' and '{FieldFootprintSymbols.FREE_CELL}' are allowed.");
+
+                hasOccupiedCell |= cell == FieldFootprintSymbols.OCCUPIED_CELL;
+            }
+
+            return hasOccupiedCell;
+        }
+    }
+}

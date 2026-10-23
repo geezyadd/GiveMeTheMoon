@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ed818fa57eae8249baba6a0be994264, type: 3}
+  m_Name: FlightFieldDecorConfiguration_Default
+  m_EditorClassIdentifier: 
+  _chunkSize: 250
+  _viewDistance: 1200
+  _chunksBuiltPerFrame: 2
+  _planetChance: 1
+  _maxPlanetsPerFlight: 1
+  _planetDistance: {x: 2000, y: 3600}
+  _planetSides:
+  - _name: Side
+    _weight: 0.5
+    _elevationDegrees: {x: 5, y: 20}
+    _isMirroredBelowPlane: 1
+  - _name: Above
+    _weight: 0.4
+    _elevationDegrees: {x: 25, y: 60}
+    _isMirroredBelowPlane: 0
+  - _name: Below
+    _weight: 0.1
+    _elevationDegrees: {x: -50, y: -25}
+    _isMirroredBelowPlane: 0
+  _planetMinAngleFromCourse: 35
+  _planetFieldClearance: 300
+  _planetStationClearance: 1000
+  _planetAlongRoute: {x: 0, y: 1500}
+  _planetMaxAngleFromLight: 50
+  _planetPlacementTries: 8
+  _viewFarClipPlane: 5000
+  _planetFarClipMargin: 300
+  _planets:
+  - _prefab: {fileID: 1924119423381419774, guid: 180b787c60fe8a94899897459077f972, type: 3}
+    _weight: 1
+    _diameter: {x: 1600, y: 2600}
+  - _prefab: {fileID: 3622320230212270030, guid: b191622c03be6fe4d82a7841fff2fba4, type: 3}
+    _weight: 1
+    _diameter: {x: 1600, y: 2600}
+  - _prefab: {fileID: 3003111091043583004, guid: e967001777902494f9376bfaa67232f9, type: 3}
+    _weight: 1
+    _diameter: {x: 1600, y: 2600}
+  - _prefab: {fileID: 6996996210386608633, guid: d214ab72f694f5640b52c10b545a86e0, type: 3}
+    _weight: 1
+    _diameter: {x: 1600, y: 2600}
+  - _prefab: {fileID: 2144988667149434970, guid: f949cc7544bb2b3429ecde7aa8e5fd17, type: 3}
+    _weight: 1
+    _diameter: {x: 1600, y: 2600}
+  - _prefab: {fileID: 6342856610871284867, guid: dfa32c6e57ae2db43b930ba4c35f0928, type: 3}
+    _weight: 1
+    _diameter: {x: 1600, y: 2600}
+  - _prefab: {fileID: 8086326160828898890, guid: b1704fd013a829042a79d3077d4325b4, type: 3}
+    _weight: 1
+    _diameter: {x: 700, y: 1100}
+  - _prefab: {fileID: 2649664159507129686, guid: 8b115f7ee71e5b5409c235e3f419e51d, type: 3}
+    _weight: 1
+    _diameter: {x: 700, y: 1100}
+  - _prefab: {fileID: 8422278482997946709, guid: 3bc51730131ab094f983cb6ace4c1681, type: 3}
+    _weight: 1
+    _diameter: {x: 700, y: 1100}
+  - _prefab: {fileID: 7991250431791209213, guid: 6da669a013c28774ba826cd0b76282bc, type: 3}
+    _weight: 1
+    _diameter: {x: 700, y: 1100}
+  - _prefab: {fileID: 6297765037383707951, guid: 9d83e93df57198f42b0e0ebe683aabbf, type: 3}
+    _weight: 1
+    _diameter: {x: 300, y: 500}
+  - _prefab: {fileID: 7831238350816611264, guid: c6091d1ad3f3f0a4b9623fbe0d9caf36, type: 3}
+    _weight: 1
+    _diameter: {x: 300, y: 500}

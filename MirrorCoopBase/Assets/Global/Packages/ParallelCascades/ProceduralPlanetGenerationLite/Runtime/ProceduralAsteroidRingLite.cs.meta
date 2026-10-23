@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: 3beed7b7835b42d4968ec333bee33d0b
+timeCreated: 1765461252
+AssetOrigin:
+  serializedVersion: 1
+  productId: 296362
+  packageName: Procedural Planet Generation - Lite Sample Pack
+  packageVersion: 3.0.1
+  assetPath: Assets/ParallelCascades/ProceduralPlanetGenerationLite/Runtime/ProceduralAsteroidRingLite.cs
+  uploadId: 835338

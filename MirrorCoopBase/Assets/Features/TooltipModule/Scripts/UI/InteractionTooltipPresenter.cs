@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Features.GrabModule.Scripts;
 using Features.MvpModule;
 using Features.ShopModule.Scripts.Data;
@@ -8,25 +9,33 @@ namespace Features.TooltipModule.Scripts.UI {
         private readonly HoveredInteractableModel _hoveredInteractableModel;
         private readonly ShopModel _shopModel;
         private readonly ITooltipContentService _tooltipContentService;
+        private readonly List<ITooltipStateProvider> _tooltipStateProviders;
 
         public InteractionTooltipPresenter(
             HoveredInteractableModel hoveredInteractableModel,
             ShopModel shopModel,
-            ITooltipContentService tooltipContentService) {
+            ITooltipContentService tooltipContentService,
+            List<ITooltipStateProvider> tooltipStateProviders) {
             _hoveredInteractableModel = hoveredInteractableModel;
             _shopModel = shopModel;
             _tooltipContentService = tooltipContentService;
+            _tooltipStateProviders = tooltipStateProviders;
         }
 
         protected override void OnViewSet() {
             _hoveredInteractableModel.OnHoverChanged += Refresh;
             _shopModel.OnOpenChanged += Refresh;
+            for (int i = 0; i < _tooltipStateProviders.Count; i++)
+                _tooltipStateProviders[i].OnStateChanged += Refresh;
+
             Refresh();
         }
 
         protected override void OnDisposed() {
             _hoveredInteractableModel.OnHoverChanged -= Refresh;
             _shopModel.OnOpenChanged -= Refresh;
+            for (int i = 0; i < _tooltipStateProviders.Count; i++)
+                _tooltipStateProviders[i].OnStateChanged -= Refresh;
         }
 
         private void Refresh() {

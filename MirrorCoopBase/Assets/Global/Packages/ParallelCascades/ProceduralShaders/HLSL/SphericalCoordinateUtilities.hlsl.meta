@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: 140a4966205146e0abf24c3ecb5e64e1
+timeCreated: 1756833567
+AssetOrigin:
+  serializedVersion: 1
+  productId: 296362
+  packageName: Procedural Planet Generation - Lite Sample Pack
+  packageVersion: 3.0.1
+  assetPath: Assets/ParallelCascades/ProceduralShaders/HLSL/SphericalCoordinateUtilities.hlsl
+  uploadId: 835338

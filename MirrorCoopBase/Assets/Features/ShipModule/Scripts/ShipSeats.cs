@@ -1,5 +1,8 @@
 using Mirror;
 using UnityEngine;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using Features.ShipModule.Scripts.Debug;
+#endif
 
 namespace Features.ShipModule.Scripts {
     internal sealed class ShipSeats : IShipSeats {
@@ -56,8 +59,13 @@ namespace Features.ShipModule.Scripts {
             }
 
             // A rider who switched seats is still seated on the other socket; only standing up releases it.
-            if (_ship.IsFlying == false && IsSeatedOnShip(previousOccupant) == false && TryGetOwnedRider(previousOccupant, out ShipRider stood))
-                stood.ReleaseFromPlatform();
+            if (_ship.IsFlying || IsSeatedOnShip(previousOccupant) || TryGetOwnedRider(previousOccupant, out ShipRider stood) == false)
+                return;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            stood.RideDiagnostics.LogReleased(stood, _ship, ShipRideDiagnostics.CAUSE_STAND_UP);
+#endif
+            stood.ReleaseFromPlatform();
         }
 
         public void ServerStand(ShipRider rider) {

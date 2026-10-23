@@ -1,0 +1,10 @@
+﻿fileFormatVersion: 2
+guid: f0ec3cf1aef84208a82c778f6484f8ac
+timeCreated: 1733056161
+AssetOrigin:
+  serializedVersion: 1
+  productId: 296362
+  packageName: Procedural Planet Generation - Lite Sample Pack
+  packageVersion: 3.0.1
+  assetPath: Assets/ParallelCascades/ProceduralShaders/Editor/CreateGradientTextureMenuItem.cs
+  uploadId: 835338
