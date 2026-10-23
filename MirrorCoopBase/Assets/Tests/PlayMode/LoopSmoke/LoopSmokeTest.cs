@@ -94,6 +94,9 @@ namespace Tests.PlayMode.LoopSmoke {
             _fieldCheck.AssertNetworkedPathWasChecked();
             yield return new LoopSmokeShopCheck().BuyAtKioskAndWalkAwayCoroutine(_flight.FindPadUnderShip());
 
+            yield return _session.ReturnToLobbyByAllDeadCoroutine();
+            yield return new LoopSmokeStagePresetCheck(_session, _flight).PlayLateRunAndReturnToLobbyCoroutine();
+
             yield return _session.LeaveToMenuCoroutine();
             yield return new LoopSmokeRejectCheck().JoinRejectedInFlightCoroutine();
             Assert.AreEqual(0, _errorLog.Count, $"Errors were logged during the loop:\n{_errorLog.Describe()}");

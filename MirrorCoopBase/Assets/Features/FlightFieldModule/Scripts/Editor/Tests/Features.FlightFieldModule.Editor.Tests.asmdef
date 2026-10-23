@@ -2,6 +2,7 @@
     "name": "Features.FlightFieldModule.Editor.Tests",
     "rootNamespace": "Features.FlightFieldModule.Editor.Tests",
     "references": [
+        "GUID:5d6793be2d204514a9702ab824c001ed",
         "GUID:de3859a8001533e4785d57768b0ba05c",
         "GUID:60e02be6a8add2e458943e03f39921e9",
         "GUID:1baf1984ba18f484c9db7270a36bfd43",

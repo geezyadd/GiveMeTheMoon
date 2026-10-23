@@ -88,8 +88,9 @@ The loop runs from start to end, but it does not match the design yet:
   yet);
 - modules are installed and removed only in the `Build` phase (`ShipSocketRule`);
 - modules still drop for free on every arrival at a station (`ShipStationCatalog.Drops`,
-  `ShipStationDropService.SpawnDrops`), so the shop is not needed yet;
-- there is no income, only the starting balance (`WalletConfiguration`, 1 000 000 now);
+  `ShipStationDropService.SpawnDrops`), so the shop is not needed yet (a stage preset turns the drops off, see
+  "Stage presets");
+- there is no income, only the starting balance (`WalletConfiguration`, 1 000 000 now; a stage preset brings its own);
 - the final ship stats are synced to clients (`ShipStats` model), but only `FlightSpeed` (cruise speed) and
   `DodgeRange` (side sway) affect the game, and no module changes `DodgeRange`; `Thrust`, `Handling` and `Armor` are
   not read by gameplay;
@@ -179,7 +180,8 @@ types.
 - Module assemblies by layer (an assembly references only lower layers; module references in brackets):
   1. `Features.GameCoreModule.Contracts` (`IGameplaySession`, `SceneNames`; the run's contracts for the flight field:
      `IFlightRouteListener` + `FlightLaunch`, `IWorldShiftFollower`, `IShipPositionSource`, `ILocalViewpointSource`),
-     `Features.AddressablesConstantGeneratorModule` (`Address_g.cs`), `Features.MvpModule` (AssetLoader),
+     `Features.AddressablesConstantGeneratorModule` (`Address_g.cs`; editor tools and tests load a configuration at its
+     address with `AddressableConfigurationLoader` in `Features.AddressablesConstantGeneratorModule.EditorLoading`), `Features.MvpModule` (AssetLoader),
      `Features.FloatingControllerModule`, `Features.MatrixModule` (no references: generic grid `IMatrix<T>` with
      shape insert and A* path finding, copied from MuffinProject's `MatrixSubmodule`; keep its public API),
      `Features.PlayerProfileModule.Data` (NetworkModel; the generated `PlayerProfile` model and
@@ -201,13 +203,17 @@ types.
   5. `Features.PlayerLifeModule` (Ship, Grab, Camera, Mvp, NetworkModel, Connection, PlayerProfileModule.Data),
      `Features.LobbyModule` (Ship,
      GameFlow, Mvp, Connection).
-  6. `Features.ShopModule` (PlayerLife, Ship, Camera, GameFlow, Mvp, NetworkModel, PlayerProfileModule.Data) →
+  6. `Features.StagePresetModule` (StagePresetModule.Data, Ship, Shop, FlightField, Mvp, Connection, NetworkModel:
+     the playtest stage presets, see "Stage presets"; its synced model is in `Features.StagePresetModule.Data`, layer 1),
+     `Features.ShopModule` (PlayerLife, Ship, Camera, GameFlow, Mvp, NetworkModel, PlayerProfileModule.Data) →
      `Features.TooltipModule` (Shop,
      Ship, Grab, Mvp) → `Features.CrewInviteModule` (CrewInviteModule.Data, Tooltip, Grab, Connection, NetworkModel: the "Hire
      crew" terminal; above Tooltip because it plugs a state tooltip into it through `ITooltipStateProvider`).
   7. Composition root: `Features.GameCoreModule` (all modules) and `Features.BootstrapersModule` (Contracts,
      GameFlow, SceneLoader).
   Tests: `Features.CharacterMovableModule.Editor.Tests`, `Features.PlayerLifeModule.Editor.Tests`,
+  `Features.StagePresetModule.Editor.Tests` (shipped presets pass the startup validator and fit ShipPlatform's sockets,
+  Early / Mid / Late loops and money against shop prices, broken presets throw, the applier's run values),
   `Features.ShipModule.Editor.Tests`, `Features.ShopModule.Editor.Tests`, `Features.GameCoreModule.Editor.Tests`
   (configuration loading and module catalog guards), `Game.Connection.Editor.Tests`,
   `Features.PlayerProfileModule.Editor.Tests`, `Features.CrewInviteModule.Editor.Tests`, `NetworkModelModule.Editor.Tests`, `Features.MatrixModule.Editor.Tests`
@@ -250,11 +256,23 @@ types.
 | Joining a running session | `Connection/Scripts/Game.Connection/Join/`: `JoinRule` (pure: lobby or `RunJoinWindow.AtStation`, free slot out of `ConnectionConfig.MaxConnections`, version, Steam id; reasons `InFlight` / `ServerFull` / `MapChanging`), `ConnectionJoinPolicy` (the rule on the live session, used by `ConnectionAuthenticator` once at authentication; `OnJoinStateChanged` is the one event for "an input of the rule changed": run window, map change, players), `SteamLobbyJoinableSystem` (Steam lobby joinable exactly when the rule lets a new player in), `ConnectionRejectModel` + `ConnectionRejectMessages` (the reason shown in the menu; `RejectedJoinMenuSystem` in GameCore switches a turned-away client to the menu state). Connection reads the run only through the contracts `ISessionJoinGate` (`ShipRunJoinGate`) and `ISessionJoinSpawn` (`ShipDeckJoinSpawn`, the next `IShipDeckSpawnPoints` pose) in `GameCoreModule.Contracts`. A mid-run joiner loads the map through Mirror's scene message and reports `MapLoadedMessage`; `ConnectionLateJoin` makes its player only then, on the deck. The transport allows one connection over the slots so an extra player hears "the crew is full" |
 | Inviting friends ("Hire crew") | `Assets/Features/CrewInviteModule/` (`Scripts/Core`: rule and status, `Scripts/Network`: terminal, inviter, roster bridge, `Scripts/UI`: tooltip, `Data`: the generated model): the terminal `CrewInviteInteractable` stands in the lobby and on every `StationPad` next to the kiosk; E sends `CrewInviter.TargetOpenInviteOverlay` to the pressing player, who opens `ISteamLobbyService.OpenInviteOverlay` (Steam invite dialog for the current lobby). `CrewInviteRule` (pure) gives `Available` / `CrewFull` / `NotAtStation` / `NoSteam` / `OverlayDisabled` from the Steam side and the shared `CrewRoster` model (players, slots, join window from `IConnectionJoinPolicy`, written by the `CrewRoster` bridge on the server on `IConnectionJoinPolicy.OnJoinStateChanged`); `CrewInviteTooltipProvider` picks the `Tooltip_CrewInvite*` asset, fills "N/M" and refreshes on the roster and on `ISteamLobbyService.InviteStateChanged` |
 | Player names and nameplates | `Assets/Features/PlayerProfileModule/`: `PlayerProfile` (bridge of the `PlayerProfile` model, the server fills the name), `PlayerNameSanitizer`, `PlayerNameplate` (TMP over other players' heads), `PlayerNameplateConfiguration`; the model is in `Data/` |
+| Stage presets (playtests) | `Assets/Features/StagePresetModule/`: a preset is one `StagePreset` asset (`GameResources/Presets/Early`, `Mid`, `Late`: id, name, description, start loop, optional field profile id, module per socket id, starting balance, station drops on / off, optional extension blocks) in `StagePresetCatalog_Default` (`Configurations` group; `StagePresetCatalogValidator` checks it at startup, the sockets are checked against the ship at the run start by `StagePresetSocketResolver`). The host's choice is the server-side `StagePresetSelectionModel`; `StagePresetSync` (a scene object in LobbyScene and GameScene) carries it to every client and late joiner in the synced `RunStagePreset` model. `StagePresetApplier` is the one server place that turns it into the run: `IShipRunStage` (Ship: start loop and drops read by `ShipRunService.Bind` / `ShipStationDropService`, modules installed through `ShipSocket.ServerTryInstall` after `ServerResetForBuild`, the field profile through `IFieldProfileDebug`) and `IWalletStartingBalanceSource` (Shop: `CrewWallet`'s starting balance). The run's end (`ShipRunService` reset: back to the lobby or the menu) clears the choice. UI in `GameHudWindow`: `StagePresetPickerView` (host, lobby only, editor / development builds or `StagePresetCatalog._isPickerShownInReleaseBuilds`) and `StagePresetLabelView` ("Preset: Late" for everyone) |
 | Scenes | `GameCoreModule/GameResources/Scenes/`: Bootstrap → Menu → Lobby → Game; only Bootstrap is in Build Settings |
 
 ### How to verify
 Play mode starts from `BootstrapScene`, then menu → Host → game. Two-player multiplayer is checked with the
 ParrelSync clone (`MirrorCoopBase_clone_0`).
+
+### Playtest stage presets
+To test mid- and late-game fun without flying 15 loops, the host picks a stage preset in the lobby before Start: the
+"Stage preset (playtest)" panel under Start offers Normal run, Early (loop 0, two propellers, 300), Mid (loop 4, two
+large engines and the radar, 1 500) and Late (loop 9, the same modules, 2 400); presets give no free station drops.
+Everyone sees "Preset: <name>" under the balance; the choice ends with the run. The panel shows only in editor and
+development builds (release: `StagePresetCatalog._isPickerShownInReleaseBuilds`). A new preset is a new `StagePreset`
+asset in `StagePresetCatalog_Default`: modules from the `ModuleCatalog`, socket ids of `ShipPlatform` (`engine-left`,
+`engine-right`, `radar`, `control`). A system that needs its own preset setting (hull HP, balloon density, ...) puts a
+ScriptableObject block into a preset's extensions and reads it with
+`IStagePresetSelectionService.TryGetSelectedExtension<T>`; the preset core does not know the block.
 
 ### Loop autotest
 The PlayMode test `LoopSmokeTest` (`Assets/Tests/PlayMode/LoopSmoke/`) plays the M1 loop on a host by itself:
@@ -282,7 +300,10 @@ after landing nothing of it is left (what a player joining at that station gets)
 in cruise keeps the field in place against the ship; the field pool never grows past what the fields needed. Every
 takeoff logs its longest frame (`[LoopSmoke] loop N takeoff`). The test shortens flight timings with its own copy of
 `ShipRunConfig` and adds the debug networked beacon to its own copy of `FieldStructureCatalog` and, as a rare ridge obstacle, to its own copies of the field configuration's difficulty profiles; assets are not
-changed. The test timeout is 180 s (a run takes about 110 s). The shared steps live in helpers both loop tests use:
+changed. After the shop check the crew returns to the lobby and `LoopSmokeStagePresetCheck` plays a third run with the
+`Late` stage preset: the host clicks Late in the lobby picker, the run starts on loop 9 with the preset's modules,
+balance and "Preset: Late" label, the first flight's field comes from loop 9's table entry, the first station drops
+nothing, and back in the lobby the preset is gone. The test timeout is 180 s (a run takes about 130 s). The shared steps live in helpers both loop tests use:
 `LoopSmokeSession` (menu, Host, lobby, Start, all dead -> lobby, Leave; waits record the run phases),
 `LoopSmokeFlight` (engines, boarding, the lever, the phases of a loop with the field checks and the checks after
 landing, messages start with "Loop N:"; at the cruise start its pilot faces the ship to the destination once through

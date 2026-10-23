@@ -1,0 +1,19 @@
+{
+    "name": "Features.AddressablesConstantGeneratorModule.EditorLoading",
+    "rootNamespace": "Features.AddressablesConstantGeneratorModule.EditorLoading",
+    "references": [
+        "GUID:03a835aea0a645a7b43f5f0c61e8d191",
+        "GUID:69448af7b92c7f342b298e06a37122aa"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

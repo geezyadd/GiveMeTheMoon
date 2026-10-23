@@ -10,13 +10,18 @@ namespace Features.ShipModule.Scripts {
 
         private readonly ShipStationCatalog _stations;
         private readonly IShipRunBindingModel _binding;
+        private readonly IShipRunStage _runStage;
 
-        public ShipStationDropService(ShipStationCatalog stations, IShipRunBindingModel binding) {
+        public ShipStationDropService(ShipStationCatalog stations, IShipRunBindingModel binding, IShipRunStage runStage) {
             _stations = stations;
             _binding = binding;
+            _runStage = runStage;
         }
 
         public void SpawnDrops(ShipLandingPad pad, int loopIndex) {
+            if (_runStage.AreStationDropsEnabled == false)
+                return;
+
             ShipBase ship = _binding.Ship;
             Transform origin = pad != null ? pad.transform : (ship != null ? ship.transform : null);
             if (origin == null)
