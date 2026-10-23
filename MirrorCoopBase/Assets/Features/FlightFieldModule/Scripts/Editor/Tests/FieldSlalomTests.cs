@@ -7,7 +7,8 @@ using NUnit.Framework;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
-    // The slalom guarantee on 200 seeds at loops 0, 1, 5 and 10, for every channel profile the loop table offers there:
+    // The slalom guarantee on 200 seeds at loops 0, 1, 5 and 10, for the Channels stage of each of those loops (the
+    // stages the former loop table offered there; the loop table now offers the obstacle profiles, FieldObstacleFieldTests):
     // with every debris rock laid out as the peers build it, a ship of the configured width plus the gap margin finds
     // a way from the cruise start to B, and the narrowest gap along that way is at least the ship width plus margin,
     // less the path finder's grid tolerance on each side.
@@ -20,6 +21,9 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const float STEP_CUT_METERS = 0.25f;
 
         private static readonly int[] _loops = { 0, 1, 5, 10 };
+        private static readonly Dictionary<int, string> _channelStageByLoop = new() {
+            { 0, "channels_warmup" }, { 1, "channels_fork" }, { 5, "channels_lanes" }, { 10, "channels_braid" },
+        };
 
         private readonly Dictionary<(string profile, int loop), List<(FlightField field, FieldSlalomReport report)>> _results = new();
         private readonly FieldDebugScenario _scenario = new();
@@ -82,14 +86,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private FlightField Generate(FieldDifficultyProfile profile, int seed, int loop) =>
             _composition.Generator.Generate(FieldTestRequests.WithProfile(_scenario.CreateRequest(_composition.RequestFactory, seed, loop), profile));
 
-        private IEnumerable<FieldDifficultyProfile> ProfilesOfLoop(int loop) {
-            FlightFieldConfiguration.LoopRoutes routes = _composition.Configuration.RoutesByLoop.Where(entry => entry.FromLoop <= loop).OrderBy(entry => entry.FromLoop).Last();
-            return routes.Profiles.Select(option => option.Profile).Where(IsChannelProfile);
-        }
-
-        // A channel profile closes every cell outside its corridors.
-        private static bool IsChannelProfile(FieldDifficultyProfile profile) =>
-            profile.BlockedShare.Evaluate(0f) >= 1f;
+        private IEnumerable<FieldDifficultyProfile> ProfilesOfLoop(int loop) =>
+            new[] { _composition.ProfileLookup.GetRequired(_channelStageByLoop[loop]) };
 
         private IEnumerable<(FlightField field, FieldSlalomReport report)> ResultsOfLoop(int loop) =>
             _results.Where(entry => entry.Key.loop == loop).SelectMany(entry => entry.Value);

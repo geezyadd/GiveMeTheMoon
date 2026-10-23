@@ -31,7 +31,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [Test]
         public void WhenTheEasyAndHardEndsOfAProfileAreShaped_ThenTheShapeFollowsTheProfile() {
             ProfileFieldRouteShaper shaper = new(_composition.Configuration);
-            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
+            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Corridors(_composition.Configuration)) {
                 FieldCorridorShape easy = shaper.Shape(profile, EASY);
                 FieldCorridorShape hard = shaper.Shape(profile, HARD);
 
@@ -44,7 +44,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [Test]
         public void WhenMainRoutesAreGenerated_ThenTheirWidthStaysAroundTheShapeAndNeverBelowTheClearance() {
             ProfileFieldRouteShaper shaper = new(_composition.Configuration);
-            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
+            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Corridors(_composition.Configuration)) {
                 FieldRoute main = _composition.Generator.Generate(FieldTestRequests.Straight(SEED, LONG_DISTANCE, profile, HARD)).Routes[0];
                 FieldCorridorShape shape = shaper.Shape(profile, HARD);
 
@@ -55,7 +55,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenTheMainRouteIsGenerated_ThenItWindsAwayFromTheStraightLine() {
-            FieldDifficultyProfile profile = _composition.Configuration.DifficultyProfiles[0];
+            FieldDifficultyProfile profile = FieldTestProfiles.Corridors(_composition.Configuration)[0];
             FlightField field = _composition.Generator.Generate(FieldTestRequests.Straight(SEED, LONG_DISTANCE, profile, EASY));
             int straightRow = field.Routes[0].Start.y;
 
@@ -66,7 +66,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenRequestHasTwoRoutes_ThenFieldKeepsBothMainRoutesAndEachHasAPassage() {
-            FieldDifficultyProfile profile = _composition.Configuration.DifficultyProfiles[0];
+            FieldDifficultyProfile profile = FieldTestProfiles.Corridors(_composition.Configuration)[0];
             FlightField field = _composition.Generator.Generate(FieldTestRequests.Straight(SEED, LONG_DISTANCE, profile, EASY, HARD));
 
             FieldRoute[] mains = field.Routes.Where(route => route.Kind == FieldRouteKind.Main).ToArray();
@@ -78,7 +78,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenLongFieldsAreGenerated_ThenBranchesFollowTheProfileAndLeaveTheMainRoute() {
-            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
+            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Corridors(_composition.Configuration)) {
                 FlightField field = _composition.Generator.Generate(FieldTestRequests.Straight(SEED, LONG_DISTANCE, profile, HARD));
                 FieldRoute main = field.Routes[0];
                 List<FieldRoute> alternatives = field.Routes.Where(route => route.Kind == FieldRouteKind.Alternative).ToList();
@@ -122,7 +122,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenFieldIs40CellsLong_ThenGenerationIsFasterThanTheThreshold() {
-            FieldDifficultyProfile profile = _composition.Configuration.DifficultyProfiles[0];
+            FieldDifficultyProfile profile = FieldTestProfiles.Corridors(_composition.Configuration)[0];
             float distance = (TIMING_LENGTH_CELLS - _composition.Configuration.MarginBehindACells - _composition.Configuration.MarginBehindBCells - 1) * _composition.Configuration.CellSize
                 + _composition.Configuration.CellSize / 2f;
             Assert.AreEqual(TIMING_LENGTH_CELLS, _composition.Generator.Generate(FieldTestRequests.Straight(SEED, distance, profile, EASY)).Frame.LengthCells);
@@ -137,7 +137,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenAShortFieldIsGenerated_ThenItStillHasItsMainRoute() {
-            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
+            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Corridors(_composition.Configuration)) {
                 FlightField field = _composition.Generator.Generate(FieldTestRequests.Straight(SEED, SHORT_DISTANCE, profile, HARD));
 
                 Assert.AreEqual(FieldRouteKind.Main, field.Routes[0].Kind, profile.Id);

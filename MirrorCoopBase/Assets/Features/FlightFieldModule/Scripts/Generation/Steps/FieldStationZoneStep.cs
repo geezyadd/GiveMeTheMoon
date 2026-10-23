@@ -13,6 +13,9 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             _fieldAreaReserver = fieldAreaReserver;
         }
 
+        public bool IsUsedBy(FieldLayoutKind layout) =>
+            true;
+
         public void Execute(FieldGenerationContext context) {
             FieldRequest request = context.Request;
             _fieldAreaReserver.Reserve(context, request.StationA, request.StationA, _flightFieldConfiguration.StationAZoneRadius, FieldReserveKind.StationZone);

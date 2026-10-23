@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Generation;
 
@@ -13,16 +11,15 @@ namespace Features.FlightFieldModule.Scripts.Requests {
     {
         private const int PROFILE_SEED_SALT = 0x7F4A7C15;
 
-        private readonly FlightFieldConfiguration _flightFieldConfiguration;
         private readonly IFieldRandomFactory _fieldRandomFactory;
-
+        private readonly IFieldProfileLookup _fieldProfileLookup;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private FieldDifficultyProfile _debugProfile;
 #endif
 
-        public FieldProfileSelector(FlightFieldConfiguration flightFieldConfiguration, IFieldRandomFactory fieldRandomFactory) {
-            _flightFieldConfiguration = flightFieldConfiguration;
+        public FieldProfileSelector(IFieldRandomFactory fieldRandomFactory, IFieldProfileLookup fieldProfileLookup) {
             _fieldRandomFactory = fieldRandomFactory;
+            _fieldProfileLookup = fieldProfileLookup;
         }
 
         public FieldDifficultyProfile Select(FlightFieldConfiguration.LoopRoutes loopRoutes, int seed) {
@@ -34,17 +31,8 @@ namespace Features.FlightFieldModule.Scripts.Requests {
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        public void DebugUseProfile(string profileId) {
-            foreach (FieldDifficultyProfile profile in _flightFieldConfiguration.DifficultyProfiles) {
-                if (profile.Id != profileId)
-                    continue;
-
-                _debugProfile = profile;
-                return;
-            }
-
-            throw new KeyNotFoundException($"{_flightFieldConfiguration.name}: no difficulty profile '{profileId}'.");
-        }
+        public void DebugUseProfile(string profileId) =>
+            _debugProfile = _fieldProfileLookup.GetRequired(profileId);
 
         public void DebugClearProfile() =>
             _debugProfile = null;

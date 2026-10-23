@@ -1,16 +1,21 @@
 using System.Collections.Generic;
+using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
 using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Debris {
-    // The debris cells as a peer sees them: the debris runs and the placements of the live field, read once per field.
+    // The debris cells as a peer sees them: the debris runs, the placements and the profile of the live field, read
+    // once per field.
     public sealed class LiveFieldDebrisCells : IFieldDebrisCells {
         private readonly Dictionary<Vector2Int, (float density, FieldDebrisRecipe recipe)> _debrisByCell = new();
         private readonly HashSet<Vector2Int> _blockedCells = new();
 
-        public void Read(IReadOnlyLiveFieldModel liveFieldModel, FieldStructureCatalog catalog, IFieldFootprintReader footprintReader) {
+        public FieldDifficultyProfile Profile { get; private set; }
+
+        public void Read(IReadOnlyLiveFieldModel liveFieldModel, FieldStructureCatalog catalog, IFieldFootprintReader footprintReader, FieldDifficultyProfile profile) {
+            Profile = profile;
             _debrisByCell.Clear();
             _blockedCells.Clear();
             foreach (FieldDebrisRunEntry run in liveFieldModel.DebrisRuns)

@@ -26,7 +26,7 @@ namespace Features.FlightFieldModule.Scripts.Decor {
         public FieldDecorPlanetPicker(FlightFieldDecorConfiguration flightFieldDecorConfiguration, FlightFieldConfiguration flightFieldConfiguration,
                                       IFieldRandomFactory fieldRandomFactory) {
             _flightFieldDecorConfiguration = flightFieldDecorConfiguration;
-            _volumeTop = FindVolumeTop(flightFieldConfiguration.Volume);
+            _volumeTop = FieldVolumeHeights.FindTop(flightFieldConfiguration.Volume);
             _random = fieldRandomFactory.Create(0);
         }
 
@@ -170,14 +170,5 @@ namespace Features.FlightFieldModule.Scripts.Decor {
 
         private float Lerp(Vector2 range) =>
             Mathf.Lerp(range.x, range.y, _random.Value());
-
-        // The highest volume band: planets keep their clearance above and below it.
-        public static float FindVolumeTop(FieldVolumeConfiguration volume) {
-            float top = 0f;
-            foreach (FieldVolumeConfiguration.Band band in volume.Bands)
-                top = Mathf.Max(top, band.HeightMeters.y);
-
-            return top;
-        }
     }
 }

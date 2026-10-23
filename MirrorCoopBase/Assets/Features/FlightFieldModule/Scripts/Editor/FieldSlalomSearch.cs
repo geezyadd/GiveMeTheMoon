@@ -2,11 +2,13 @@ using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor {
     // The state of one A* search over a slalom grid: the best cost and parent of every point, the points already
-    // closed and the open heap ordered by cost plus the octile distance to the goal.
+    // closed and the open heap ordered by cost plus the octile distance to the goal; of two points with the same sum the
+    // one farther along goes first, so an open field is not searched as a whole band of equal sums.
     public sealed class FieldSlalomSearch {
         private const int NO_PARENT = -1;
         private const int STRAIGHT_COST = 10;
         private const int DIAGONAL_COST = 14;
+        private const int TIE_SHIFT_BITS = 32;
 
         private readonly bool[] _isClosed;
 
@@ -39,7 +41,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
         public void Open(int index, int parent, int cost) {
             Costs[index] = cost;
             Parents[index] = parent;
-            Heap.Push(cost + Estimate(index), index);
+            Heap.Push(((long)(cost + Estimate(index)) << TIE_SHIFT_BITS) - cost, index);
         }
 
         // Octile distance: never more than the real cost, so the first time the goal closes its way is the shortest.

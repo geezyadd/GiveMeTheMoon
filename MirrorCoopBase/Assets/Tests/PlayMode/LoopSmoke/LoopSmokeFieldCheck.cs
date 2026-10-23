@@ -42,6 +42,10 @@ namespace Tests.PlayMode.LoopSmoke {
         private const string RIDGE_OBSTACLES_PROPERTY = "_ridgeObstacles";
         private const string OBSTACLE_STRUCTURE_PROPERTY = "_structure";
         private const string OBSTACLE_WEIGHT_PROPERTY = "_weight";
+        private const string GIANT_CLASSES_PROPERTY = "_giantClasses";
+        private const string GIANT_CLASS_NAME_PROPERTY = "_name";
+        private const string GIANT_CLASS_OBSTACLES_PROPERTY = "_obstacles";
+        private const string DEBUG_GIANT_CLASS_NAME = "Debug networked beacon";
         // Against weight 1 of the single-cell rock: about one beacon in a Channels warm-up field (almost all big wall
         // footprints, ~5 single cells), a dozen in the busiest fields, not hundreds of Mirror objects.
         private const float BEACON_WEIGHT = 0.25f;
@@ -122,8 +126,22 @@ namespace Tests.PlayMode.LoopSmoke {
             SerializedProperty beacon = ridge.GetArrayElementAtIndex(ridge.arraySize - 1);
             beacon.FindPropertyRelative(OBSTACLE_STRUCTURE_PROPERTY).objectReferenceValue = AssetDatabase.LoadAssetAtPath<FieldStructureDefinition>(DEBUG_NETWORKED_STRUCTURE_PATH);
             beacon.FindPropertyRelative(OBSTACLE_WEIGHT_PROPERTY).floatValue = BEACON_WEIGHT;
+            AddNetworkedGiantClass(serializedCopy.FindProperty(GIANT_CLASSES_PROPERTY));
             serializedCopy.ApplyModifiedPropertiesWithoutUndo();
             return copy;
+        }
+
+        // An obstacle profile places giants, not ridges: the beacon comes as a giant class of its own.
+        private static void AddNetworkedGiantClass(SerializedProperty giantClasses) {
+            giantClasses.arraySize++;
+            SerializedProperty giantClass = giantClasses.GetArrayElementAtIndex(giantClasses.arraySize - 1);
+            giantClass.FindPropertyRelative(GIANT_CLASS_NAME_PROPERTY).stringValue = DEBUG_GIANT_CLASS_NAME;
+            giantClass.FindPropertyRelative(OBSTACLE_WEIGHT_PROPERTY).floatValue = BEACON_WEIGHT;
+            SerializedProperty obstacles = giantClass.FindPropertyRelative(GIANT_CLASS_OBSTACLES_PROPERTY);
+            obstacles.arraySize = 1;
+            SerializedProperty beacon = obstacles.GetArrayElementAtIndex(0);
+            beacon.FindPropertyRelative(OBSTACLE_STRUCTURE_PROPERTY).objectReferenceValue = AssetDatabase.LoadAssetAtPath<FieldStructureDefinition>(DEBUG_NETWORKED_STRUCTURE_PATH);
+            beacon.FindPropertyRelative(OBSTACLE_WEIGHT_PROPERTY).floatValue = 1f;
         }
 
         private static void PointLoopAtCopies(SerializedProperty loopProfiles, Dictionary<Object, Object> profileCopies) {

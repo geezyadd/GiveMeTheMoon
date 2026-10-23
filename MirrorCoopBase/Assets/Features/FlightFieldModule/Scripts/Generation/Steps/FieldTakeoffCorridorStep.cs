@@ -17,6 +17,9 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             _fieldAreaReserver = fieldAreaReserver;
         }
 
+        public bool IsUsedBy(FieldLayoutKind layout) =>
+            true;
+
         public void Execute(FieldGenerationContext context) {
             FieldRequest request = context.Request;
             Vector3 corridorEnd = request.CruiseStart + TakeoffForward(request) * _flightFieldConfiguration.TakeoffRunOutLength;

@@ -3,6 +3,7 @@ using Features.FlightFieldModule.Scripts.Debris;
 using Features.FlightFieldModule.Scripts.Decor;
 using Features.FlightFieldModule.Scripts.Generation;
 using Features.FlightFieldModule.Scripts.Generation.Noise;
+using Features.FlightFieldModule.Scripts.Generation.Obstacles;
 using Features.FlightFieldModule.Scripts.Generation.Passage;
 using Features.FlightFieldModule.Scripts.Generation.Placement;
 using Features.FlightFieldModule.Scripts.Generation.Routes;
@@ -41,11 +42,13 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldClearancePathFinder>().To<FieldClearancePathFinder>().AsSingle();
             Container.Bind<IFieldCorridorClearer>().To<FieldCorridorClearer>().AsSingle();
             Container.Bind<IFieldDebrisLayout>().To<FieldDebrisLayout>().AsSingle();
+            Container.Bind<IFieldObstacleDensity>().To<FieldObstacleDensity>().AsSingle();
             InstallGenerationSteps();
             Container.Bind<IFlightFieldGenerator>().To<FlightFieldGenerator>().AsSingle();
             Container.BindInterfacesTo<FlightFieldGenerationWarmup>().AsSingle();
             Container.BindInterfacesTo<FieldProfileSelector>().AsSingle();
             Container.Bind<IFieldRequestFactory>().To<FieldRequestFactory>().AsSingle();
+            Container.Bind<IFieldProfileLookup>().To<FieldProfileLookup>().AsSingle();
             InstallLiveField();
             InstallDecor();
         }
@@ -82,19 +85,24 @@ namespace Features.FlightFieldModule.Scripts {
             Container.BindInterfacesTo<LiveFieldBuildSystem>().AsSingle();
         }
 
-        // The only place that orders generation: the steps run in the order they are bound here. A new kind of field
-        // content is a new step class and one line here.
+        // The only place that orders generation: the steps run in the order they are bound here, each only for the
+        // profile layouts it serves (Corridors, Obstacles or both). A new kind of field content is a new step class
+        // and one line here.
         private void InstallGenerationSteps() {
             Container.Bind<IFieldGenerationStep>().To<FieldFrameStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldStationZoneStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldTakeoffCorridorStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldRouteStep>().AsSingle();
+            Container.Bind<IFieldGenerationStep>().To<FieldObstacleRouteStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldBranchStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldDensityMapStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldWallStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldZoneStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldGiantPlacementStep>().AsSingle();
+            Container.Bind<IFieldGenerationStep>().To<FieldObstacleGiantStep>().AsSingle();
+            Container.Bind<IFieldGenerationStep>().To<FieldObstacleDebrisStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldPassageStep>().AsSingle();
+            Container.Bind<IFieldGenerationStep>().To<FieldObstaclePassageStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldPathMetricStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldBalanceMetricStep>().AsSingle();
         }

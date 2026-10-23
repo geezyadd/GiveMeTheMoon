@@ -52,7 +52,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
         }
 
         private static void Expand(FieldSlalomSearch search) {
-            (int _, int index) = search.Heap.Pop();
+            (long _, int index) = search.Heap.Pop();
             if (search.IsClosed(index))
                 return;
 

@@ -35,6 +35,9 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             _flightFieldConfiguration = flightFieldConfiguration;
         }
 
+        public bool IsUsedBy(FieldLayoutKind layout) =>
+            layout == FieldLayoutKind.Corridors;
+
         public void Execute(FieldGenerationContext context) {
             foreach (FieldRouteRequest routeRequest in context.Request.RouteRequests)
                 AddChannels(context, routeRequest.Difficulty);

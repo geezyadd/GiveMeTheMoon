@@ -4,8 +4,9 @@ using UnityEngine;
 using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Configuration {
-    // The one startup check of the volume of rocks: a volume configuration with rocks; every band above the plane
-    // clearance, high enough for its largest rock, with presences in 0..1 and materials.
+    // The one startup check of the volume of rocks: a volume configuration with rocks, and the same for every profile's
+    // own volume, which also stays below the configuration's top (the planets keep their clearance above that); every
+    // band above the plane clearance, high enough for its largest rock, with presences in 0..1 and materials.
     public sealed class FieldVolumeConfigurationValidator : IInitializable {
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
 
@@ -17,6 +18,19 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
             if (volume == null)
                 throw new InvalidOperationException($"{_flightFieldConfiguration.name}: no volume configuration.");
 
+            ValidateVolume(volume);
+            float top = FieldVolumeHeights.FindTop(volume);
+            foreach (FieldDifficultyProfile profile in _flightFieldConfiguration.DifficultyProfiles) {
+                if (profile == null || !profile.HasOwnVolume)
+                    continue;
+
+                ValidateVolume(profile.Volume);
+                if (FieldVolumeHeights.FindTop(profile.Volume) > top)
+                    throw new InvalidOperationException($"{profile.Volume.name}: the volume of {profile.name} reaches above {top} m, the top of {volume.name} the planets keep clear of.");
+            }
+        }
+
+        private static void ValidateVolume(FieldVolumeConfiguration volume) {
             if (volume.Rocks.Count == 0)
                 throw new InvalidOperationException($"{volume.name}: no volume rock.");
 

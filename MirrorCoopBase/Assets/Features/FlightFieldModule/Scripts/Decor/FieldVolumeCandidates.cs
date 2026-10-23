@@ -19,12 +19,10 @@ namespace Features.FlightFieldModule.Scripts.Decor {
         // How much of a rock's size follows the ridge below it; the rest is chance.
         private const float RIDGE_SIZE_SHARE = 0.5f;
 
-        private readonly FlightFieldConfiguration _flightFieldConfiguration;
         private readonly IFieldRidgeNoise _fieldRidgeNoise;
         private readonly IFieldRandom _random;
 
-        public FieldVolumeCandidates(FlightFieldConfiguration flightFieldConfiguration, IFieldRidgeNoise fieldRidgeNoise, IFieldRandomFactory fieldRandomFactory) {
-            _flightFieldConfiguration = flightFieldConfiguration;
+        public FieldVolumeCandidates(IFieldRidgeNoise fieldRidgeNoise, IFieldRandomFactory fieldRandomFactory) {
             _fieldRidgeNoise = fieldRidgeNoise;
             _random = fieldRandomFactory.Create(0);
         }
@@ -44,7 +42,7 @@ namespace Features.FlightFieldModule.Scripts.Decor {
             float sizeRoll = _random.Value();
             float ridge = _fieldRidgeNoise.Sample(source.Profile, source.Difficulty, fieldSeed, new Vector2(onPlane.y / source.CellSize, onPlane.x / source.CellSize));
             float radius = Mathf.Lerp(band.DiameterMeters.x, band.DiameterMeters.y, Mathf.Lerp(sizeRoll, ridge, RIDGE_SIZE_SHARE)) * HALF;
-            float lowest = Mathf.Max(band.HeightMeters.x, _flightFieldConfiguration.Volume.PlaneClearanceMeters) + radius + band.GapMeters * HALF;
+            float lowest = Mathf.Max(band.HeightMeters.x, source.Volume.PlaneClearanceMeters) + radius + band.GapMeters * HALF;
             float highest = band.HeightMeters.y - radius - band.GapMeters * HALF;
             float height = Mathf.Clamp(band.HeightMeters.x + (point.y + layerShare) * layerHeight, lowest, highest);
             bool exists = presenceRoll < Mathf.Lerp(band.Presence.x, band.Presence.y, ridge) && lowest <= highest && !IsNearStation(side, onPlane, radius, source);
@@ -54,7 +52,7 @@ namespace Features.FlightFieldModule.Scripts.Decor {
 
         // Below the plane near the route's ends the ship climbs from and sinks to the stations.
         private bool IsNearStation(int side, Vector2 onPlane, float radius, FieldVolumeSource source) {
-            float reach = _flightFieldConfiguration.Volume.StationClearanceMeters + radius;
+            float reach = source.Volume.StationClearanceMeters + radius;
             bool isBelow = side < 0;
             return isBelow && (Vector2.Distance(onPlane, source.RouteStart) < reach || Vector2.Distance(onPlane, source.RouteEnd) < reach);
         }

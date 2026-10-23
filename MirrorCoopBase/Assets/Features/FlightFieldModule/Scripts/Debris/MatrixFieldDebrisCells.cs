@@ -1,3 +1,4 @@
+using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Structures;
 using Features.MatrixModule.Scripts;
@@ -10,9 +11,12 @@ namespace Features.FlightFieldModule.Scripts.Debris {
         private readonly IMatrix<FieldCell> _cells;
         private readonly FieldStructureCatalog _fieldStructureCatalog;
 
-        public MatrixFieldDebrisCells(IMatrix<FieldCell> cells, FieldStructureCatalog fieldStructureCatalog) {
+        public FieldDifficultyProfile Profile { get; }
+
+        public MatrixFieldDebrisCells(IMatrix<FieldCell> cells, FieldStructureCatalog fieldStructureCatalog, FieldDifficultyProfile profile) {
             _cells = cells;
             _fieldStructureCatalog = fieldStructureCatalog;
+            Profile = profile;
         }
 
         public bool TryGetDebris(Vector2Int cell, out float density, out FieldDebrisRecipe recipe) {

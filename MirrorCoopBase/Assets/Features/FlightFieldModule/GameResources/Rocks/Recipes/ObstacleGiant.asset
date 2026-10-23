@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c022969774822447b9edc3717c670ed, type: 3}
+  m_Name: ObstacleGiant
+  m_EditorClassIdentifier: 
+  _rocks:
+  - _prefab: {fileID: 8764060928733923911, guid: 9c9ceadf0dfcda54a9a25fd8bbc7256f, type: 3}
+    _weight: 1
+  - _prefab: {fileID: 502716433160651421, guid: c811cc461ead7fe4c92e96127460c9e7, type: 3}
+    _weight: 1
+  - _prefab: {fileID: 1465632849820702662, guid: 2fd48a2dadef23d4abfd30afe3ba166a, type: 3}
+    _weight: 1
+  - _prefab: {fileID: 389152053218500649, guid: 11f71e34574b0c7418440a9efded9884, type: 3}
+    _weight: 1
+  - _prefab: {fileID: 1366553966095815797, guid: a7a0009763c559b4cae8e118507e9011, type: 3}
+    _weight: 1
+  - _prefab: {fileID: 4032994201507482594, guid: eaf29583ee60a434e8dff9c72054ace1, type: 3}
+    _weight: 1
+  _materials:
+  - {fileID: 2100000, guid: 01eabe4719924c2dbca25dab72d7cbc2, type: 2}
+  - {fileID: 2100000, guid: db805820543140e69a7d8adcd74573c0, type: 2}
+  - {fileID: 2100000, guid: 2dd3f03d50c74f8484a61d5a815a3437, type: 2}
+  _mainSize: 1.2
+  _mainHeightJitter: 0.08
+  _axisScale: {x: 0.85, y: 1.15}
+  _satelliteCount: {x: 0, y: 0}
+  _satelliteSize: {x: 0.4, y: 0.9}
+  _heightSpreadCells: 3
+  _debrisChance: 0
+  _debrisCount: {x: 8, y: 14}
+  _debrisSize: {x: 0.03, y: 0.08}
+  _planeRocks: []
+  _planeHalfExtentShare: 0.3
+  _planeReachShare: 0.65
+  _planeSizeVariation: 0.4
+  _planeGapMeters: {x: 0, y: 5}
+  _planeJitterMeters: 3
+  _planeHeightJitterMeters: 3
+  _planeMinHalfHeightMeters: 11
+  _planeMaxSpillMeters: 35
+  _planeMinPartMeters: 20
+  _extraRocksPerCell: 0
+  _extraHeightMeters: {x: 25, y: 130}
+  _extraDiameterMeters: {x: 15, y: 70}

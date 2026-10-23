@@ -6,8 +6,9 @@ using UnityEngine;
 namespace Features.FlightFieldModule.Scripts.Configuration {
     // The visual-only volume of big rocks above and below the flight plane, in height bands (near, far): every peer
     // lays it out per decor chunk from the field seed; no colliders, not in the matrix, not synced. How many rocks
-    // stand follows the field's ridges (denser over ridges, sparser over glades, never empty); rocks of one band keep
-    // a gap between them, and no rock comes closer to the flight plane than the clearance.
+    // stand follows the field's ridges (denser over ridges, sparser over glades, never empty); rocks keep a gap between
+    // them (also across bands), and no rock comes closer to the flight plane than the clearance. A profile may bring
+    // its own volume.
     [CreateAssetMenu(menuName = "Game/Flight Field/Volume Configuration", fileName = "FieldVolumeConfiguration_Default")]
     public sealed class FieldVolumeConfiguration : ScriptableObject {
         [Serializable]
@@ -33,6 +34,7 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
             public IReadOnlyList<Material> Materials => _materials;
         }
 
+        [Tooltip("From small rocks to big ones: a rock gives way to any rock of a later band that comes closer than the wider gap of the two.")]
         [SerializeField] private Band[] _bands = Array.Empty<Band>();
         [Tooltip("Rock prefabs of the volume and their weights.")]
         [SerializeField] private FieldClusterRockOption[] _rocks = Array.Empty<FieldClusterRockOption>();

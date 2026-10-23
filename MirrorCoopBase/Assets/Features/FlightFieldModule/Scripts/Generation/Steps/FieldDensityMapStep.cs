@@ -22,6 +22,9 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             _fieldRidgeNoise = fieldRidgeNoise;
         }
 
+        public bool IsUsedBy(FieldLayoutKind layout) =>
+            true;
+
         public void Execute(FieldGenerationContext context) {
             Vector2Int size = context.Frame.Size;
             FieldDensityMap map = new(size);

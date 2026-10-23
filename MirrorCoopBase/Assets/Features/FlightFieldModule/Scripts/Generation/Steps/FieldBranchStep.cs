@@ -24,6 +24,9 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             _flightFieldConfiguration = flightFieldConfiguration;
         }
 
+        public bool IsUsedBy(FieldLayoutKind layout) =>
+            layout == FieldLayoutKind.Corridors;
+
         public void Execute(FieldGenerationContext context) {
             List<FieldRoute> mainRoutes = new();
             foreach (FieldRoute route in context.Routes) {

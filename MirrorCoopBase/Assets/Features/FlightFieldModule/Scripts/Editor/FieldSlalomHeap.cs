@@ -1,14 +1,14 @@
 using System.Collections.Generic;
 
 namespace Features.FlightFieldModule.Scripts.Editor {
-    // A binary min-heap of grid point indices by an integer cost, for the slalom search. A point may sit in it more
-    // than once with older, higher costs; the search skips those.
+    // A binary min-heap of grid point indices by an integer key, for the slalom search. A point may sit in it more
+    // than once with older, higher keys; the search skips those.
     public sealed class FieldSlalomHeap {
-        private readonly List<(int cost, int index)> _items = new();
+        private readonly List<(long cost, int index)> _items = new();
 
         public int Count => _items.Count;
 
-        public void Push(int cost, int index) {
+        public void Push(long cost, int index) {
             _items.Add((cost, index));
             int child = _items.Count - 1;
             while (child > 0) {
@@ -21,8 +21,8 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             }
         }
 
-        public (int cost, int index) Pop() {
-            (int cost, int index) top = _items[0];
+        public (long cost, int index) Pop() {
+            (long cost, int index) top = _items[0];
             int last = _items.Count - 1;
             _items[0] = _items[last];
             _items.RemoveAt(last);

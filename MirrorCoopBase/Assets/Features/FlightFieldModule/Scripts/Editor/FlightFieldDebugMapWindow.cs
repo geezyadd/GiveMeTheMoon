@@ -181,6 +181,11 @@ namespace Features.FlightFieldModule.Scripts.Editor {
                 : "NO WAY for the ship";
             _summaryLines.Add($"Slalom: {way}; rocks {report.Rocks.Count}, in main channels {report.ChannelRocks} over {report.ChannelLengthMeters / METERS_PER_KILOMETER:0.0} km "
                 + $"= {report.RocksPerKilometer:0} per km");
+            IReadOnlyList<float> limits = FieldRockSizeLimits.UpperDiametersMeters;
+            int[] sizes = report.CountBySize(limits);
+            _summaryLines.Add($"Flight plane: {report.PlaneRocksPerSquareKilometer():0} rocks per km2 (giants {report.Plane.GiantDiametersMeters.Count}), largest {report.LargestRockMeters():0} m; "
+                + $"sizes up to {limits[0]:0} m: {sizes[0]}, up to {limits[1]:0} m: {sizes[1]}, up to {limits[2]:0} m: {sizes[2]}, "
+                + $"above: {sizes[3]}");
         }
 
         private FieldRequest WithChosenProfile(FieldRequest request, FlightFieldConfiguration configuration) {
