@@ -40,9 +40,11 @@ namespace Features.AddressablesConstantsGenerator.Generated {
             public const string PlayerStatsConfiguration_Default = "PlayerStatsConfiguration_Default";
             public const string ShipAccumulativeStatsConfiguration_Default = "ShipAccumulativeStatsConfiguration_Default";
             public const string ShipRadarCatalog_Default = "ShipRadarCatalog_Default";
-            public const string FlightFieldDecorConfiguration_Default = "FlightFieldDecorConfiguration_Default";
             public const string StagePresetCatalog_Default = "StagePresetCatalog_Default";
-            public static List<string> AllAddressablesInGroup = new List<string>() {"ShopKioskConfiguration_Default","ConnectionConfig_Default","CameraCatalog_Default","ShipStationCatalog_Default","GrabConfiguration_Default","PlayerLifeConfiguration_Default","FlightFieldConfiguration_Default","ShipRunConfig_Default","ShipFlightConfig_Default","ReviveConfiguration_Default","PlayerDamageConfiguration_Default","ShopCatalog_Default","ModuleCatalog_Default","FieldStructureCatalog_Default","WalletConfiguration_Default","PlayerNameplateConfiguration_Default","PlayerStatsConfiguration_Default","ShipAccumulativeStatsConfiguration_Default","ShipRadarCatalog_Default","FlightFieldDecorConfiguration_Default","StagePresetCatalog_Default",};
+            public const string FlightFieldDecorConfiguration_Default = "FlightFieldDecorConfiguration_Default";
+            public const string WeaponCatalog_Default = "WeaponCatalog_Default";
+            public const string WeaponHitRuleConfiguration_Default = "WeaponHitRuleConfiguration_Default";
+            public static List<string> AllAddressablesInGroup = new List<string>() {"ShopKioskConfiguration_Default","ConnectionConfig_Default","CameraCatalog_Default","ShipStationCatalog_Default","GrabConfiguration_Default","PlayerLifeConfiguration_Default","FlightFieldConfiguration_Default","ShipRunConfig_Default","ShipFlightConfig_Default","ReviveConfiguration_Default","PlayerDamageConfiguration_Default","ShopCatalog_Default","ModuleCatalog_Default","FieldStructureCatalog_Default","WalletConfiguration_Default","PlayerNameplateConfiguration_Default","PlayerStatsConfiguration_Default","ShipAccumulativeStatsConfiguration_Default","ShipRadarCatalog_Default","StagePresetCatalog_Default","FlightFieldDecorConfiguration_Default","WeaponCatalog_Default","WeaponHitRuleConfiguration_Default",};
         }
         public static partial class Groups {
             public static List<List<string>> AllAddressablesGroups = new List<List<string>>() {Windows.AllAddressablesInGroup,Scenes.AllAddressablesInGroup,Configurations.AllAddressablesInGroup,};

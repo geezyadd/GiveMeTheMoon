@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b605cd8debde17c4994371d03cc65001, type: 3}
+  m_Name: Minigun
+  m_EditorClassIdentifier: 
+  _id: minigun
+  _displayName: Minigun
+  _shotsPerSecond: 20
+  _damagePerHit: 1
+  _rangeMeters: 400
+  _fireMode:
+    rid: 3002219236546576460
+  _delivery:
+    rid: 3002219236546576461
+  _hitEffects:
+  - rid: 3002219236546576462
+  _feelProfile: {fileID: 11400000, guid: dfa70271a369ce04298916a67066dcc6, type: 2}
+  references:
+    version: 2
+    RefIds:
+    - rid: 3002219236546576460
+      type: {class: AutoFireModeDefinition, ns: Features.WeaponModule.Scripts.Parts.FireModes, asm: Features.WeaponModule}
+      data:
+        _spinUpSeconds: 0.25
+        _spinDownSeconds: 0.4
+    - rid: 3002219236546576461
+      type: {class: HitscanDeliveryDefinition, ns: Features.WeaponModule.Scripts.Parts.Delivery, asm: Features.WeaponModule}
+      data:
+        _spreadDegrees: 0.6
+    - rid: 3002219236546576462
+      type: {class: DamageHitEffect, ns: Features.WeaponModule.Scripts.Parts.Effects, asm: Features.WeaponModule}
+      data: 
