@@ -34,7 +34,8 @@ namespace Features.FlightFieldModule.Scripts.Scene {
 
         public void Restart(IReadOnlyLiveFieldModel liveFieldModel) {
             Clear();
-            _debrisCells.Read(liveFieldModel, _fieldStructureCatalog, _fieldFootprintReader, _fieldProfileLookup.GetRequired(liveFieldModel.ProfileId));
+            _debrisCells.Read(liveFieldModel.DebrisRuns, liveFieldModel.Placements, _fieldStructureCatalog, _fieldFootprintReader,
+                _fieldProfileLookup.GetRequired(liveFieldModel.ProfileId));
             foreach (FieldDebrisRunEntry run in liveFieldModel.DebrisRuns)
                 AddRunCells(run);
         }

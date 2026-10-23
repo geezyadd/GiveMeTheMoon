@@ -57,7 +57,9 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return new LoopSmokeHandCheck(_session.Ship).ReinstallRadarByHandCoroutine();
 
             ShipLandingPad startPad = _flight.FindPadUnderShip();
-            yield return _flight.FlyLoopCoroutine(1);
+            LoopSmokeRockBreakCheck rockBreak = new LoopSmokeRockBreakCheck();
+            yield return _flight.FlyLoopCoroutine(1, rockBreak.BreakNearestRockInCruiseCoroutine);
+            rockBreak.AssertBrokenListClearedAfterLanding();
             ShipLandingPad firstPad = _flight.FindPadUnderShip();
             yield return _flight.AssertLandedSafelyCoroutine(1, startPad, firstPad);
             int firstLandingSpawns = LoopSmokeSpawnCounts.CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values);

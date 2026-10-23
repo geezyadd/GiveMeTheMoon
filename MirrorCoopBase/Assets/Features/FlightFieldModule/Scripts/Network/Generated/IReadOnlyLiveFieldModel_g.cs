@@ -19,6 +19,7 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteEntry> Routes { get; }
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteCellEntry> RouteCells { get; }
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> DebrisRuns { get; }
+        public IReadOnlyList<global::Features.FlightFieldModule.Contracts.FieldRockId> BrokenRocks { get; }
         public bool IsAvailable { get; }
 
         public event Action OnNumberChanged;
@@ -49,6 +50,11 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> OnDebrisRunsSet;
         public event Action OnDebrisRunsCleared;
         public event Action OnDebrisRunsChanged;
+        public event Action<int, global::Features.FlightFieldModule.Contracts.FieldRockId> OnBrokenRocksAdded;
+        public event Action<int, global::Features.FlightFieldModule.Contracts.FieldRockId> OnBrokenRocksRemoved;
+        public event Action<int, global::Features.FlightFieldModule.Contracts.FieldRockId> OnBrokenRocksSet;
+        public event Action OnBrokenRocksCleared;
+        public event Action OnBrokenRocksChanged;
         public event Action OnChanged;
         public event Action OnAvailableChanged;
     }

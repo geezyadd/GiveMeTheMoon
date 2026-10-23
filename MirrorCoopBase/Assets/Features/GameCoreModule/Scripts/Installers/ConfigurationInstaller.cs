@@ -40,6 +40,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FieldStructureCatalog>(Address.Configurations.FieldStructureCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<FieldRockDurabilityConfiguration>(Address.Configurations.FieldRockDurabilityConfiguration_Default).AsSingle();
         }
     }
 }

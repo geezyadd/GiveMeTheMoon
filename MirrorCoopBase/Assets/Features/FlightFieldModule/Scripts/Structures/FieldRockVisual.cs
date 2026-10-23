@@ -9,6 +9,10 @@ namespace Features.FlightFieldModule.Scripts.Structures {
 
         [SerializeField] private MeshRenderer _renderer;
 
+        public Material Material => _renderer.sharedMaterial;
+        // The diameter the rock's mesh stays within as it stands in the world.
+        public float BoundingDiameter => 2f * MESH_REACH * Mathf.Max(transform.lossyScale.x, Mathf.Max(transform.lossyScale.y, transform.lossyScale.z));
+
         public void SetMaterial(Material material) =>
             _renderer.sharedMaterial = material;
     }

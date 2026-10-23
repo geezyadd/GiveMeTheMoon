@@ -25,6 +25,8 @@ namespace Features.FlightFieldModule.Scripts.Structures {
         [SerializeField] private Vector2 _offPlaneHeightMeters = new(20f, 80f);
         [Tooltip("Random per-axis scale of every rock (non-uniform), min and max.")]
         [SerializeField] private Vector2 _axisScale = new(0.8f, 1.2f);
+        [Tooltip("The rocks of this recipe can be broken (by a ship collision or a weapon).")]
+        [SerializeField] private bool _isBreakable = true;
 
         public IReadOnlyList<FieldClusterRockOption> Rocks => _rocks;
         public IReadOnlyList<Material> Materials => _materials;
@@ -35,5 +37,6 @@ namespace Features.FlightFieldModule.Scripts.Structures {
         public float OffPlaneShare => _offPlaneShare;
         public Vector2 OffPlaneHeightMeters => _offPlaneHeightMeters;
         public Vector2 AxisScale => _axisScale;
+        public bool IsBreakable => _isBreakable;
     }
 }

@@ -22,10 +22,11 @@ namespace Features.FlightFieldModule.Scripts.Model {
         public float Difficulty { get; }
         public FieldDensityMap Density { get; }
         public FieldMetrics Metrics { get; }
+        public int LoopIndex { get; }
 
         public FlightField(FieldFrame frame, int seed, IMatrix<FieldCell> cells, IReadOnlyList<FieldPlacement> placements, IReadOnlyList<FieldRoute> routes,
                            Vector2Int stationACell, Vector2Int stationBCell, Vector2Int cruiseStartCell, bool isPassageForced, string profileId, float difficulty,
-                           FieldDensityMap density, FieldMetrics metrics) {
+                           FieldDensityMap density, FieldMetrics metrics, int loopIndex) {
             Frame = frame;
             Seed = seed;
             Cells = cells;
@@ -39,6 +40,7 @@ namespace Features.FlightFieldModule.Scripts.Model {
             Difficulty = difficulty;
             Density = density;
             Metrics = metrics;
+            LoopIndex = loopIndex;
         }
     }
 }
