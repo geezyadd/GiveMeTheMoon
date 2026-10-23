@@ -2,15 +2,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Features.AddressablesConstantGeneratorModule.EditorLoading;
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.GrabModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Configurations;
 using Mirror;
 using NUnit.Framework;
-using UnityEditor;
-using UnityEditor.AddressableAssets;
-using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -41,7 +39,7 @@ namespace Features.GameCoreModule.Editor.Tests {
 
         [SetUp]
         public void SetUp() =>
-            _moduleCatalog = LoadConfiguration<ModuleCatalog>(Address.Configurations.ModuleCatalog_Default);
+            _moduleCatalog = AddressableConfigurationLoader.Load<ModuleCatalog>(Address.Configurations.ModuleCatalog_Default);
 
         [Test]
         public void WhenModuleCatalogIsRead_ThenEveryIdIsSetAndUnique() {
@@ -78,14 +76,14 @@ namespace Features.GameCoreModule.Editor.Tests {
 
         [Test]
         public void WhenShopCatalogIsRead_ThenEveryModuleIsInTheModuleCatalog() {
-            ShopCatalog shopCatalog = LoadConfiguration<ShopCatalog>(Address.Configurations.ShopCatalog_Default);
+            ShopCatalog shopCatalog = AddressableConfigurationLoader.Load<ShopCatalog>(Address.Configurations.ShopCatalog_Default);
 
             AssertAllInModuleCatalog(shopCatalog.Modules, shopCatalog.name);
         }
 
         [Test]
         public void WhenStationDropsAreRead_ThenEveryModuleIsInTheModuleCatalog() {
-            ShipStationCatalog stationCatalog = LoadConfiguration<ShipStationCatalog>(Address.Configurations.ShipStationCatalog_Default);
+            ShipStationCatalog stationCatalog = AddressableConfigurationLoader.Load<ShipStationCatalog>(Address.Configurations.ShipStationCatalog_Default);
 
             AssertAllInModuleCatalog(stationCatalog.Drops.Select(drop => drop.Module).ToArray(), stationCatalog.name);
         }
@@ -127,13 +125,6 @@ namespace Features.GameCoreModule.Editor.Tests {
                 if (wasOpen == false)
                     EditorSceneManager.CloseScene(scene, true);
             }
-        }
-
-        private static T LoadConfiguration<T>(string address) where T : ScriptableObject {
-            AddressableAssetGroup group = AddressableAssetSettingsDefaultObject.Settings.FindGroup(Address.Configurations.ADDRESSABLE_GROUP_NAME);
-            AddressableAssetEntry entry = group.entries.FirstOrDefault(candidate => candidate.address == address);
-            Assert.IsNotNull(entry, $"No entry with address {address} in the {Address.Configurations.ADDRESSABLE_GROUP_NAME} group.");
-            return AssetDatabase.LoadAssetAtPath<T>(entry.AssetPath);
         }
 
         private static string ToAssetPath(string path) =>

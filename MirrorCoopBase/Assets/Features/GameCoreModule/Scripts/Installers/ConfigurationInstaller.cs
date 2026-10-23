@@ -4,11 +4,13 @@ using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Structures;
 using Features.GrabModule.Scripts;
+using Features.LobbyModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
 using Features.PlayerProfileModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Hull;
 using Features.ShopModule.Scripts.Configurations;
+using Features.StagePresetModule.Scripts.Configurations;
 using Features.Zenject.Zenject.Addons.AddressablesConfigurationsLoader;
 using Game.Connection;
 using Zenject;
@@ -26,6 +28,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
                     Address.Configurations.ShipAccumulativeStatsConfiguration_Default)
                 .AsSingle();
             Container.BindConfigurationFromAddressables<ShipHullConfiguration>(Address.Configurations.ShipHullConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ShipHullHudConfiguration>(Address.Configurations.ShipHullHudConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShopCatalog>(Address.Configurations.ShopCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WalletConfiguration>(Address.Configurations.WalletConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShopKioskConfiguration>(Address.Configurations.ShopKioskConfiguration_Default).AsSingle();
@@ -42,6 +45,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FieldStructureCatalog>(Address.Configurations.FieldStructureCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<StagePresetCatalog>(Address.Configurations.StagePresetCatalog_Default).AsSingle();
         }
     }
 }

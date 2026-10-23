@@ -79,9 +79,15 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
         }
 
         [Test]
-        public void WhenHullHitHarderThanItHas_ThenItStopsAtZero_AndRefillTakesItToMax() {
+        public void WhenHullHitHarderThanItHas_ThenItStopsAtZero() {
             _sheet.Subtract(ShipStatType.Hull, LETHAL_HIT);
+
             Assert.AreEqual(0f, _sheet.GetFull(ShipStatType.Hull), TOLERANCE);
+        }
+
+        [Test]
+        public void WhenHullIsEmpty_AndRefilled_ThenItIsAtMax() {
+            _sheet.Subtract(ShipStatType.Hull, LETHAL_HIT);
 
             _sheet.Refill(ShipStatType.Hull);
 

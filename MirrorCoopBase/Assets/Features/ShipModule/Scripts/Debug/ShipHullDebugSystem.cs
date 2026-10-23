@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 using Zenject;
 
 namespace Features.ShipModule.Scripts.Debug {
-    // Debug only, on the host: F7 hits the ship's hull with the configured debug damage, F8 takes it to 0. Both go
+    // Debug only, on the host: F7 hits the ship's hull with the configured debug damage, F10 takes it to 0. Both go
     // through the hull service like a real hit, so armor, the synced stats and the hull events all see them.
     public sealed class ShipHullDebugSystem : ITickable, IShipHullDebug {
         // More than any hull and armor can absorb: the hull goes to 0 whatever its max and armor.
@@ -28,7 +28,7 @@ namespace Features.ShipModule.Scripts.Debug {
 
             if (keyboard.f7Key.wasPressedThisFrame)
                 DebugDamage(_shipHullConfiguration.DebugDamage);
-            else if (keyboard.f8Key.wasPressedThisFrame)
+            else if (keyboard.f10Key.wasPressedThisFrame)
                 DebugDestroy();
         }
 

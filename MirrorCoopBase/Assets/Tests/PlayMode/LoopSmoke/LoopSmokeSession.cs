@@ -63,7 +63,7 @@ namespace Tests.PlayMode.LoopSmoke {
             Model = null;
         }
 
-        // The other way back: a destroyed hull (the F8 debug entry) sends everyone to the lobby through the same exit.
+        // The other way back: a destroyed hull (the F10 debug entry) sends everyone to the lobby through the same exit.
         public IEnumerator ReturnToLobbyByHullLossCoroutine() {
             SessionQueries.Resolve<IShipHullDebug>().DebugDestroy();
             yield return WaitForCoroutine(IsBackInLobby, RETURN_TO_LOBBY_TIMEOUT_SECONDS, "the lobby after the hull was destroyed, with GameScene unloaded");

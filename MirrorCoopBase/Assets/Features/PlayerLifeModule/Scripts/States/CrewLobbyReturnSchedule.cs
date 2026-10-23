@@ -6,7 +6,7 @@ namespace Features.PlayerLifeModule.Scripts {
         private bool _isShipLostPending;
         private float _returnAt;
 
-        public bool IsPending => _isAllDeadPending || _isShipLostPending;
+        private bool IsPending => _isAllDeadPending || _isShipLostPending;
 
         public void SetAllDead(bool areAllDead, float returnAt) {
             if (areAllDead == false) {

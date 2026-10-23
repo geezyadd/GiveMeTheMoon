@@ -8,12 +8,15 @@ namespace Features.LobbyModule.Scripts {
         private const string HULL_FORMAT = "hull {0} / {1}";
 
         private readonly IReadOnlyShipStatsModel _shipStatsModel;
+        private readonly ShipHullHudConfiguration _shipHullHudConfiguration;
 
         private bool _isHullShown;
         private float _shownHull;
 
-        public ShipHullPresenter(IReadOnlyShipStatsModel shipStatsModel) =>
+        public ShipHullPresenter(IReadOnlyShipStatsModel shipStatsModel, ShipHullHudConfiguration shipHullHudConfiguration) {
             _shipStatsModel = shipStatsModel;
+            _shipHullHudConfiguration = shipHullHudConfiguration;
+        }
 
         protected override void OnViewSet() {
             _shipStatsModel.OnHullChanged += Refresh;
@@ -41,7 +44,7 @@ namespace Features.LobbyModule.Scripts {
             float hullMax = _shipStatsModel.HullMax;
             // The first value a player sees (a join at a station included) is no hit.
             if (_isHullShown && hull < _shownHull)
-                View.PlayDamageFlash();
+                View.PlayDamageFlash(_shipHullHudConfiguration.FlashSeconds, _shipHullHudConfiguration.FlashAlpha);
 
             _isHullShown = true;
             _shownHull = hull;

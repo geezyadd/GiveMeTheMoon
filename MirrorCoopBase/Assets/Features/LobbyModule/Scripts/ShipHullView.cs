@@ -8,9 +8,9 @@ namespace Features.LobbyModule.Scripts {
         [SerializeField] private RectTransform _fill;
         [SerializeField] private Text _label;
         [SerializeField] private Image _flash;
-        [SerializeField, Min(0.01f)] private float _flashSeconds = 0.35f;
-        [SerializeField, Range(0f, 1f)] private float _flashAlpha = 0.85f;
 
+        private float _flashSeconds;
+        private float _flashAlpha;
         private float _flashSecondsLeft;
 
         private void Update() {
@@ -31,8 +31,10 @@ namespace Features.LobbyModule.Scripts {
             _label.text = text;
         }
 
-        public override void PlayDamageFlash() {
-            _flashSecondsLeft = _flashSeconds;
+        public override void PlayDamageFlash(float seconds, float alpha) {
+            _flashSeconds = seconds;
+            _flashAlpha = alpha;
+            _flashSecondsLeft = seconds;
             ApplyFlash();
         }
 

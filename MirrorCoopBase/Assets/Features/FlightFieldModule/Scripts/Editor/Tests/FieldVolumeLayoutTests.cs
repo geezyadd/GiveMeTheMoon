@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Features.AddressablesConstantGeneratorModule.EditorLoading;
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Decor;
@@ -31,8 +32,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [OneTimeSetUp]
         public void OneTimeSetUp() {
-            _configuration = FlightFieldEditorCompositionFactory.LoadConfiguration<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default);
-            FlightFieldDecorConfiguration decor = FlightFieldEditorCompositionFactory.LoadConfiguration<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default);
+            _configuration = AddressableConfigurationLoader.Load<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default);
+            FlightFieldDecorConfiguration decor = AddressableConfigurationLoader.Load<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default);
             FieldVolumeCandidates candidates = new(new FieldRidgeNoise(new FieldValueNoise()), _randomFactory);
             _chunkLayout = new FieldDecorChunkLayout(decor, candidates, _sourceReader);
             UseSource(_configuration.DifficultyProfiles[0], Vector2.one * FAR_AWAY);
