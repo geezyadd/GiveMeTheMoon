@@ -2,6 +2,7 @@
     "name": "Features.GameCoreModule.Editor.Tests",
     "rootNamespace": "Features.GameCoreModule.Editor.Tests",
     "references": [
+        "GUID:5d6793be2d204514a9702ab824c001ed",
         "GUID:03a835aea0a645a7b43f5f0c61e8d191",
         "GUID:69448af7b92c7f342b298e06a37122aa",
         "GUID:27619889b8ba8c24980f49ee34dbb44a",

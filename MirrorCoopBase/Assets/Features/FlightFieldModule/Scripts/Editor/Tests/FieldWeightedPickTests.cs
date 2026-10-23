@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.AddressablesConstantGeneratorModule.EditorLoading;
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Generation;
@@ -19,8 +20,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [OneTimeSetUp]
         public void OneTimeSetUp() {
-            _catalog = FlightFieldEditorCompositionFactory.LoadConfiguration<FieldStructureCatalog>(Address.Configurations.FieldStructureCatalog_Default);
-            _configuration = FlightFieldEditorCompositionFactory.LoadConfiguration<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default);
+            _catalog = AddressableConfigurationLoader.Load<FieldStructureCatalog>(Address.Configurations.FieldStructureCatalog_Default);
+            _configuration = AddressableConfigurationLoader.Load<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default);
             _randomFactory = new FieldRandomFactory();
         }
 

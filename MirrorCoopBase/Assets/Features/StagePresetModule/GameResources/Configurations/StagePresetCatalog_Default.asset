@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90a6db7328944b4b9bada9c8064e7fef, type: 3}
+  m_Name: StagePresetCatalog_Default
+  m_EditorClassIdentifier: 
+  _presets:
+  - {fileID: 11400000, guid: 5b3e1eec4f264afab2634f81e253d06c, type: 2}
+  - {fileID: 11400000, guid: 25a72282eda94eb48dab913bdf94ef71, type: 2}
+  - {fileID: 11400000, guid: 1db23749d79c4f0db3bd6d3af047cf56, type: 2}
+  _isPickerShownInReleaseBuilds: 0

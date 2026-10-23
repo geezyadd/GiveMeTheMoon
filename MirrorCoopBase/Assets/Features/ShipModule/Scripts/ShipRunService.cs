@@ -8,6 +8,7 @@ namespace Features.ShipModule.Scripts {
     public sealed class ShipRunService : IShipRunService, IGameplaySession {
         private const float WRECK_PITCH_DEGREES = 12f;
         private const float WRECK_ROLL_DEGREES = 18f;
+        private const int FIRST_LOOP_INDEX = 0;
 
         private readonly IReadOnlyShipRunModel _model;
         private readonly ShipRunConfig _config;
@@ -20,6 +21,7 @@ namespace Features.ShipModule.Scripts {
         private readonly IShipRadarBinding _radar;
         private readonly ConnectionSpawnModel _spawn;
         private readonly IFlightRouteListener _flightRouteListener;
+        private readonly IShipRunStage _runStage;
 
         private float _wreckUntil;
 
@@ -38,7 +40,8 @@ namespace Features.ShipModule.Scripts {
             IShipFlightStatService flightStats,
             IShipRoute route,
             IShipWorldShiftService worldShift,
-            IFlightRouteListener flightRouteListener) {
+            IFlightRouteListener flightRouteListener,
+            IShipRunStage runStage) {
             _model = model;
             _config = config;
             _radar = radar;
@@ -50,6 +53,7 @@ namespace Features.ShipModule.Scripts {
             _route = route;
             _worldShift = worldShift;
             _flightRouteListener = flightRouteListener;
+            _runStage = runStage;
         }
 
         public void CleanupGameplay() {
@@ -63,9 +67,11 @@ namespace Features.ShipModule.Scripts {
         public void Bind(ShipRunDirector director, ShipBase ship, ShipLandingPad startPad) {
             _binding.Bind(director, ship);
             _pads.Reset(startPad);
-            director.ServerSetState(StartState());
-            if (ship != null && startPad != null)
+            director.ServerSetState(StartState(_runStage.StartLoopIndex));
+            if (ship != null && startPad != null) {
                 ship.ServerResetForBuild(startPad.BuildBerth.position, startPad.BuildBerth.rotation);
+                _runStage.ServerPrepareShip(ship);
+            }
 
             _radar.BindShip(ship);
             PublishPreview();
@@ -83,9 +89,10 @@ namespace Features.ShipModule.Scripts {
                 Ship.ServerResetForBuild(CurrentPad.BuildBerth.position, CurrentPad.BuildBerth.rotation);
 
             if (NetworkServer.active && Director != null)
-                Director.ServerSetState(StartState());
+                Director.ServerSetState(StartState(FIRST_LOOP_INDEX));
 
             _flightRouteListener.ServerOnFlightEnded();
+            _runStage.OnRunEnded();
             _binding.Clear();
             _pads.Reset(null);
             _wreckUntil = 0f;
@@ -93,9 +100,11 @@ namespace Features.ShipModule.Scripts {
             _radar.UnbindShip();
         }
 
-        private static ShipRunState StartState() =>
+        private ShipRunState StartState(int loopIndex) =>
             new ShipRunState {
                 Phase = ShipRunPhase.Build,
+                LoopIndex = loopIndex,
+                LaunchLocked = IsLaunchLocked(loopIndex),
                 TransitSpeed = 1f,
                 TransitAlignment = 1f
             };
@@ -273,12 +282,15 @@ namespace Features.ShipModule.Scripts {
 
             ShipRunState state = Director.State;
             state.LoopIndex += 1;
-            state.LaunchLocked = _config.MaxLoops > 0 && state.LoopIndex >= _config.MaxLoops;
+            state.LaunchLocked = IsLaunchLocked(state.LoopIndex);
             state.LastAbortReason = reason;
             state.Phase = phase;
             _route.EndRoute();
             Director.ServerSetState(_route.WithTransit(state));
         }
+
+        private bool IsLaunchLocked(int loopIndex) =>
+            _config.MaxLoops > 0 && loopIndex >= _config.MaxLoops;
 
         private void PublishPreview() {
             _route.RefreshPreview();
