@@ -1,6 +1,5 @@
 using System;
 using Features.NetworkModelModule.Scripts;
-using Features.ShopModule.Scripts.Configurations;
 using Features.ShopModule.Scripts.Core;
 using Features.ShopModule.Scripts.Data;
 using Features.ShopModule.Scripts.Generated;
@@ -9,7 +8,7 @@ using Zenject;
 
 namespace Features.ShopModule.Scripts.Network {
     public sealed class CrewWallet : WalletBridge, ICrewWallet {
-        private WalletConfiguration _walletConfiguration;
+        private IWalletStartingBalanceSource _walletStartingBalanceSource;
         private ShopPurchaseRequestEventClass _shopPurchaseRequestEventClass;
         private IShopPurchaseSystem _shopPurchaseSystem;
         private ShopReviveRequestEventClass _shopReviveRequestEventClass;
@@ -20,12 +19,12 @@ namespace Features.ShopModule.Scripts.Network {
 
         [Inject]
         private void InjectDependencies(
-            WalletConfiguration walletConfiguration,
+            IWalletStartingBalanceSource walletStartingBalanceSource,
             ShopPurchaseRequestEventClass shopPurchaseRequestEventClass,
             IShopPurchaseSystem shopPurchaseSystem,
             ShopReviveRequestEventClass shopReviveRequestEventClass,
             IReviveShopSystem reviveShopSystem) {
-            _walletConfiguration = walletConfiguration;
+            _walletStartingBalanceSource = walletStartingBalanceSource;
             _shopPurchaseRequestEventClass = shopPurchaseRequestEventClass;
             _shopPurchaseSystem = shopPurchaseSystem;
             _shopReviveRequestEventClass = shopReviveRequestEventClass;
@@ -34,7 +33,7 @@ namespace Features.ShopModule.Scripts.Network {
 
         public override void OnStartServer() {
             base.OnStartServer();
-            ServerSetBalance(_walletConfiguration.StartingBalance);
+            ServerSetBalance(_walletStartingBalanceSource.StartingBalance);
         }
 
         public override void OnStartClient() {

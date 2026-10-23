@@ -3,6 +3,7 @@ using Features.FlightFieldModule.Contracts;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Debris;
 using Features.FlightFieldModule.Scripts.Generation;
+using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Rocks;
 using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
@@ -15,7 +16,6 @@ namespace Features.FlightFieldModule.Scripts.Scene {
     public sealed class FieldDebrisSceneBuilder : IFieldDebrisSceneBuilder {
         private const string ROOT_NAME = "FlightFieldDebris";
         private const float HALF = 0.5f;
-        private const float CELL_CENTER = 0.5f;
 
         private readonly IFieldDebrisLayout _fieldDebrisLayout;
         private readonly IFieldStructurePool _fieldStructurePool;
@@ -53,7 +53,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
 
             FieldBuiltObjects objects = _freeObjects.Count > 0 ? _freeObjects.Pop() : new FieldBuiltObjects();
             _objectsByCell.Add(cell, objects);
-            Vector3 cellCenter = new((cell.y + CELL_CENTER) * cellSize, 0f, (cell.x + CELL_CENTER) * cellSize);
+            Vector3 cellCenter = FieldFrame.CellCenterInField(cell, cellSize);
             for (int rockIndex = 0; rockIndex < _spots.Count; rockIndex++) {
                 FieldDebrisSpot spot = _spots[rockIndex];
                 _lookRandom.Reseed(spot.LookSeed);

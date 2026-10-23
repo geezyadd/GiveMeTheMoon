@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Features.AddressablesConstantGeneratorModule.EditorLoading;
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Model;
@@ -114,7 +115,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             if (_profileChoices != null)
                 return _profileChoices;
 
-            FlightFieldConfiguration configuration = FlightFieldEditorCompositionFactory.LoadConfiguration<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default);
+            FlightFieldConfiguration configuration = AddressableConfigurationLoader.Load<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default);
             _profileChoices = new[] { PROFILE_BY_LOOP }.Concat(configuration.DifficultyProfiles.Select(profile => profile.Id)).ToArray();
             return _profileChoices;
         }

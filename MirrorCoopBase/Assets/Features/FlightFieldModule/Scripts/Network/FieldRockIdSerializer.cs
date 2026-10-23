@@ -1,6 +1,5 @@
 using Features.FlightFieldModule.Contracts;
 using Mirror;
-using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Network {
     // Mirror's writer and reader for a rock id in the live field's broken list: the id is a read-only struct of the
@@ -13,12 +12,8 @@ namespace Features.FlightFieldModule.Scripts.Network {
             writer.WriteInt(id.RockIndex);
         }
 
-        public static FieldRockId ReadFieldRockId(this NetworkReader reader) {
-            FieldRockSource source = (FieldRockSource)reader.ReadInt();
-            int placementIndex = reader.ReadInt();
-            Vector2Int debrisCell = reader.ReadVector2Int();
-            int rockIndex = reader.ReadInt();
-            return new FieldRockId(source, placementIndex, debrisCell, rockIndex);
-        }
+        // The arguments are read left to right, in the order they were written.
+        public static FieldRockId ReadFieldRockId(this NetworkReader reader) =>
+            new((FieldRockSource)reader.ReadInt(), reader.ReadInt(), reader.ReadVector2Int(), reader.ReadInt());
     }
 }

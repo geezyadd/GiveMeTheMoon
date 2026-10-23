@@ -11,8 +11,6 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
     // IFieldDebrisLayout), so a rock's id, middle and diameter match the rock every peer shows. Field space: x across
     // the field, y up from the flight plane, z along it; the frame turns it into the world.
     public sealed class FieldRockReader : IFieldRockReader {
-        private const float CELL_CENTER = 0.5f;
-
         private readonly FieldStructureCatalog _fieldStructureCatalog;
         private readonly IFieldStructureSpawnRule _fieldStructureSpawnRule;
         private readonly IFieldFootprintReader _fieldFootprintReader;
@@ -62,7 +60,7 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
 
             string debrisId = fieldData.Field.Cells[cell].DebrisId;
             _fieldDebrisLayout.Fill(fieldData.Field.Seed, cell, frame.CellSize, fieldData.DebrisCells, fieldData.Workspace, _spots);
-            Vector3 cellCenter = new((cell.y + CELL_CENTER) * frame.CellSize, 0f, (cell.x + CELL_CENTER) * frame.CellSize);
+            Vector3 cellCenter = FieldFrame.CellCenterInField(cell, frame.CellSize);
             for (int rockIndex = 0; rockIndex < _spots.Count; rockIndex++) {
                 FieldDebrisSpot spot = _spots[rockIndex];
                 FieldRockSize size = _fieldRockClassifier.GetSize(spot.Diameter, false);

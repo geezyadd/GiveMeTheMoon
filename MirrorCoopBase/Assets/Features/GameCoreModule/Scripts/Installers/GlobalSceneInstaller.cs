@@ -9,6 +9,7 @@ using Features.PlayerLifeModule.Scripts.Installers;
 using Features.PlayerProfileModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Installers;
+using Features.StagePresetModule.Scripts.Installers;
 using Features.TooltipModule.Scripts.Installers;
 using Game.Connection;
 using Zenject;
@@ -26,6 +27,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             PlayerLifeModuleInstaller.Install(Container);
             PlayerProfileModuleInstaller.Install(Container);
             ShopModuleInstaller.Install(Container);
+            StagePresetModuleInstaller.Install(Container);
             TooltipModuleInstaller.Install(Container);
             CrewInviteModuleInstaller.Install(Container);
             ConnectionModuleInstaller.Install(Container);

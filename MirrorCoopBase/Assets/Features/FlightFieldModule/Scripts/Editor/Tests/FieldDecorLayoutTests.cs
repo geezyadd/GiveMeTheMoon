@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.AddressablesConstantGeneratorModule.EditorLoading;
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Decor;
@@ -54,8 +55,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [OneTimeSetUp]
         public void OneTimeSetUp() {
-            _configuration = FlightFieldEditorCompositionFactory.LoadConfiguration<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default);
-            _fieldConfiguration = FlightFieldEditorCompositionFactory.LoadConfiguration<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default);
+            _configuration = AddressableConfigurationLoader.Load<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default);
+            _fieldConfiguration = AddressableConfigurationLoader.Load<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default);
             _randomFactory = new FieldRandomFactory();
             _alwaysPlanetConfiguration = Object.Instantiate(_configuration);
             SerializedObject alwaysPlanet = new(_alwaysPlanetConfiguration);

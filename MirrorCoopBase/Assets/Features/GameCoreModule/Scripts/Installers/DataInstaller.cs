@@ -16,6 +16,8 @@ using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Data;
 using Features.ShipModule.Scripts.Generated;
 using Features.ShopModule.Scripts.Generated;
+using Features.StagePresetModule.Data;
+using Features.StagePresetModule.Data.Generated;
 using Game.Connection;
 using Zenject;
 
@@ -45,6 +47,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             ShipSocketsModelInstaller.Install(Container);
             ShipStatsModelInstaller.Install(Container);
             CrewRosterModelInstaller.Install(Container);
+            RunStagePresetModelInstaller.Install(Container);
+            Container.BindInterfacesAndSelfTo<StagePresetSelectionModel>().AsSingle();
             LiveFieldModelInstaller.Install(Container);
             Container.Bind<IFlightFieldSyncBindingModel>().To<FlightFieldSyncBindingModel>().AsSingle();
             Container.BindInterfacesAndSelfTo<FlightFieldServerModel>().AsSingle();

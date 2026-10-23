@@ -6,9 +6,9 @@ using UnityEngine.InputSystem;
 using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Rocks {
-    // Debug only: F8 on the server (host) breaks the rock nearest to the ship.
+    // Debug only: F6 on the server (host) breaks the rock nearest to the ship.
     public sealed class FieldRockBreakDebugKeySystem : ITickable {
-        private const string LOG_PREFIX = "[FieldRock] F8: ";
+        private const string LOG_PREFIX = "[FieldRock] F6: ";
 
         private readonly IFieldRockBreakDebug _fieldRockBreakDebug;
 
@@ -17,7 +17,7 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
 
         public void Tick() {
             Keyboard keyboard = Keyboard.current;
-            if (keyboard == null || !keyboard.f8Key.wasPressedThisFrame || !NetworkServer.active)
+            if (keyboard == null || !keyboard.f6Key.wasPressedThisFrame || !NetworkServer.active)
                 return;
 
             FieldRockBreakResult result = _fieldRockBreakDebug.DebugBreakNearestRock(out FieldRockId id);

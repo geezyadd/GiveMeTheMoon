@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Features.AddressablesConstantGeneratorModule.EditorLoading;
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.FlightFieldModule.Contracts;
 using Features.FlightFieldModule.Scripts.Configuration;
@@ -39,7 +40,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [OneTimeSetUp]
         public void OneTimeSetUp() {
             _composition = new FlightFieldEditorCompositionFactory().Create();
-            _durability = FlightFieldEditorCompositionFactory.LoadConfiguration<FieldRockDurabilityConfiguration>(Address.Configurations.FieldRockDurabilityConfiguration_Default);
+            _durability = AddressableConfigurationLoader.Load<FieldRockDurabilityConfiguration>(Address.Configurations.FieldRockDurabilityConfiguration_Default);
         }
 
         [TestCase(GIANTS_PROFILE)]
@@ -271,12 +272,10 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             rock.Id.Source == FieldRockSource.Cluster && _composition.Catalog.GetRequired(rock.SourceId).ClusterRecipe.IsAlwaysLarge;
 
         private static IEnumerable<Vector2Int> DebrisCells(FlightField field) {
-            for (int along = 0; along < field.Frame.LengthCells; along++) {
-                for (int across = 0; across < field.Frame.WidthCells; across++) {
-                    Vector2Int cell = new(along, across);
-                    if (field.Cells[cell].HasDebris)
-                        yield return cell;
-                }
+            for (int index = 0; index < field.Frame.LengthCells * field.Frame.WidthCells; index++) {
+                Vector2Int cell = new(index / field.Frame.WidthCells, index % field.Frame.WidthCells);
+                if (field.Cells[cell].HasDebris)
+                    yield return cell;
             }
         }
 
