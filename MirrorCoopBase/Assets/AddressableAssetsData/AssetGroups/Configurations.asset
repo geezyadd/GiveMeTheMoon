@@ -25,6 +25,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3100fd9ec0da35642a247beab427210c
+    m_Address: ShipHullHudConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3bd71940ec6f98c7431f6a0e3c7b5928
     m_Address: CameraCatalog_Default
     m_ReadOnly: 0
@@ -62,6 +67,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a35935974a701b446a96499c50c1d176
     m_Address: ReviveConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a818313b2919db44d8ced6b58d83c4e3
+    m_Address: ShipHullConfiguration_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
