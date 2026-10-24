@@ -60,7 +60,7 @@ namespace Features.ShipModule.Scripts {
         internal IShipFlightControl FlightControl => _flightControl;
         internal IShipDeckCargo Cargo => _cargo;
         internal ShipPoseSync PoseSync => _poseSync;
-        internal ShipHullVolume HullVolume => _hullVolume;
+        public ShipHullVolume HullVolume => _hullVolume;
         internal ShipImpactSync ImpactSync => _impactSync;
         internal IShipKnockback Knockback => _flightControl;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

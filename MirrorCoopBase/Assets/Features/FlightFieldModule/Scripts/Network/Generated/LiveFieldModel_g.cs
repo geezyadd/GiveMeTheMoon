@@ -26,6 +26,10 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> DebrisRuns => _debrisRuns;
         private readonly List<global::Features.FlightFieldModule.Contracts.FieldRockId> _brokenRocks = new();
         public IReadOnlyList<global::Features.FlightFieldModule.Contracts.FieldRockId> BrokenRocks => _brokenRocks;
+        private readonly List<global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry> _targets = new();
+        public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry> Targets => _targets;
+        private readonly List<global::Features.FlightFieldModule.Contracts.FieldTargetId> _poppedTargets = new();
+        public IReadOnlyList<global::Features.FlightFieldModule.Contracts.FieldTargetId> PoppedTargets => _poppedTargets;
 
         public event Action OnNumberChanged;
         public event Action OnSeedChanged;
@@ -60,6 +64,16 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public event Action<int, global::Features.FlightFieldModule.Contracts.FieldRockId> OnBrokenRocksSet;
         public event Action OnBrokenRocksCleared;
         public event Action OnBrokenRocksChanged;
+        public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry> OnTargetsAdded;
+        public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry> OnTargetsRemoved;
+        public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry> OnTargetsSet;
+        public event Action OnTargetsCleared;
+        public event Action OnTargetsChanged;
+        public event Action<int, global::Features.FlightFieldModule.Contracts.FieldTargetId> OnPoppedTargetsAdded;
+        public event Action<int, global::Features.FlightFieldModule.Contracts.FieldTargetId> OnPoppedTargetsRemoved;
+        public event Action<int, global::Features.FlightFieldModule.Contracts.FieldTargetId> OnPoppedTargetsSet;
+        public event Action OnPoppedTargetsCleared;
+        public event Action OnPoppedTargetsChanged;
 
         internal void ApplyState(LiveFieldState state) {
             bool numberChanged = EqualityComparer<int>.Default.Equals(Number, state.Number) == false;
@@ -407,6 +421,132 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
 
             for (int i = 0; i < _brokenRocks.Count; i++) {
                 if (EqualityComparer<global::Features.FlightFieldModule.Contracts.FieldRockId>.Default.Equals(_brokenRocks[i], values[i]) == false)
+                    return false;
+            }
+
+            return true;
+        }
+
+        internal void AddTargets(int index, global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry value) {
+            _targets.Insert(index, value);
+            OnTargetsAdded?.Invoke(index, value);
+            OnTargetsChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void SetTargets(int index, global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry value) {
+            if (EqualityComparer<global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry>.Default.Equals(_targets[index], value))
+                return;
+
+            _targets[index] = value;
+            OnTargetsSet?.Invoke(index, value);
+            OnTargetsChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void RemoveTargetsAt(int index, global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry removed) {
+            if (index >= 0 && index < _targets.Count)
+                _targets.RemoveAt(index);
+
+            OnTargetsRemoved?.Invoke(index, removed);
+            OnTargetsChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void ClearTargets() {
+            if (_targets.Count == 0)
+                return;
+
+            _targets.Clear();
+            OnTargetsCleared?.Invoke();
+            OnTargetsChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void ReplaceTargets(IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry> values) {
+            if (TargetsMatch(values))
+                return;
+
+            _targets.Clear();
+            OnTargetsCleared?.Invoke();
+            for (int i = 0; i < values.Count; i++) {
+                global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry value = values[i];
+                _targets.Add(value);
+                OnTargetsAdded?.Invoke(i, value);
+            }
+            OnTargetsChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        private bool TargetsMatch(IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry> values) {
+            if (_targets.Count != values.Count)
+                return false;
+
+            for (int i = 0; i < _targets.Count; i++) {
+                if (EqualityComparer<global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry>.Default.Equals(_targets[i], values[i]) == false)
+                    return false;
+            }
+
+            return true;
+        }
+
+        internal void AddPoppedTargets(int index, global::Features.FlightFieldModule.Contracts.FieldTargetId value) {
+            _poppedTargets.Insert(index, value);
+            OnPoppedTargetsAdded?.Invoke(index, value);
+            OnPoppedTargetsChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void SetPoppedTargets(int index, global::Features.FlightFieldModule.Contracts.FieldTargetId value) {
+            if (EqualityComparer<global::Features.FlightFieldModule.Contracts.FieldTargetId>.Default.Equals(_poppedTargets[index], value))
+                return;
+
+            _poppedTargets[index] = value;
+            OnPoppedTargetsSet?.Invoke(index, value);
+            OnPoppedTargetsChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void RemovePoppedTargetsAt(int index, global::Features.FlightFieldModule.Contracts.FieldTargetId removed) {
+            if (index >= 0 && index < _poppedTargets.Count)
+                _poppedTargets.RemoveAt(index);
+
+            OnPoppedTargetsRemoved?.Invoke(index, removed);
+            OnPoppedTargetsChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void ClearPoppedTargets() {
+            if (_poppedTargets.Count == 0)
+                return;
+
+            _poppedTargets.Clear();
+            OnPoppedTargetsCleared?.Invoke();
+            OnPoppedTargetsChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void ReplacePoppedTargets(IReadOnlyList<global::Features.FlightFieldModule.Contracts.FieldTargetId> values) {
+            if (PoppedTargetsMatch(values))
+                return;
+
+            _poppedTargets.Clear();
+            OnPoppedTargetsCleared?.Invoke();
+            for (int i = 0; i < values.Count; i++) {
+                global::Features.FlightFieldModule.Contracts.FieldTargetId value = values[i];
+                _poppedTargets.Add(value);
+                OnPoppedTargetsAdded?.Invoke(i, value);
+            }
+            OnPoppedTargetsChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        private bool PoppedTargetsMatch(IReadOnlyList<global::Features.FlightFieldModule.Contracts.FieldTargetId> values) {
+            if (_poppedTargets.Count != values.Count)
+                return false;
+
+            for (int i = 0; i < _poppedTargets.Count; i++) {
+                if (EqualityComparer<global::Features.FlightFieldModule.Contracts.FieldTargetId>.Default.Equals(_poppedTargets[i], values[i]) == false)
                     return false;
             }
 

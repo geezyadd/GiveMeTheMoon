@@ -13,6 +13,8 @@ namespace Features.FlightFieldModule.Scripts.Model {
         public IMatrix<FieldCell> Cells { get; }
         public IReadOnlyList<FieldPlacement> Placements { get; }
         public IReadOnlyList<FieldRoute> Routes { get; }
+        // The target balloons, by their index: a balloon's FieldTargetId.
+        public IReadOnlyList<FieldTargetPlacement> Targets { get; }
         public Vector2Int StationACell { get; }
         public Vector2Int StationBCell { get; }
         public Vector2Int CruiseStartCell { get; }
@@ -26,7 +28,7 @@ namespace Features.FlightFieldModule.Scripts.Model {
 
         public FlightField(FieldFrame frame, int seed, IMatrix<FieldCell> cells, IReadOnlyList<FieldPlacement> placements, IReadOnlyList<FieldRoute> routes,
                            Vector2Int stationACell, Vector2Int stationBCell, Vector2Int cruiseStartCell, bool isPassageForced, string profileId, float difficulty,
-                           FieldDensityMap density, FieldMetrics metrics, int loopIndex) {
+                           FieldDensityMap density, FieldMetrics metrics, int loopIndex, IReadOnlyList<FieldTargetPlacement> targets) {
             Frame = frame;
             Seed = seed;
             Cells = cells;
@@ -41,6 +43,7 @@ namespace Features.FlightFieldModule.Scripts.Model {
             Density = density;
             Metrics = metrics;
             LoopIndex = loopIndex;
+            Targets = targets;
         }
     }
 }

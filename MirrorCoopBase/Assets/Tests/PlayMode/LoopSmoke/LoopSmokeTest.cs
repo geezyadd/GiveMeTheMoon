@@ -16,7 +16,8 @@ namespace Tests.PlayMode.LoopSmoke {
         private const int RUN_TWO_LOOPS = 5;
         // The run 2 flight that shifts the world in cruise.
         private const int WORLD_SHIFT_LOOP = 3;
-        // The run 2 flight whose cruise fires the minigun at the debug target.
+        // The run 2 flight whose cruise fires the minigun at the debug target, a rock and a balloon, and flies into a
+        // balloon.
         private const int TURRET_LOOP = 2;
 
         private readonly HashSet<uint> _firstRunObjects = new HashSet<uint>();
@@ -29,6 +30,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private LoopSmokeFieldCheck _fieldCheck;
         private LoopSmokeFlight _flight;
         private LoopSmokeTurretCheck _turretCheck;
+        private LoopSmokeTargetCheck _targetCheck;
         private int _lobbyRuntimeObjects;
 
         [SetUp]
@@ -99,7 +101,8 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.AreEqual(firstLandingSpawns, LoopSmokeSpawnCounts.CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values), "Run 2 does not spawn the same pad and drops on landing as run 1.");
             // The crew invite check left the player at the pad's terminal: back on the deck before the next flights.
             yield return _flight.BoardPlayerCoroutine();
-            _turretCheck = new LoopSmokeTurretCheck(_session);
+            _targetCheck = new LoopSmokeTargetCheck(_session);
+            _turretCheck = new LoopSmokeTurretCheck(_session, _targetCheck);
             yield return _turretCheck.InstallMinigunAndStandByItCoroutine();
             yield return FlyMoreLoopsCoroutine(2, RUN_TWO_LOOPS);
             _fieldCheck.AssertNetworkedPathWasChecked();
@@ -130,6 +133,8 @@ namespace Tests.PlayMode.LoopSmoke {
                 ShipLandingPad launchPad = _flight.FindPadUnderShip();
                 yield return _flight.FlyLoopCoroutine(loopIndex, CreateCruiseCheck(loopIndex));
                 yield return _flight.AssertLandedSafelyCoroutine(loopIndex, launchPad, _flight.FindPadUnderShip());
+                if (loopIndex == TURRET_LOOP)
+                    _targetCheck.AssertPoppedListClearedAfterLanding();
             }
         }
 
@@ -137,7 +142,13 @@ namespace Tests.PlayMode.LoopSmoke {
             if (loopIndex == WORLD_SHIFT_LOOP)
                 return ShiftWorldInCruiseCoroutine;
 
-            return loopIndex == TURRET_LOOP ? _turretCheck.FireAtDebugTargetInCruiseCoroutine : null;
+            return loopIndex == TURRET_LOOP ? FireAndPopBalloonsInCruiseCoroutine : null;
+        }
+
+        // The gunner shoots the dummy, a rock and a balloon; then the ship flies into another balloon.
+        private IEnumerator FireAndPopBalloonsInCruiseCoroutine() {
+            yield return _turretCheck.FireAtDebugTargetInCruiseCoroutine();
+            yield return _targetCheck.FlyIntoBalloonCoroutine(_flight);
         }
 
         // The first-cruise checks run in the same cruise, one after the other.

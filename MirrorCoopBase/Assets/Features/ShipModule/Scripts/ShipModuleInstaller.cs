@@ -47,6 +47,7 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipRockKnockbackRule>().AsSingle();
             Container.BindInterfacesTo<ShipHullRockScanner>().AsSingle();
             Container.BindInterfacesTo<ShipRockCollisionSystem>().AsSingle();
+            Container.BindInterfacesTo<ShipFieldTargetCollisionSystem>().AsSingle();
             Container.BindInterfacesTo<ShipImpactEventBus>().AsSingle();
             Container.BindInterfacesTo<ShipRockImpactFeelSource>().AsSingle();
             Container.BindInterfacesTo<ShipImpactEffectPool>().AsSingle();

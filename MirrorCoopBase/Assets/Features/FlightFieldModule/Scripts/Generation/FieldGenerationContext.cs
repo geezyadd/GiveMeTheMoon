@@ -9,6 +9,7 @@ namespace Features.FlightFieldModule.Scripts.Generation {
     public sealed class FieldGenerationContext {
         private readonly List<FieldPlacement> _placements = new();
         private readonly List<FieldRoute> _routes = new();
+        private readonly List<FieldTargetPlacement> _targets = new();
 
         private int _lastPlacementId = FieldCell.NO_PLACEMENT;
 
@@ -17,6 +18,7 @@ namespace Features.FlightFieldModule.Scripts.Generation {
         public IFieldRandom Random { get; }
         public IReadOnlyList<FieldPlacement> Placements => _placements;
         public IReadOnlyList<FieldRoute> Routes => _routes;
+        public IReadOnlyList<FieldTargetPlacement> Targets => _targets;
         public FieldDifficultyProfile Profile => Request.Profile;
         public float Difficulty => Request.Difficulty;
         public FieldMetrics Metrics { get; } = new();
@@ -53,5 +55,8 @@ namespace Features.FlightFieldModule.Scripts.Generation {
 
         public void AddRoute(FieldRoute route) =>
             _routes.Add(route);
+
+        public void AddTarget(FieldTargetPlacement target) =>
+            _targets.Add(target);
     }
 }

@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _id: early
   _displayName: Early
-  _description: 'Early game: loop 0, two propellers and the helm, 300 money, no free drops.'
+  _description: 'Early game: loop 0, two propellers and the helm, 300 money, no free
+    drops.'
   _startLoopIndex: 0
   _fieldProfileId: 
   _modules:
@@ -26,4 +27,5 @@ MonoBehaviour:
     _module: {fileID: 11400000, guid: ed0a9eee18ae3044abbdd909ac66cfb6, type: 2}
   _startingBalance: 300
   _areStationDropsEnabled: 0
-  _extensions: []
+  _extensions:
+  - {fileID: 11400000, guid: bfa6041687fe22b4f9fcc4fbe28edd68, type: 2}

@@ -8,12 +8,14 @@ using Features.FlightFieldModule.Scripts.Network.Generated;
 using Features.FlightFieldModule.Scripts.Rocks;
 using Features.FlightFieldModule.Scripts.Scene;
 using Features.FlightFieldModule.Scripts.Server;
+using Features.FlightFieldModule.Scripts.Targets;
 using Features.GrabModule.Scripts;
 using Features.GrabModule.Scripts.Generated;
 using Features.MvpModule;
 using Features.PlayerLifeModule.Scripts.Generated;
 using Features.PlayerProfileModule.Data.Generated;
 using Features.ShipModule.Scripts;
+using Features.ShopModule.Scripts.Core;
 using Features.ShopModule.Scripts.Data;
 using Features.ShipModule.Scripts.Generated;
 using Features.ShopModule.Scripts.Generated;
@@ -58,6 +60,10 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindInterfacesAndSelfTo<FlightFieldServerModel>().AsSingle();
             Container.BindInterfacesAndSelfTo<FlightFieldSceneModel>().AsSingle();
             Container.Bind<FieldRockDamageModel>().AsSingle();
+            Container.Bind<FieldTargetDamageModel>().AsSingle();
+            Container.BindInterfacesAndSelfTo<FieldTargetSceneModel>().AsSingle();
+            Container.BindInterfacesAndSelfTo<FieldTargetCountScaleModel>().AsSingle();
+            Container.BindInterfacesAndSelfTo<CrewWalletBindingModel>().AsSingle();
             Container.Bind<FieldDecorSceneModel>().AsSingle();
         }
     }
