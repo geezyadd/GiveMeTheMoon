@@ -16,9 +16,8 @@ namespace Tests.Shared {
     // deck. Shared by the editor tests and the development-build client, so both wait for the same states.
     public static class SessionQueries {
         private const float DECK_EDGE_TOLERANCE = 0.5f;
-        // A standing player's feet are above the deck's middle; this far below it they fell through. The middle, not the
-        // top of the bounds: a banking deck raises its bounds' top above the walkable surface.
-        private const float BELOW_DECK_CENTER_TOLERANCE = 0.5f;
+        // A standing player's position is above the deck surface under it; this far below it the player fell through.
+        private const float BELOW_DECK_SURFACE_TOLERANCE = 0.5f;
 
         public static ConnectionNetworkManager NetworkManager =>
             ProjectContext.Instance.Container.Resolve<ConnectionSessionModel>().NetworkManager;
@@ -68,10 +67,17 @@ namespace Tests.Shared {
             return run.Phase == ShipRunPhase.Build && run.LoopIndex == loopIndex;
         }
 
-        // Over the deck (with a little edge tolerance) and not fallen through it.
+        // Over the deck's walk boxes (with a little edge tolerance) and not fallen through it, in ship space: the deck is
+        // several boxes, and the world bounds of one of them miss the others whatever the ship's heading.
         public static bool IsOnDeck(ShipBase ship, Vector3 position) {
-            Bounds deck = ship.DeckGeometry.Bounds;
-            return ContainsXZ(deck, position, DECK_EDGE_TOLERANCE) && position.y > deck.center.y - BELOW_DECK_CENTER_TOLERANCE;
+            Vector3 local = ship.transform.InverseTransformPoint(position);
+            if (ship.DeckGeometry.TryClosestDeckWalk(local, out _, out float dx, out float dz) == false)
+                return false;
+
+            if (dx * dx + dz * dz > DECK_EDGE_TOLERANCE * DECK_EDGE_TOLERANCE)
+                return false;
+
+            return ship.DeckGeometry.TryGetDeckSurfaceY(local, out float surfaceY) && local.y > surfaceY - BELOW_DECK_SURFACE_TOLERANCE;
         }
 
         public static bool ContainsXZ(Bounds bounds, Vector3 point, float tolerance) =>

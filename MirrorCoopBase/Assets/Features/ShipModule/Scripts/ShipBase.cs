@@ -40,6 +40,7 @@ namespace Features.ShipModule.Scripts {
         private ShipRiders _riders;
         private ShipDeckRideRule _rideRule;
         private ShipSeats _seats;
+        private ShipSteering _steering;
         private ShipFlightControl _flightControl;
         private int _fixedSteps;
         private bool _flying;
@@ -129,7 +130,8 @@ namespace Features.ShipModule.Scripts {
             _rideRule = new ShipDeckRideRule(_deckGeometry, ReadFlightSettings);
             _riders = new ShipRiders(this, _rideRule, ReadCharacterMovables);
             _seats = new ShipSeats(this, _sockets, _riders);
-            _flightControl = new ShipFlightControl(ReadFlightSettings, _modules, _seats);
+            _steering = new ShipSteering(_sockets);
+            _flightControl = new ShipFlightControl(ReadFlightSettings, _modules, _steering);
             _cargo = new ShipDeckCargo(transform, this, _poseSync);
             if (_poseSync != null)
                 _poseSync.BindShip(this, transform);
@@ -158,7 +160,6 @@ namespace Features.ShipModule.Scripts {
                 takeoffSeconds,
                 dodgeRangeScale,
                 mode);
-            _seats.ClearSteer();
             SleepBody();
             _flying = true;
             if (_poseSync != null)
@@ -308,7 +309,7 @@ namespace Features.ShipModule.Scripts {
                     _runService.ServerTick();
             }
             else if (_flying && _poseSync != null) {
-                _poseSync.ApplyInterpolated(_riders.HasOwnedHelmPilot());
+                _poseSync.ApplyInterpolated(_steering.IsSteeredByLocalPlayer());
             }
 
             _cargo.Follow(NetworkServer.active);

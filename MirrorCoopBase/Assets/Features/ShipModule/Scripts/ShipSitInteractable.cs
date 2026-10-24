@@ -14,8 +14,7 @@ namespace Features.ShipModule.Scripts {
             if (grab != null && grab.IsHolding)
                 return false;
 
-            uint occupant = _socket.OccupantNetId;
-            return occupant == 0 || (user != null && occupant == user.netId);
+            return _socket.HasOccupant == false || IsSeatedHere(user);
         }
 
         public override void ServerUse(NetworkIdentity user, GrabController grab) {
@@ -26,10 +25,13 @@ namespace Features.ShipModule.Scripts {
             if (rider == null)
                 return;
 
-            if (_socket.OccupantNetId == rider.netId)
+            if (_socket.IsHeldBy(rider.Key))
                 _ship.Seats.ServerStand(rider);
             else
                 _ship.Seats.ServerTrySit(rider, _socket);
         }
+
+        private bool IsSeatedHere(NetworkIdentity user) =>
+            user != null && user.TryGetComponent(out ShipRider rider) && _socket.IsHeldBy(rider.Key);
     }
 }

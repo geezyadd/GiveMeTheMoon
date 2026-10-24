@@ -33,7 +33,7 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
 
             Assert.IsTrue(state.Occupied, "The reset left the socket empty.");
             Assert.AreEqual(MODULE_ID, state.ModuleId);
-            Assert.AreEqual(0u, state.OccupantNetId, "The reset kept a seated rider.");
+            Assert.IsTrue(string.IsNullOrEmpty(state.OccupantKey), "The reset kept a seated rider.");
         }
 
         [Test]

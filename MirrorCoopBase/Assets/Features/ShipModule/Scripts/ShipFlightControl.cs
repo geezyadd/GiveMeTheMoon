@@ -14,7 +14,7 @@ namespace Features.ShipModule.Scripts {
         // Read on use: the settings can be injected after the parts are created.
         private readonly System.Func<ShipFlightSettings> _flightSettings;
         private readonly IShipModules _modules;
-        private readonly IShipSeats _seats;
+        private readonly IShipSteering _steering;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private bool _debugSteerActive;
@@ -30,10 +30,10 @@ namespace Features.ShipModule.Scripts {
         internal Quaternion Rotation => _flight.Rotation;
         public Vector3 Velocity => _flight.Velocity;
 
-        internal ShipFlightControl(System.Func<ShipFlightSettings> flightSettings, IShipModules modules, IShipSeats seats) {
+        internal ShipFlightControl(System.Func<ShipFlightSettings> flightSettings, IShipModules modules, IShipSteering steering) {
             _flightSettings = flightSettings;
             _modules = modules;
-            _seats = seats;
+            _steering = steering;
         }
 
         internal void BeginTakeoff(
@@ -111,7 +111,7 @@ namespace Features.ShipModule.Scripts {
             _flight.SetManualHeading(manual);
             float steer = debugSteering
                 ? debugSteer
-                : canSteer && _seats.HasHelmPilot() ? _seats.ReadHelmSteer() : 0f;
+                : canSteer ? _steering.ReadSteer() : 0f;
             _flight.SetSteer(steer);
             PushTravelSpeed();
             SimulateFlight(dt);

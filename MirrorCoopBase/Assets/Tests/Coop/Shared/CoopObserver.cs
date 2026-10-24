@@ -18,7 +18,7 @@ using Object = UnityEngine.Object;
 
 namespace Tests.Coop.Shared {
     // Reads what this process sees of the shared game: the run, the ship's sockets and stats, the crew balance, the
-    // flight field, the other player's nameplate, where the local player stands and whether it is alive.
+    // flight field, the other player's nameplate, where the local player stands, whether it is alive and at the helm.
     // The host and the client capture the same fields.
     public static class CoopObserver {
         private const string SOCKET_FORMAT = "{0}={1}";
@@ -94,6 +94,7 @@ namespace Tests.Coop.Shared {
             Vector3 position = SessionQueries.LocalPlayer.transform.position;
             observation.Position = position;
             observation.IsOnDeck = SessionQueries.IsOnDeck(ship, position);
+            observation.IsHelmPilot = CoopHelm.FindStation(ship).IsSteeredByLocalPlayer;
         }
     }
 }

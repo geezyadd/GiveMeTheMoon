@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Features.CharacterMovableModule.Scripts;
 using Features.CharacterMovableModule.Scripts.Models;
+using Features.NetworkModelModule.Scripts;
 using Mirror;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using Features.ShipModule.Scripts.Debug;
@@ -122,11 +123,18 @@ namespace Features.ShipModule.Scripts {
             return rider != null && rider.IsRiding;
         }
 
-        internal bool HasOwnedHelmPilot() {
-            for (int i = 0; i < _riders.Count; i++) {
-                ShipRider rider = _riders[i];
-                if (rider != null && rider.isOwned && rider.IsHelmSeat)
-                    return true;
+        // Every player on this peer, not only the riders: a seat's occupant may stand anywhere or have just spawned.
+        public bool TryFindByKey(PlayerKey key, out ShipRider rider) {
+            rider = null;
+            if (key.IsEmpty)
+                return false;
+
+            foreach (CharacterMovableBase movable in _characterMovables().Movables.Values) {
+                if (movable == null || movable.TryGetComponent(out ShipRider candidate) == false || candidate.Key.Equals(key) == false)
+                    continue;
+
+                rider = candidate;
+                return true;
             }
 
             return false;

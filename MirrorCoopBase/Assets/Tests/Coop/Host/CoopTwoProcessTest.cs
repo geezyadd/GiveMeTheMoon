@@ -30,9 +30,10 @@ using Object = UnityEngine.Object;
 namespace Tests.Coop.Host {
     // The editor hosts, a development build of the game is the second player (CoopTestClient). The client joins by direct
     // IP, both ride one loop (the host navigates at the radar's sonar console and marks the station, the client must see
-    // the mark in its synced model), the client leaves in flight and is turned away in flight, comes back at the next station on
-    // the deck, dies there and is bought back by the host at the kiosk, and both ride one more loop. At every step the
-    // host compares its own view with the client's report.
+    // the mark in its synced model), the client takes the helm at the station and steers the next cruise, leaves in flight
+    // from the helm (the seat is free again) and is turned away in flight, comes back at the next station on the deck and
+    // not at the helm, dies there and is bought back by the host at the kiosk, and both ride one more loop. At every step
+    // the host compares its own view with the client's report.
     [PrebuildSetup("Tests.Coop.Editor.CoopClientBuild")]
     public sealed class CoopTwoProcessTest {
         private const int TEST_TIMEOUT_MS = 420000;
@@ -43,6 +44,9 @@ namespace Tests.Coop.Host {
         private const string RUN_FOLDER_FORMAT = "yyyyMMdd-HHmmss";
         private const int LEAVE_LOOP = 2;
         private const int LAST_LOOP = 3;
+        private const float SIT_POINT_TOLERANCE = 0.3f;
+        // The client holds D from the helm into the cruise: the ship turns right at the flight's turn rate.
+        private const float MIN_STEERED_DEGREES = 1f;
 
         private readonly WaitForSeconds _exchangePoll = new WaitForSeconds(CoopTestExchange.POLL_SECONDS);
 
@@ -58,6 +62,7 @@ namespace Tests.Coop.Host {
         private int _readReports;
         private float _testStarted;
         private float _stepStarted;
+        private float _cruiseStartYaw;
 
         private ShipBase Ship =>
             _session.Ship;
@@ -88,6 +93,7 @@ namespace Tests.Coop.Host {
             yield return HostAndLetClientInCoroutine();
             yield return StartAndBoardCoroutine();
             yield return RideLoopTogetherCoroutine(1);
+            yield return WatchClientTakeHelmCoroutine();
             yield return FlyWhileClientLeavesCoroutine();
             yield return LetClientRejoinCoroutine();
             yield return BuyBackDeadClientCoroutine();
@@ -141,12 +147,33 @@ namespace Tests.Coop.Host {
                 yield return _flight.BoardPlayerCoroutine();
         }
 
+        // The seat is keyed by the client's player key on the server, and the host sees the client's body in it.
+        private IEnumerator WatchClientTakeHelmCoroutine() {
+            BeginStep("client takes the helm at the station");
+            yield return WaitForReportCoroutine(CoopTestSteps.SEATED_AT_HELM);
+            Assert.IsTrue(_lastReport.IsHelmPilot, "The client does not steer from the helm on its own peer.");
+            ShipSocket helm = CoopHelm.FindSocket(Ship);
+            ShipRider client = ClientRider();
+            yield return WaitForCoroutine(() => helm.IsHeldBy(client.Key), "the helm held by the client's key on the server");
+            Assert.IsTrue(client.IsSeated, "The client's rider is not seated on the server.");
+            Assert.IsTrue(CoopHelm.FindStation(Ship).HasPilot, "The host's helm station sees no pilot.");
+            Assert.IsFalse(CoopHelm.FindStation(Ship).IsSteeredByLocalPlayer, "The host's helm station takes the client for the host.");
+            float sitDistance = Vector3.Distance(client.transform.position, helm.Seat.SitPoint.position);
+            Assert.Less(sitDistance, SIT_POINT_TOLERANCE, $"The host does not see the client at the helm's seat: {sitDistance:0.00} m away.");
+        }
+
         private IEnumerator FlyWhileClientLeavesCoroutine() {
             yield return LaunchAndCompareCruiseCoroutine(LEAVE_LOOP);
+            Assert.IsTrue(_lastReport.IsHelmPilot, "The client is not at the helm in the cruise.");
+            yield return WaitForCoroutine(IsShipSteeredRight, "the ship turning right under the client pilot's D");
             BeginStep("client leaves in flight");
             yield return WaitForReportCoroutine(CoopTestSteps.LEFT_IN_FLIGHT);
             yield return WaitForCoroutine(IsClientGone, "the client's connection gone on the server");
             Assert.AreNotEqual(ShipRunPhase.Build, Model.Phase, "The client left after the landing: the scenario cannot check a join in flight.");
+            Assert.IsFalse(CoopHelm.FindSocket(Ship).HasOccupant, "The pilot left, but the helm is still taken.");
+            Assert.IsFalse(CoopHelm.FindStation(Ship).HasPilot, "The pilot left, but the helm station still has a pilot.");
+            // The client steered away from the destination; with nobody at the helm the autopilot keeps that heading.
+            _flight.FaceDestination();
 
             BeginStep("client knocks in flight");
             yield return WaitForReportCoroutine(CoopTestSteps.REJECTED_IN_FLIGHT);
@@ -165,6 +192,9 @@ namespace Tests.Coop.Host {
             yield return WaitForReportCoroutine(CoopTestSteps.REJOINED);
             Assert.IsTrue(IsClientPlayerSpawned(), "The rejoined client has no player on the server.");
             Assert.IsTrue(IsClientOnDeckOnServer(), $"The rejoined client is not on the deck by its server position: {ClientServerPosition()}.");
+            Assert.IsFalse(ClientRider().IsSeated, "The rejoined client is seated on the server.");
+            Assert.IsFalse(CoopHelm.FindSocket(Ship).HasOccupant, "The helm is taken after the old pilot came back.");
+            Assert.IsFalse(_lastReport.IsHelmPilot, "The rejoined client is back at the helm.");
             AssertSameView(false, true);
         }
 
@@ -230,6 +260,9 @@ namespace Tests.Coop.Host {
             _flight.PullLaunchLever(loopIndex);
             yield return WaitForCoroutine(() => Model.Phase == ShipRunPhase.Cruise, $"Cruise of loop {loopIndex}");
             _flight.FaceDestination();
+            // The ship takes the faced heading in its LateUpdate.
+            yield return null;
+            _cruiseStartYaw = Ship.transform.eulerAngles.y;
             BeginStep($"loop {loopIndex} cruise");
             yield return WaitForReportCoroutine(CoopTestSteps.IN_CRUISE);
             Assert.AreEqual(ShipRunPhase.Cruise, Model.Phase, $"The client's cruise report of loop {loopIndex} came after the cruise.");
@@ -247,7 +280,8 @@ namespace Tests.Coop.Host {
         private void AssertLanded() {
             Assert.AreEqual(ShipRunAbortReason.None, Model.LastAbortReason, "The flight ended as a wreck.");
             Assert.AreEqual(LoopSmokeFlight.REQUIRED_ENGINES, _flight.CountInstalledEngines(), "Engines were lost on landing.");
-            Assert.IsTrue(SessionQueries.IsOnDeck(Ship, SessionQueries.LocalPlayer.transform.position), "The host is not on the deck after landing.");
+            Vector3 host = SessionQueries.LocalPlayer.transform.position;
+            Assert.IsTrue(SessionQueries.IsOnDeck(Ship, host), $"The host is not on the deck after landing: at {host}, deck {Ship.DeckGeometry.Bounds}.");
         }
 
         private void AssertSameView(bool isInFlight, bool isClientStaying) {
@@ -311,6 +345,14 @@ namespace Tests.Coop.Host {
         private static PlayerLifeState ClientLifeState() {
             Assert.IsTrue(TryGetClientConnection(out NetworkConnectionToClient connection) && connection.identity != null, "The client has no player on the server.");
             return connection.identity.GetComponent<PlayerLifeBody>().LifeState;
+        }
+
+        private bool IsShipSteeredRight() =>
+            Mathf.DeltaAngle(_cruiseStartYaw, Ship.transform.eulerAngles.y) > MIN_STEERED_DEGREES;
+
+        private static ShipRider ClientRider() {
+            Assert.IsTrue(TryGetClientConnection(out NetworkConnectionToClient connection) && connection.identity != null, "The client has no player on the server.");
+            return connection.identity.GetComponent<ShipRider>();
         }
 
         private static bool IsClientPlayerSpawned() =>
