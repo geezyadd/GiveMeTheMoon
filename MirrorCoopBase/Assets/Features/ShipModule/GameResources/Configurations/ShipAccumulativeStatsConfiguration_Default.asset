@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ShipAccumulativeStatsConfiguration_Default
   m_EditorClassIdentifier: 
   AccumulativeStats:
-  - 4
+  - 6
   _defaults:
   - Type: 1
     MaxValue: 999
@@ -28,5 +28,8 @@ MonoBehaviour:
     MaxValue: 20
     Value: 1
   - Type: 4
+    MaxValue: 100
+    Value: 0
+  - Type: 6
     MaxValue: 100
     Value: 100

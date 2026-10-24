@@ -1,0 +1,18 @@
+{
+    "name": "Features.WeaponModule.Editor",
+    "rootNamespace": "Features.WeaponModule.Editor",
+    "references": [
+        "GUID:e596d38ca81247398483edaf270c2ed8"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -10,8 +10,8 @@ using UnityEngine;
 using Zenject;
 
 namespace Features.PlayerLifeModule.Scripts {
-    // Server: one life state machine per connected player, the all-dead return to the lobby, the revive on a new map
-    // and the revive of one player on the ship's deck.
+    // Server: one life state machine per connected player, the return to the lobby when the whole crew is dead or the
+    // ship's hull is destroyed, the revive on a new map and the revive of one player on the ship's deck.
     public sealed class PlayerLifeSystem : IInitializable, IDisposable, ITickable, IGameplaySession, IPlayerLifeReviver {
         private const string REVIVE_ERROR = "Player {0} cannot be revived: not dead, not spawned or no deck spawn point.";
 
@@ -22,11 +22,11 @@ namespace Features.PlayerLifeModule.Scripts {
         private readonly IConnectionSessionService _connectionSessionService;
         private readonly PlayerLifeConfiguration _playerLifeConfiguration;
         private readonly IShipDeckSpawnPoints _shipDeckSpawnPoints;
+        private readonly IShipHullEvents _shipHullEvents;
         private readonly Dictionary<PlayerLifeBody, IPlayerLifeStateMachine> _machinesByBody = new();
         private readonly List<IPlayerLifeStateMachine> _machines = new();
         private readonly List<PlayerKey> _knownKeys = new();
-        private bool _returnPending;
-        private float _returnAt;
+        private readonly CrewLobbyReturnSchedule _lobbyReturn = new();
 
         public PlayerLifeSystem(
             IPlayerBodyRegistry playerBodyRegistry,
@@ -35,7 +35,8 @@ namespace Features.PlayerLifeModule.Scripts {
             IPlayerLifeStateMachineFactory playerLifeStateMachineFactory,
             IConnectionSessionService connectionSessionService,
             PlayerLifeConfiguration playerLifeConfiguration,
-            IShipDeckSpawnPoints shipDeckSpawnPoints) {
+            IShipDeckSpawnPoints shipDeckSpawnPoints,
+            IShipHullEvents shipHullEvents) {
             _playerBodyRegistry = playerBodyRegistry;
             _playerLifeRegistry = playerLifeRegistry;
             _allDeadRule = allDeadRule;
@@ -43,6 +44,7 @@ namespace Features.PlayerLifeModule.Scripts {
             _connectionSessionService = connectionSessionService;
             _playerLifeConfiguration = playerLifeConfiguration;
             _shipDeckSpawnPoints = shipDeckSpawnPoints;
+            _shipHullEvents = shipHullEvents;
         }
 
         public void Initialize() {
@@ -50,6 +52,7 @@ namespace Features.PlayerLifeModule.Scripts {
             _playerBodyRegistry.OnServerBodyRemoved += OnServerBodyRemoved;
             _playerLifeRegistry.OnPlayerAdded += OnLifeRecordAdded;
             _connectionSessionService.OnMapReady += OnMapReady;
+            _shipHullEvents.OnDestroyed += OnShipDestroyed;
         }
 
         public void Dispose() {
@@ -57,16 +60,13 @@ namespace Features.PlayerLifeModule.Scripts {
             _playerBodyRegistry.OnServerBodyRemoved -= OnServerBodyRemoved;
             _playerLifeRegistry.OnPlayerAdded -= OnLifeRecordAdded;
             _connectionSessionService.OnMapReady -= OnMapReady;
+            _shipHullEvents.OnDestroyed -= OnShipDestroyed;
         }
 
         public void Tick() {
-            if (_returnPending == false || NetworkServer.active == false)
+            if (NetworkServer.active == false || _lobbyReturn.TryConsume(Time.time) == false)
                 return;
 
-            if (Time.time < _returnAt)
-                return;
-
-            _returnPending = false;
             _connectionSessionService.ReturnToLobby();
         }
 
@@ -97,7 +97,7 @@ namespace Features.PlayerLifeModule.Scripts {
         }
 
         public void CleanupGameplay() {
-            _returnPending = false;
+            _lobbyReturn.Cancel();
             // Leaving the session: the next host starts with fresh records (alive, full health).
             for (int i = 0; i < _knownKeys.Count; i++)
                 _playerLifeRegistry.Remove(_knownKeys[i]);
@@ -106,7 +106,7 @@ namespace Features.PlayerLifeModule.Scripts {
         }
 
         public void RestartGameplay() {
-            _returnPending = false;
+            _lobbyReturn.Cancel();
             if (NetworkServer.active)
                 ServerReviveAll();
         }
@@ -161,17 +161,13 @@ namespace Features.PlayerLifeModule.Scripts {
                 ServerReviveAll();
         }
 
-        private void EvaluateAllDead() {
-            if (_allDeadRule.AreAllDead(_machines) == false) {
-                _returnPending = false;
-                return;
-            }
+        // The same exit as the whole crew dead: the crew sees the loss for the same delay, then goes to the lobby.
+        private void OnShipDestroyed() =>
+            _lobbyReturn.RequestShipLost(Time.time + _playerLifeConfiguration.AllDeadReturnDelay);
 
-            if (_returnPending)
-                return;
-
-            _returnPending = true;
-            _returnAt = Time.time + _playerLifeConfiguration.AllDeadReturnDelay;
-        }
+        private void EvaluateAllDead() =>
+            _lobbyReturn.SetAllDead(
+                _allDeadRule.AreAllDead(_machines),
+                Time.time + _playerLifeConfiguration.AllDeadReturnDelay);
     }
 }

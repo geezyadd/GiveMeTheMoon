@@ -11,6 +11,7 @@ using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Installers;
 using Features.StagePresetModule.Scripts.Installers;
 using Features.TooltipModule.Scripts.Installers;
+using Features.WeaponModule.Scripts;
 using Game.Connection;
 using Zenject;
 
@@ -24,6 +25,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             GrabModuleInstaller.Install(Container);
             ShipModuleInstaller.Install(Container);
             FlightFieldModuleInstaller.Install(Container);
+            WeaponModuleInstaller.Install(Container);
             PlayerLifeModuleInstaller.Install(Container);
             PlayerProfileModuleInstaller.Install(Container);
             ShopModuleInstaller.Install(Container);

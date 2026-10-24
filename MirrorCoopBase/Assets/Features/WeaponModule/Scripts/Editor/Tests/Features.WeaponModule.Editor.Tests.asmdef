@@ -1,0 +1,28 @@
+{
+    "name": "Features.WeaponModule.Editor.Tests",
+    "rootNamespace": "Features.WeaponModule.Editor.Tests",
+    "references": [
+        "GUID:e596d38ca81247398483edaf270c2ed8",
+        "GUID:ec7e8f1783e34cd7a6ba8441101f8f7e",
+        "GUID:7c3e1a9b4d2f4e6a8b0c1d2e3f4a5b6c",
+        "GUID:5d6793be2d204514a9702ab824c001ed",
+        "GUID:03a835aea0a645a7b43f5f0c61e8d191",
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

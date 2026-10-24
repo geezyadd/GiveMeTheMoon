@@ -5,6 +5,7 @@ namespace Features.ShipModule.Scripts {
         DodgeRange = 2,
         Handling = 3,
         Armor = 4,
-        FlightSpeed = 5
+        FlightSpeed = 5,
+        Hull = 6
     }
 }

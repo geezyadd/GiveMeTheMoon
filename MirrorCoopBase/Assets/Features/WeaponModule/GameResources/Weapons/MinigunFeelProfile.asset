@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 381258ecf36952741bb9ce75fe56e051, type: 3}
+  m_Name: MinigunFeelProfile
+  m_EditorClassIdentifier: 
+  _muzzleFlashColor: {r: 1, g: 0.92, b: 0.6, a: 1}
+  _muzzleFlashSize: 0.6
+  _muzzleLightIntensity: 3
+  _muzzleLightRange: 6
+  _casingPoolSize: 200
+  _casingLifetimeSeconds: 6
+  _casingFadeSeconds: 1
+  _casingEjectDirection: {x: 1, y: 0.6, z: -0.2}
+  _casingEjectSpeed: 3
+  _casingSpinDegreesPerSecond: 720
+  _recoilPositionNoiseMeters: 0.01
+  _recoilRotationNoiseDegrees: 0.6
+  _recoilNoiseFrequency: 25
+  _fireShakeAmplitude: 0.15
+  _nearImpactShakeAmplitude: 0.5
+  _nearImpactDistanceMeters: 30
+  _targetDestroyedShakeAmplitude: 0.8
+  _tracerEveryNthShot: 3
+  _tracerColor: {r: 1, g: 0.65, b: 0.2, a: 1}
+  _tracerSpeedMetersPerSecond: 600
+  _tracerWidthMeters: 0.08
+  _impactSparkCount: 8
+  _impactDebrisCount: 4
+  _impactDustSizeMeters: 1.5
+  _targetFlashSeconds: 0.08

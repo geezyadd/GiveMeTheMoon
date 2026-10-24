@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Linq;
+using Features.AddressablesConstantGeneratorModule.EditorLoading;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Structures;
@@ -14,7 +14,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // field code checks a concrete structure.
     public sealed class FieldStructureCatalogGuardTests {
         private const string MODULE_SCRIPTS_FOLDER = "Assets/Features/FlightFieldModule/Scripts";
-        private const string SOURCE_PATTERN = "*.cs";
         private const string TESTS_FOLDER = "/Tests/";
         private const char QUOTE = '"';
         private const string DIFFICULTY_PROFILES_FIELD = "_difficultyProfiles";
@@ -78,11 +77,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         public void WhenFieldSourcesAreScanned_ThenNoneNamesAConcreteStructure() {
             string[] quotedIds = _composition.Catalog.Structures.Select(structure => QUOTE + structure.Id + QUOTE).ToArray();
 
-            string[] offenders = Directory.GetFiles(MODULE_SCRIPTS_FOLDER, SOURCE_PATTERN, SearchOption.AllDirectories)
-                .Select(path => path.Replace('\\', '/'))
-                .Where(path => !path.Contains(TESTS_FOLDER))
-                .Where(path => quotedIds.Any(File.ReadAllText(path).Contains))
-                .ToArray();
+            string[] offenders = SourceScan.FindFilesMatching(MODULE_SCRIPTS_FOLDER, TESTS_FOLDER, source => quotedIds.Any(source.Contains));
 
             Assert.IsEmpty(offenders, $"Structure behaviour comes from FieldStructureDefinition, not from checks of a structure id: {string.Join(", ", offenders)}");
         }
