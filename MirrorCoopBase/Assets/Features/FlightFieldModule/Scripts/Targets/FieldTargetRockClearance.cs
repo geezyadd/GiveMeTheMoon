@@ -27,11 +27,19 @@ namespace Features.FlightFieldModule.Scripts.Targets {
             Vector2Int center = new(Mathf.FloorToInt(fieldPosition.z / frame.CellSize), Mathf.FloorToInt(fieldPosition.x / frame.CellSize));
             int reach = REACH_CELLS + Mathf.CeilToInt(radius / frame.CellSize);
             for (int along = center.x - reach; along <= center.x + reach; along++) {
-                for (int across = center.y - reach; across <= center.y + reach; across++) {
-                    Vector2Int cell = new(along, across);
-                    if (workspace.FieldData.Field.Cells.ValidateIndex(cell) && !IsCellClear(workspace, frame, cell, fieldPosition, worldPosition, radius))
-                        return false;
-                }
+                if (!IsRowClear(workspace, frame, along, center.y - reach, center.y + reach, fieldPosition, worldPosition, radius))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private bool IsRowClear(FieldTargetRockWorkspace workspace, FieldFrame frame, int along, int firstAcross, int lastAcross, Vector3 fieldPosition, Vector3 worldPosition,
+                                float radius) {
+            for (int across = firstAcross; across <= lastAcross; across++) {
+                Vector2Int cell = new(along, across);
+                if (workspace.FieldData.Field.Cells.ValidateIndex(cell) && !IsCellClear(workspace, frame, cell, fieldPosition, worldPosition, radius))
+                    return false;
             }
 
             return true;

@@ -1,3 +1,4 @@
+using Features.CameraModule.Contracts;
 using UnityEngine;
 
 namespace Features.WeaponModule.Scripts.Definitions {
@@ -49,16 +50,14 @@ namespace Features.WeaponModule.Scripts.Definitions {
         [SerializeField, Min(0f)] private float _recoilSettleSeconds;
 
         [Header("Camera shake")]
-        [Tooltip("Shake amplitudes are view turn noise in degrees.")]
-        [SerializeField, Min(0f)] private float _fireShakeAmplitude;
-        [SerializeField, Min(0f)] private float _nearImpactShakeAmplitude;
+        [Tooltip("The holder's view shake while firing, continuous at intensity 1.")]
+        [SerializeField] private CameraShakeProfile _fireShake;
+        [Tooltip("The holder's view shake from an impact close by, at strength 1 for an impact right at the view.")]
+        [SerializeField] private CameraShakeProfile _nearImpactShake;
+        [Tooltip("Impacts closer than this shake the view, stronger the closer they are.")]
         [SerializeField, Min(0f)] private float _nearImpactDistanceMeters;
+        [Tooltip("View turn noise in degrees when a target is destroyed.")]
         [SerializeField, Min(0f)] private float _targetDestroyedShakeAmplitude;
-        [SerializeField, Min(0f)] private float _shakeFrequency;
-        [Tooltip("Seconds an impact shake takes to fade out.")]
-        [SerializeField, Min(0f)] private float _shakeFadeSeconds;
-        [Tooltip("Roll reads as a sea-sick tilt: its share of the shake on the other axes.")]
-        [SerializeField, Range(0f, 1f)] private float _shakeRollShare;
 
         [Header("Tracers")]
         [Tooltip("Every Nth shot draws a tracer (3 = every third shot).")]
@@ -124,13 +123,10 @@ namespace Features.WeaponModule.Scripts.Definitions {
         public float RecoilRotationNoiseDegrees => _recoilRotationNoiseDegrees;
         public float RecoilNoiseFrequency => _recoilNoiseFrequency;
         public float RecoilSettleSeconds => _recoilSettleSeconds;
-        public float FireShakeAmplitude => _fireShakeAmplitude;
-        public float NearImpactShakeAmplitude => _nearImpactShakeAmplitude;
+        public CameraShakeProfile FireShake => _fireShake;
+        public CameraShakeProfile NearImpactShake => _nearImpactShake;
         public float NearImpactDistanceMeters => _nearImpactDistanceMeters;
         public float TargetDestroyedShakeAmplitude => _targetDestroyedShakeAmplitude;
-        public float ShakeFrequency => _shakeFrequency;
-        public float ShakeFadeSeconds => _shakeFadeSeconds;
-        public float ShakeRollShare => _shakeRollShare;
         public int TracerEveryNthShot => _tracerEveryNthShot;
         public Color TracerColor => _tracerColor;
         public float TracerSpeedMetersPerSecond => _tracerSpeedMetersPerSecond;

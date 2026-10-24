@@ -1,4 +1,5 @@
 using Features.CameraModule.Scripts.Models;
+using Features.CameraModule.Scripts.Shake;
 using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.CrewInviteModule.Data.Generated;
@@ -36,6 +37,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<CharacterMovableModel>().AsSingle();
             Container.Bind<PlayerControlBlockModel>().AsSingle();
             Container.Bind<GameCameraModel>().AsSingle();
+            Container.Bind<CameraShakeModel>().AsSingle();
             Container.Bind<IShipRunBindingModel>().To<ShipRunBindingModel>().AsSingle();
             Container.Bind<IShipClientBindingModel>().To<ShipClientBindingModel>().AsSingle();
             Container.Bind<HoveredInteractableModel>().AsSingle();

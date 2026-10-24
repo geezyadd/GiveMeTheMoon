@@ -7,7 +7,7 @@ using Features.FlightFieldModule.Scripts.Network.Generated;
 using Features.FlightFieldModule.Scripts.Targets;
 using Features.NetworkModelModule.Scripts;
 using Features.ShipModule.Scripts;
-using Features.ShipModule.Scripts.Impacts;
+using Features.ShipModule.Scripts.Debug;
 using Features.ShipModule.Scripts.Turret;
 using Features.ShopModule.Scripts.Generated;
 using Features.WeaponModule.Contracts;
@@ -41,6 +41,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private readonly IReadOnlyFieldTargetSceneModel _fieldTargetSceneModel;
         private readonly IReadOnlyWalletModel _walletModel;
         private readonly IPlayerIdentityService _playerIdentityService;
+        private readonly IShipRockImpactDebug _shipRockImpactDebug;
         private readonly List<FieldTargetPopped> _popped = new List<FieldTargetPopped>();
         private readonly List<FieldTargetDescription> _targets = new List<FieldTargetDescription>();
 
@@ -53,6 +54,7 @@ namespace Tests.PlayMode.LoopSmoke {
             _fieldTargetSceneModel = SessionQueries.Resolve<IReadOnlyFieldTargetSceneModel>();
             _walletModel = SessionQueries.Resolve<IReadOnlyWalletModel>();
             _playerIdentityService = SessionQueries.Resolve<IPlayerIdentityService>();
+            _shipRockImpactDebug = SessionQueries.Resolve<IShipRockImpactDebug>();
         }
 
         // The host sits at the turret.
@@ -141,9 +143,9 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         // Before the balloon at the height of the hull's middle, heading at it.
-        private static void PutShipBefore(ShipBase ship, FieldTargetDescription target) {
+        private void PutShipBefore(ShipBase ship, FieldTargetDescription target) {
             Vector3 toTarget = HorizontalDirection(ship.transform.position, target.Center);
-            float hullMiddle = ShipHullBox.Enclose(ship.HullVolume.Boxes).Center.y;
+            float hullMiddle = _shipRockImpactDebug.DebugGetHullMiddleHeight();
             Vector3 position = target.Center - toTarget * (target.Radius + FLY_IN_DISTANCE) + Vector3.down * hullMiddle;
             ship.FlightControlDebug.DebugMove(position - ship.transform.position);
             ship.FlightControlDebug.DebugFace(toTarget);

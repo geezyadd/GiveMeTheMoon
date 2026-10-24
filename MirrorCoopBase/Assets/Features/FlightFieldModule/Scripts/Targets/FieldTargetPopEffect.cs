@@ -12,12 +12,6 @@ namespace Features.FlightFieldModule.Scripts.Targets {
         private const string REWARD_FORMAT = "+{0}";
         // An irrational turn per coin spreads the coins evenly around the pop.
         private const float GOLDEN_ANGLE_DEGREES = 137.50776f;
-        // Above the deck, where the coins disappear into the ship.
-        private const float SHIP_TARGET_HEIGHT = 2f;
-        private const float TEXT_START_HEIGHT_SHARE = 1.2f;
-        // The coins leave in three rings: 30 degrees down, level and 30 degrees up.
-        private const int COIN_RINGS = 3;
-        private const float COIN_RING_SPREAD_DEGREES = 60f;
         private const int MAX_COINS = 32;
 
         [SerializeField] private ParticleSystem[] _tintedParticles;
@@ -55,7 +49,7 @@ namespace Features.FlightFieldModule.Scripts.Targets {
             _localViewpointSource = localViewpointSource;
             _feel = feel;
             _origin = position;
-            _textStart = position + Vector3.up * (radius * TEXT_START_HEIGHT_SHARE);
+            _textStart = position + Vector3.up * (radius * feel.RewardTextStartHeightShare);
             _textColor = color;
             _seconds = 0f;
             _coinCount = Mathf.Min(feel.CoinCount, Mathf.Min(_coins.Length, MAX_COINS));
@@ -86,19 +80,23 @@ namespace Features.FlightFieldModule.Scripts.Targets {
                 if (!isUsed)
                     continue;
 
-                float elevation = COIN_RING_SPREAD_DEGREES * ((i % COIN_RINGS) / (float)(COIN_RINGS - 1) - 0.5f);
+                float elevation = _feel.CoinRingSpreadDegrees * RingShare(i);
                 Vector3 direction = Quaternion.Euler(elevation, i * GOLDEN_ANGLE_DEGREES, 0f) * Vector3.forward;
                 _coins[i].position = _origin + direction * radius;
                 _coinBurstEnds[i] = _origin + direction * (radius + _feel.CoinBurstSpeed * _feel.CoinBurstSeconds);
             }
         }
 
+        // From -0.5 (the lowest ring) to 0.5 (the highest); one ring is level.
+        private float RingShare(int coin) =>
+            _feel.CoinRings <= 1 ? 0f : (coin % _feel.CoinRings) / (float)(_feel.CoinRings - 1) - 0.5f;
+
         // Out fast and slowing down, then pulled into the ship faster and faster.
         private void MoveCoins() {
             float burst = Mathf.Clamp01(_seconds / _feel.CoinBurstSeconds);
             float fly = Mathf.Clamp01((_seconds - _feel.CoinBurstSeconds) / _feel.CoinFlySeconds);
             bool hasShip = _shipPositionSource.TryGetShipPosition(out Vector3 ship);
-            Vector3 target = hasShip ? ship + Vector3.up * SHIP_TARGET_HEIGHT : _origin + Vector3.up * _feel.RewardTextRiseMeters;
+            Vector3 target = hasShip ? ship + Vector3.up * _feel.CoinShipHeightMeters : _origin + Vector3.up * _feel.RewardTextRiseMeters;
             for (int i = 0; i < _coinCount; i++) {
                 Transform coin = _coins[i];
                 if (!coin.gameObject.activeSelf)

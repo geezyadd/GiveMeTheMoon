@@ -17,9 +17,6 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
             if (configuration.HeightMeters.y < configuration.HeightMeters.x)
                 throw new InvalidOperationException($"{configuration.name}: the balloon height range {configuration.HeightMeters} runs downwards.");
 
-            if (configuration.ReleaseRadiusMeters <= configuration.BuildRadiusMeters)
-                throw new InvalidOperationException($"{configuration.name}: the release radius must be above the build radius.");
-
             if (configuration.PopEffect == null)
                 throw new InvalidOperationException($"{configuration.name}: the pop effect is empty.");
         }

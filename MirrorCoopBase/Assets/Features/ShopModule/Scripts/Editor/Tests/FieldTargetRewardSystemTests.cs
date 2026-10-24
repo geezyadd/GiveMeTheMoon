@@ -1,10 +1,7 @@
 using System;
-using Features.FlightFieldModule.Contracts;
-using Features.NetworkModelModule.Scripts;
 using Features.ShopModule.Scripts.Core;
 using Features.ShopModule.Scripts.Systems;
 using NUnit.Framework;
-using UnityEngine;
 
 namespace Features.ShopModule.Editor.Tests {
     // A popped target balloon pays its reward into the bound crew wallet once per pop event; nothing is paid after the
@@ -55,31 +52,6 @@ namespace Features.ShopModule.Editor.Tests {
             _binding.Clear(_wallet);
 
             Assert.Throws<InvalidOperationException>(() => _events.Pop(0, SMALL_REWARD));
-        }
-
-        private sealed class TargetEventsStub : IFieldTargetEvents {
-            public event Action<FieldTargetPopped> TargetPopped;
-
-            public void Pop(int index, int reward) {
-                FieldTargetDescription target = new(new FieldTargetId(index), "balloon", Vector3.zero, 1f, reward);
-                TargetPopped?.Invoke(new FieldTargetPopped(target, FieldTargetPopCause.Weapon, new PlayerKey("client:shooter"), "minigun", 1, 0));
-            }
-        }
-
-        private sealed class WalletStub : ICrewWallet {
-            public long Balance { get; private set; }
-            public int Earnings { get; private set; }
-
-            public WalletStub(long balance) =>
-                Balance = balance;
-
-            public bool ServerTrySpend(long amount) =>
-                throw new NotSupportedException();
-
-            public void ServerEarn(long amount) {
-                Balance += amount;
-                Earnings++;
-            }
         }
     }
 }

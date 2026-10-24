@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Configuration {
     // How many target balloons a flight field gets and where (passable cells, clear of rocks, more of them away from
-    // the main course), how far from the camera every peer builds them, how a weapon hit on one is checked and how
-    // they bob, squash and pop. The kinds are in the FieldTargetCatalog; a stage preset may scale the count
+    // the main course), how a weapon hit on one is checked and how they bob, squash and pop (every peer builds them
+    // within the field's own build radius, IFieldStreamingRule). The kinds are in the FieldTargetCatalog; a stage preset may scale the count
     // (FieldTargetPresetBlock).
     [CreateAssetMenu(menuName = "Game/Flight Field/Target Configuration", fileName = "FieldTargetConfiguration_Default")]
     public sealed class FieldTargetConfiguration : ScriptableObject {
@@ -28,12 +28,6 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [Tooltip("Tries to find a free spot per balloon before the generator gives that balloon up.")]
         [SerializeField, Min(1)] private int _placementTriesPerTarget = 20;
 
-        [Header("Streaming")]
-        [Tooltip("Every peer builds the balloons within this distance of its camera on the flight plane, meters.")]
-        [SerializeField, Min(1f)] private float _buildRadiusMeters = 1300f;
-        [Tooltip("A built balloon farther than this goes back to the pool, meters (above the build radius).")]
-        [SerializeField, Min(1f)] private float _releaseRadiusMeters = 1500f;
-
         [Header("Weapon hits")]
         [Tooltip("How far, meters, a reported hit may lie outside the balloon's sphere and still count (aim and network delay).")]
         [SerializeField, Min(0f)] private float _hitPointToleranceMeters = 3f;
@@ -52,8 +46,12 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [SerializeField] private FieldTargetPopFeel _popFeel = new() {
             CoinCount = 8,
             CoinBurstSpeed = 7f,
+            CoinRings = 3,
+            CoinRingSpreadDegrees = 60f,
+            CoinShipHeightMeters = 2f,
             CoinBurstSeconds = 0.35f,
             CoinFlySeconds = 0.8f,
+            RewardTextStartHeightShare = 1.2f,
             RewardTextRiseMeters = 5f,
             RewardTextSeconds = 1.6f,
             RewardTextSizeMeters = 1.6f,
@@ -68,8 +66,6 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public float MaxCourseDistanceMeters => _maxCourseDistanceMeters;
         public float AwayFromCourseWeight => _awayFromCourseWeight;
         public int PlacementTriesPerTarget => _placementTriesPerTarget;
-        public float BuildRadiusMeters => _buildRadiusMeters;
-        public float ReleaseRadiusMeters => _releaseRadiusMeters;
         public float HitPointToleranceMeters => _hitPointToleranceMeters;
         public float BobAmplitudeMeters => _bobAmplitudeMeters;
         public float BobPeriodSeconds => _bobPeriodSeconds;

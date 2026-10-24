@@ -66,6 +66,9 @@ namespace Features.ShipModule.Scripts.Debug {
                 ship.FlightControlDebug.DebugMove(position - ship.transform.position);
         }
 
+        public float DebugGetHullMiddleHeight() =>
+            ShipHullBox.Enclose(_shipRunBindingModel.Ship.HullVolume.Boxes).Center.y;
+
         private void LogAim(ShipRockImpactKind kind) {
             bool isAimed = TryDebugAimAtNearestRock(kind, out FieldRockDescription rock);
             UnityEngine.Debug.Log(isAimed

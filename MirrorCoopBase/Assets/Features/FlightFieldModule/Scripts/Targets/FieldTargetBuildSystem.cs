@@ -1,15 +1,16 @@
 using System;
 using System.Collections.Generic;
 using Features.FlightFieldModule.Contracts;
-using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
+using Features.FlightFieldModule.Scripts.Scene;
 using Features.GameCoreModule.Contracts;
 using UnityEngine;
 using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Targets {
-    // Keeps this peer's target balloons equal to the live field around the viewpoint, like the field's structures: a
+    // Keeps this peer's target balloons equal to the live field around the viewpoint, like the field's structures and
+    // by the same build and release radii (IFieldStreamingRule): a
     // new field number releases the old balloons; then every frame the balloons within the build radius are built
     // and the built ones beyond the release radius go back to the pool. A popped balloon is never built, so a balloon
     // that streams in later (or a late joiner's snapshot) stays gone; the pop view hides one that pops while it
@@ -20,20 +21,20 @@ namespace Features.FlightFieldModule.Scripts.Targets {
         private readonly IFieldTargetSceneBuilder _fieldTargetSceneBuilder;
         private readonly IFieldPoppedTargets _fieldPoppedTargets;
         private readonly ILocalViewpointSource _localViewpointSource;
-        private readonly FieldTargetConfiguration _fieldTargetConfiguration;
+        private readonly IFieldStreamingRule _fieldStreamingRule;
 
         private bool _isDirty;
 
         private bool IsShowingLiveField => _fieldTargetSceneModel.BuiltNumber != LiveFieldNumbers.NO_FIELD && _fieldTargetSceneModel.BuiltNumber == _liveFieldModel.Number;
 
         public FieldTargetBuildSystem(IReadOnlyLiveFieldModel liveFieldModel, FieldTargetSceneModel fieldTargetSceneModel, IFieldTargetSceneBuilder fieldTargetSceneBuilder,
-                                      IFieldPoppedTargets fieldPoppedTargets, ILocalViewpointSource localViewpointSource, FieldTargetConfiguration fieldTargetConfiguration) {
+                                      IFieldPoppedTargets fieldPoppedTargets, ILocalViewpointSource localViewpointSource, IFieldStreamingRule fieldStreamingRule) {
             _liveFieldModel = liveFieldModel;
             _fieldTargetSceneModel = fieldTargetSceneModel;
             _fieldTargetSceneBuilder = fieldTargetSceneBuilder;
             _fieldPoppedTargets = fieldPoppedTargets;
             _localViewpointSource = localViewpointSource;
-            _fieldTargetConfiguration = fieldTargetConfiguration;
+            _fieldStreamingRule = fieldStreamingRule;
         }
 
         public void Initialize() =>
@@ -73,14 +74,12 @@ namespace Features.FlightFieldModule.Scripts.Targets {
             IReadOnlyList<FieldTargetEntry> targets = _liveFieldModel.Targets;
             _fieldTargetSceneModel.TrackTargets(targets.Count);
             Vector3 viewpoint = _fieldTargetSceneModel.Root.InverseTransformPoint(_localViewpointSource.GetPosition());
-            float buildSquared = _fieldTargetConfiguration.BuildRadiusMeters * _fieldTargetConfiguration.BuildRadiusMeters;
-            float releaseSquared = _fieldTargetConfiguration.ReleaseRadiusMeters * _fieldTargetConfiguration.ReleaseRadiusMeters;
             for (int i = 0; i < targets.Count; i++) {
                 bool isBuilt = _fieldTargetSceneModel.TryGetView(i, out FieldTargetView view);
                 float distanceSquared = PlaneDistanceSquared(targets[i].FieldPosition, viewpoint);
-                if (isBuilt && distanceSquared > releaseSquared)
+                if (isBuilt && _fieldStreamingRule.ShouldRelease(distanceSquared))
                     Release(i, view);
-                else if (!isBuilt && distanceSquared <= buildSquared && !_fieldPoppedTargets.IsPopped(new FieldTargetId(i)))
+                else if (!isBuilt && _fieldStreamingRule.ShouldBuild(distanceSquared) && !_fieldPoppedTargets.IsPopped(new FieldTargetId(i)))
                     _fieldTargetSceneModel.SetView(i, _fieldTargetSceneBuilder.Build(_fieldTargetSceneModel.Root, targets[i], i));
             }
         }

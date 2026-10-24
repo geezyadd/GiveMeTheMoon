@@ -21,8 +21,6 @@ MonoBehaviour:
   _maxCourseDistanceMeters: 450
   _awayFromCourseWeight: 3
   _placementTriesPerTarget: 20
-  _buildRadiusMeters: 1300
-  _releaseRadiusMeters: 1500
   _hitPointToleranceMeters: 3
   _bobAmplitudeMeters: 0.6
   _bobPeriodSeconds: 3.2
@@ -32,8 +30,12 @@ MonoBehaviour:
   _popFeel:
     CoinCount: 8
     CoinBurstSpeed: 7
+    CoinRings: 3
+    CoinRingSpreadDegrees: 60
+    CoinShipHeightMeters: 2
     CoinBurstSeconds: 0.35
     CoinFlySeconds: 0.8
+    RewardTextStartHeightShare: 1.2
     RewardTextRiseMeters: 5
     RewardTextSeconds: 1.6
     RewardTextSizeMeters: 1.6

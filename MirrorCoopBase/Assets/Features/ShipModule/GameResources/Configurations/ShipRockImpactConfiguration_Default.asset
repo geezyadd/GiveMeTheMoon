@@ -36,15 +36,9 @@ MonoBehaviour:
   _largeHitCooldownSeconds: 1
   _maxSweepMeters: 60
   _smallFeel:
-    _shakeDegrees: 1.5
-    _shakeMeters: 0.03
-    _shakeSeconds: 0.35
-    _shakeFrequency: 18
+    _shake: {fileID: 11400000, guid: 1f95eaf2e2eaeef4f87b933f1680660d, type: 2}
     _effectSize: 6
   _largeFeel:
-    _shakeDegrees: 5
-    _shakeMeters: 0.12
-    _shakeSeconds: 0.8
-    _shakeFrequency: 14
+    _shake: {fileID: 11400000, guid: a8e09aaaaba0ab5409fbd7614beea2d1, type: 2}
     _effectSize: 10
   _impactEffect: {fileID: 6636624147284935301, guid: a1390414e8aec334b9b9f91c4bce496e, type: 3}

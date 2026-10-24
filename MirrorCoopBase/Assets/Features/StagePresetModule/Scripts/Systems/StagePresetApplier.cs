@@ -22,7 +22,7 @@ namespace Features.StagePresetModule.Scripts.Systems {
         private readonly IStagePresetSelectionService _stagePresetSelectionService;
         private readonly IStagePresetSocketResolver _stagePresetSocketResolver;
         private readonly WalletConfiguration _walletConfiguration;
-        private readonly FieldTargetCountScaleModel _fieldTargetCountScaleModel;
+        private readonly IFieldTargetCountScaleWriter _fieldTargetCountScaleWriter;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private readonly IFieldProfileDebug _fieldProfileDebug;
 #endif
@@ -43,14 +43,14 @@ namespace Features.StagePresetModule.Scripts.Systems {
             IFieldProfileDebug fieldProfileDebug,
 #endif
             WalletConfiguration walletConfiguration,
-            FieldTargetCountScaleModel fieldTargetCountScaleModel) {
+            IFieldTargetCountScaleWriter fieldTargetCountScaleWriter) {
             _stagePresetSelectionService = stagePresetSelectionService;
             _stagePresetSocketResolver = stagePresetSocketResolver;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             _fieldProfileDebug = fieldProfileDebug;
 #endif
             _walletConfiguration = walletConfiguration;
-            _fieldTargetCountScaleModel = fieldTargetCountScaleModel;
+            _fieldTargetCountScaleWriter = fieldTargetCountScaleWriter;
         }
 
         public void ServerPrepareShip(ShipBase ship) {
@@ -62,7 +62,7 @@ namespace Features.StagePresetModule.Scripts.Systems {
                 InstallModule(preset, preset.Modules[i].Module, sockets[i]);
 
             if (_stagePresetSelectionService.TryGetSelectedExtension(out FieldTargetPresetBlock targets))
-                _fieldTargetCountScaleModel.SetCountScale(targets.CountScale);
+                _fieldTargetCountScaleWriter.SetCountScale(targets.CountScale);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (preset.HasFieldProfile)
@@ -76,7 +76,7 @@ namespace Features.StagePresetModule.Scripts.Systems {
                 _fieldProfileDebug.DebugClearProfile();
 #endif
             _stagePresetSelectionService.Clear();
-            _fieldTargetCountScaleModel.Reset();
+            _fieldTargetCountScaleWriter.Reset();
         }
 
         // A socket that already holds the module (its starting module, e.g. the helm) keeps it.

@@ -87,22 +87,24 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
 
         private List<FieldTargetCell> CollectCells(FieldGenerationContext context) {
             List<Vector2Int> course = CollectMainCourse(context.Routes);
-            float maxDistance = _fieldTargetConfiguration.MaxCourseDistanceMeters;
             List<FieldTargetCell> cells = new();
             Vector2Int size = context.Frame.Size;
             for (int x = 0; x < size.x; x++) {
-                for (int y = 0; y < size.y; y++) {
-                    Vector2Int cell = new(x, y);
-                    if (!IsPassable(context.Cells[cell]))
-                        continue;
-
-                    float distance = Mathf.Sqrt(SquaredCellDistance(course, cell)) * context.Frame.CellSize;
-                    if (distance <= maxDistance)
-                        cells.Add(new FieldTargetCell(cell, 1f + _fieldTargetConfiguration.AwayFromCourseWeight * distance / maxDistance));
-                }
+                for (int y = 0; y < size.y; y++)
+                    AddIfNearTheCourse(context, course, new Vector2Int(x, y), cells);
             }
 
             return cells;
+        }
+
+        private void AddIfNearTheCourse(FieldGenerationContext context, List<Vector2Int> course, Vector2Int cell, List<FieldTargetCell> cells) {
+            if (!IsPassable(context.Cells[cell]))
+                return;
+
+            float maxDistance = _fieldTargetConfiguration.MaxCourseDistanceMeters;
+            float distance = Mathf.Sqrt(SquaredCellDistance(course, cell)) * context.Frame.CellSize;
+            if (distance <= maxDistance)
+                cells.Add(new FieldTargetCell(cell, 1f + _fieldTargetConfiguration.AwayFromCourseWeight * distance / maxDistance));
         }
 
         private static List<float> SumWeights(List<FieldTargetCell> cells) {
@@ -141,7 +143,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
         // Per generation: generations may run on several threads at once.
         private FieldTargetRockWorkspace ReadRocks(FieldGenerationContext context) {
             FlightField field = new(context.Frame, context.Seed, context.Cells, context.Placements, context.Routes, context.StationACell, context.StationBCell,
-                context.CruiseStartCell, false, context.Profile.Id, context.Difficulty, context.Density, context.Metrics, context.Request.LoopIndex, context.Targets);
+                context.CruiseStartCell, isPassageForced: false, context.Profile.Id, context.Difficulty, context.Density, context.Metrics, context.Request.LoopIndex, context.Targets);
             FieldRockFieldData fieldData = new(new FieldDebrisWorkspace(_fieldRandomFactory.Create(NO_DEBRIS_SEED)));
             fieldData.Read(field, GENERATION_FIELD_NUMBER, new MatrixFieldDebrisCells(context.Cells, _fieldStructureCatalog, context.Profile));
             return new FieldTargetRockWorkspace(fieldData);

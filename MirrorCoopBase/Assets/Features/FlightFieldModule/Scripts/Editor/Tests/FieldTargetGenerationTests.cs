@@ -101,17 +101,21 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
                 Assert.AreEqual(0, without.Targets.Count, $"Seed {seed}: a count scale of 0 still placed balloons.");
                 Assert.AreEqual(without.Placements.Count, with.Placements.Count, $"Seed {seed}: the balloons changed the placements.");
-                Vector2Int size = with.Frame.Size;
-                for (int x = 0; x < size.x; x++) {
-                    for (int y = 0; y < size.y; y++) {
-                        FieldCell before = without.Cells[x, y];
-                        FieldCell after = with.Cells[x, y];
-                        Assert.IsTrue(before.Class == after.Class && before.Reserve == after.Reserve && before.PlacementId == after.PlacementId && before.DebrisId == after.DebrisId
-                                      && Mathf.Approximately(before.DebrisDensity, after.DebrisDensity), $"Seed {seed}: the balloons changed cell ({x}, {y}).");
-                    }
-                }
+                AssertSameCells(without, with, seed);
             }
         }
+
+        private static void AssertSameCells(FlightField without, FlightField with, int seed) {
+            Vector2Int size = with.Frame.Size;
+            for (int x = 0; x < size.x; x++) {
+                for (int y = 0; y < size.y; y++)
+                    Assert.IsTrue(IsSameCell(without.Cells[x, y], with.Cells[x, y]), $"Seed {seed}: the balloons changed cell ({x}, {y}).");
+            }
+        }
+
+        private static bool IsSameCell(FieldCell before, FieldCell after) =>
+            before.Class == after.Class && before.Reserve == after.Reserve && before.PlacementId == after.PlacementId && before.DebrisId == after.DebrisId
+            && Mathf.Approximately(before.DebrisDensity, after.DebrisDensity);
 
         private void AssertPlaced(FlightField field, FieldRockTestRig rocks, FieldTargetPlacement target, string where) {
             Assert.IsTrue(_catalog.TryGet(target.KindId, out FieldTargetDefinition kind), $"{where}: balloon kind '{target.KindId}' is not in the catalog.");
