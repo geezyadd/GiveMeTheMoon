@@ -31131,7 +31131,7 @@ MonoBehaviour:
   _muzzle: {fileID: 643578517400174853}
   _casingEjectPoint: {fileID: 5510175290795726948}
   _recoilRoot: {fileID: 1589473449914026531}
-  _viewShakeRoot: {fileID: 2133524286989023470}
+  _viewPoint: {fileID: 2133524286989023470}
   _casingTemplate: {fileID: 2867492995626177003}
   _tracerTemplate: {fileID: 7979331300203949608}
   _muzzleGlow: {fileID: 1679410644327539101}
