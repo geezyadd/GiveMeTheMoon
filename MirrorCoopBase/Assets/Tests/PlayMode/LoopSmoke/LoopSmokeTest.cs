@@ -1,4 +1,5 @@
 #if UNITY_INCLUDE_TESTS
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Features.ShipModule.Scripts;
@@ -15,6 +16,8 @@ namespace Tests.PlayMode.LoopSmoke {
         private const int RUN_TWO_LOOPS = 5;
         // The run 2 flight that shifts the world in cruise.
         private const int WORLD_SHIFT_LOOP = 3;
+        // The run 2 flight whose cruise fires the minigun at the debug target.
+        private const int TURRET_LOOP = 2;
 
         private readonly HashSet<uint> _firstRunObjects = new HashSet<uint>();
 
@@ -25,6 +28,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private LoopSmokeSession _session;
         private LoopSmokeFieldCheck _fieldCheck;
         private LoopSmokeFlight _flight;
+        private LoopSmokeTurretCheck _turretCheck;
         private int _lobbyRuntimeObjects;
 
         [SetUp]
@@ -94,6 +98,8 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.AreEqual(firstLandingSpawns, LoopSmokeSpawnCounts.CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values), "Run 2 does not spawn the same pad and drops on landing as run 1.");
             // The crew invite check left the player at the pad's terminal: back on the deck before the next flights.
             yield return _flight.BoardPlayerCoroutine();
+            _turretCheck = new LoopSmokeTurretCheck(_session);
+            yield return _turretCheck.InstallMinigunAndStandByItCoroutine();
             yield return FlyMoreLoopsCoroutine(2, RUN_TWO_LOOPS);
             _fieldCheck.AssertNetworkedPathWasChecked();
             yield return new LoopSmokeShopCheck().BuyAtKioskAndWalkAwayCoroutine(_flight.FindPadUnderShip());
@@ -121,9 +127,16 @@ namespace Tests.PlayMode.LoopSmoke {
         private IEnumerator FlyMoreLoopsCoroutine(int firstLoopIndex, int lastLoopIndex) {
             for (int loopIndex = firstLoopIndex; loopIndex <= lastLoopIndex; loopIndex++) {
                 ShipLandingPad launchPad = _flight.FindPadUnderShip();
-                yield return _flight.FlyLoopCoroutine(loopIndex, loopIndex == WORLD_SHIFT_LOOP ? ShiftWorldInCruiseCoroutine : null);
+                yield return _flight.FlyLoopCoroutine(loopIndex, CreateCruiseCheck(loopIndex));
                 yield return _flight.AssertLandedSafelyCoroutine(loopIndex, launchPad, _flight.FindPadUnderShip());
             }
+        }
+
+        private Func<IEnumerator> CreateCruiseCheck(int loopIndex) {
+            if (loopIndex == WORLD_SHIFT_LOOP)
+                return ShiftWorldInCruiseCoroutine;
+
+            return loopIndex == TURRET_LOOP ? _turretCheck.FireAtDebugTargetInCruiseCoroutine : null;
         }
 
         // Both first-cruise checks run in the same cruise, one after the other.

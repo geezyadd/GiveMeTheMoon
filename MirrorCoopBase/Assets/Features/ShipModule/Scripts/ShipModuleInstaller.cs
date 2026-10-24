@@ -31,6 +31,8 @@ namespace Features.ShipModule.Scripts {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.BindInterfacesTo<Debug.DeckFeelHarness>().AsSingle();
             Container.BindInterfacesTo<Debug.ShipHullDebugSystem>().AsSingle();
+            Container.BindInterfacesTo<Debug.WeaponDebugTargetSystem>().AsSingle();
+            Container.BindInterfacesTo<Debug.WeaponDebugTargetPrefabSystem>().AsSingle();
             Container.Bind<Debug.ShipStatsDebugOverlay>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
 #endif
         }

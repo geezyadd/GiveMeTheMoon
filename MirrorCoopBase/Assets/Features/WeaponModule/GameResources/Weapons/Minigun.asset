@@ -36,6 +36,9 @@ MonoBehaviour:
       type: {class: HitscanDeliveryDefinition, ns: Features.WeaponModule.Scripts.Parts.Delivery, asm: Features.WeaponModule}
       data:
         _spreadDegrees: 0.6
+        _hitLayers:
+          serializedVersion: 2
+          m_Bits: 256
     - rid: 3002219236546576462
       type: {class: DamageHitEffect, ns: Features.WeaponModule.Scripts.Parts.Effects, asm: Features.WeaponModule}
       data: 

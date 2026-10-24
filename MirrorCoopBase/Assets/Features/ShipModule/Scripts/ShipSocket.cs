@@ -22,6 +22,7 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private ShipBase _ship;
 
         private ModuleCatalog _moduleCatalog;
+        private IInstantiator _instantiator;
         private ShipRadarCatalog _radarCatalog;
         private IReadOnlyShipRunModel _run;
         private IReadOnlyShipSocketsModel _sockets;
@@ -29,6 +30,8 @@ namespace Features.ShipModule.Scripts {
         private ShipSocketRule _rule;
         private ShipSocketState _shownState;
         private GameObject _spawnedView;
+        private ISeatStation _station;
+        private uint _stationOccupantNetId;
 
         public string SocketId => _socketId;
         public ShipModuleType AcceptedType => _acceptedType;
@@ -69,8 +72,10 @@ namespace Features.ShipModule.Scripts {
             ModuleCatalog moduleCatalog,
             ShipRadarCatalog radarCatalog,
             IReadOnlyShipRunModel run,
-            IReadOnlyShipSocketsModel sockets) {
+            IReadOnlyShipSocketsModel sockets,
+            IInstantiator instantiator) {
             _moduleCatalog = moduleCatalog;
+            _instantiator = instantiator;
             _radarCatalog = radarCatalog;
             _run = run;
             _sockets = sockets;
@@ -194,6 +199,7 @@ namespace Features.ShipModule.Scripts {
         private void RefreshView() {
             ClearSpawnedView();
             _seat = null;
+            _station = null;
             if (IsOccupied == false)
                 return;
 
@@ -206,12 +212,14 @@ namespace Features.ShipModule.Scripts {
 
             GameObject prefab = module.SlotViewPrefab;
             Transform point = ResolveInstallPoint(module);
-            _spawnedView = Instantiate(prefab, point);
+            _spawnedView = _instantiator.InstantiatePrefab(prefab, point);
             _spawnedView.transform.localPosition = Vector3.zero;
             _spawnedView.transform.localRotation = Quaternion.identity;
             ApplyWorldScale(_spawnedView.transform, prefab.transform.localScale);
             _seat = _spawnedView.GetComponentInChildren<ShipSeat>();
+            _station = _spawnedView.GetComponentInChildren<ISeatStation>();
             BindRadarScreen(_spawnedView);
+            SyncStationOccupant();
         }
 
         private Transform ResolveInstallPoint(ModuleDefinition module) {
@@ -252,6 +260,8 @@ namespace Features.ShipModule.Scripts {
             if (_spawnedView == null)
                 return;
 
+            LeaveStation();
+
             ShipRadarScreen screen = _spawnedView.GetComponentInChildren<ShipRadarScreen>(true);
             if (screen != null)
                 screen.Unbind();
@@ -278,6 +288,26 @@ namespace Features.ShipModule.Scripts {
         private void HandleOccupantChanged(uint previous, uint current) {
             SetHovered(false);
             _ship.Seats.ClientSyncSeat(this, previous, current);
+            SyncStationOccupant();
+        }
+
+        // A station (a turret) hears who sits in it on every peer; a view without one only seats.
+        private void SyncStationOccupant() {
+            uint occupant = OccupantNetId;
+            if (_station == null || occupant == _stationOccupantNetId)
+                return;
+
+            LeaveStation();
+            _stationOccupantNetId = occupant;
+            if (occupant != 0)
+                _station.Enter(occupant);
+        }
+
+        private void LeaveStation() {
+            if (_station != null && _stationOccupantNetId != 0)
+                _station.Exit();
+
+            _stationOccupantNetId = 0;
         }
     }
 }

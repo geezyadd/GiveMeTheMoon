@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _id: mid
   _displayName: Mid
-  _description: 'Mid game: loop 4, two large engines, the helm and the radar, 1500 money, no free drops.'
+  _description: 'Mid game: loop 4, two large engines, the helm, the radar and the
+    minigun, 1500 money, no free drops.'
   _startLoopIndex: 4
   _fieldProfileId: 
   _modules:
@@ -26,6 +27,8 @@ MonoBehaviour:
     _module: {fileID: 11400000, guid: ed0a9eee18ae3044abbdd909ac66cfb6, type: 2}
   - _socketId: radar
     _module: {fileID: 11400000, guid: 545fb73e510c00640acbfc66d56bb1a3, type: 2}
+  - _socketId: turret-front
+    _module: {fileID: 11400000, guid: 089ec9b0656ec2b4ea21f7977ff29111, type: 2}
   _startingBalance: 1500
   _areStationDropsEnabled: 0
   _extensions: []
