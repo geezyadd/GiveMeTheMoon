@@ -23,7 +23,7 @@ namespace Features.ShipModule.Scripts.Impacts {
             contacts.Clear();
             float largeMargin = _shipRockImpactConfiguration.LargeContactMarginMeters;
             Pose ahead = new(to.position + largeLookAhead, to.rotation);
-            ShipHullSweep query = ShipHullSweep.Create(Enclose(boxes), from, ahead).Grow(largeMargin);
+            ShipHullSweep query = ShipHullSweep.Create(ShipHullBox.Enclose(boxes), from, ahead).Grow(largeMargin);
             _fieldRockQuery.FindInBox(query.Center, query.HalfExtents, query.Rotation, _rocks);
             foreach (FieldRockDescription rock in _rocks) {
                 ShipRockImpactKind kind = _shipRockImpactClassifier.Classify(rock);
@@ -47,14 +47,6 @@ namespace Features.ShipModule.Scripts.Impacts {
             }
 
             return false;
-        }
-
-        private static ShipHullBox Enclose(IReadOnlyList<ShipHullBox> boxes) {
-            Bounds bounds = new(boxes[0].Center, boxes[0].HalfExtents * 2f);
-            for (int i = 1; i < boxes.Count; i++)
-                bounds.Encapsulate(new Bounds(boxes[i].Center, boxes[i].HalfExtents * 2f));
-
-            return new ShipHullBox { Center = bounds.center, HalfExtents = bounds.extents };
         }
     }
 }

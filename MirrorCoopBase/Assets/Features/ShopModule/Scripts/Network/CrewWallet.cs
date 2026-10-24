@@ -13,6 +13,7 @@ namespace Features.ShopModule.Scripts.Network {
         private IShopPurchaseSystem _shopPurchaseSystem;
         private ShopReviveRequestEventClass _shopReviveRequestEventClass;
         private IReviveShopSystem _reviveShopSystem;
+        private ICrewWalletBindingModel _crewWalletBindingModel;
 
         public long Balance =>
             Model.Balance;
@@ -23,17 +24,25 @@ namespace Features.ShopModule.Scripts.Network {
             ShopPurchaseRequestEventClass shopPurchaseRequestEventClass,
             IShopPurchaseSystem shopPurchaseSystem,
             ShopReviveRequestEventClass shopReviveRequestEventClass,
-            IReviveShopSystem reviveShopSystem) {
+            IReviveShopSystem reviveShopSystem,
+            ICrewWalletBindingModel crewWalletBindingModel) {
             _walletStartingBalanceSource = walletStartingBalanceSource;
             _shopPurchaseRequestEventClass = shopPurchaseRequestEventClass;
             _shopPurchaseSystem = shopPurchaseSystem;
             _shopReviveRequestEventClass = shopReviveRequestEventClass;
             _reviveShopSystem = reviveShopSystem;
+            _crewWalletBindingModel = crewWalletBindingModel;
         }
 
         public override void OnStartServer() {
             base.OnStartServer();
             ServerSetBalance(_walletStartingBalanceSource.StartingBalance);
+            _crewWalletBindingModel.Bind(this);
+        }
+
+        public override void OnStopServer() {
+            _crewWalletBindingModel.Clear(this);
+            base.OnStopServer();
         }
 
         public override void OnStartClient() {
@@ -58,6 +67,14 @@ namespace Features.ShopModule.Scripts.Network {
 
             ServerSetBalance(Balance - amount);
             return true;
+        }
+
+        [Server]
+        public void ServerEarn(long amount) {
+            if (amount < 0)
+                throw new ArgumentOutOfRangeException(nameof(amount), amount, null);
+
+            ServerSetBalance(Balance + amount);
         }
 
         [Command(requiresAuthority = false)]

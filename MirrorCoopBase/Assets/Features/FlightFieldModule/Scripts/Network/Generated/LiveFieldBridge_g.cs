@@ -16,6 +16,8 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         private readonly SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteCellEntry> _routeCells = new();
         private readonly SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> _debrisRuns = new();
         private readonly SyncList<global::Features.FlightFieldModule.Contracts.FieldRockId> _brokenRocks = new();
+        private readonly SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry> _targets = new();
+        private readonly SyncList<global::Features.FlightFieldModule.Contracts.FieldTargetId> _poppedTargets = new();
 
         [Server]
         public void ServerSetNumber(int value) {
@@ -205,6 +207,54 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public void ServerClearBrokenRocks() =>
             _brokenRocks.Clear();
 
+        [Server]
+        public void ServerAddTargets(global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry value) =>
+            _targets.Add(value);
+
+        [Server]
+        public void ServerInsertTargets(int index, global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry value) =>
+            _targets.Insert(index, value);
+
+        [Server]
+        public void ServerSetTargets(int index, global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry value) =>
+            _targets[index] = value;
+
+        [Server]
+        public bool ServerRemoveTargets(global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry value) =>
+            _targets.Remove(value);
+
+        [Server]
+        public void ServerRemoveTargetsAt(int index) =>
+            _targets.RemoveAt(index);
+
+        [Server]
+        public void ServerClearTargets() =>
+            _targets.Clear();
+
+        [Server]
+        public void ServerAddPoppedTargets(global::Features.FlightFieldModule.Contracts.FieldTargetId value) =>
+            _poppedTargets.Add(value);
+
+        [Server]
+        public void ServerInsertPoppedTargets(int index, global::Features.FlightFieldModule.Contracts.FieldTargetId value) =>
+            _poppedTargets.Insert(index, value);
+
+        [Server]
+        public void ServerSetPoppedTargets(int index, global::Features.FlightFieldModule.Contracts.FieldTargetId value) =>
+            _poppedTargets[index] = value;
+
+        [Server]
+        public bool ServerRemovePoppedTargets(global::Features.FlightFieldModule.Contracts.FieldTargetId value) =>
+            _poppedTargets.Remove(value);
+
+        [Server]
+        public void ServerRemovePoppedTargetsAt(int index) =>
+            _poppedTargets.RemoveAt(index);
+
+        [Server]
+        public void ServerClearPoppedTargets() =>
+            _poppedTargets.Clear();
+
         protected override void PushFullState() {
             Model.ApplyState(_state);
             Model.ReplacePlacements(_placements);
@@ -212,6 +262,8 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
             Model.ReplaceRouteCells(_routeCells);
             Model.ReplaceDebrisRuns(_debrisRuns);
             Model.ReplaceBrokenRocks(_brokenRocks);
+            Model.ReplaceTargets(_targets);
+            Model.ReplacePoppedTargets(_poppedTargets);
         }
 
         protected override void ClearLocal() {
@@ -221,6 +273,8 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
             Model.ClearRouteCells();
             Model.ClearDebrisRuns();
             Model.ClearBrokenRocks();
+            Model.ClearTargets();
+            Model.ClearPoppedTargets();
         }
 
         protected override void BindCallbacks() {
@@ -229,6 +283,8 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
             _routeCells.Callback += HandleRouteCellsChanged;
             _debrisRuns.Callback += HandleDebrisRunsChanged;
             _brokenRocks.Callback += HandleBrokenRocksChanged;
+            _targets.Callback += HandleTargetsChanged;
+            _poppedTargets.Callback += HandlePoppedTargetsChanged;
         }
 
         protected override void ReleaseCallbacks() {
@@ -237,6 +293,8 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
             _routeCells.Callback -= HandleRouteCellsChanged;
             _debrisRuns.Callback -= HandleDebrisRunsChanged;
             _brokenRocks.Callback -= HandleBrokenRocksChanged;
+            _targets.Callback -= HandleTargetsChanged;
+            _poppedTargets.Callback -= HandlePoppedTargetsChanged;
         }
 
         private void OnStateSynced(LiveFieldState previous, LiveFieldState current) =>
@@ -336,6 +394,46 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
                     break;
                 case SyncList<global::Features.FlightFieldModule.Contracts.FieldRockId>.Operation.OP_CLEAR:
                     Model.ClearBrokenRocks();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(operation), operation, null);
+            }
+        }
+
+        private void HandleTargetsChanged(SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry>.Operation operation, int index, global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry oldValue, global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry newValue) {
+            switch (operation) {
+                case SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry>.Operation.OP_ADD:
+                case SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry>.Operation.OP_INSERT:
+                    Model.AddTargets(index, newValue);
+                    break;
+                case SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry>.Operation.OP_SET:
+                    Model.SetTargets(index, newValue);
+                    break;
+                case SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry>.Operation.OP_REMOVEAT:
+                    Model.RemoveTargetsAt(index, oldValue);
+                    break;
+                case SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry>.Operation.OP_CLEAR:
+                    Model.ClearTargets();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(operation), operation, null);
+            }
+        }
+
+        private void HandlePoppedTargetsChanged(SyncList<global::Features.FlightFieldModule.Contracts.FieldTargetId>.Operation operation, int index, global::Features.FlightFieldModule.Contracts.FieldTargetId oldValue, global::Features.FlightFieldModule.Contracts.FieldTargetId newValue) {
+            switch (operation) {
+                case SyncList<global::Features.FlightFieldModule.Contracts.FieldTargetId>.Operation.OP_ADD:
+                case SyncList<global::Features.FlightFieldModule.Contracts.FieldTargetId>.Operation.OP_INSERT:
+                    Model.AddPoppedTargets(index, newValue);
+                    break;
+                case SyncList<global::Features.FlightFieldModule.Contracts.FieldTargetId>.Operation.OP_SET:
+                    Model.SetPoppedTargets(index, newValue);
+                    break;
+                case SyncList<global::Features.FlightFieldModule.Contracts.FieldTargetId>.Operation.OP_REMOVEAT:
+                    Model.RemovePoppedTargetsAt(index, oldValue);
+                    break;
+                case SyncList<global::Features.FlightFieldModule.Contracts.FieldTargetId>.Operation.OP_CLEAR:
+                    Model.ClearPoppedTargets();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(operation), operation, null);
