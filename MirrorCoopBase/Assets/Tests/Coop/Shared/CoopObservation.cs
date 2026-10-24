@@ -27,6 +27,7 @@ namespace Tests.Coop.Shared {
         public bool IsOnDeck;
         public string LifeState;
         public bool IsSpectating;
+        public bool IsHelmPilot;
         public Vector3 Position;
         public string RejectReason;
         public bool IsRejectTextShown;
@@ -36,6 +37,7 @@ namespace Tests.Coop.Shared {
 
         public string Describe() =>
             $"{Step} at {RealTime:0.0} s: phase {Phase}, loop {LoopIndex}, {LifeState}, spectating {IsSpectating}, on deck {IsOnDeck} at {Position}, "
+            + $"helm pilot {IsHelmPilot}, "
             + $"field #{FieldNumber} seed {FieldSeed} placements {FieldPlacements}, nameplate '{OtherNameplate}', "
             + $"sockets [{string.Join(LIST_SEPARATOR, Sockets ?? Array.Empty<string>())}], "
             + $"stats thrust {Thrust} dodge {DodgeRange} handling {Handling} armor {Armor} speed {FlightSpeed}, balance {Balance}, "

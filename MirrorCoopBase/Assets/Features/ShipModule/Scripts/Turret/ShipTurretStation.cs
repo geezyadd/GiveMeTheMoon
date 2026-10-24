@@ -3,6 +3,7 @@ using Features.CameraModule.Scripts.Models;
 using Features.CameraModule.Scripts.Services;
 using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts.Generated;
+using Features.NetworkModelModule.Scripts;
 using Features.ShipModule.Scripts.Damage;
 using Features.WeaponModule.Scripts.Definitions;
 using Features.WeaponModule.Scripts.Feel;
@@ -51,7 +52,7 @@ namespace Features.ShipModule.Scripts.Turret {
         private Quaternion _pitchRest;
         private Transform _seatPoint;
         private int _weaponIndex;
-        private uint _occupantNetId;
+        private PlayerKey _occupant;
         private WeaponHolderSync _occupantWeapon;
         private ShipRider _occupantRider;
         private bool _isOwner;
@@ -106,7 +107,7 @@ namespace Features.ShipModule.Scripts.Turret {
 
         private void Update() {
             float deltaTime = Time.deltaTime;
-            if (_occupantNetId != 0 && _occupantWeapon == null)
+            if (_occupant.IsEmpty == false && _occupantWeapon == null)
                 TryTakeOccupant();
 
             if (_isOwner)
@@ -119,9 +120,9 @@ namespace Features.ShipModule.Scripts.Turret {
             _feel.Advance(deltaTime);
         }
 
-        public void Enter(uint occupantNetId) {
+        public void Enter(PlayerKey occupant) {
             Exit();
-            _occupantNetId = occupantNetId;
+            _occupant = occupant;
             _hands.SetActive(true);
             TryTakeOccupant();
         }
@@ -138,7 +139,7 @@ namespace Features.ShipModule.Scripts.Turret {
                 _occupantRider.StopFollowingSeatPoint(_seatPoint);
 
             _isServerHolding = false;
-            _occupantNetId = 0;
+            _occupant = default;
             _occupantWeapon = null;
             _occupantRider = null;
             _holder.SetTriggerHeld(false);
@@ -159,28 +160,20 @@ namespace Features.ShipModule.Scripts.Turret {
 
         // The occupant's player object may spawn on this peer after the seat state (a late join): taken when it is there.
         private void TryTakeOccupant() {
-            if (TryFindOccupant(out NetworkIdentity occupant) == false || occupant.TryGetComponent(out WeaponHolderSync weapon) == false)
+            if (_ship.Riders.TryFindByKey(_occupant, out ShipRider rider) == false || rider.TryGetComponent(out WeaponHolderSync weapon) == false)
                 return;
 
             _occupantWeapon = weapon;
-            if (occupant.TryGetComponent(out _occupantRider))
-                _occupantRider.FollowSeatPoint(_seatPoint);
+            _occupantRider = rider;
+            _occupantRider.FollowSeatPoint(_seatPoint);
 
             if (NetworkServer.active) {
                 weapon.ServerBeginHolding(_weapon, _weaponIndex, _holder);
                 _isServerHolding = true;
             }
 
-            if (occupant.isOwned)
+            if (rider.isOwned)
                 BeginOwnerControl();
-        }
-
-        private bool TryFindOccupant(out NetworkIdentity occupant) {
-            occupant = null;
-            if (NetworkClient.active && NetworkClient.spawned.TryGetValue(_occupantNetId, out occupant))
-                return occupant != null;
-
-            return NetworkServer.active && NetworkServer.spawned.TryGetValue(_occupantNetId, out occupant) && occupant != null;
         }
 
         private void BeginOwnerControl() {

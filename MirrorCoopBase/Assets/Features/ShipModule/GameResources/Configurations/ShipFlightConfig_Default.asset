@@ -26,3 +26,4 @@ MonoBehaviour:
   _boardingMaxHeight: 6
   _confineRidersToDeck: 0
   _reboardDelaySeconds: 0.5
+  _helmSteerSendSeconds: 0.03
