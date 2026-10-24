@@ -76,6 +76,12 @@ namespace Features.CameraModule.Scripts {
                 _orbitFollow = follow;
             }
 
+            if (_model.FixedViewEye != null) {
+                _pendingLook = Vector2.zero;
+                ApplyFixedView(rig);
+                return;
+            }
+
             if (_cursorWantedLocked == false || _cursorModel.IsFreeCursorRequested) {
                 UnlockCursor();
                 _pendingLook = Vector2.zero;
@@ -112,6 +118,20 @@ namespace Features.CameraModule.Scripts {
             rig.Anchor = _model.Eye != null ? _model.Eye : follow;
             rig.Yaw = _yaw;
             rig.Pitch = _pitch;
+        }
+
+        // The station turns its eye itself; the free cursor of a window still wins, as in the normal look.
+        private void ApplyFixedView(CameraLookRig rig) {
+            if (rig != null) {
+                rig.Anchor = _model.FixedViewEye;
+                rig.Yaw = 0f;
+                rig.Pitch = 0f;
+            }
+
+            if (_cursorWantedLocked == false || _cursorModel.IsFreeCursorRequested)
+                UnlockCursor();
+            else
+                LockCursor();
         }
 
         private CameraLookRig EnsureRig() {

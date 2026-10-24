@@ -43,7 +43,7 @@ namespace Features.ShipModule.Scripts.Debug {
                 LogAim(ShipRockImpactKind.Large);
         }
 
-        public bool DebugAimAtNearestRock(ShipRockImpactKind kind, out FieldRockDescription rock) {
+        public bool TryDebugAimAtNearestRock(ShipRockImpactKind kind, out FieldRockDescription rock) {
             rock = default;
             ShipBase ship = _shipRunBindingModel.Ship;
             if (ship == null || !ship.IsFlying || !TryFindNearest(ship.transform.position, kind, out rock))
@@ -67,7 +67,7 @@ namespace Features.ShipModule.Scripts.Debug {
         }
 
         private void LogAim(ShipRockImpactKind kind) {
-            bool isAimed = DebugAimAtNearestRock(kind, out FieldRockDescription rock);
+            bool isAimed = TryDebugAimAtNearestRock(kind, out FieldRockDescription rock);
             UnityEngine.Debug.Log(isAimed
                 ? $"{LOG_PREFIX}{kind}: heading at {rock.Id} ({rock.SourceId}, {rock.Diameter:0.0} m)"
                 : $"{LOG_PREFIX}{kind}: no rock of this kind near the flying ship");
@@ -76,22 +76,27 @@ namespace Features.ShipModule.Scripts.Debug {
         private bool TryFindNearest(Vector3 shipPosition, ShipRockImpactKind kind, out FieldRockDescription nearest) {
             nearest = default;
             foreach (float radius in _searchRadii) {
-                _fieldRockQuery.FindInSphere(shipPosition, radius, _rocks);
-                float best = float.MaxValue;
-                foreach (FieldRockDescription rock in _rocks) {
-                    float distance = (rock.Center - shipPosition).sqrMagnitude;
-                    if (distance >= best || !IsInTheWay(rock, kind, shipPosition))
-                        continue;
-
-                    best = distance;
-                    nearest = rock;
-                }
-
-                if (best < float.MaxValue)
+                if (TryFindNearestWithin(shipPosition, radius, kind, out nearest))
                     return true;
             }
 
             return false;
+        }
+
+        private bool TryFindNearestWithin(Vector3 shipPosition, float radius, ShipRockImpactKind kind, out FieldRockDescription nearest) {
+            nearest = default;
+            _fieldRockQuery.FindInSphere(shipPosition, radius, _rocks);
+            float best = float.MaxValue;
+            foreach (FieldRockDescription rock in _rocks) {
+                float distance = (rock.Center - shipPosition).sqrMagnitude;
+                if (distance >= best || !IsInTheWay(rock, kind, shipPosition))
+                    continue;
+
+                best = distance;
+                nearest = rock;
+            }
+
+            return best < float.MaxValue;
         }
 
         private bool IsInTheWay(FieldRockDescription rock, ShipRockImpactKind kind, Vector3 shipPosition) =>

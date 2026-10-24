@@ -1,3 +1,4 @@
+using Features.EffectPoolModule.Scripts;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Rocks {
@@ -5,7 +6,7 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
     // rock of 1 m and scaled by the rock's diameter (the particle systems simulate in local space and scale with the
     // hierarchy). The root system's stop action disables the object when the effect is over, so a disabled effect
     // is free for the pool.
-    public sealed class FieldRockBreakEffect : MonoBehaviour {
+    public sealed class FieldRockBreakEffect : MonoBehaviour, ISelfDisablingEffect {
         [SerializeField] private ParticleSystem _particles;
         [SerializeField] private ParticleSystemRenderer _chunkRenderer;
 

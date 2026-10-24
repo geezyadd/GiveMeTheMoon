@@ -242,6 +242,12 @@ namespace Features.ShipModule.Scripts {
             _syncedRideShip = ship;
         }
 
+        // A seat station's own stand-up button (a turret's interact key) goes the same way as the jump.
+        internal void OwnerRequestStand() {
+            if (isOwned && _seated)
+                CmdStand();
+        }
+
         internal void ServerUnlockSeat() {
             _seated = false;
             _helmSeat = false;

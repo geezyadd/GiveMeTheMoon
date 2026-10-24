@@ -25,6 +25,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2f9818ddf1b3f474fb9d62c61ff95c09
+    m_Address: WeaponDebugTargetConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3100fd9ec0da35642a247beab427210c
     m_Address: ShipHullHudConfiguration_Default
     m_ReadOnly: 0

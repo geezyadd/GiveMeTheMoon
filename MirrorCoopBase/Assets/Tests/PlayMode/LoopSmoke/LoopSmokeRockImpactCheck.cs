@@ -63,7 +63,7 @@ namespace Tests.PlayMode.LoopSmoke {
 
         private IEnumerator HitSmallRockCoroutine() {
             float hullBefore = _shipStatsModel.Hull;
-            Assert.IsTrue(_shipRockImpactDebug.DebugAimAtNearestRock(ShipRockImpactKind.Small, out FieldRockDescription aimed), "Rock impact: no small rock near the ship.");
+            Assert.IsTrue(_shipRockImpactDebug.TryDebugAimAtNearestRock(ShipRockImpactKind.Small, out FieldRockDescription aimed), "Rock impact: no small rock near the ship.");
 
             yield return WaitForCoroutine(HasBrokenRockByCollision, "a small rock broken by the ship");
             yield return null;
@@ -77,7 +77,7 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         private IEnumerator HitLargeRockCoroutine(ShipBase ship) {
-            Assert.IsTrue(_shipRockImpactDebug.DebugAimAtNearestRock(ShipRockImpactKind.Large, out FieldRockDescription rock), "Rock impact: no large rock near the ship.");
+            Assert.IsTrue(_shipRockImpactDebug.TryDebugAimAtNearestRock(ShipRockImpactKind.Large, out FieldRockDescription rock), "Rock impact: no large rock near the ship.");
 
             yield return WaitForCoroutine(HasLargeImpact, "a large rock knocking the ship back");
             // The ship brakes towards the rock first (the acceleration is limited), then moves back out.
@@ -130,10 +130,8 @@ namespace Tests.PlayMode.LoopSmoke {
         private static bool IsCollision(FieldRockDestroyed destroyed) =>
             destroyed.Cause == FieldRockDestroyCause.ShipCollision;
 
-        private static float HorizontalDistance(Vector3 a, Vector3 b) {
-            Vector2 flat = new Vector2(a.x - b.x, a.z - b.z);
-            return flat.magnitude;
-        }
+        private static float HorizontalDistance(Vector3 a, Vector3 b) =>
+            new Vector2(a.x - b.x, a.z - b.z).magnitude;
     }
 }
 #endif
