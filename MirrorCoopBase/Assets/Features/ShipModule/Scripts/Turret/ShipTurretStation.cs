@@ -3,6 +3,7 @@ using Features.CameraModule.Scripts.Models;
 using Features.CameraModule.Scripts.Services;
 using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts.Generated;
+using Features.ShipModule.Scripts.Damage;
 using Features.WeaponModule.Scripts.Definitions;
 using Features.WeaponModule.Scripts.Feel;
 using Features.WeaponModule.Scripts.Network;
@@ -15,7 +16,7 @@ namespace Features.ShipModule.Scripts.Turret {
     // A turret's slot view as a seat station. On the seated owner's peer the mouse turns it at once, the fire button
     // fires and the view rides the camera point behind the gun; on every other peer the turret follows the synced aim,
     // smoothed, and replays the fire from the synced trigger. On the server the seated player holds the weapon, so
-    // its hit reports are accepted.
+    // its hit reports are accepted. A broken turret module does not fire until it is repaired.
     public sealed class ShipTurretStation : MonoBehaviour, ISeatStation {
         private const string WEAPON_NOT_IN_CATALOG_FORMAT = "{0}: weapon {1} is not in the {2}; add it there, the server checks every hit against the catalog.";
 
@@ -29,9 +30,11 @@ namespace Features.ShipModule.Scripts.Turret {
         private IGameCameraService _gameCameraService;
         private IWeaponShooterFactory _weaponShooterFactory;
         private WeaponCatalog _weaponCatalog;
+        private IShipModuleCondition _shipModuleCondition;
         private TurretOwnerInput _ownerInput;
 
         private ShipBase _ship;
+        private ShipSocket _socket;
         private IWeaponFeelPresenter _feel;
         private TurretAim _aim;
         private TurretAim _receivedAim;
@@ -48,6 +51,7 @@ namespace Features.ShipModule.Scripts.Turret {
         private ShipRider _occupantRider;
         private bool _isOwner;
         private bool _isServerHolding;
+        private bool _isWorking = true;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private bool _isDebugTriggerHeld;
 #endif
@@ -61,15 +65,18 @@ namespace Features.ShipModule.Scripts.Turret {
             HoveredInteractableModel hoveredInteractableModel,
             IGameCameraService gameCameraService,
             IWeaponShooterFactory weaponShooterFactory,
-            WeaponCatalog weaponCatalog) {
+            WeaponCatalog weaponCatalog,
+            IShipModuleCondition shipModuleCondition) {
             _gameCameraService = gameCameraService;
             _weaponShooterFactory = weaponShooterFactory;
             _weaponCatalog = weaponCatalog;
+            _shipModuleCondition = shipModuleCondition;
             _ownerInput = new TurretOwnerInput(inputService, cursorModel, hoveredInteractableModel);
         }
 
         private void Awake() {
             _ship = GetComponentInParent<ShipBase>();
+            _socket = GetComponentInParent<ShipSocket>();
             _feel = GetComponent<IWeaponFeelPresenter>();
             _aim = new TurretAim(_definition);
             _receivedAim = new TurretAim(_definition);
@@ -82,10 +89,14 @@ namespace Features.ShipModule.Scripts.Turret {
             _feel.Bind(_weapon.FeelProfile, new ShipDeckFeelFloor(_ship.transform, _ship.DeckGeometry));
             _replayShooter = _weaponShooterFactory.Create(_weapon, _feel, new ShownShotOutcomes(_feel));
             _hands.SetActive(false);
+            _shipModuleCondition.OnConditionChanged += OnConditionChanged;
+            OnConditionChanged();
         }
 
-        private void OnDestroy() =>
+        private void OnDestroy() {
+            _shipModuleCondition.OnConditionChanged -= OnConditionChanged;
             Exit();
+        }
 
         private void Update() {
             float deltaTime = Time.deltaTime;
@@ -189,7 +200,7 @@ namespace Features.ShipModule.Scripts.Turret {
 
         private void AdvanceOwner() {
             _aim.Turn(_ownerInput.ConsumeLook());
-            bool isTriggerHeld = IsOwnerTriggerHeld();
+            bool isTriggerHeld = IsOwnerTriggerHeld() && _isWorking;
             _holder.SetTriggerHeld(isTriggerHeld);
             _remoteAim.SnapTo(_aim.Yaw, _aim.Pitch);
             SendAimIfDue(isTriggerHeld);
@@ -216,7 +227,7 @@ namespace Features.ShipModule.Scripts.Turret {
 
         private void AdvanceReplay(float deltaTime) {
             bool hasOccupant = _occupantWeapon != null;
-            _holder.SetTriggerHeld(hasOccupant && _occupantWeapon.IsTriggerHeld);
+            _holder.SetTriggerHeld(hasOccupant && _occupantWeapon.IsTriggerHeld && _isWorking);
             if (hasOccupant)
                 _receivedAim.SetDirection(_occupantWeapon.AimDirection);
 
@@ -241,5 +252,8 @@ namespace Features.ShipModule.Scripts.Turret {
 
             throw new InvalidOperationException(string.Format(WEAPON_NOT_IN_CATALOG_FORMAT, name, _weapon.Id, nameof(WeaponCatalog)));
         }
+
+        private void OnConditionChanged() =>
+            _isWorking = _shipModuleCondition.IsWorking(_socket.SocketId);
     }
 }

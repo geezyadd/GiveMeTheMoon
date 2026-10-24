@@ -23,3 +23,5 @@ MonoBehaviour:
   _statModifiers: []
   _isRemovable: 1
   _isControlModule: 0
+  _canBreak: 1
+  _breakChanceMultiplier: 1

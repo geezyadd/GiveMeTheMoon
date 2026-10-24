@@ -12,6 +12,7 @@ using Features.FlightFieldModule.Scripts.Server;
 using Features.FlightFieldModule.Scripts.Targets;
 using Features.GrabModule.Scripts;
 using Features.GrabModule.Scripts.Generated;
+using Features.GrabModule.Scripts.Hold;
 using Features.MvpModule;
 using Features.PlayerLifeModule.Scripts.Generated;
 using Features.PlayerProfileModule.Data.Generated;
@@ -41,6 +42,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<IShipRunBindingModel>().To<ShipRunBindingModel>().AsSingle();
             Container.Bind<IShipClientBindingModel>().To<ShipClientBindingModel>().AsSingle();
             Container.Bind<HoveredInteractableModel>().AsSingle();
+            Container.Bind<HoldUseModel>().AsSingle();
             Container.Bind<SpectatorModel>().AsSingle();
             Container.Bind<ShopVisitModel>().AsSingle();
             Container.Bind<DeadCrewModel>().AsSingle();
@@ -53,6 +55,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             PlayerProfileModelInstaller.Install(Container);
             ShipRunModelInstaller.Install(Container);
             ShipSocketsModelInstaller.Install(Container);
+            ShipConditionModelInstaller.Install(Container);
             ShipStatsModelInstaller.Install(Container);
             CrewRosterModelInstaller.Install(Container);
             RunStagePresetModelInstaller.Install(Container);

@@ -183,6 +183,42 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
             Assert.AreEqual(HANDLING, _sheet.GetFull(ShipStatType.Handling), TOLERANCE);
         }
 
+        [Test]
+        public void WhenEngineBroken_ThenItsSpeedIsOff_AndRepairBringsItBack() {
+            _sheet.AddModule(LEFT_ENGINE_SOCKET, FlightSpeedModifiers(ENGINE_FLIGHT_SPEED));
+
+            Assert.IsTrue(_sheet.SuspendModule(LEFT_ENGINE_SOCKET), "A working engine was not suspended.");
+            Assert.AreEqual(FLIGHT_SPEED, _sheet.GetFull(ShipStatType.FlightSpeed), TOLERANCE, "A broken engine still adds speed.");
+            Assert.IsFalse(_sheet.SuspendModule(LEFT_ENGINE_SOCKET), "A broken engine was suspended twice.");
+
+            Assert.IsTrue(_sheet.ResumeModule(LEFT_ENGINE_SOCKET), "A broken engine was not resumed.");
+            Assert.AreEqual(FLIGHT_SPEED + ENGINE_FLIGHT_SPEED, _sheet.GetFull(ShipStatType.FlightSpeed), TOLERANCE, "A repaired engine does not add its speed back.");
+            Assert.IsFalse(_sheet.ResumeModule(LEFT_ENGINE_SOCKET), "A working engine was resumed again.");
+        }
+
+        [Test]
+        public void WhenBrokenEngineUninstalled_ThenNothingIsTakenOffTwice_AndReinstallWorks() {
+            _sheet.AddModule(LEFT_ENGINE_SOCKET, FlightSpeedModifiers(ENGINE_FLIGHT_SPEED));
+            _sheet.AddModule(RIGHT_ENGINE_SOCKET, FlightSpeedModifiers(SMALL_ENGINE_FLIGHT_SPEED));
+            _sheet.SuspendModule(LEFT_ENGINE_SOCKET);
+
+            Assert.IsTrue(_sheet.RemoveModule(LEFT_ENGINE_SOCKET), "The broken engine was not removed.");
+            Assert.AreEqual(FLIGHT_SPEED + SMALL_ENGINE_FLIGHT_SPEED, _sheet.GetFull(ShipStatType.FlightSpeed), TOLERANCE, "Removing a broken engine took off another module's speed.");
+
+            _sheet.AddModule(LEFT_ENGINE_SOCKET, FlightSpeedModifiers(ENGINE_FLIGHT_SPEED));
+            Assert.AreEqual(FLIGHT_SPEED + ENGINE_FLIGHT_SPEED + SMALL_ENGINE_FLIGHT_SPEED, _sheet.GetFull(ShipStatType.FlightSpeed), TOLERANCE, "A reinstalled engine does not work.");
+        }
+
+        [Test]
+        public void WhenHullDamaged_AndHealed_ThenItRisesUpToTheMaxOnly() {
+            _sheet.Subtract(ShipStatType.Hull, HIT);
+            _sheet.Add(ShipStatType.Hull, HIT / 2f);
+            Assert.AreEqual(HULL - HIT / 2f, _sheet.GetFull(ShipStatType.Hull), TOLERANCE, "Healing did not add the amount.");
+
+            _sheet.Add(ShipStatType.Hull, LETHAL_HIT);
+            Assert.AreEqual(HULL_MAX, _sheet.GetFull(ShipStatType.Hull), TOLERANCE, "Healing went past the hull max.");
+        }
+
         private static ModuleDefinition.StatModifierEntry[] FlightSpeedModifiers(float value) =>
             new[] { Modifier(ShipStatType.FlightSpeed, value, ModifierType.Flat) };
 

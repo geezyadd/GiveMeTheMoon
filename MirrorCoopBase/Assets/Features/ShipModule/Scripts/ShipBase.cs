@@ -1,8 +1,11 @@
+using System.Collections.Generic;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.GameCoreModule.Contracts;
+using Features.ShipModule.Scripts.Damage;
 using Features.ShipModule.Scripts.Generated;
 using Features.ShipModule.Scripts.Hull;
 using Features.ShipModule.Scripts.Impacts;
+using Features.ShipModule.Scripts.Repair;
 using Mirror;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -23,6 +26,9 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private ShipStatsSync _statsSync;
         [SerializeField] private ShipHullVolume _hullVolume;
         [SerializeField] private ShipImpactSync _impactSync;
+        [SerializeField] private ShipConditionSync _conditionSync;
+        [SerializeField] private ShipHullDamagePoint[] _damagePoints;
+        [SerializeField] private ShipToolRack _toolRack;
 
         private ShipFlightSettings _flightSettings;
         private ShipAccumulativeStatsConfiguration _statsConfiguration;
@@ -62,6 +68,9 @@ namespace Features.ShipModule.Scripts {
         internal ShipPoseSync PoseSync => _poseSync;
         internal ShipHullVolume HullVolume => _hullVolume;
         internal ShipImpactSync ImpactSync => _impactSync;
+        internal ShipConditionSync ConditionSync => _conditionSync;
+        public IReadOnlyList<ShipHullDamagePoint> DamagePoints => _damagePoints;
+        internal ShipToolRack ToolRack => _toolRack;
         internal IShipKnockback Knockback => _flightControl;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         internal IShipRidersDebug RidersDebug => _riders;
@@ -110,11 +119,12 @@ namespace Features.ShipModule.Scripts {
 
         private void Awake() {
             Assert.IsTrue(
-                _sockets != null && _stats != null && _socketStates != null && _statsSync != null && _hullVolume != null && _impactSync != null,
-                name + " needs its sockets, socket states, stat entity, stats sync, hull volume and impact sync wired.");
+                _sockets != null && _stats != null && _socketStates != null && _statsSync != null && _hullVolume != null && _impactSync != null
+                && _conditionSync != null && _damagePoints != null && _toolRack != null,
+                name + " needs its sockets, socket states, stat entity, stats sync, hull volume, impact sync, condition sync, damage points and tool rack wired.");
             _deckGeometry = new ShipDeckGeometry(transform, _deck, _deckColliders);
             ShipStatSheet statSheet = new ShipStatSheet(_stats);
-            _modules = new ShipModules(_sockets, statSheet, _statsSync, ReadStatsConfiguration);
+            _modules = new ShipModules(_sockets, statSheet, _statsSync, _conditionSync, ReadStatsConfiguration);
             _hull = new ShipHullStat(statSheet, _modules);
             _rideRule = new ShipDeckRideRule(_deckGeometry, ReadFlightSettings);
             _riders = new ShipRiders(this, _rideRule, ReadCharacterMovables);
@@ -200,6 +210,7 @@ namespace Features.ShipModule.Scripts {
             _riders.ServerReleaseRiders();
             _seats.ClearAllOccupants();
             _modules.ResetInstalledModules();
+            _conditionSync.ServerClearOpenBreaches();
             // A run starts with this reset: full hull for the new max, and a ship with no stat modules publishes
             // nothing on uninstall, so the repair's publish covers that too.
             _hull.ServerRepair();

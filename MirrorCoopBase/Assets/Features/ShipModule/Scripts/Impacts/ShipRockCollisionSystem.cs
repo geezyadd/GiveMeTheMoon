@@ -18,6 +18,7 @@ namespace Features.ShipModule.Scripts.Impacts {
         private readonly IShipRockDamageRule _shipRockDamageRule;
         private readonly IFieldRockBreaker _fieldRockBreaker;
         private readonly IShipHull _shipHull;
+        private readonly IShipServerImpactEventPublisher _shipServerImpactEventPublisher;
         private readonly ShipRockImpactConfiguration _shipRockImpactConfiguration;
         private readonly List<ShipRockContact> _contacts = new();
         private readonly ShipRockContactCooldowns _cooldowns = new();
@@ -29,6 +30,7 @@ namespace Features.ShipModule.Scripts.Impacts {
             IShipRockDamageRule shipRockDamageRule,
             IFieldRockBreaker fieldRockBreaker,
             IShipHull shipHull,
+            IShipServerImpactEventPublisher shipServerImpactEventPublisher,
             ShipRockImpactConfiguration shipRockImpactConfiguration) {
             _shipHullStepSource = shipHullStepSource;
             _shipHullRockScanner = shipHullRockScanner;
@@ -36,6 +38,7 @@ namespace Features.ShipModule.Scripts.Impacts {
             _shipRockDamageRule = shipRockDamageRule;
             _fieldRockBreaker = fieldRockBreaker;
             _shipHull = shipHull;
+            _shipServerImpactEventPublisher = shipServerImpactEventPublisher;
             _shipRockImpactConfiguration = shipRockImpactConfiguration;
         }
 
@@ -70,7 +73,7 @@ namespace Features.ShipModule.Scripts.Impacts {
             float speed = velocity.magnitude;
             ApplyDamage(_shipRockDamageRule.CalculateSmallRockDamage(contact.Rock.Diameter, speed), contact);
             ApplyKnockback(ship, _shipRockKnockbackRule.CalculateSmallPush(away, heading, velocity));
-            ship.ImpactSync.ServerBroadcast(new ShipRockImpact(ShipRockImpactKind.Small, contact.HullPoint, _shipRockDamageRule.CalculateStrength(speed)));
+            BroadcastImpact(ship, new ShipRockImpact(ShipRockImpactKind.Small, contact.HullPoint, _shipRockDamageRule.CalculateStrength(speed)));
         }
 
         private void TouchLargeRock(ShipBase ship, ShipRockContact contact, Vector3 away, Vector3 heading, Vector3 velocity) {
@@ -84,7 +87,12 @@ namespace Features.ShipModule.Scripts.Impacts {
             if (damage > 0f)
                 ApplyDamage(damage, contact);
 
-            ship.ImpactSync.ServerBroadcast(new ShipRockImpact(ShipRockImpactKind.Large, contact.HullPoint, _shipRockDamageRule.CalculateStrength(velocity.magnitude)));
+            BroadcastImpact(ship, new ShipRockImpact(ShipRockImpactKind.Large, contact.HullPoint, _shipRockDamageRule.CalculateStrength(velocity.magnitude)));
+        }
+
+        private void BroadcastImpact(ShipBase ship, ShipRockImpact impact) {
+            _shipServerImpactEventPublisher.PublishServerImpact(impact);
+            ship.ImpactSync.ServerBroadcast(impact);
         }
 
         private void ApplyDamage(float amount, ShipRockContact contact) =>
