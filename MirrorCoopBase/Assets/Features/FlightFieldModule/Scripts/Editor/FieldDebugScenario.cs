@@ -19,6 +19,14 @@ namespace Features.FlightFieldModule.Scripts.Editor {
         [SerializeField] private float _distancePerLoop = 1680f;
         [SerializeField] private float _destinationConeDegrees = 170f;
 
+        public FieldDebugScenario() { }
+
+        // A flight of another length, e.g. the loop tests' short flights.
+        public FieldDebugScenario(float baseDistance, float distancePerLoop) {
+            _baseDistance = baseDistance;
+            _distancePerLoop = distancePerLoop;
+        }
+
         public FieldRequest CreateRequest(IFieldRequestFactory requestFactory, int seed, int loopIndex) {
             Vector3 stationA = Vector3.zero;
             Vector3 cruiseStart = stationA + Vector3.forward * _takeoffForward + Vector3.up * _takeoffHeight;

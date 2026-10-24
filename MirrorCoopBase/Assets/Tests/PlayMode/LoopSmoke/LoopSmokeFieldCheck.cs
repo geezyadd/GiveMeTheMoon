@@ -45,8 +45,10 @@ namespace Tests.PlayMode.LoopSmoke {
         private const string GIANT_CLASS_NAME_PROPERTY = "_name";
         private const string GIANT_CLASS_OBSTACLES_PROPERTY = "_obstacles";
         private const string DEBUG_GIANT_CLASS_NAME = "Debug networked beacon";
-        // The weight of the beacon's giant class: a few beacons per field, not hundreds of Mirror objects.
-        private const float BEACON_WEIGHT = 0.25f;
+        // The weight of the beacon's giant class against about 1 of the game's classes: two of three giants, so nearly
+        // every short test field has one (0.25 left 60 % of the fields without one, and a run of 7 fields had none in
+        // about 3 %), and still about half of them have a local giant.
+        private const float BEACON_WEIGHT = 2f;
 #endif
 
         private readonly Dictionary<string, int> _mostLocalObjectsByStructure = new Dictionary<string, int>();
