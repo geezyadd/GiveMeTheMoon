@@ -4,7 +4,7 @@ using Features.FlightFieldModule.Contracts;
 namespace Features.FlightFieldModule.Scripts.Rocks {
     // Server: the damage the rocks of the current field have taken, only for the rocks hit and not broken yet, so a
     // field of thousands of rocks keeps no entry per rock. Not synced: peers learn only that a rock broke.
-    public sealed class FieldRockDamageModel : IReadOnlyFieldRockDamageModel {
+    public sealed class FieldRockDamageModel {
         private readonly Dictionary<FieldRockId, float> _damageTaken = new();
 
         public int DamagedCount => _damageTaken.Count;

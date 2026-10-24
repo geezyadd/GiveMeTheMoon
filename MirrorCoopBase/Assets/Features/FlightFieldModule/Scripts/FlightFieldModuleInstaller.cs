@@ -68,8 +68,10 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldRockTargetIds>().To<FieldRockTargetIds>().AsSingle();
             Container.Bind<IFieldRockHitPoints>().To<FieldRockHitPoints>().AsSingle();
             Container.BindInterfacesTo<FieldRockDamageService>().AsSingle();
-            Container.BindInterfacesTo<FieldRockWeaponTargets>().AsSingle();
+            Container.Bind<FieldRockWeaponTarget>().AsSingle();
+            Container.BindInterfacesTo<FieldRockWeaponTargetSystem>().AsSingle();
             Container.BindInterfacesTo<FieldRockHitFeedbackSystem>().AsSingle();
+            Container.Bind<IFieldRockTargetBinder>().To<FieldRockTargetBinder>().AsSingle();
             Container.Bind<IFieldRockBreakEffectPool>().To<FieldRockBreakEffectPool>().AsSingle();
             Container.BindInterfacesTo<FieldRockBreakViewSystem>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

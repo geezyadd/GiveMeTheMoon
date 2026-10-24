@@ -57,7 +57,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<IFlightFieldSyncBindingModel>().To<FlightFieldSyncBindingModel>().AsSingle();
             Container.BindInterfacesAndSelfTo<FlightFieldServerModel>().AsSingle();
             Container.BindInterfacesAndSelfTo<FlightFieldSceneModel>().AsSingle();
-            Container.BindInterfacesAndSelfTo<FieldRockDamageModel>().AsSingle();
+            Container.Bind<FieldRockDamageModel>().AsSingle();
             Container.Bind<FieldDecorSceneModel>().AsSingle();
         }
     }

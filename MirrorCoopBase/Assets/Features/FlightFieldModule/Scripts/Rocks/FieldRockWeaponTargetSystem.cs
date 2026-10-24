@@ -6,16 +6,15 @@ using Zenject;
 namespace Features.FlightFieldModule.Scripts.Rocks {
     // Server: every rock of the field as a weapon target, registered once as a source for the rocks' id range instead
     // of once per rock, so the rocks need no scene object on the server.
-    public sealed class FieldRockWeaponTargets : IWeaponTargetSource, IInitializable, IDisposable {
+    public sealed class FieldRockWeaponTargetSystem : IWeaponTargetSource, IInitializable, IDisposable {
         private readonly IWeaponTargetRegistry _weaponTargetRegistry;
         private readonly IFieldRockTargetIds _fieldRockTargetIds;
-        private readonly FieldRockWeaponTarget _target;
+        private readonly FieldRockWeaponTarget _fieldRockWeaponTarget;
 
-        public FieldRockWeaponTargets(IWeaponTargetRegistry weaponTargetRegistry, IFieldRockTargetIds fieldRockTargetIds, IFieldRockQuery fieldRockQuery,
-                                      IFieldRockDamageService fieldRockDamageService) {
+        public FieldRockWeaponTargetSystem(IWeaponTargetRegistry weaponTargetRegistry, IFieldRockTargetIds fieldRockTargetIds, FieldRockWeaponTarget fieldRockWeaponTarget) {
             _weaponTargetRegistry = weaponTargetRegistry;
             _fieldRockTargetIds = fieldRockTargetIds;
-            _target = new FieldRockWeaponTarget(fieldRockQuery, fieldRockDamageService);
+            _fieldRockWeaponTarget = fieldRockWeaponTarget;
         }
 
         public void Initialize() =>
@@ -29,8 +28,8 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
             if (!_fieldRockTargetIds.TryGetRockId(targetId, out FieldRockId id))
                 return false;
 
-            _target.AimAt(id);
-            target = _target;
+            _fieldRockWeaponTarget.AimAt(id);
+            target = _fieldRockWeaponTarget;
             return true;
         }
     }

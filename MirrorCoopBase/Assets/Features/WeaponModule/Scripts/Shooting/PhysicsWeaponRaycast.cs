@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Features.WeaponModule.Scripts.Shooting {
     // A physics ray on the weapon's layers. Triggers count only when they carry a weapon target: a target may have a
     // trigger collider so that it pushes nothing, while a trigger with no target on it (a field structure's volume)
-    // lets the shot through. A struck target that shows impacts is told here, on every peer that casts the shot.
+    // lets the shot through. What shows the strike on the struck surface travels with the hit; the shooter shows it.
     public sealed class PhysicsWeaponRaycast : IWeaponRaycast {
         // Enough for the triggers a long ray crosses through a dense rock field before the nearest real surface.
         private const int MAX_RAY_HITS = 32;
@@ -23,10 +23,8 @@ namespace Features.WeaponModule.Scripts.Shooting {
                 return false;
 
             bool hasTarget = target != null;
-            hit = new WeaponRaycastHit(physicsHit.point, physicsHit.normal, hasTarget, hasTarget ? target.TargetId : 0);
-            if (physicsHit.collider.TryGetComponent(out IWeaponImpactFeedback feedback))
-                feedback.PresentImpact(physicsHit.point, physicsHit.normal);
-
+            physicsHit.collider.TryGetComponent(out IWeaponImpactFeedback feedback);
+            hit = new WeaponRaycastHit(physicsHit.point, physicsHit.normal, hasTarget, hasTarget ? target.TargetId : 0, feedback);
             return true;
         }
 

@@ -167,7 +167,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             FieldRockTestRig rig = CreateRig();
             FieldRockTargetIds targetIds = new();
             RecordingWeaponTargetRegistry registry = new();
-            FieldRockWeaponTargets targets = new(registry, targetIds, rig.Query, rig.DamageService);
+            FieldRockWeaponTargetSystem targets = new(registry, targetIds, new FieldRockWeaponTarget(rig.Query, rig.DamageService));
             targets.Initialize();
             FieldRockDescription rock = _rocks.Where(other => other.IsBreakable).OrderBy(other => other.Diameter).First();
 

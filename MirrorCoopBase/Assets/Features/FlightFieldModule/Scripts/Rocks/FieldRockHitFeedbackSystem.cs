@@ -20,6 +20,12 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
         public void Tick() {
             for (int i = _shakes.Count - 1; i >= 0; i--) {
                 FieldRockHitShake shake = _shakes[i];
+                // A pooled rock can be destroyed with its root while it shakes: its entry just goes.
+                if (shake.Target == null) {
+                    _shakes.RemoveAt(i);
+                    continue;
+                }
+
                 shake.SecondsLeft -= Time.deltaTime;
                 if (shake.SecondsLeft <= 0f) {
                     PutAtRest(shake);
@@ -64,11 +70,7 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
             renderer.SetPropertyBlock(_flash);
         }
 
-        // A rock returned to the pool or destroyed with its scene is left alone.
         private static void PutAtRest(in FieldRockHitShake shake) {
-            if (shake.Target == null)
-                return;
-
             shake.Target.transform.localPosition = shake.RestLocalPosition;
             shake.Target.Renderer.SetPropertyBlock(null);
         }

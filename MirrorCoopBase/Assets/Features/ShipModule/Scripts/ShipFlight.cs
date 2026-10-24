@@ -1,3 +1,4 @@
+using Features.ShipModule.Scripts.Impacts;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
@@ -11,6 +12,8 @@ namespace Features.ShipModule.Scripts {
 
         private const float ARRIVE_DISTANCE = 0.4f;
         private const float ARRIVE_SPEED_SQR = 0.25f;
+
+        private readonly ShipKnockback _knockback = new ShipKnockback();
 
         private ShipFlightSettings _settings;
         private ShipFlightMode _mode = ShipFlightMode.TravelInSpace;
@@ -83,6 +86,7 @@ namespace Features.ShipModule.Scripts {
             _takeoffSeconds = Mathf.Max(0.2f, takeoffSeconds);
             _landAge = 0f;
             _landed = false;
+            _knockback.Reset();
             // The autopilot keeps the takeoff heading; the crew finds the destination by radar and steers there.
             _restHeading = FlattenHeading(heading);
             Rotation = _restHeading;
@@ -127,6 +131,15 @@ namespace Features.ShipModule.Scripts {
             _travelSpeed = Mathf.Max(0f, metersPerSecond);
         }
 
+        public void ApplyKnockback(Vector3 velocity, float fadeSeconds, float maxAcceleration) =>
+            _knockback.Apply(velocity, fadeSeconds, maxAcceleration);
+
+        // The ship as a whole moves along the direction at least this fast, whatever its own flight does.
+        public void SustainKnockback(Vector3 direction, float minimumSpeed) {
+            Vector3 ownVelocity = _velocity - _knockback.Velocity;
+            _knockback.Sustain(direction, minimumSpeed - Vector3.Dot(ownVelocity, direction));
+        }
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public void DebugFace(Vector3 worldForward) {
             Vector3 flat = worldForward;
@@ -151,11 +164,14 @@ namespace Features.ShipModule.Scripts {
             _velocity = Vector3.zero;
             _landVelocity = Vector3.zero;
             _landed = false;
+            _knockback.Reset();
         }
 
         public void Simulate(float dt) {
             if (IsActive == false || dt <= 0f)
                 return;
+
+            ApplyKnockbackStep(dt);
 
             if (_phase == Phase.Takeoff)
                 SimulateTakeoff(dt);
@@ -196,6 +212,16 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             _routeAnchor += forward.normalized * (_travelSpeed * ramp) * dt;
+        }
+
+        // The knockback moves the path the ship follows, so it stays where it was pushed to; the pad it lands on stays.
+        private void ApplyKnockbackStep(float dt) {
+            Vector3 push = _knockback.Step(dt);
+            _from += push;
+            _hover += push;
+            _routeAnchor += push;
+            if (_phase == Phase.Landing && _mode == ShipFlightMode.TravelInSpace)
+                _position += push;
         }
 
         private Vector3 CruiseAnchor() {

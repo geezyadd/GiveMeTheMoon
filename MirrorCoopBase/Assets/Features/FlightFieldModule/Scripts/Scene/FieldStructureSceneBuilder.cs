@@ -22,8 +22,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         private readonly IFieldPlacementRockLayout _fieldPlacementRockLayout;
         private readonly IFieldStructurePool _fieldStructurePool;
         private readonly IFieldBrokenRocks _fieldBrokenRocks;
-        private readonly IFieldRockTargetIds _fieldRockTargetIds;
-        private readonly IFieldRockHitFeedback _fieldRockHitFeedback;
+        private readonly IFieldRockTargetBinder _fieldRockTargetBinder;
         // Reused lists: building runs every frame of the takeoff and allocates nothing once the pool is warm.
         private readonly List<FieldClusterRockPose> _clusterRocks = new();
         private readonly Dictionary<int, FieldBuiltObjects> _objectsByPlacement = new();
@@ -31,7 +30,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
 
         public FieldStructureSceneBuilder(FieldStructureCatalog fieldStructureCatalog, IFieldStructureSpawnRule fieldStructureSpawnRule, IFieldStructureLayout fieldStructureLayout,
                                           IFieldFootprintReader fieldFootprintReader, IFieldPlacementRockLayout fieldPlacementRockLayout, IFieldStructurePool fieldStructurePool,
-                                          IFieldBrokenRocks fieldBrokenRocks, IFieldRockTargetIds fieldRockTargetIds, IFieldRockHitFeedback fieldRockHitFeedback) {
+                                          IFieldBrokenRocks fieldBrokenRocks, IFieldRockTargetBinder fieldRockTargetBinder) {
             _fieldStructureCatalog = fieldStructureCatalog;
             _fieldStructureSpawnRule = fieldStructureSpawnRule;
             _fieldStructureLayout = fieldStructureLayout;
@@ -39,8 +38,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             _fieldPlacementRockLayout = fieldPlacementRockLayout;
             _fieldStructurePool = fieldStructurePool;
             _fieldBrokenRocks = fieldBrokenRocks;
-            _fieldRockTargetIds = fieldRockTargetIds;
-            _fieldRockHitFeedback = fieldRockHitFeedback;
+            _fieldRockTargetBinder = fieldRockTargetBinder;
         }
 
         // Kept across scene loads with its pooled objects; it is empty whenever no field stands.
@@ -83,7 +81,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             if (!_objectsByPlacement.Remove(placementIndex, out FieldBuiltObjects objects))
                 return;
 
-            UnbindRocks(objects);
+            objects.UnbindRocks();
             foreach (GameObject builtObject in objects.Objects)
                 _fieldStructurePool.Return(builtObject);
 
@@ -94,7 +92,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         public void ReleaseAll() {
             _fieldStructurePool.ReturnAll();
             foreach (FieldBuiltObjects objects in _objectsByPlacement.Values) {
-                UnbindRocks(objects);
+                objects.UnbindRocks();
                 objects.Clear();
                 _freeObjects.Push(objects);
             }
@@ -126,14 +124,9 @@ namespace Features.FlightFieldModule.Scripts.Scene {
                 rock.transform.localScale = rockPose.Scale / triggerScale;
                 rock.SetMaterial(rockPose.Material);
                 FieldRockId id = FieldRockId.CreateCluster(placementIndex, rockIndex);
-                rock.Target.Bind(_fieldRockTargetIds.GetTargetId(id), _fieldRockHitFeedback);
+                _fieldRockTargetBinder.Bind(rock, id);
                 rock.gameObject.SetActive(!_fieldBrokenRocks.IsBroken(id));
             }
-        }
-
-        private static void UnbindRocks(FieldBuiltObjects objects) {
-            foreach (FieldRockVisual rock in objects.Rocks)
-                rock.Target.Unbind();
         }
     }
 }

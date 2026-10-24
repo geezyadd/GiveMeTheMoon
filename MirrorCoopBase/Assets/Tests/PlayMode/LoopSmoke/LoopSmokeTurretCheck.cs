@@ -23,6 +23,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float FIRE_TIMEOUT_SECONDS = 6f;
         private const float BOARD_SETTLE_SECONDS = 0.6f;
         private const float DROP_HEIGHT = 0.5f;
+        private const float BELOW_DECK_TOLERANCE = 0.25f;
         // Behind the turret socket on the deck, within reach of its seat.
         private static readonly Vector3 _gunnerSpot = new Vector3(-2.6f, 0.3f, 1.3f);
 
@@ -41,7 +42,7 @@ namespace Tests.PlayMode.LoopSmoke {
             ShipDeckBoarding.PutAbove(Player.GetComponent<CharacterMovableBase>(), _session.Ship, _gunnerSpot, DROP_HEIGHT);
 
             yield return new WaitForSeconds(BOARD_SETTLE_SECONDS);
-            Assert.IsTrue(SessionQueries.IsOnDeck(_session.Ship, Player.transform.position), "Turret: the host did not stay on the deck by the minigun.");
+            AssertPlayerStandsOnDeck(_session.Ship);
         }
 
         public IEnumerator FireAtDebugTargetInCruiseCoroutine() {
@@ -71,6 +72,14 @@ namespace Tests.PlayMode.LoopSmoke {
         private static bool AimAndCountHits(ShipTurretStation station, WeaponDebugTarget target) {
             station.DebugAimAt(target.transform.position);
             return target.Hits >= MIN_ACCEPTED_HITS;
+        }
+
+        // In ship space: the world box of the deck collider grows and shifts with the ship's heading at the station.
+        private static void AssertPlayerStandsOnDeck(ShipBase ship) {
+            Vector3 local = Quaternion.Inverse(ship.transform.rotation) * (Player.transform.position - ship.transform.position);
+            Assert.IsTrue(ship.DeckGeometry.ContainsDeckWalk(local, 0f), $"Turret: the host at ship-local {local} did not stay on the deck by the minigun.");
+            Assert.IsTrue(ship.DeckGeometry.TryGetDeckSurfaceY(local, out float surfaceY), $"Turret: no deck under the host at ship-local {local}.");
+            Assert.Greater(local.y, surfaceY - BELOW_DECK_TOLERANCE, $"Turret: the host at ship-local {local} is below the deck ({surfaceY:0.00}).");
         }
 
         private static ShipSocket FindSocket(ShipBase ship) {

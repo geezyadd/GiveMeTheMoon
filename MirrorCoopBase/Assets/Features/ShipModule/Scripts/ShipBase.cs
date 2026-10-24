@@ -2,6 +2,7 @@ using Features.CharacterMovableModule.Scripts.Models;
 using Features.GameCoreModule.Contracts;
 using Features.ShipModule.Scripts.Generated;
 using Features.ShipModule.Scripts.Hull;
+using Features.ShipModule.Scripts.Impacts;
 using Mirror;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -20,6 +21,8 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private ShipStatEntity _stats;
         [SerializeField] private ShipSocketsSync _socketStates;
         [SerializeField] private ShipStatsSync _statsSync;
+        [SerializeField] private ShipHullVolume _hullVolume;
+        [SerializeField] private ShipImpactSync _impactSync;
 
         private ShipFlightSettings _flightSettings;
         private ShipAccumulativeStatsConfiguration _statsConfiguration;
@@ -57,6 +60,9 @@ namespace Features.ShipModule.Scripts {
         internal IShipFlightControl FlightControl => _flightControl;
         internal IShipDeckCargo Cargo => _cargo;
         internal ShipPoseSync PoseSync => _poseSync;
+        internal ShipHullVolume HullVolume => _hullVolume;
+        internal ShipImpactSync ImpactSync => _impactSync;
+        internal IShipKnockback Knockback => _flightControl;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         internal IShipRidersDebug RidersDebug => _riders;
         // Public for the loop tests: their pilot faces the ship to the destination, as a crew does by radar.
@@ -104,8 +110,8 @@ namespace Features.ShipModule.Scripts {
 
         private void Awake() {
             Assert.IsTrue(
-                _sockets != null && _stats != null && _socketStates != null && _statsSync != null,
-                name + " needs its sockets, socket states, stat entity and stats sync wired.");
+                _sockets != null && _stats != null && _socketStates != null && _statsSync != null && _hullVolume != null && _impactSync != null,
+                name + " needs its sockets, socket states, stat entity, stats sync, hull volume and impact sync wired.");
             _deckGeometry = new ShipDeckGeometry(transform, _deck, _deckColliders);
             ShipStatSheet statSheet = new ShipStatSheet(_stats);
             _modules = new ShipModules(_sockets, statSheet, _statsSync, ReadStatsConfiguration);
