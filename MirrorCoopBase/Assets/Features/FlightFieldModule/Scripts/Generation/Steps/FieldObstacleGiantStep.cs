@@ -33,15 +33,22 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
                 TryLay(context, structure, footprint);
         }
 
-        // Drawn before any is laid, so the count and the picks do not depend on where the earlier ones landed.
+        // Drawn before any is laid, so the count and the picks do not depend on where the earlier ones landed. Only the
+        // giants that fit the frame are drawn: a short field (a test's short flight) would drop every massive one.
         private List<(FieldStructureDefinition structure, FieldFootprint footprint)> DrawGiants(FieldGenerationContext context) {
             FieldFrame frame = context.Frame;
             float squareKilometers = frame.LengthCells * frame.WidthCells * frame.CellSize * frame.CellSize / SQUARE_METERS_PER_SQUARE_KILOMETER;
             int count = Mathf.RoundToInt(context.Profile.GiantsPerSquareKilometer.Evaluate(context.Difficulty) * squareKilometers);
+            List<FieldGiantClass> fittingClasses = new();
+            Dictionary<FieldGiantClass, List<FieldObstacleOption>> fittingObstacles = new();
+            CollectFittingGiants(context, fittingClasses, fittingObstacles);
+            if (!HasWeight(fittingClasses))
+                return new List<(FieldStructureDefinition, FieldFootprint)>();
+
             List<(FieldStructureDefinition structure, FieldFootprint footprint, int order)> giants = new(count);
             for (int i = 0; i < count; i++) {
-                FieldGiantClass giantClass = FieldWeightedPick.Pick(context.Profile.GiantClasses, context.Random);
-                FieldStructureDefinition structure = FieldWeightedPick.Pick(giantClass.Obstacles, context.Random).Structure;
+                FieldGiantClass giantClass = FieldWeightedPick.Pick(fittingClasses, context.Random);
+                FieldStructureDefinition structure = FieldWeightedPick.Pick(fittingObstacles[giantClass], context.Random).Structure;
                 giants.Add((structure, _fieldFootprintReader.Read(structure, FieldRotation.None), i));
             }
 
@@ -51,6 +58,42 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
                 ordered.Add((structure, footprint));
 
             return ordered;
+        }
+
+        // The classes and obstacles of the profile in their order, without the obstacles whose footprint is longer or
+        // wider than the frame and the classes left without one: when everything fits, the picks are the profile's.
+        private void CollectFittingGiants(FieldGenerationContext context, List<FieldGiantClass> fittingClasses,
+                                          Dictionary<FieldGiantClass, List<FieldObstacleOption>> fittingObstacles) {
+            foreach (FieldGiantClass giantClass in context.Profile.GiantClasses) {
+                List<FieldObstacleOption> obstacles = CollectFittingObstacles(giantClass, context.Frame.Size);
+                if (!HasWeight(obstacles))
+                    continue;
+
+                fittingClasses.Add(giantClass);
+                fittingObstacles.Add(giantClass, obstacles);
+            }
+        }
+
+        private List<FieldObstacleOption> CollectFittingObstacles(FieldGiantClass giantClass, Vector2Int frameSize) {
+            List<FieldObstacleOption> obstacles = new();
+            foreach (FieldObstacleOption obstacle in giantClass.Obstacles) {
+                if (Fits(_fieldFootprintReader.Read(obstacle.Structure, FieldRotation.None), frameSize))
+                    obstacles.Add(obstacle);
+            }
+
+            return obstacles;
+        }
+
+        private static bool Fits(FieldFootprint footprint, Vector2Int frameSize) =>
+            footprint.Width <= frameSize.x && footprint.Height <= frameSize.y;
+
+        private static bool HasWeight<T>(List<T> options) where T : IFieldWeighted {
+            foreach (T option in options) {
+                if (option.Weight > 0f)
+                    return true;
+            }
+
+            return false;
         }
 
         // The draw order breaks ties, so the order is the same on every machine.
@@ -63,9 +106,6 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
         private void TryLay(FieldGenerationContext context, FieldStructureDefinition structure, FieldFootprint footprint) {
             Vector2Int size = context.Frame.Size;
             Vector2Int room = new(size.x - footprint.Width, size.y - footprint.Height);
-            if (room.x < 0 || room.y < 0)
-                return;
-
             for (int attempt = 0; attempt < context.Profile.GiantPlacementTries; attempt++) {
                 Vector2Int anchor = new(context.Random.Range(0, room.x + 1), context.Random.Range(0, room.y + 1));
                 Vector2Int middle = anchor + new Vector2Int(footprint.Width / 2, footprint.Height / 2);
