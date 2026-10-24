@@ -12,28 +12,52 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 381258ecf36952741bb9ce75fe56e051, type: 3}
   m_Name: MinigunFeelProfile
   m_EditorClassIdentifier: 
+  _barrelSpinDegreesPerSecond: 1440
   _muzzleFlashColor: {r: 1, g: 0.92, b: 0.6, a: 1}
-  _muzzleFlashSize: 0.6
-  _muzzleLightIntensity: 3
-  _muzzleLightRange: 6
+  _muzzleFlashSize: 1.2
+  _muzzleFlashFlicker: 0.35
+  _muzzleFlashSeconds: 0.05
+  _muzzleLightIntensity: 8
+  _muzzleLightRange: 7
   _casingPoolSize: 200
   _casingLifetimeSeconds: 6
   _casingFadeSeconds: 1
-  _casingEjectDirection: {x: 1, y: 0.6, z: -0.2}
-  _casingEjectSpeed: 3
-  _casingSpinDegreesPerSecond: 720
-  _recoilPositionNoiseMeters: 0.01
-  _recoilRotationNoiseDegrees: 0.6
-  _recoilNoiseFrequency: 25
-  _fireShakeAmplitude: 0.15
-  _nearImpactShakeAmplitude: 0.5
+  _casingEjectDirection: {x: 1, y: 0.75, z: -0.15}
+  _casingEjectSpeed: 2.6
+  _casingEjectSpeedVariation: 0.3
+  _casingEjectSpreadDegrees: 14
+  _casingSpinDegreesPerSecond: 900
+  _casingBounciness: 0.35
+  _casingFloorFriction: 0.55
+  _casingRestSpeed: 0.5
+  _casingRestHeight: 0.0175
+  _casingPileJitter: 0.03
+  _recoilPositionNoiseMeters: 0.008
+  _recoilRotationNoiseDegrees: 0.8
+  _recoilNoiseFrequency: 22
+  _recoilSettleSeconds: 0.15
+  _fireShakeAmplitude: 0.35
+  _nearImpactShakeAmplitude: 1.6
   _nearImpactDistanceMeters: 30
   _targetDestroyedShakeAmplitude: 0.8
+  _shakeFrequency: 16
+  _shakeFadeSeconds: 0.35
   _tracerEveryNthShot: 3
-  _tracerColor: {r: 1, g: 0.65, b: 0.2, a: 1}
-  _tracerSpeedMetersPerSecond: 600
-  _tracerWidthMeters: 0.08
-  _impactSparkCount: 8
-  _impactDebrisCount: 4
-  _impactDustSizeMeters: 1.5
+  _tracerColor: {r: 1, g: 0.62, b: 0.2, a: 1}
+  _tracerSpeedMetersPerSecond: 380
+  _tracerWidthMeters: 0.22
+  _tracerLengthMeters: 6
+  _impactSparkCount: 10
+  _impactSparkSpeed: 7
+  _impactDebrisCount: 3
+  _impactDebrisSpeed: 4
+  _impactDustSizeMeters: 1.6
+  _impactFlashSizeMeters: 2.2
+  _impactFlashSeconds: 0.07
   _targetFlashSeconds: 0.08
+  _fireLoopClip: {fileID: 8300000, guid: d2f7009334d59f44d92d9f87d2e6709d, type: 3}
+  _fireTailClip: {fileID: 8300000, guid: fa6993adf072b664cbad727917ae86db, type: 3}
+  _casingClip: {fileID: 8300000, guid: a9ae746008989274ea9cc9e5946f6045, type: 3}
+  _casingClinkShare: 0.35
+  _impactClip: {fileID: 8300000, guid: d3dce68e2177b6a4e8e4b1ac57b55e25, type: 3}
+  _impactSoundEveryNth: 2

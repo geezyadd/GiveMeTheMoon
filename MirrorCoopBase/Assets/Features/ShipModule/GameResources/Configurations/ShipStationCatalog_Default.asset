@@ -30,3 +30,7 @@ MonoBehaviour:
   - _module: {fileID: 11400000, guid: 545fb73e510c00640acbfc66d56bb1a3, type: 2}
     _minLoop: 0
     _count: 1
+  - _module: {fileID: 11400000, guid: 089ec9b0656ec2b4ea21f7977ff29111, type: 2}
+    _minLoop: 0
+    _count: 1
+  _weaponDebugTargetPrefab: {fileID: 6307907291231248790, guid: 9a3618b7f6c14cf4f81cbcf78c4a4948, type: 3}

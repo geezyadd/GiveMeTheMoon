@@ -6,5 +6,6 @@ namespace Features.WeaponModule.Scripts.Hits {
         TargetNotAlive = 3,
         OutOfRange = 4,
         FireRateExceeded = 5,
+        UnknownTarget = 6,
     }
 }

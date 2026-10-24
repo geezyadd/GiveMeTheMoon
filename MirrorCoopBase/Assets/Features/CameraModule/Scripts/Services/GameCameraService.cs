@@ -162,6 +162,25 @@ namespace Features.CameraModule.Scripts.Services {
             BlendTo(next);
         }
 
+        public void BeginFixedView(Transform eye) {
+            if (_model.FixedViewEye == null)
+                _model.CameraIdBeforeFixedView = _model.ActiveId;
+
+            _model.FixedViewEye = eye;
+            BlendTo(CameraIds.FPCamera, 0f);
+        }
+
+        public void EndFixedView() {
+            if (_model.FixedViewEye == null)
+                return;
+
+            _model.FixedViewEye = null;
+            string previousId = _model.CameraIdBeforeFixedView;
+            _model.CameraIdBeforeFixedView = null;
+            if (string.IsNullOrEmpty(previousId) == false)
+                BlendTo(previousId, 0f);
+        }
+
         private void SpawnIdleCameras() {
             EnsureRoot();
             EnsureOutputCamera();

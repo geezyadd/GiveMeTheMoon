@@ -11,6 +11,10 @@ namespace Features.CameraModule.Scripts.Models {
         public Transform Eye { get; internal set; }
         public Transform LookPivot { get; internal set; }
         public Transform OrbitHoldAnchor { get; internal set; }
+        // A station's own eye (a turret's camera point): while set, the view rides it and the mouse does not turn the
+        // camera, the station turns itself.
+        public Transform FixedViewEye { get; internal set; }
+        public string CameraIdBeforeFixedView { get; internal set; }
 
         public IReadOnlyDictionary<string, GameCamera> Cameras => _cameras;
 
@@ -50,6 +54,8 @@ namespace Features.CameraModule.Scripts.Models {
             Eye = null;
             LookPivot = null;
             OrbitHoldAnchor = null;
+            FixedViewEye = null;
+            CameraIdBeforeFixedView = null;
         }
     }
 }

@@ -147,6 +147,15 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""Fire"",
+                    ""type"": ""Button"",
+                    ""id"": ""5c6d7e8f-901a-4b3c-8d5e-6f708192a3c5"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""Release"",
                     ""type"": ""Button"",
                     ""id"": ""293a4b5c-6d7e-8f90-1a2b-3c4d5e6f7082"",
@@ -322,6 +331,28 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
+                    ""id"": ""6d7e8f90-1a2b-4c3d-9e4f-708192a3b4d6"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and Mouse"",
+                    ""action"": ""Fire"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7e8f901a-2b3c-4d4e-8f50-8192a3b4c5e7"",
+                    ""path"": ""<Gamepad>/rightTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Touchscreen"",
+                    ""action"": ""Fire"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
                     ""id"": ""3a4b5c6d-7e8f-901a-2b3c-4d5e6f708193"",
                     ""path"": ""<Keyboard>/q"",
                     ""interactions"": """",
@@ -462,6 +493,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         m_MovementMap_SwitchCamera = m_MovementMap.FindAction("SwitchCamera", throwIfNotFound: true);
         m_MovementMap_Look = m_MovementMap.FindAction("Look", throwIfNotFound: true);
         m_MovementMap_Grab = m_MovementMap.FindAction("Grab", throwIfNotFound: true);
+        m_MovementMap_Fire = m_MovementMap.FindAction("Fire", throwIfNotFound: true);
         m_MovementMap_Release = m_MovementMap.FindAction("Release", throwIfNotFound: true);
         m_MovementMap_ToggleCursor = m_MovementMap.FindAction("ToggleCursor", throwIfNotFound: true);
         // UiMap
@@ -560,6 +592,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_MovementMap_SwitchCamera;
     private readonly InputAction m_MovementMap_Look;
     private readonly InputAction m_MovementMap_Grab;
+    private readonly InputAction m_MovementMap_Fire;
     private readonly InputAction m_MovementMap_Release;
     private readonly InputAction m_MovementMap_ToggleCursor;
     /// <summary>
@@ -597,6 +630,10 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "MovementMap/Grab".
         /// </summary>
         public InputAction @Grab => m_Wrapper.m_MovementMap_Grab;
+        /// <summary>
+        /// Provides access to the underlying input action "MovementMap/Fire".
+        /// </summary>
+        public InputAction @Fire => m_Wrapper.m_MovementMap_Fire;
         /// <summary>
         /// Provides access to the underlying input action "MovementMap/Release".
         /// </summary>
@@ -649,6 +686,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @Grab.started += instance.OnGrab;
             @Grab.performed += instance.OnGrab;
             @Grab.canceled += instance.OnGrab;
+            @Fire.started += instance.OnFire;
+            @Fire.performed += instance.OnFire;
+            @Fire.canceled += instance.OnFire;
             @Release.started += instance.OnRelease;
             @Release.performed += instance.OnRelease;
             @Release.canceled += instance.OnRelease;
@@ -684,6 +724,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @Grab.started -= instance.OnGrab;
             @Grab.performed -= instance.OnGrab;
             @Grab.canceled -= instance.OnGrab;
+            @Fire.started -= instance.OnFire;
+            @Fire.performed -= instance.OnFire;
+            @Fire.canceled -= instance.OnFire;
             @Release.started -= instance.OnRelease;
             @Release.performed -= instance.OnRelease;
             @Release.canceled -= instance.OnRelease;
@@ -1012,6 +1055,13 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnGrab(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Fire" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnFire(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "Release" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
