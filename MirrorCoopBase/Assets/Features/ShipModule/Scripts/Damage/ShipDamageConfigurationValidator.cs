@@ -16,6 +16,9 @@ namespace Features.ShipModule.Scripts.Damage {
             if (_shipDamageConfiguration.MaxOpenBreaches < 0)
                 throw new InvalidOperationException($"{_shipDamageConfiguration.name}: {nameof(ShipDamageConfiguration.MaxOpenBreaches)} must be 0 or above, is {_shipDamageConfiguration.MaxOpenBreaches}.");
 
+            if (_shipDamageConfiguration.LeakStepHull <= 0f)
+                throw new InvalidOperationException($"{_shipDamageConfiguration.name}: {nameof(ShipDamageConfiguration.LeakStepHull)} must be above 0, is {_shipDamageConfiguration.LeakStepHull}.");
+
             if (_shipDamageConfiguration.LeakHullPerSecond < 0f || _shipDamageConfiguration.HullPerRepairedBreach < 0f)
                 throw new InvalidOperationException($"{_shipDamageConfiguration.name}: {nameof(ShipDamageConfiguration.LeakHullPerSecond)} and {nameof(ShipDamageConfiguration.HullPerRepairedBreach)} must be 0 or above.");
         }

@@ -1,10 +1,12 @@
 using Features.CameraModule.Scripts.Models;
+using Features.CameraModule.Scripts.Shake;
 using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.CrewInviteModule.Data.Generated;
 using Features.FlightFieldModule.Scripts.Decor;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
+using Features.FlightFieldModule.Scripts.Rocks;
 using Features.FlightFieldModule.Scripts.Scene;
 using Features.FlightFieldModule.Scripts.Server;
 using Features.GrabModule.Scripts;
@@ -34,6 +36,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<CharacterMovableModel>().AsSingle();
             Container.Bind<PlayerControlBlockModel>().AsSingle();
             Container.Bind<GameCameraModel>().AsSingle();
+            Container.Bind<CameraShakeModel>().AsSingle();
             Container.Bind<IShipRunBindingModel>().To<ShipRunBindingModel>().AsSingle();
             Container.Bind<IShipClientBindingModel>().To<ShipClientBindingModel>().AsSingle();
             Container.Bind<HoveredInteractableModel>().AsSingle();
@@ -59,6 +62,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<IFlightFieldSyncBindingModel>().To<FlightFieldSyncBindingModel>().AsSingle();
             Container.BindInterfacesAndSelfTo<FlightFieldServerModel>().AsSingle();
             Container.BindInterfacesAndSelfTo<FlightFieldSceneModel>().AsSingle();
+            Container.Bind<FieldRockDamageModel>().AsSingle();
             Container.Bind<FieldDecorSceneModel>().AsSingle();
         }
     }

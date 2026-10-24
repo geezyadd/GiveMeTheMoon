@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f030670d551115146b6f612ea2230e04, type: 3}
+  m_Name: CameraShake_RockImpactLarge
+  m_EditorClassIdentifier: 
+  _degrees: 5
+  _rollShare: 1
+  _meters: 0.12
+  _seconds: 0.8
+  _frequency: 14
+  _fadePower: 2
+  _isLengthScaledByStrength: 0

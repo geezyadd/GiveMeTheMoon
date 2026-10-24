@@ -17,6 +17,8 @@ namespace Features.ShipModule.Scripts.Damage {
         [SerializeField, Min(0f)] private float _hullPerRepairedBreach = 10f;
         [Tooltip("Hull HP every open breach leaks per second in flight; 0 = no leak.")]
         [SerializeField, Min(0f)] private float _leakHullPerSecond = 0.5f;
+        [Tooltip("The leak is dealt to the hull in steps of this many HP, so the hull bar flashes once per step.")]
+        [SerializeField, Min(0.01f)] private float _leakStepHull = 1f;
         [Tooltip("Seconds of holding the interact button to repair with a tool of speed 1; a faster tool divides it.")]
         [SerializeField, Min(0.1f)] private float _repairSeconds = 2.5f;
 
@@ -26,6 +28,7 @@ namespace Features.ShipModule.Scripts.Damage {
         public int MaxOpenBreaches => _maxOpenBreaches;
         public float HullPerRepairedBreach => _hullPerRepairedBreach;
         public float LeakHullPerSecond => _leakHullPerSecond;
+        public float LeakStepHull => _leakStepHull;
         public float RepairSeconds => _repairSeconds;
     }
 }

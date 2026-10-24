@@ -16,6 +16,9 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         public FieldRockReader Reader { get; }
         public FieldRockQuery Query { get; }
         public FieldRockBreaker Breaker { get; }
+        public FieldRockDamageModel DamageModel { get; } = new();
+        public FieldRockHitPoints HitPoints { get; }
+        public FieldRockDamageService DamageService { get; }
 
         public FieldRockTestRig(FlightFieldEditorComposition composition, FieldRockDurabilityConfiguration durabilityConfiguration, FlightField field) {
             FieldRandomFactory randomFactory = new();
@@ -26,6 +29,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 debrisLayout, new FieldRockClassifier(durabilityConfiguration));
             Query = new FieldRockQuery(ServerModel, composition.Catalog, composition.Configuration, composition.ProfileLookup, Reader, BrokenRocks, randomFactory);
             Breaker = new FieldRockBreaker(ServerModel, Query, BrokenRocks, BrokenRocks);
+            HitPoints = new FieldRockHitPoints(durabilityConfiguration);
+            DamageService = new FieldRockDamageService(Query, Breaker, HitPoints, DamageModel, durabilityConfiguration);
             ServerModel.SetField(field);
         }
     }

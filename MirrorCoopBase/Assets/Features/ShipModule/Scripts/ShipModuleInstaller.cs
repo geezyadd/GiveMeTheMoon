@@ -69,6 +69,7 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipImpactDamageService>().AsSingle();
             Container.BindInterfacesTo<ShipLandingRepair>().AsSingle();
             Container.BindInterfacesTo<ShipImpactDamageSystem>().AsSingle();
+            Container.BindInterfacesTo<ShipHullLeakRule>().AsSingle();
             Container.BindInterfacesTo<ShipHullLeakSystem>().AsSingle();
         }
 

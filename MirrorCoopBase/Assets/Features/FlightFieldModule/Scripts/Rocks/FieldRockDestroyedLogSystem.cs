@@ -22,7 +22,7 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
 
         private void OnRockDestroyed(FieldRockDestroyed destroyed) =>
             Debug.Log($"{LOG_PREFIX}{destroyed.Id} ({destroyed.SourceId}, {destroyed.Size}, {destroyed.Diameter:F1} m) at {destroyed.Position} by {destroyed.Cause}, "
-                      + $"instigator '{destroyed.Instigator}', field {destroyed.FieldNumber}, loop {destroyed.LoopIndex}");
+                      + $"instigator '{destroyed.Instigator}', weapon '{destroyed.WeaponId}', field {destroyed.FieldNumber}, loop {destroyed.LoopIndex}");
     }
 }
 #endif

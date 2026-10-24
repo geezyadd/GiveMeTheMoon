@@ -5,55 +5,32 @@ using UnityEngine;
 using Zenject;
 
 namespace Features.ShipModule.Scripts.Repair {
-    // A socket's broken module as a repair place: usable with a module repair tool in the hand, by holding interact.
-    // Slot views have no colliders and some socket plates sit in the deck, so the aim finds a broken module by its
-    // repair volume over the socket, which is on only while the module is broken.
-    public sealed class ShipModuleRepairInteractable : InteractableBase {
+    // A socket's broken module as a repair place, for a module repair tool. Slot views have no colliders and some
+    // socket plates sit in the deck, so its repair volume is a trigger over the socket.
+    public sealed class ShipModuleRepairInteractable : ShipRepairInteractableBase {
         [SerializeField] private ShipSocket _socket;
-        [SerializeField] private Collider _repairVolume;
-
-        private readonly HeldRepairTool _heldRepairTool = new HeldRepairTool();
 
         private IShipModuleCondition _shipModuleCondition;
         private IShipConditionService _shipConditionService;
-        private ShipDamageConfiguration _shipDamageConfiguration;
 
-        public bool NeedsRepair => _socket.IsOccupied && _shipModuleCondition.IsWorking(_socket.SocketId) == false;
+        public override bool NeedsRepair => _socket.IsOccupied && _shipModuleCondition.IsWorking(_socket.SocketId) == false;
+        protected override ShipRepairKind RepairKind => ShipRepairKind.Module;
 
         [Inject]
-        private void InjectDependencies(
-            IShipModuleCondition shipModuleCondition,
-            IShipConditionService shipConditionService,
-            ShipDamageConfiguration shipDamageConfiguration) {
+        private void InjectDependencies(IShipModuleCondition shipModuleCondition, IShipConditionService shipConditionService) {
             _shipModuleCondition = shipModuleCondition;
             _shipConditionService = shipConditionService;
-            _shipDamageConfiguration = shipDamageConfiguration;
         }
 
         private void OnEnable() {
-            _shipModuleCondition.OnConditionChanged += OnConditionChanged;
-            OnConditionChanged();
+            _shipModuleCondition.OnConditionChanged += RefreshRepairVolume;
+            RefreshRepairVolume();
         }
 
         private void OnDisable() =>
-            _shipModuleCondition.OnConditionChanged -= OnConditionChanged;
-
-        public override bool CanUse(NetworkIdentity user, GrabController grab) =>
-            NeedsRepair && _heldRepairTool.TryGet(grab, ShipRepairKind.Module, out _);
-
-        public override bool TryGetHoldSeconds(GrabController grab, out float seconds) {
-            seconds = 0f;
-            if (_heldRepairTool.TryGet(grab, ShipRepairKind.Module, out RepairToolDefinition tool) == false)
-                return false;
-
-            seconds = _shipDamageConfiguration.RepairSeconds / tool.SpeedMultiplier;
-            return true;
-        }
+            _shipModuleCondition.OnConditionChanged -= RefreshRepairVolume;
 
         public override void ServerUse(NetworkIdentity user, GrabController grab) =>
             _shipConditionService.ServerRepairModule(_socket.SocketId);
-
-        private void OnConditionChanged() =>
-            _repairVolume.enabled = NeedsRepair;
     }
 }

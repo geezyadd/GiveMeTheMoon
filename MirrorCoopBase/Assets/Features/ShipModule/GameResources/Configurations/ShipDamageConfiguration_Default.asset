@@ -18,4 +18,5 @@ MonoBehaviour:
   _maxOpenBreaches: 4
   _hullPerRepairedBreach: 10
   _leakHullPerSecond: 0.5
+  _leakStepHull: 1
   _repairSeconds: 2.5

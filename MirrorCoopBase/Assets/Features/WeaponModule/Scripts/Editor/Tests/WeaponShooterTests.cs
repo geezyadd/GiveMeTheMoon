@@ -52,6 +52,22 @@ namespace Features.WeaponModule.Editor.Tests {
             Assert.AreEqual(0, _reporter.Reports);
         }
 
+        [Test]
+        public void WhenAnotherPeerReplaysShotsOnASurfaceThatShowsImpacts_ThenEveryStrikeIsShown() {
+            RecordingImpactFeedback impactFeedback = new RecordingImpactFeedback();
+            WeaponShooter shooter = new WeaponShooter(
+                _weapon,
+                new AutoFireMode(0f, 0f, SHOTS_PER_SECOND),
+                new HitscanDelivery(0f, new TargetEverywhereRaycast(TARGET_ID, impactFeedback), new SequenceWeaponRandom(MIDDLE_OF_RANGE)),
+                _feel,
+                new ShownShotOutcomes(_feel));
+
+            AdvanceOneSecond(shooter);
+
+            Assert.Greater(impactFeedback.Impacts, 0);
+            Assert.AreEqual(_feel.Shots, impactFeedback.Impacts);
+        }
+
         private void AdvanceOneSecond(WeaponShooter shooter) {
             for (int frame = 0; frame < FRAMES; frame++)
                 shooter.Advance(_holder, FRAME_SECONDS);

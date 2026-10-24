@@ -1,9 +1,11 @@
+using Features.GrabModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Repair;
 using Features.ShopModule.Scripts.Configurations;
 using UnityEngine;
 
 namespace Features.ShopModule.Scripts.Core {
+    // Shop entry indices: the catalog's modules first, then its tools; every bought item is a grabbable prefab.
     public sealed class ShopPurchaseService : IShopPurchaseService {
         private readonly ShopCatalog _shopCatalog;
 
@@ -11,9 +13,10 @@ namespace Features.ShopModule.Scripts.Core {
             _shopCatalog = shopCatalog;
 
         public ShopPurchaseResult Evaluate(long balance, int entryIndex) {
-            if (TryGetEntry(entryIndex, out long price, out GameObject itemPrefab) == false)
+            if (TryGetEntry(entryIndex, out long price, out Component item) == false)
                 return new ShopPurchaseResult(ShopPurchaseStatus.UnknownItem, 0, null);
 
+            Grabbable itemPrefab = item.GetComponent<Grabbable>();
             if (balance < price)
                 return new ShopPurchaseResult(ShopPurchaseStatus.NotEnoughMoney, price, itemPrefab);
 
@@ -21,11 +24,11 @@ namespace Features.ShopModule.Scripts.Core {
         }
 
         public bool CanAfford(long balance, int entryIndex) =>
-            Evaluate(balance, entryIndex).Status == ShopPurchaseStatus.Success;
+            TryGetEntry(entryIndex, out long price, out _) && balance >= price;
 
-        private bool TryGetEntry(int entryIndex, out long price, out GameObject itemPrefab) {
+        private bool TryGetEntry(int entryIndex, out long price, out Component item) {
             price = 0;
-            itemPrefab = null;
+            item = null;
             if (entryIndex < 0 || entryIndex >= _shopCatalog.EntryCount)
                 return false;
 
@@ -33,13 +36,13 @@ namespace Features.ShopModule.Scripts.Core {
             if (entryIndex < moduleCount) {
                 ModuleDefinition module = _shopCatalog.Modules[entryIndex];
                 price = module.Price;
-                itemPrefab = module.ItemPrefab.gameObject;
+                item = module.ItemPrefab;
                 return true;
             }
 
             RepairToolDefinition tool = _shopCatalog.Tools[entryIndex - moduleCount];
             price = tool.Price;
-            itemPrefab = tool.ItemPrefab.gameObject;
+            item = tool.ItemPrefab;
             return true;
         }
     }

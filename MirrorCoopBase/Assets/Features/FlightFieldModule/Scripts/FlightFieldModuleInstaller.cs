@@ -57,14 +57,21 @@ namespace Features.FlightFieldModule.Scripts {
             InstallDecor();
         }
 
-        // The rocks of the live field one by one: the server finds and breaks them from the field data, every peer
-        // hides a broken one and plays its break.
+        // The rocks of the live field one by one: the server finds, damages and breaks them from the field data, every
+        // peer makes its built rocks weapon targets, shows their hits, hides a broken one and plays its break.
         private void InstallRocks() {
             Container.BindInterfacesTo<LiveFieldBrokenRocks>().AsSingle();
             Container.Bind<IFieldRockClassifier>().To<FieldRockClassifier>().AsSingle();
             Container.Bind<IFieldRockReader>().To<FieldRockReader>().AsSingle();
             Container.Bind<IFieldRockQuery>().To<FieldRockQuery>().AsSingle();
             Container.BindInterfacesTo<FieldRockBreaker>().AsSingle();
+            Container.Bind<IFieldRockTargetIds>().To<FieldRockTargetIds>().AsSingle();
+            Container.Bind<IFieldRockHitPoints>().To<FieldRockHitPoints>().AsSingle();
+            Container.BindInterfacesTo<FieldRockDamageService>().AsSingle();
+            Container.Bind<FieldRockWeaponTarget>().AsSingle();
+            Container.BindInterfacesTo<FieldRockWeaponTargetSystem>().AsSingle();
+            Container.BindInterfacesTo<FieldRockHitFeedbackSystem>().AsSingle();
+            Container.Bind<IFieldRockTargetBinder>().To<FieldRockTargetBinder>().AsSingle();
             Container.Bind<IFieldRockBreakEffectPool>().To<FieldRockBreakEffectPool>().AsSingle();
             Container.BindInterfacesTo<FieldRockBreakViewSystem>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
