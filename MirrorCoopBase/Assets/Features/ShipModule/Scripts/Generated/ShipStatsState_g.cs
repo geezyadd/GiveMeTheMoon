@@ -13,9 +13,10 @@ namespace Features.ShipModule.Scripts.Generated {
         public float FlightSpeed;
         public float Hull;
         public float HullMax;
+        public float SonarRange;
 
         public bool Equals(ShipStatsState other) {
-            return EqualityComparer<float>.Default.Equals(Thrust, other.Thrust) && EqualityComparer<float>.Default.Equals(DodgeRange, other.DodgeRange) && EqualityComparer<float>.Default.Equals(Handling, other.Handling) && EqualityComparer<float>.Default.Equals(Armor, other.Armor) && EqualityComparer<float>.Default.Equals(FlightSpeed, other.FlightSpeed) && EqualityComparer<float>.Default.Equals(Hull, other.Hull) && EqualityComparer<float>.Default.Equals(HullMax, other.HullMax);
+            return EqualityComparer<float>.Default.Equals(Thrust, other.Thrust) && EqualityComparer<float>.Default.Equals(DodgeRange, other.DodgeRange) && EqualityComparer<float>.Default.Equals(Handling, other.Handling) && EqualityComparer<float>.Default.Equals(Armor, other.Armor) && EqualityComparer<float>.Default.Equals(FlightSpeed, other.FlightSpeed) && EqualityComparer<float>.Default.Equals(Hull, other.Hull) && EqualityComparer<float>.Default.Equals(HullMax, other.HullMax) && EqualityComparer<float>.Default.Equals(SonarRange, other.SonarRange);
         }
 
         public override bool Equals(object obj) =>
@@ -30,6 +31,7 @@ namespace Features.ShipModule.Scripts.Generated {
             hash.Add(FlightSpeed);
             hash.Add(Hull);
             hash.Add(HullMax);
+            hash.Add(SonarRange);
             return hash.ToHashCode();
         }
     }

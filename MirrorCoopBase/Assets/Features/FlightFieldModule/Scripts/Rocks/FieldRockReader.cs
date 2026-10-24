@@ -42,7 +42,7 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
 
         public void ReadPlacement(FieldRockFieldData fieldData, FieldFrame frame, int placementIndex, List<FieldRockDescription> rocks) {
             rocks.Clear();
-            FieldPlacement placement = fieldData.Field.Placements[placementIndex];
+            FieldPlacement placement = fieldData.Placements[placementIndex];
             FieldStructureDefinition structure = _fieldStructureCatalog.GetRequired(placement.StructureId);
             if (!_fieldStructureSpawnRule.IsBuiltLocally(structure))
                 return;
@@ -50,7 +50,7 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
             FieldFootprint footprint = _fieldFootprintReader.Read(structure, placement.Rotation);
             Vector3 position = _fieldStructureLayout.GetFieldPose(footprint, placement.Anchor, placement.Rotation, frame.CellSize).position;
             List<FieldClusterRockPose> clusterRocks = ClusterRocks;
-            _fieldPlacementRockLayout.Fill(fieldData.Field.Seed, placementIndex, structure, footprint, frame.CellSize, clusterRocks);
+            _fieldPlacementRockLayout.Fill(fieldData.Seed, placementIndex, structure, footprint, frame.CellSize, clusterRocks);
             for (int rockIndex = 0; rockIndex < clusterRocks.Count; rockIndex++) {
                 FieldClusterRockPose rock = clusterRocks[rockIndex];
                 FieldClusterRecipe recipe = structure.ClusterRecipe;
@@ -62,12 +62,11 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
 
         public void ReadDebrisCell(FieldRockFieldData fieldData, FieldFrame frame, Vector2Int cell, List<FieldRockDescription> rocks) {
             rocks.Clear();
-            if (!fieldData.DebrisCells.TryGetDebris(cell, out _, out FieldDebrisRecipe recipe))
+            if (!fieldData.DebrisCells.TryGetDebris(cell, out _, out FieldDebrisRecipe recipe) || !fieldData.Cells.TryGetDebrisId(cell, out string debrisId))
                 return;
 
-            string debrisId = fieldData.Field.Cells[cell].DebrisId;
             List<FieldDebrisSpot> spots = Spots;
-            _fieldDebrisLayout.Fill(fieldData.Field.Seed, cell, frame.CellSize, fieldData.DebrisCells, fieldData.Workspace, spots);
+            _fieldDebrisLayout.Fill(fieldData.Seed, cell, frame.CellSize, fieldData.DebrisCells, fieldData.Workspace, spots);
             Vector3 cellCenter = FieldFrame.CellCenterInField(cell, frame.CellSize);
             for (int rockIndex = 0; rockIndex < spots.Count; rockIndex++) {
                 FieldDebrisSpot spot = spots[rockIndex];

@@ -23,7 +23,6 @@ namespace Features.ShipModule.Scripts {
 
         private ModuleCatalog _moduleCatalog;
         private IInstantiator _instantiator;
-        private ShipRadarCatalog _radarCatalog;
         private IReadOnlyShipRunModel _run;
         private IReadOnlyShipSocketsModel _sockets;
         private ShipSeat _seat;
@@ -70,13 +69,11 @@ namespace Features.ShipModule.Scripts {
         [Inject]
         private void InjectDependencies(
             ModuleCatalog moduleCatalog,
-            ShipRadarCatalog radarCatalog,
             IReadOnlyShipRunModel run,
             IReadOnlyShipSocketsModel sockets,
             IInstantiator instantiator) {
             _moduleCatalog = moduleCatalog;
             _instantiator = instantiator;
-            _radarCatalog = radarCatalog;
             _run = run;
             _sockets = sockets;
         }
@@ -218,7 +215,6 @@ namespace Features.ShipModule.Scripts {
             ApplyWorldScale(_spawnedView.transform, prefab.transform.localScale);
             _seat = _spawnedView.GetComponentInChildren<ShipSeat>();
             _station = _spawnedView.GetComponentInChildren<ISeatStation>();
-            BindRadarScreen(_spawnedView);
             SyncStationOccupant();
         }
 
@@ -250,22 +246,11 @@ namespace Features.ShipModule.Scripts {
                 parentScale.z == 0f ? worldScale.z : worldScale.z / parentScale.z);
         }
 
-        private void BindRadarScreen(GameObject view) {
-            ShipRadarScreen screen = view.GetComponentInChildren<ShipRadarScreen>(true);
-            if (screen != null)
-                screen.Bind(_radarCatalog, _run, _ship);
-        }
-
         private void ClearSpawnedView() {
             if (_spawnedView == null)
                 return;
 
             LeaveStation();
-
-            ShipRadarScreen screen = _spawnedView.GetComponentInChildren<ShipRadarScreen>(true);
-            if (screen != null)
-                screen.Unbind();
-
             Destroy(_spawnedView);
             _spawnedView = null;
         }

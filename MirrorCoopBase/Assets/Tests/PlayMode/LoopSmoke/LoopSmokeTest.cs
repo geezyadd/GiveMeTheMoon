@@ -26,6 +26,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private LoopSmokeSteamLobbySpy _steamLobby;
         private LoopSmokeShipRunConfigOverride _configOverride;
         private LoopSmokeFieldCatalogOverride _fieldCatalogOverride;
+        private LoopSmokeSonarConfigOverride _sonarConfigOverride;
         private LoopSmokeSession _session;
         private LoopSmokeFieldCheck _fieldCheck;
         private LoopSmokeFlight _flight;
@@ -37,6 +38,7 @@ namespace Tests.PlayMode.LoopSmoke {
         public void SetUp() {
             _configOverride = new LoopSmokeShipRunConfigOverride(LoopSmokeShipRunConfigOverride.FAST_TIMINGS_JSON);
             _fieldCatalogOverride = new LoopSmokeFieldCatalogOverride();
+            _sonarConfigOverride = new LoopSmokeSonarConfigOverride();
             _errorLog = new LoopSmokeErrorLog();
             _steamLobby = new LoopSmokeSteamLobbySpy();
             _steamLobby.BindIntoSceneContexts();
@@ -47,6 +49,7 @@ namespace Tests.PlayMode.LoopSmoke {
         public void TearDown() {
             _configOverride.Dispose();
             _fieldCatalogOverride.Dispose();
+            _sonarConfigOverride.Dispose();
             _errorLog.Dispose();
             _steamLobby.Dispose();
         }
@@ -63,12 +66,14 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return new LoopSmokeHandCheck(_session.Ship).ReinstallRadarByHandCoroutine();
             LoopSmokeRepairCheck repairCheck = new LoopSmokeRepairCheck(_session.Ship);
             yield return repairCheck.RepairEngineAndBreachAtStationCoroutine();
+            LoopSmokeSonarCheck sonar = new LoopSmokeSonarCheck(_session);
+            yield return sonar.StandByConsoleCoroutine();
 
             ShipLandingPad startPad = _flight.FindPadUnderShip();
             LoopSmokeHullCheck hullCheck = new LoopSmokeHullCheck();
             LoopSmokeRockBreakCheck rockBreak = new LoopSmokeRockBreakCheck();
             LoopSmokeRockImpactCheck rockImpact = new LoopSmokeRockImpactCheck();
-            yield return _flight.FlyLoopCoroutine(1, () => HitHullAndRocksInCruiseCoroutine(hullCheck, rockBreak, rockImpact, repairCheck));
+            yield return _flight.FlyLoopCoroutine(1, () => FirstCruiseChecksCoroutine(hullCheck, rockBreak, rockImpact, repairCheck, sonar));
             rockBreak.AssertBrokenListClearedAfterLanding();
             ShipLandingPad firstPad = _flight.FindPadUnderShip();
             yield return _flight.AssertLandedSafelyCoroutine(1, startPad, firstPad);
@@ -155,7 +160,8 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         // The first-cruise checks run in the same cruise, one after the other.
-        private IEnumerator HitHullAndRocksInCruiseCoroutine(LoopSmokeHullCheck hullCheck, LoopSmokeRockBreakCheck rockBreak, LoopSmokeRockImpactCheck rockImpact, LoopSmokeRepairCheck repairCheck) {
+        private IEnumerator FirstCruiseChecksCoroutine(LoopSmokeHullCheck hullCheck, LoopSmokeRockBreakCheck rockBreak, LoopSmokeRockImpactCheck rockImpact, LoopSmokeRepairCheck repairCheck, LoopSmokeSonarCheck sonar) {
+            yield return sonar.UseConsoleInCruiseCoroutine();
             yield return hullCheck.HitInCruiseCoroutine();
             yield return rockBreak.BreakNearestRockInCruiseCoroutine();
             yield return rockImpact.HitSmallAndLargeRockInCruiseCoroutine(_session.Ship, _flight);

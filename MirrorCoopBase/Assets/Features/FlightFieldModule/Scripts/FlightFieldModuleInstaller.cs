@@ -67,7 +67,10 @@ namespace Features.FlightFieldModule.Scripts {
             Container.BindInterfacesTo<LiveFieldBrokenRocks>().AsSingle();
             Container.Bind<IFieldRockClassifier>().To<FieldRockClassifier>().AsSingle();
             Container.Bind<IFieldRockReader>().To<FieldRockReader>().AsSingle();
+            Container.Bind<IFieldRockFieldSource>().To<ServerFieldRockFieldSource>().AsSingle();
             Container.Bind<IFieldRockQuery>().To<FieldRockQuery>().AsSingle();
+            Container.Bind<PublishedFieldRockReader>().AsSingle();
+            Container.Bind<IPeerFieldRockQuery>().To<PeerFieldRockQuery>().AsSingle();
             Container.BindInterfacesTo<FieldRockBreaker>().AsSingle();
             Container.Bind<IFieldRockTargetIds>().To<FieldRockTargetIds>().AsSingle();
             Container.Bind<IFieldRockHitPoints>().To<FieldRockHitPoints>().AsSingle();
@@ -92,7 +95,9 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldTargetCountRule>().To<FieldTargetCountRule>().AsSingle();
             Container.Bind<IFieldTargetRockClearance>().To<FieldTargetRockClearance>().AsSingle();
             Container.BindInterfacesTo<LiveFieldPoppedTargets>().AsSingle();
+            Container.Bind<IFieldTargetFieldSource>().To<ServerFieldTargetFieldSource>().AsSingle();
             Container.Bind<IFieldTargetQuery>().To<FieldTargetQuery>().AsSingle();
+            Container.Bind<IPeerFieldTargetQuery>().To<PeerFieldTargetQuery>().AsSingle();
             Container.BindInterfacesTo<FieldTargetPopper>().AsSingle();
             Container.BindInterfacesTo<FieldTargetDamageService>().AsSingle();
             Container.Bind<IFieldTargetWeaponIds>().To<FieldTargetWeaponIds>().AsSingle();

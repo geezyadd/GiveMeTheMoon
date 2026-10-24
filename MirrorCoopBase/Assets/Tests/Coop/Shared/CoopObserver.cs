@@ -8,6 +8,8 @@ using Features.PlayerProfileModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Generated;
 using Features.ShopModule.Scripts.Generated;
+using Features.SonarModule.Data;
+using Features.SonarModule.Data.Generated;
 using Mirror;
 using Tests.Shared;
 using TMPro;
@@ -37,7 +39,18 @@ namespace Tests.Coop.Shared {
             CaptureLocalPlayer(observation);
             observation.LifeState = SessionQueries.Resolve<IPlayerLifeQuery>().LocalState.ToString();
             observation.IsSpectating = SessionQueries.Resolve<SpectatorModel>().IsSpectating;
+            observation.SonarMarks = CaptureSonarMarks(SessionQueries.Resolve<IReadOnlySonarConsoleModel>());
             return observation;
+        }
+
+        // The contacts the crew has marked, as this process's synced sonar model holds them.
+        private static string[] CaptureSonarMarks(IReadOnlySonarConsoleModel sonar) {
+            List<string> marks = new List<string>();
+            foreach (SonarMark mark in sonar.Marks)
+                marks.Add(mark.ContactId);
+
+            marks.Sort(StringComparer.Ordinal);
+            return marks.ToArray();
         }
 
         private static string[] CaptureSockets(IReadOnlyShipSocketsModel sockets) {

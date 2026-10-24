@@ -27,7 +27,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             FieldDebrisLayout debrisLayout = new(composition.Configuration, composition.Catalog);
             Reader = new FieldRockReader(composition.Catalog, new FieldStructureSpawnRule(), footprintReader, new FieldStructureLayout(footprintReader), placementRockLayout,
                 debrisLayout, new FieldRockClassifier(durabilityConfiguration));
-            Query = new FieldRockQuery(ServerModel, composition.Catalog, composition.Configuration, composition.ProfileLookup, Reader, BrokenRocks, randomFactory);
+            Query = new FieldRockQuery(new ServerFieldRockFieldSource(ServerModel, composition.Catalog, composition.ProfileLookup), composition.Catalog, composition.Configuration, Reader, BrokenRocks,
+                randomFactory);
             Breaker = new FieldRockBreaker(ServerModel, Query, BrokenRocks, BrokenRocks);
             HitPoints = new FieldRockHitPoints(durabilityConfiguration);
             DamageService = new FieldRockDamageService(Query, Breaker, HitPoints, DamageModel, durabilityConfiguration);

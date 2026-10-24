@@ -14,7 +14,6 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ModuleCatalogValidator>().AsSingle();
             Container.BindInterfacesTo<ShipRunConfigValidator>().AsSingle();
             Container.BindInterfacesTo<ShipHullConfigurationValidator>().AsSingle();
-            Container.BindInterfacesTo<ShipRadarService>().AsSingle();
             Container.BindInterfacesTo<ShipStationPads>().AsSingle();
             Container.BindInterfacesTo<ShipStationDropService>().AsSingle();
             InstallFlightLength();

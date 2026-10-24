@@ -29,7 +29,8 @@ using Object = UnityEngine.Object;
 
 namespace Tests.Coop.Host {
     // The editor hosts, a development build of the game is the second player (CoopTestClient). The client joins by direct
-    // IP, both ride one loop, the client leaves in flight and is turned away in flight, comes back at the next station on
+    // IP, both ride one loop (the host navigates at the radar's sonar console and marks the station, the client must see
+    // the mark in its synced model), the client leaves in flight and is turned away in flight, comes back at the next station on
     // the deck, dies there and is bought back by the host at the kiosk, and both ride one more loop. At every step the
     // host compares its own view with the client's report.
     [PrebuildSetup("Tests.Coop.Editor.CoopClientBuild")]
@@ -49,6 +50,7 @@ namespace Tests.Coop.Host {
         private LoopSmokeShipRunConfigOverride _configOverride;
         private LoopSmokeSession _session;
         private LoopSmokeFlight _flight;
+        private LoopSmokeSonarCheck _sonar;
         private string _runDirectory;
         private CoopTestExchange _exchange;
         private CoopClientProcess _client;
@@ -114,7 +116,10 @@ namespace Tests.Coop.Host {
             _configOverride.AssertBound();
             _flight = new LoopSmokeFlight(_session, new LoopSmokeFieldCheck(ProjectContext.Instance.Container));
             _flight.InstallRequiredEngines();
+            _sonar = new LoopSmokeSonarCheck(_session);
+            _sonar.InstallRadarAtStation();
             yield return _flight.BoardPlayerCoroutine();
+            yield return _sonar.StandByConsoleCoroutine();
             yield return WaitForReportCoroutine(CoopTestSteps.BOARDED);
             yield return WaitForCoroutine(IsClientOnDeckOnServer, "the client on the deck by its server position");
             AssertSameView(false, true);
@@ -122,12 +127,18 @@ namespace Tests.Coop.Host {
 
         private IEnumerator RideLoopTogetherCoroutine(int loopIndex) {
             yield return LaunchAndCompareCruiseCoroutine(loopIndex);
+            if (loopIndex == CoopTestSteps.SONAR_MARK_LOOP)
+                yield return MarkForClientCoroutine();
+
             BeginStep($"loop {loopIndex} landing");
             yield return WaitForCoroutine(() => SessionQueries.IsAtStationAfterLoop(loopIndex), $"Build after loop {loopIndex}");
             AssertLanded();
             yield return WaitForReportCoroutine(CoopTestSteps.LANDED);
             Assert.IsTrue(IsClientOnDeckOnServer(), $"The client is not on the deck by its server position after loop {loopIndex}: {ClientServerPosition()}.");
             AssertSameView(false, true);
+            // The console stands at the deck's edge: the host goes back to its boarding spot for the next loops.
+            if (loopIndex == CoopTestSteps.SONAR_MARK_LOOP)
+                yield return _flight.BoardPlayerCoroutine();
         }
 
         private IEnumerator FlyWhileClientLeavesCoroutine() {
@@ -223,6 +234,14 @@ namespace Tests.Coop.Host {
             yield return WaitForReportCoroutine(CoopTestSteps.IN_CRUISE);
             Assert.AreEqual(ShipRunPhase.Cruise, Model.Phase, $"The client's cruise report of loop {loopIndex} came after the cruise.");
             AssertSameView(true, loopIndex != LEAVE_LOOP);
+        }
+
+        // The host is the navigator: its station mark must reach the client's synced sonar model.
+        private IEnumerator MarkForClientCoroutine() {
+            BeginStep("host navigator marks the station");
+            yield return _sonar.MarkStationInCruiseCoroutine();
+            yield return WaitForReportCoroutine(CoopTestSteps.SONAR_MARK_SEEN);
+            CollectionAssert.Contains(_lastReport.SonarMarks, LoopSmokeSonarCheck.STATION_CONTACT_ID, "The client does not see the host navigator's station mark.");
         }
 
         private void AssertLanded() {

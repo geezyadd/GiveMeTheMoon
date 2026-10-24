@@ -55,7 +55,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             _serverModel = new FlightFieldServerModel();
             _serverModel.SetField(_field);
             _poppedTargets = new RecordingPoppedTargets();
-            _query = new FieldTargetQuery(_serverModel, _catalog, _poppedTargets);
+            _query = new FieldTargetQuery(new ServerFieldTargetFieldSource(_serverModel), _catalog, _poppedTargets);
             _popper = new FieldTargetPopper(_serverModel, _query, _poppedTargets, _poppedTargets);
             _damageModel = new FieldTargetDamageModel();
             _damageService = new FieldTargetDamageService(_query, _popper, _catalog, _damageModel, _configuration);
