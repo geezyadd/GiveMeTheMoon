@@ -5,6 +5,7 @@ using Features.CrewInviteModule.Data.Generated;
 using Features.FlightFieldModule.Scripts.Decor;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
+using Features.FlightFieldModule.Scripts.Rocks;
 using Features.FlightFieldModule.Scripts.Scene;
 using Features.FlightFieldModule.Scripts.Server;
 using Features.GrabModule.Scripts;
@@ -56,6 +57,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<IFlightFieldSyncBindingModel>().To<FlightFieldSyncBindingModel>().AsSingle();
             Container.BindInterfacesAndSelfTo<FlightFieldServerModel>().AsSingle();
             Container.BindInterfacesAndSelfTo<FlightFieldSceneModel>().AsSingle();
+            Container.Bind<FieldRockDamageModel>().AsSingle();
             Container.Bind<FieldDecorSceneModel>().AsSingle();
         }
     }

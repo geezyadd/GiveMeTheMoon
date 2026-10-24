@@ -75,7 +75,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         }
 
         [Test]
-        public void WhenCatalogIsRead_ThenEveryLocalStructureHasACompleteRecipeOfColliderFreeRocks() {
+        public void WhenCatalogIsRead_ThenEveryLocalStructureHasACompleteRecipeOfRocksThatNeverCollide() {
             foreach (FieldStructureDefinition structure in _composition.Catalog.Structures.Where(structure => !structure.IsNetworked)) {
                 Assert.IsTrue(structure.HasClusterRecipe, $"{structure.name} has no cluster recipe: it would be an invisible trigger.");
                 FieldClusterRecipe recipe = structure.ClusterRecipe;
@@ -84,9 +84,19 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 Assert.IsTrue(recipe.Materials.All(material => material != null), $"{recipe.name} has an empty material slot.");
                 foreach (FieldClusterRockOption option in recipe.Rocks) {
                     Assert.IsNotNull(option.Prefab, $"{recipe.name} has an empty rock slot.");
-                    Assert.IsEmpty(option.Prefab.GetComponentsInChildren<Collider>(true), $"{option.Prefab.name} has a collider: visual rocks must not collide.");
+                    AssertOnlyWeaponTargetTrigger(option.Prefab);
                     Assert.LessOrEqual(GetFarthestVertex(option.Prefab), FieldRockVisual.MESH_REACH + TOLERANCE, $"{option.Prefab.name} reaches farther than the layout allows: normalise its mesh to about 1 m.");
                 }
+            }
+        }
+
+        // A visual rock never collides: its only collider is its weapon target's trigger, off until a builder binds it.
+        private static void AssertOnlyWeaponTargetTrigger(FieldRockVisual rock) {
+            Assert.IsNotNull(rock.Target, $"{rock.name} has no weapon target.");
+            foreach (Collider collider in rock.GetComponentsInChildren<Collider>(true)) {
+                Assert.AreSame(rock.Target.gameObject, collider.gameObject, $"{rock.name} has a collider besides its weapon target's.");
+                Assert.IsTrue(collider.isTrigger, $"{rock.name}: the weapon target's collider must be a trigger, visual rocks must not collide.");
+                Assert.IsFalse(collider.enabled, $"{rock.name}: the weapon target's collider must be off until a builder binds it.");
             }
         }
 

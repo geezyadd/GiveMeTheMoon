@@ -22,6 +22,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         private readonly IFieldPlacementRockLayout _fieldPlacementRockLayout;
         private readonly IFieldStructurePool _fieldStructurePool;
         private readonly IFieldBrokenRocks _fieldBrokenRocks;
+        private readonly IFieldRockTargetBinder _fieldRockTargetBinder;
         // Reused lists: building runs every frame of the takeoff and allocates nothing once the pool is warm.
         private readonly List<FieldClusterRockPose> _clusterRocks = new();
         private readonly Dictionary<int, FieldBuiltObjects> _objectsByPlacement = new();
@@ -29,7 +30,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
 
         public FieldStructureSceneBuilder(FieldStructureCatalog fieldStructureCatalog, IFieldStructureSpawnRule fieldStructureSpawnRule, IFieldStructureLayout fieldStructureLayout,
                                           IFieldFootprintReader fieldFootprintReader, IFieldPlacementRockLayout fieldPlacementRockLayout, IFieldStructurePool fieldStructurePool,
-                                          IFieldBrokenRocks fieldBrokenRocks) {
+                                          IFieldBrokenRocks fieldBrokenRocks, IFieldRockTargetBinder fieldRockTargetBinder) {
             _fieldStructureCatalog = fieldStructureCatalog;
             _fieldStructureSpawnRule = fieldStructureSpawnRule;
             _fieldStructureLayout = fieldStructureLayout;
@@ -37,6 +38,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             _fieldPlacementRockLayout = fieldPlacementRockLayout;
             _fieldStructurePool = fieldStructurePool;
             _fieldBrokenRocks = fieldBrokenRocks;
+            _fieldRockTargetBinder = fieldRockTargetBinder;
         }
 
         // Kept across scene loads with its pooled objects; it is empty whenever no field stands.
@@ -79,6 +81,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             if (!_objectsByPlacement.Remove(placementIndex, out FieldBuiltObjects objects))
                 return;
 
+            objects.UnbindRocks();
             foreach (GameObject builtObject in objects.Objects)
                 _fieldStructurePool.Return(builtObject);
 
@@ -89,6 +92,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         public void ReleaseAll() {
             _fieldStructurePool.ReturnAll();
             foreach (FieldBuiltObjects objects in _objectsByPlacement.Values) {
+                objects.UnbindRocks();
                 objects.Clear();
                 _freeObjects.Push(objects);
             }
@@ -107,7 +111,8 @@ namespace Features.FlightFieldModule.Scripts.Scene {
 
         // The rocks are children of the trigger, so the field root keeps one object per structure; their offsets
         // are in field space and are carried into the trigger's turned and scaled space. A broken rock still takes
-        // its pooled object, so every rock index keeps its slot, but it stays hidden.
+        // its pooled object, so every rock index keeps its slot, but it stays hidden. Every rock becomes a weapon
+        // target under its rock id.
         private void BuildCluster(Transform trigger, int placementIndex, FieldBuiltObjects objects) {
             Quaternion toTrigger = Quaternion.Inverse(trigger.localRotation);
             float triggerScale = trigger.localScale.x;
@@ -118,7 +123,9 @@ namespace Features.FlightFieldModule.Scripts.Scene {
                 rock.transform.SetLocalPositionAndRotation(toTrigger * rockPose.Offset / triggerScale, toTrigger * rockPose.Rotation);
                 rock.transform.localScale = rockPose.Scale / triggerScale;
                 rock.SetMaterial(rockPose.Material);
-                rock.gameObject.SetActive(!_fieldBrokenRocks.IsBroken(FieldRockId.CreateCluster(placementIndex, rockIndex)));
+                FieldRockId id = FieldRockId.CreateCluster(placementIndex, rockIndex);
+                _fieldRockTargetBinder.Bind(rock, id);
+                rock.gameObject.SetActive(!_fieldBrokenRocks.IsBroken(id));
             }
         }
     }
