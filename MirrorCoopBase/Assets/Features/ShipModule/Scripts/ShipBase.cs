@@ -40,6 +40,7 @@ namespace Features.ShipModule.Scripts {
         private ShipRiders _riders;
         private ShipDeckRideRule _rideRule;
         private ShipSeats _seats;
+        private ShipSteering _steering;
         private ShipFlightControl _flightControl;
         private int _fixedSteps;
         private bool _flying;
@@ -47,6 +48,7 @@ namespace Features.ShipModule.Scripts {
         private IReadOnlyShipRunModel _run;
         private IShipRunService _runService;
         private CharacterMovableModel _characterMovableModel;
+        private ShipRiderKeyModel _shipRiderKeyModel;
 
         public ShipLaunchLever Lever => _lever;
         public Transform Destination => _destination;
@@ -108,13 +110,15 @@ namespace Features.ShipModule.Scripts {
             ShipAccumulativeStatsConfiguration statsConfiguration,
             IReadOnlyShipRunModel run,
             IShipRunService runService,
-            CharacterMovableModel characterMovableModel) {
+            CharacterMovableModel characterMovableModel,
+            ShipRiderKeyModel shipRiderKeyModel) {
             _flightSettings = settings;
             _statsConfiguration = statsConfiguration;
 
             _run = run;
             _runService = runService;
             _characterMovableModel = characterMovableModel;
+            _shipRiderKeyModel = shipRiderKeyModel;
         }
 
         private void Awake() {
@@ -127,9 +131,10 @@ namespace Features.ShipModule.Scripts {
             _modules = new ShipModules(_sockets, statSheet, _statsSync, _conditionSync, ReadStatsConfiguration);
             _hull = new ShipHullStat(statSheet, _modules);
             _rideRule = new ShipDeckRideRule(_deckGeometry, ReadFlightSettings);
-            _riders = new ShipRiders(this, _rideRule, ReadCharacterMovables);
+            _riders = new ShipRiders(this, _rideRule, ReadCharacterMovables, ReadRiderKeys);
             _seats = new ShipSeats(this, _sockets, _riders);
-            _flightControl = new ShipFlightControl(ReadFlightSettings, _modules, _seats);
+            _steering = new ShipSteering(_sockets);
+            _flightControl = new ShipFlightControl(ReadFlightSettings, _modules, _steering);
             _cargo = new ShipDeckCargo(transform, this, _poseSync);
             if (_poseSync != null)
                 _poseSync.BindShip(this, transform);
@@ -158,7 +163,6 @@ namespace Features.ShipModule.Scripts {
                 takeoffSeconds,
                 dodgeRangeScale,
                 mode);
-            _seats.ClearSteer();
             SleepBody();
             _flying = true;
             if (_poseSync != null)
@@ -308,7 +312,7 @@ namespace Features.ShipModule.Scripts {
                     _runService.ServerTick();
             }
             else if (_flying && _poseSync != null) {
-                _poseSync.ApplyInterpolated(_riders.HasOwnedHelmPilot());
+                _poseSync.ApplyInterpolated(_steering.IsSteeredByLocalPlayer());
             }
 
             _cargo.Follow(NetworkServer.active);
@@ -339,6 +343,9 @@ namespace Features.ShipModule.Scripts {
 
         private CharacterMovableModel ReadCharacterMovables() =>
             _characterMovableModel;
+
+        private ShipRiderKeyModel ReadRiderKeys() =>
+            _shipRiderKeyModel;
 
         private void SleepBody() {
             if (_body == null)

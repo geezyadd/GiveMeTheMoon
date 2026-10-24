@@ -7,6 +7,9 @@ namespace Tests.Coop.Shared {
         public const string IN_LOBBY = "in-lobby";
         public const string BOARDED = "boarded";
         public const string IN_CRUISE = "in-cruise";
+        public const string SEATED_AT_HELM = "seated-at-helm";
+        // The loop after whose landing the client takes the helm; it steers the next loop until it leaves in flight.
+        public const int HELM_LOOP = 1;
         public const string LANDED = "landed";
         public const string LEFT_IN_FLIGHT = "left-in-flight";
         public const string REJECTED_IN_FLIGHT = "rejected-in-flight";

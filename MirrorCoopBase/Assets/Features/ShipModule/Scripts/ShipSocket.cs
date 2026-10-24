@@ -1,4 +1,5 @@
 using System;
+using Features.NetworkModelModule.Scripts;
 using Features.ShipModule.Scripts.Generated;
 using Mirror;
 using UnityEngine;
@@ -21,6 +22,8 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private ModuleDefinition _startingModule;
         [SerializeField] private ShipBase _ship;
 
+        private readonly ShipSeatRule _seatRule = new ShipSeatRule();
+
         private ModuleCatalog _moduleCatalog;
         private IInstantiator _instantiator;
         private IReadOnlyShipRunModel _run;
@@ -30,15 +33,18 @@ namespace Features.ShipModule.Scripts {
         private ShipSocketState _shownState;
         private GameObject _spawnedView;
         private ISeatStation _station;
-        private uint _stationOccupantNetId;
+        private ISeatStationOwnerInput _stationOwnerInput;
+        private PlayerKey _stationOccupant;
 
         public string SocketId => _socketId;
         public ShipModuleType AcceptedType => _acceptedType;
         public bool RequiredForLaunch => _requiredForLaunch;
         public bool IsOccupied => State.Occupied;
         public string InstalledModuleId => IsOccupied ? State.ModuleId : null;
-        public uint OccupantNetId => State.OccupantNetId;
+        public PlayerKey Occupant => new PlayerKey(State.OccupantKey);
+        public bool HasOccupant => Occupant.IsEmpty == false;
         public ShipSeat Seat => _seat;
+        public ISeatStation Station => _station;
         public bool IsSittable => _seat != null;
 
         public bool CanAccept(ShipModuleType type) =>
@@ -62,9 +68,6 @@ namespace Features.ShipModule.Scripts {
         // A socket the server has not written yet is empty.
         private ShipSocketState State =>
             _sockets.States.TryGetValue(_socketId, out ShipSocketState state) ? state : default;
-
-        public bool HasHelmPilot =>
-            OccupantNetId != 0 && _seat != null && _seat.Role == ShipSeatRole.Helm;
 
         [Inject]
         private void InjectDependencies(
@@ -103,7 +106,7 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             if (IsOccupied && IsSittable)
-                _outline.enabled = hovered && OccupantNetId == 0;
+                _outline.enabled = hovered && HasOccupant == false;
             else if (IsOccupied)
                 _outline.enabled = hovered && CanUninstall;
             else
@@ -133,30 +136,39 @@ namespace Features.ShipModule.Scripts {
             return true;
         }
 
-        internal bool CanSeat(uint riderNetId) =>
-            IsSittable && riderNetId != 0 && OccupantNetId == 0;
+        public bool IsHeldBy(PlayerKey rider) =>
+            _seatRule.IsHeldBy(Occupant, rider);
 
-        internal bool ServerTrySit(uint riderNetId) {
-            if (isServer == false || CanSeat(riderNetId) == false)
+        internal bool CanSeat(PlayerKey rider) =>
+            _seatRule.CanSit(IsSittable, Occupant, rider);
+
+        internal bool ServerTrySit(PlayerKey rider) {
+            if (isServer == false || CanSeat(rider) == false)
                 return false;
 
-            ServerWriteOccupant(riderNetId);
+            ServerWriteOccupant(rider);
             return true;
         }
 
-        internal void ServerStand(uint riderNetId) {
+        internal void ServerStand(PlayerKey rider) {
             if (isServer == false)
                 return;
 
-            if (OccupantNetId == riderNetId)
-                ServerWriteOccupant(0);
+            if (IsHeldBy(rider))
+                ServerWriteOccupant(default);
         }
 
         internal void ServerClearOccupant() {
-            if (isServer == false || OccupantNetId == 0)
+            if (isServer == false || HasOccupant == false)
                 return;
 
-            ServerWriteOccupant(0);
+            ServerWriteOccupant(default);
+        }
+
+        // Only the seat's occupant sends it (ShipSeats routes by the sender's key); a station that takes none ignores it.
+        internal void ServerReceiveStationInput(float value) {
+            if (isServer && _stationOwnerInput != null)
+                _stationOwnerInput.ServerReceiveOwnerInput(value);
         }
 
         internal void ServerClearInstall() {
@@ -184,9 +196,9 @@ namespace Features.ShipModule.Scripts {
             return Quaternion.Inverse(ship.rotation) * (point.position - ship.position);
         }
 
-        private void ServerWriteOccupant(uint riderNetId) {
+        private void ServerWriteOccupant(PlayerKey rider) {
             ShipSocketState state = State;
-            state.OccupantNetId = riderNetId;
+            state.OccupantKey = rider.IsEmpty ? string.Empty : rider.Id;
             ServerWriteState(state);
         }
 
@@ -197,6 +209,7 @@ namespace Features.ShipModule.Scripts {
             ClearSpawnedView();
             _seat = null;
             _station = null;
+            _stationOwnerInput = null;
             if (IsOccupied == false)
                 return;
 
@@ -215,6 +228,7 @@ namespace Features.ShipModule.Scripts {
             ApplyWorldScale(_spawnedView.transform, prefab.transform.localScale);
             _seat = _spawnedView.GetComponentInChildren<ShipSeat>();
             _station = _spawnedView.GetComponentInChildren<ISeatStation>();
+            _stationOwnerInput = _spawnedView.GetComponentInChildren<ISeatStationOwnerInput>();
             SyncStationOccupant();
         }
 
@@ -263,36 +277,37 @@ namespace Features.ShipModule.Scripts {
 
             ShipSocketState shown = _shownState;
             _shownState = State;
-            if (shown.OccupantNetId != _shownState.OccupantNetId)
-                HandleOccupantChanged(shown.OccupantNetId, _shownState.OccupantNetId);
+            PlayerKey shownOccupant = new PlayerKey(shown.OccupantKey);
+            if (shownOccupant.Equals(Occupant) == false)
+                HandleOccupantChanged(shownOccupant, Occupant);
 
             if (shown.Occupied != _shownState.Occupied || shown.ModuleId != _shownState.ModuleId)
                 RefreshView();
         }
 
-        private void HandleOccupantChanged(uint previous, uint current) {
+        private void HandleOccupantChanged(PlayerKey previous, PlayerKey current) {
             SetHovered(false);
             _ship.Seats.ClientSyncSeat(this, previous, current);
             SyncStationOccupant();
         }
 
-        // A station (a turret) hears who sits in it on every peer; a view without one only seats.
+        // A station (a turret, the helm) hears who sits in it on every peer; a view without one only seats.
         private void SyncStationOccupant() {
-            uint occupant = OccupantNetId;
-            if (_station == null || occupant == _stationOccupantNetId)
+            PlayerKey occupant = Occupant;
+            if (_station == null || occupant.Equals(_stationOccupant))
                 return;
 
             LeaveStation();
-            _stationOccupantNetId = occupant;
-            if (occupant != 0)
+            _stationOccupant = occupant;
+            if (occupant.IsEmpty == false)
                 _station.Enter(occupant);
         }
 
         private void LeaveStation() {
-            if (_station != null && _stationOccupantNetId != 0)
+            if (_station != null && _stationOccupant.IsEmpty == false)
                 _station.Exit();
 
-            _stationOccupantNetId = 0;
+            _stationOccupant = default;
         }
     }
 }

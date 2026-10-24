@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using Features.CharacterMovableModule.Scripts;
+using Features.GrabModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
 using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.ShipModule.Scripts;
@@ -16,18 +17,24 @@ using Object = UnityEngine.Object;
 
 namespace Tests.Coop.Client {
     // The second player of the coop test, in a development build: joins the host by direct IP through the menu,
-    // boards, rides the loops the host flies, leaves in flight, is turned away in flight, comes back at the next
-    // station, dies there and waits to be bought back, and reports what it sees at every step into the exchange
-    // folder. The host test decides pass or fail.
+    // boards, rides the loops the host flies, takes the helm at a station and steers the next flight, leaves in flight
+    // from the helm, is turned away in flight, comes back at the next station, dies there and waits to be bought back,
+    // and reports what it sees at every step into the exchange folder. The host test decides pass or fail.
     public sealed class CoopTestClient : MonoBehaviour {
         private const float STEP_TIMEOUT_SECONDS = 120f;
         private const float SETTLE_SECONDS = 1.5f;
         private const int LEAVE_LOOP = 2;
         private const int LAST_LOOP = 3;
         private const int FAILURE_EXIT_CODE = 1;
+        private const float HELM_DROP_HEIGHT = 0.5f;
+        // The pilot steers this long into the cruise before it leaves, so the host sees the ship turn.
+        private const float STEER_BEFORE_LEAVING_SECONDS = 0.5f;
+        // Held on the move stick from the helm: D, a turn to the right.
+        private static readonly Vector2 _steerRight = Vector2.right;
 
         private readonly WaitForSeconds _settle = new WaitForSeconds(SETTLE_SECONDS);
         private readonly WaitForSeconds _exchangePoll = new WaitForSeconds(CoopTestExchange.POLL_SECONDS);
+        private readonly WaitForSeconds _steerBeforeLeaving = new WaitForSeconds(STEER_BEFORE_LEAVING_SECONDS);
 
         private CoopTestArguments _arguments;
         private CoopTestExchange _exchange;
@@ -59,7 +66,8 @@ namespace Tests.Coop.Client {
             yield return JoinLobbyCoroutine();
             yield return WaitForCoroutine(SessionQueries.IsGameAtStation, "GameScene at the start station");
             yield return BoardCoroutine();
-            yield return RideLoopCoroutine(1);
+            yield return RideLoopCoroutine(CoopTestSteps.HELM_LOOP);
+            yield return TakeHelmCoroutine();
             yield return LeaveInFlightCoroutine();
             yield return KnockInFlightCoroutine();
             yield return RejoinAtStationCoroutine();
@@ -100,8 +108,26 @@ namespace Tests.Coop.Client {
             Report(CoopObserver.CaptureGame(CoopTestSteps.SONAR_MARK_SEEN));
         }
 
+        // Walks to the helm (put beside its seat), sits down through the seat's use command, what E sends, and holds D
+        // through the scripted move stick until it leaves: the host checks the seat, then the turn in the next cruise.
+        private IEnumerator TakeHelmCoroutine() {
+            ShipBase ship = Object.FindAnyObjectByType<ShipBase>();
+            ShipSocket helm = CoopHelm.FindSocket(ship);
+            Vector3 sitSpot = ship.transform.InverseTransformPoint(helm.Seat.SitPoint.position);
+            ShipDeckBoarding.PutAbove(SessionQueries.LocalPlayer.GetComponent<CharacterMovableBase>(), ship, sitSpot, HELM_DROP_HEIGHT);
+            yield return _settle;
+
+            SessionQueries.LocalPlayer.GetComponent<UseController>().RequestUse(helm.GetComponentInChildren<ShipSitInteractable>());
+            yield return WaitForCoroutine(() => CoopHelm.FindStation(ship).IsSteeredByLocalPlayer, "the local player at the helm");
+            CharacterInputBuffer input = SessionQueries.Resolve<CharacterInputBuffer>();
+            input.BeginScripted();
+            input.SetScripted(_steerRight, false, false);
+            Report(CoopObserver.CaptureGame(CoopTestSteps.SEATED_AT_HELM));
+        }
+
         private IEnumerator LeaveInFlightCoroutine() {
             yield return WaitForCruiseCoroutine(LEAVE_LOOP);
+            yield return _steerBeforeLeaving;
             CoopSessionActions.LeaveThroughHud();
             yield return WaitForCoroutine(SessionQueries.IsBackInMenu, "the menu after leaving in flight");
             Report(CoopObserver.CaptureStep(CoopTestSteps.LEFT_IN_FLIGHT));

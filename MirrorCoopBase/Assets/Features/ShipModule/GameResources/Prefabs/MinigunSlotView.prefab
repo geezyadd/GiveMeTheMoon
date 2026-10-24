@@ -31113,7 +31113,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4e5f6478091a2b3c4d5e6f708192031, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _role: 2
   _sitPoint: {fileID: 9178110999724772320}
 --- !u!114 &7976649416319136040
 MonoBehaviour:

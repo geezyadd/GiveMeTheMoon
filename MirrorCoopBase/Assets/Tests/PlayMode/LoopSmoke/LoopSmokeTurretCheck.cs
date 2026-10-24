@@ -58,7 +58,7 @@ namespace Tests.PlayMode.LoopSmoke {
 
             use.RequestUse(seat);
             yield return _session.WaitForCoroutine(() => station.IsOccupiedByLocalPlayer, SEAT_TIMEOUT_SECONDS, "Turret: the host seated at the minigun");
-            Assert.AreEqual(Player.netId, Socket.OccupantNetId, "Turret: the socket does not hold the host as its occupant.");
+            Assert.IsTrue(Socket.IsHeldBy(Player.GetComponent<ShipRider>().Key), "Turret: the socket does not hold the host's key as its occupant.");
 
             station.DebugHoldTrigger(true);
             yield return _session.WaitForCoroutine(() => AimAndCountHits(station, target), FIRE_TIMEOUT_SECONDS, $"Turret: {MIN_ACCEPTED_HITS} hits the server accepted on the debug target");
@@ -68,7 +68,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return _targetCheck.ShootBalloonCoroutine(station);
 
             use.RequestUse(seat);
-            yield return _session.WaitForCoroutine(() => Socket.OccupantNetId == 0 && station.IsOccupiedByLocalPlayer == false, SEAT_TIMEOUT_SECONDS, "Turret: the host stood up from the minigun");
+            yield return _session.WaitForCoroutine(() => Socket.HasOccupant == false && station.IsOccupiedByLocalPlayer == false, SEAT_TIMEOUT_SECONDS, "Turret: the host stood up from the minigun");
             Assert.IsTrue(Player.GetComponent<ShipRider>().IsRiding, "Turret: the host does not ride the ship after standing up in cruise.");
         }
 

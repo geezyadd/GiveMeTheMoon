@@ -43,6 +43,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<CameraShakeModel>().AsSingle();
             Container.Bind<IShipRunBindingModel>().To<ShipRunBindingModel>().AsSingle();
             Container.Bind<IShipClientBindingModel>().To<ShipClientBindingModel>().AsSingle();
+            Container.Bind<ShipRiderKeyModel>().AsSingle();
             Container.Bind<HoveredInteractableModel>().AsSingle();
             Container.Bind<HoldUseModel>().AsSingle();
             Container.Bind<SpectatorModel>().AsSingle();
