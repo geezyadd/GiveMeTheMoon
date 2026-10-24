@@ -25,9 +25,6 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             _fieldObstacleDensity = fieldObstacleDensity;
         }
 
-        public bool IsUsedBy(FieldLayoutKind layout) =>
-            layout == FieldLayoutKind.Obstacles;
-
         public void Execute(FieldGenerationContext context) {
             if (context.Profile.GiantClasses.Count == 0)
                 return;

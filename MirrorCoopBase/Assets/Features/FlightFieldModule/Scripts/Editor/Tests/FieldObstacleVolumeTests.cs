@@ -77,7 +77,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         }
 
         private IEnumerable<(FlightField field, FieldVolumeSource source, List<FieldClusterRockPose> rocks)> LayOutFields() {
-            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Obstacles(_composition.Configuration)) {
+            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
                 for (int seed = FIRST_SEED; seed < FIRST_SEED + SEEDS; seed++) {
                     FlightField field = _composition.Generator.Generate(FieldTestRequests.WithProfile(_scenario.CreateRequest(_composition.RequestFactory, seed, 0), profile));
                     FieldVolumeSource source = CreateSource(field, profile);

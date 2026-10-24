@@ -48,6 +48,7 @@ namespace Features.ShipModule.Scripts {
         private IReadOnlyShipRunModel _run;
         private IShipRunService _runService;
         private CharacterMovableModel _characterMovableModel;
+        private ShipRiderKeyModel _shipRiderKeyModel;
 
         public ShipLaunchLever Lever => _lever;
         public Transform Destination => _destination;
@@ -109,13 +110,15 @@ namespace Features.ShipModule.Scripts {
             ShipAccumulativeStatsConfiguration statsConfiguration,
             IReadOnlyShipRunModel run,
             IShipRunService runService,
-            CharacterMovableModel characterMovableModel) {
+            CharacterMovableModel characterMovableModel,
+            ShipRiderKeyModel shipRiderKeyModel) {
             _flightSettings = settings;
             _statsConfiguration = statsConfiguration;
 
             _run = run;
             _runService = runService;
             _characterMovableModel = characterMovableModel;
+            _shipRiderKeyModel = shipRiderKeyModel;
         }
 
         private void Awake() {
@@ -128,7 +131,7 @@ namespace Features.ShipModule.Scripts {
             _modules = new ShipModules(_sockets, statSheet, _statsSync, _conditionSync, ReadStatsConfiguration);
             _hull = new ShipHullStat(statSheet, _modules);
             _rideRule = new ShipDeckRideRule(_deckGeometry, ReadFlightSettings);
-            _riders = new ShipRiders(this, _rideRule, ReadCharacterMovables);
+            _riders = new ShipRiders(this, _rideRule, ReadCharacterMovables, ReadRiderKeys);
             _seats = new ShipSeats(this, _sockets, _riders);
             _steering = new ShipSteering(_sockets);
             _flightControl = new ShipFlightControl(ReadFlightSettings, _modules, _steering);
@@ -340,6 +343,9 @@ namespace Features.ShipModule.Scripts {
 
         private CharacterMovableModel ReadCharacterMovables() =>
             _characterMovableModel;
+
+        private ShipRiderKeyModel ReadRiderKeys() =>
+            _shipRiderKeyModel;
 
         private void SleepBody() {
             if (_body == null)

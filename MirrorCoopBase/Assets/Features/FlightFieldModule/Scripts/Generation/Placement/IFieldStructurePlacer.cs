@@ -7,6 +7,5 @@ namespace Features.FlightFieldModule.Scripts.Generation.Placement {
         // Places the whole footprint on cells with the given reserve and no placement, or nothing; the cells take the class.
         public bool TryPlace(FieldGenerationContext context, FieldStructureDefinition structure, Vector2Int anchor, FieldRotation rotation, FieldReserveKind reserve,
                              FieldCellClass cellClass);
-        public void Remove(FieldGenerationContext context, int placementId);
     }
 }

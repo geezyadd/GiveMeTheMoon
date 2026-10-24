@@ -60,7 +60,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 serializedConfiguration.FindProperty(DIFFICULTY_PROFILES_FIELD).arraySize = 0;
                 serializedConfiguration.ApplyModifiedPropertiesWithoutUndo();
 
-                Assert.Throws<InvalidOperationException>(new FieldDifficultyProfileValidator(configuration, _composition.Catalog, _composition.FootprintReader).Initialize);
+                Assert.Throws<InvalidOperationException>(new FieldDifficultyProfileValidator(configuration, _composition.Catalog).Initialize);
             } finally {
                 Object.DestroyImmediate(configuration);
             }
@@ -70,7 +70,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         public void WhenStartupValidatorsRunOnTheGameAssets_ThenTheyAcceptThem() {
             Assert.DoesNotThrow(new FieldStructureCatalogValidator(_composition.Catalog).Initialize);
             Assert.DoesNotThrow(new FlightFieldConfigurationValidator(_composition.Configuration).Initialize);
-            Assert.DoesNotThrow(new FieldDifficultyProfileValidator(_composition.Configuration, _composition.Catalog, _composition.FootprintReader).Initialize);
+            Assert.DoesNotThrow(new FieldDifficultyProfileValidator(_composition.Configuration, _composition.Catalog).Initialize);
         }
 
         [Test]

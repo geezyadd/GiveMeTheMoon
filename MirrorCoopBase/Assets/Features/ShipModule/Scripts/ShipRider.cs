@@ -43,6 +43,7 @@ namespace Features.ShipModule.Scripts {
         private CharacterInputBuffer _input;
         private IGameCameraService _cameras;
         private IPlayerIdentityService _playerIdentityService;
+        private ShipRiderKeyModel _shipRiderKeyModel;
 
         private const float OffsetSendSeconds = 0.05f;
         private const float OFFSET_RESEND_SQR_METERS = 0.000001f;
@@ -82,19 +83,31 @@ namespace Features.ShipModule.Scripts {
         private void InjectDependencies(
             CharacterInputBuffer characterInputBuffer,
             IGameCameraService gameCameraService,
-            IPlayerIdentityService playerIdentityService) {
+            IPlayerIdentityService playerIdentityService,
+            ShipRiderKeyModel shipRiderKeyModel) {
             _input = characterInputBuffer;
             _cameras = gameCameraService;
             _playerIdentityService = playerIdentityService;
+            _shipRiderKeyModel = shipRiderKeyModel;
         }
 
-        public override void OnStartServer() =>
+        public override void OnStartServer() {
             _playerKey = _playerIdentityService.GetKey(connectionToClient).Id;
+            _shipRiderKeyModel.Register(this);
+        }
+
+        // A client gets the key with the spawn, before this; on the host the server start registered it already.
+        public override void OnStartClient() =>
+            _shipRiderKeyModel.Register(this);
 
         public override void OnStopServer() {
+            _shipRiderKeyModel.Unregister(this);
             if (_ship != null)
                 _ship.ServerRemoveRider(this);
         }
+
+        public override void OnStopClient() =>
+            _shipRiderKeyModel.Unregister(this);
 
         internal ShipRideRefusal CheckLanding(ShipBase ship) {
             // Right after a drop the interpolated body still trails the moving deck by a frame; without this it lands

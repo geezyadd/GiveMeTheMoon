@@ -5,9 +5,7 @@ using Features.FlightFieldModule.Scripts.Decor;
 using Features.FlightFieldModule.Scripts.Generation;
 using Features.FlightFieldModule.Scripts.Generation.Noise;
 using Features.FlightFieldModule.Scripts.Generation.Obstacles;
-using Features.FlightFieldModule.Scripts.Generation.Passage;
 using Features.FlightFieldModule.Scripts.Generation.Placement;
-using Features.FlightFieldModule.Scripts.Generation.Routes;
 using Features.FlightFieldModule.Scripts.Generation.Steps;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Requests;
@@ -34,19 +32,10 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldRandomFactory>().To<FieldRandomFactory>().AsSingle();
             Container.Bind<IFieldFootprintReader>().To<FieldFootprintReader>().AsSingle();
             Container.Bind<IFieldStructurePlacer>().To<FieldStructurePlacer>().AsSingle();
-            Container.Bind<IFieldGiantPacker>().To<FieldGiantPacker>().AsSingle();
             Container.Bind<IFieldDebrisPicker>().To<FieldDebrisPicker>().AsSingle();
             Container.Bind<IFieldAreaReserver>().To<FieldAreaReserver>().AsSingle();
             Container.Bind<IFieldNoise>().To<FieldValueNoise>().AsSingle();
             Container.Bind<IFieldRidgeNoise>().To<FieldRidgeNoise>().AsSingle();
-            Container.Bind<IFieldRouteShaper>().To<ProfileFieldRouteShaper>().AsSingle();
-            Container.Bind<IFieldPathRasterizer>().To<FieldPathRasterizer>().AsSingle();
-            Container.Bind<IFieldCenterlinePlanner>().To<FieldMeanderPlanner>().AsSingle();
-            Container.Bind<IFieldBranchPlanner>().To<FieldBranchPlanner>().AsSingle();
-            Container.Bind<IFieldCorridorMapper>().To<FieldCorridorMapper>().AsSingle();
-            Container.Bind<IFieldPassageChecker>().To<FieldPassageChecker>().AsSingle();
-            Container.Bind<IFieldClearancePathFinder>().To<FieldClearancePathFinder>().AsSingle();
-            Container.Bind<IFieldCorridorClearer>().To<FieldCorridorClearer>().AsSingle();
             Container.Bind<IFieldDebrisLayout>().To<FieldDebrisLayout>().AsSingle();
             Container.Bind<IFieldObstacleDensity>().To<FieldObstacleDensity>().AsSingle();
             InstallGenerationSteps();
@@ -145,25 +134,16 @@ namespace Features.FlightFieldModule.Scripts {
             Container.BindInterfacesTo<LiveFieldBuildSystem>().AsSingle();
         }
 
-        // The only place that orders generation: the steps run in the order they are bound here, each only for the
-        // profile layouts it serves (Corridors, Obstacles or both). A new kind of field content is a new step class
-        // and one line here.
+        // The only place that orders generation: the steps run in the order they are bound here. A new kind of field
+        // content is a new step class and one line here.
         private void InstallGenerationSteps() {
             Container.Bind<IFieldGenerationStep>().To<FieldFrameStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldStationZoneStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldTakeoffCorridorStep>().AsSingle();
-            Container.Bind<IFieldGenerationStep>().To<FieldRouteStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldObstacleRouteStep>().AsSingle();
-            Container.Bind<IFieldGenerationStep>().To<FieldBranchStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldDensityMapStep>().AsSingle();
-            Container.Bind<IFieldGenerationStep>().To<FieldWallStep>().AsSingle();
-            Container.Bind<IFieldGenerationStep>().To<FieldZoneStep>().AsSingle();
-            Container.Bind<IFieldGenerationStep>().To<FieldGiantPlacementStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldObstacleGiantStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldObstacleDebrisStep>().AsSingle();
-            Container.Bind<IFieldGenerationStep>().To<FieldPassageStep>().AsSingle();
-            Container.Bind<IFieldGenerationStep>().To<FieldObstaclePassageStep>().AsSingle();
-            Container.Bind<IFieldGenerationStep>().To<FieldPathMetricStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldBalanceMetricStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldTargetStep>().AsSingle();
         }

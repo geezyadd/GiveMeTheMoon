@@ -17,6 +17,7 @@ namespace Features.ShipModule.Scripts {
         private readonly IShipDeckRideRule _rideRule;
         // Read on use: the model is injected after the ship's parts are created, and the players spawn after the ship.
         private readonly System.Func<CharacterMovableModel> _characterMovables;
+        private readonly System.Func<ShipRiderKeyModel> _riderKeys;
         private readonly List<ShipRider> _riders = new List<ShipRider>();
 
         private CharacterMovableBase _cachedLocalPlayer;
@@ -24,10 +25,15 @@ namespace Features.ShipModule.Scripts {
 
         public IReadOnlyList<ShipRider> All => _riders;
 
-        internal ShipRiders(ShipBase ship, IShipDeckRideRule rideRule, System.Func<CharacterMovableModel> characterMovables) {
+        internal ShipRiders(
+            ShipBase ship,
+            IShipDeckRideRule rideRule,
+            System.Func<CharacterMovableModel> characterMovables,
+            System.Func<ShipRiderKeyModel> riderKeys) {
             _ship = ship;
             _rideRule = rideRule;
             _characterMovables = characterMovables;
+            _riderKeys = riderKeys;
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -124,21 +130,8 @@ namespace Features.ShipModule.Scripts {
         }
 
         // Every player on this peer, not only the riders: a seat's occupant may stand anywhere or have just spawned.
-        public bool TryFindByKey(PlayerKey key, out ShipRider rider) {
-            rider = null;
-            if (key.IsEmpty)
-                return false;
-
-            foreach (CharacterMovableBase movable in _characterMovables().Movables.Values) {
-                if (movable == null || movable.TryGetComponent(out ShipRider candidate) == false || candidate.Key.Equals(key) == false)
-                    continue;
-
-                rider = candidate;
-                return true;
-            }
-
-            return false;
-        }
+        public bool TryFindByKey(PlayerKey key, out ShipRider rider) =>
+            _riderKeys().TryGet(key, out rider);
 
         private void TryCatchRider(ShipRider rider) {
             if (rider == null || rider.isOwned == false || rider.IsRiding)

@@ -19,7 +19,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // the rocks touching a volume and leaves broken ones out, a rock breaks once, and the broken list goes with the field.
     public sealed class FieldRockTests {
         private const string GIANTS_PROFILE = "obstacles_giants";
-        private const string CORRIDOR_PROFILE = "canyon";
         private const int SEED = 7;
         private const int LOOP = 2;
         private const float PROBE_RADIUS = 120f;
@@ -44,7 +43,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         }
 
         [TestCase(GIANTS_PROFILE)]
-        [TestCase(CORRIDOR_PROFILE)]
         public void WhenTwoIndependentBuildsReadTheSameField_ThenEveryRockHasTheSameIdAndPose(string profileId) {
             FlightField field = GetField(profileId);
             List<Vector3> probes = CreateProbes(field.Frame);
@@ -71,7 +69,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         }
 
         [TestCase(GIANTS_PROFILE)]
-        [TestCase(CORRIDOR_PROFILE)]
         public void WhenAPeerLaysOutDebrisFromThePublishedField_ThenItMatchesTheServer(string profileId) {
             FlightField field = GetField(profileId);
             RecordingFieldPublishTarget published = Publish(field);
@@ -98,7 +95,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         }
 
         [TestCase(GIANTS_PROFILE)]
-        [TestCase(CORRIDOR_PROFILE)]
         public void WhenAVolumeIsQueried_ThenItFindsExactlyTheRocksTouchingIt(string profileId) {
             FlightField field = GetField(profileId);
             FieldRockTestRig rig = new(_composition, _durability, field);
@@ -115,7 +111,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         }
 
         [TestCase(GIANTS_PROFILE)]
-        [TestCase(CORRIDOR_PROFILE)]
         public void WhenAPeerQueriesThePublishedField_ThenItFindsTheSameRocksAsTheServer(string profileId) {
             FlightField field = GetField(profileId);
             FieldRockTestRig rig = new(_composition, _durability, field);

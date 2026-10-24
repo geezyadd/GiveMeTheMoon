@@ -57,8 +57,11 @@ namespace Features.ShipModule.Scripts {
                 return;
             }
 
-            // A rider who switched seats is still seated on the other socket; only standing up releases it.
-            if (_ship.IsFlying || TryGetHeldSocket(previousOccupant, out ShipSocket _) || TryGetOwnedRider(previousOccupant, out ShipRider stood) == false)
+            // In flight the deck carries the rider on; at a station standing up releases it onto the static deck.
+            if (_ship.IsFlying || IsStillSeated(previousOccupant))
+                return;
+
+            if (TryGetOwnedRider(previousOccupant, out ShipRider stood) == false)
                 return;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -107,6 +110,10 @@ namespace Features.ShipModule.Scripts {
             ClearOccupant(rider);
             rider.ServerUnlockSeat();
         }
+
+        // A rider who switched seats is still seated on the other socket; only standing up releases it.
+        private bool IsStillSeated(PlayerKey rider) =>
+            TryGetHeldSocket(rider, out ShipSocket _);
 
         private bool TryGetHeldSocket(PlayerKey rider, out ShipSocket held) {
             held = null;

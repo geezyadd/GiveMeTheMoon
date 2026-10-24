@@ -29,15 +29,9 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         public void WhenObstacleOptionsArePickedByWeight_ThenTheSequenceIsTheSameAsTheFormerPackers() {
             IFieldRandom random = _randomFactory.Create(0);
             IFieldRandom formerRandom = _randomFactory.Create(0);
-            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Corridors(_configuration)) {
-                for (int seed = 1; seed <= SEEDS; seed++) {
-                    random.Reseed(seed);
-                    formerRandom.Reseed(seed);
-                    for (int i = 0; i < PICKS_PER_SEED; i++) {
-                        Assert.AreSame(FormerPickByWeight(profile.RidgeObstacles, formerRandom), FieldWeightedPick.Pick(profile.RidgeObstacles, random),
-                            $"{profile.Id}, seed {seed}, pick {i}: the obstacle differs.");
-                    }
-                }
+            foreach (FieldDifficultyProfile profile in _configuration.DifficultyProfiles) {
+                foreach (FieldGiantClass giantClass in profile.GiantClasses)
+                    AssertSamePicks(giantClass.Obstacles, random, formerRandom, $"{profile.Id} {giantClass.Name}");
             }
         }
 
@@ -57,6 +51,15 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                             $"{structure.Id}, seed {seed}, pick {i}: the rock differs.");
                     }
                 }
+            }
+        }
+
+        private static void AssertSamePicks(IReadOnlyList<FieldObstacleOption> options, IFieldRandom random, IFieldRandom formerRandom, string where) {
+            for (int seed = 1; seed <= SEEDS; seed++) {
+                random.Reseed(seed);
+                formerRandom.Reseed(seed);
+                for (int i = 0; i < PICKS_PER_SEED; i++)
+                    Assert.AreSame(FormerPickByWeight(options, formerRandom), FieldWeightedPick.Pick(options, random), $"{where}, seed {seed}, pick {i}: the obstacle differs.");
             }
         }
 

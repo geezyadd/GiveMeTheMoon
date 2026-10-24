@@ -10,8 +10,7 @@ using UnityEngine;
 namespace Features.FlightFieldModule.Scripts.Editor {
     // Lays out every debris rock of a generated field exactly as the peers build them and measures the slalom: the way
     // from the cruise start to B for a ship that needs half the debris gap (ship width + margin) on every side, its
-    // length against the straight line, the narrowest gap along it, and the rocks per kilometre of the main channels.
-    // The walls count as their cells grown by the largest spill of the wall rocks; the giants of an obstacle field are
+    // length against the straight line, the narrowest gap along it and the rocks of the flight plane. The giants are
     // one rock inside their footprint, so their cells count as they are.
     public sealed class FieldSlalomAnalyzer {
         private const float HALF = 0.5f;
@@ -39,26 +38,22 @@ namespace Features.FlightFieldModule.Scripts.Editor {
         public FieldSlalomReport Analyze(FlightField field) {
             float cellSize = field.Frame.CellSize;
             FieldDifficultyProfile profile = _fieldProfileLookup.GetRequired(field.ProfileId);
-            bool isObstacleField = profile.Layout == FieldLayoutKind.Obstacles;
-            FieldSlalomObstacles obstacles = new(field.Cells, field.Frame.Size, cellSize, isObstacleField ? 0f : WallRockSpill());
+            FieldSlalomObstacles obstacles = new(field.Cells, field.Frame.Size, cellSize);
             List<FieldSlalomRock> rocks = new();
-            int channelRocks = LayOutRocks(field, profile, obstacles, rocks);
+            LayOutRocks(field, profile, obstacles, rocks);
             float clearance = _flightFieldConfiguration.DebrisMinGapMeters * HALF;
             Vector2 start = CellCenter(field.CruiseStartCell, cellSize);
             Vector2 goal = CellCenter(field.StationBCell, cellSize);
             List<Vector2> path = new();
             bool isFound = _fieldSlalomPathFinder.TryFind(obstacles, start, goal, clearance, path);
             float minGap = isFound ? _fieldSlalomPathFinder.MinClearance(obstacles, path, CLEARANCE_LIMIT_METERS) * 2f : 0f;
-            FieldSlalomPlane plane = new(field.Frame.LengthCells * field.Frame.WidthCells * cellSize * cellSize, GiantDiameters(field, isObstacleField));
-            return new FieldSlalomReport(isFound, path, rocks, Length(path), Vector2.Distance(start, goal), minGap, channelRocks, ChannelLength(field), plane);
+            FieldSlalomPlane plane = new(field.Frame.LengthCells * field.Frame.WidthCells * cellSize * cellSize, GiantDiameters(field));
+            return new FieldSlalomReport(isFound, path, rocks, Length(path), Vector2.Distance(start, goal), minGap, plane);
         }
 
         // The diameter the main rock of every giant stays within: the footprint's shorter side.
-        private List<float> GiantDiameters(FlightField field, bool isObstacleField) {
+        private List<float> GiantDiameters(FlightField field) {
             List<float> diameters = new();
-            if (!isObstacleField)
-                return diameters;
-
             foreach (FieldPlacement placement in field.Placements) {
                 FieldFootprint footprint = _fieldFootprintReader.Read(_fieldStructureCatalog.GetRequired(placement.StructureId), placement.Rotation);
                 diameters.Add(Mathf.Min(footprint.Width, footprint.Height) * field.Frame.CellSize);
@@ -67,52 +62,21 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             return diameters;
         }
 
-        // Returns the rocks standing in main corridor cells.
-        private int LayOutRocks(FlightField field, FieldDifficultyProfile profile, FieldSlalomObstacles obstacles, List<FieldSlalomRock> rocks) {
+        private void LayOutRocks(FlightField field, FieldDifficultyProfile profile, FieldSlalomObstacles obstacles, List<FieldSlalomRock> rocks) {
             MatrixFieldDebrisCells cells = new(field.Cells, _fieldStructureCatalog, profile);
             FieldDebrisWorkspace workspace = new(_fieldRandomFactory.Create(0));
             List<FieldDebrisSpot> spots = new();
-            int channelRocks = 0;
             foreach (Vector2Int cell in field.Cells.GetIndexes(HasDebris)) {
                 _fieldDebrisLayout.Fill(field.Seed, cell, field.Frame.CellSize, cells, workspace, spots);
-                if (field.Cells[cell].Reserve == FieldReserveKind.RouteCorridor)
-                    channelRocks += spots.Count;
-
                 foreach (FieldDebrisSpot spot in spots)
                     AddRock(CellCenter(cell, field.Frame.CellSize), spot, obstacles, rocks);
             }
-
-            return channelRocks;
         }
 
         private static void AddRock(Vector2 cellCenter, FieldDebrisSpot spot, FieldSlalomObstacles obstacles, List<FieldSlalomRock> rocks) {
             FieldSlalomRock rock = new(cellCenter + new Vector2(spot.Offset.x, spot.Offset.z), spot.Radius, Mathf.Abs(spot.Offset.y) < spot.Radius);
             rocks.Add(rock);
             obstacles.Add(rock);
-        }
-
-        // The farthest any wall rock may reach past its cell, taken everywhere: the check is on the safe side.
-        private float WallRockSpill() {
-            float spill = 0f;
-            foreach (FieldStructureDefinition structure in _fieldStructureCatalog.Structures) {
-                if (structure.HasClusterRecipe && structure.ClusterRecipe.HasPlaneCover)
-                    spill = Mathf.Max(spill, structure.ClusterRecipe.PlaneMaxSpillMeters);
-            }
-
-            return spill;
-        }
-
-        private static float ChannelLength(FlightField field) {
-            float length = 0f;
-            foreach (FieldRoute route in field.Routes) {
-                if (route.Kind != FieldRouteKind.Main)
-                    continue;
-
-                for (int i = 1; i < route.Centerline.Count; i++)
-                    length += Vector2Int.Distance(route.Centerline[i - 1], route.Centerline[i]) * field.Frame.CellSize;
-            }
-
-            return length;
         }
 
         private static float Length(IReadOnlyList<Vector2> path) {

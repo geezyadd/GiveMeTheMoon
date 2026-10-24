@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor {
     // A fine grid over the field plane where a point is shut when an obstacle surface is closer than the clearance:
-    // every closed cell (and the outside of the matrix) grown by the wall reach and the clearance, every rock in the
+    // every closed cell (and the outside of the matrix) grown by the clearance, every rock in the
     // plane grown by the clearance. Stamped once, so the search looks up a flag instead of measuring distances.
     public sealed class FieldSlalomGrid {
         private const float CELL_CENTER = 0.5f;
@@ -38,12 +38,11 @@ namespace Features.FlightFieldModule.Scripts.Editor {
 
         // The ring of cells just outside the matrix counts as closed, so the field edge is a wall too.
         private void StampWalls(FieldSlalomObstacles obstacles, float clearance) {
-            float reach = obstacles.WallReach + clearance;
             for (int along = -1; along <= obstacles.Size.x; along++) {
                 for (int across = -1; across <= obstacles.Size.y; across++) {
                     Vector2Int cell = new(along, across);
                     if (obstacles.IsClosed(cell))
-                        StampCell(obstacles, cell, IsSurrounded(obstacles, cell) ? 0f : reach);
+                        StampCell(obstacles, cell, IsSurrounded(obstacles, cell) ? 0f : clearance);
                 }
             }
         }

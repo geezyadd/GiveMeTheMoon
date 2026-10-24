@@ -148,9 +148,6 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
                 reach = Mathf.Max(reach, Mathf.Max(recipe.PlaneMaxSpillMeters + recipe.PlaneJitterMeters, recipe.ExtraDiameterMeters.y * HALF));
             }
 
-            foreach (FieldDebrisDefinition debris in catalog.Debris)
-                reach = Mathf.Max(reach, Mathf.Max(debris.Recipe.BigDiameterMeters.y, debris.Recipe.SmallDiameterMeters.y) * HALF);
-
             foreach (FieldDifficultyProfile profile in configuration.DifficultyProfiles) {
                 foreach (FieldRockSizeClass sizeClass in profile.DebrisSizeClasses)
                     reach = Mathf.Max(reach, sizeClass.DiameterMeters.y * HALF);

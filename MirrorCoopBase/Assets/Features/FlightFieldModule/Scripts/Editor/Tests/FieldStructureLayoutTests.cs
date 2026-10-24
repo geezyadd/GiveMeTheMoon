@@ -1,7 +1,7 @@
-using System.Linq;
 using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Structures;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
@@ -12,26 +12,35 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const float TOLERANCE = 0.001f;
         private const int SQUARE_SIDE = 2;
         private const float HALF_TURN_DEGREES = 180f;
+        private const string FOOTPRINT_ROWS_FIELD = "_footprintRows";
+        private const string SQUARE_ROW = "XX";
+        private const string SINGLE_ROW = "X";
 
         private const int FRAME_SIDE_CELLS = 10;
 
         private static readonly Vector2Int _anchor = new(3, 5);
         private static readonly Vector3 _frameOrigin = new(100f, 50f, -20f);
 
-        private FlightFieldEditorComposition _composition;
         private FieldStructureLayout _layout;
+        private FieldStructureDefinition _square;
+        private FieldStructureDefinition _single;
 
         [OneTimeSetUp]
         public void OneTimeSetUp() {
-            _composition = new FlightFieldEditorCompositionFactory().Create();
-            _layout = new FieldStructureLayout(_composition.FootprintReader);
+            _layout = new FieldStructureLayout(new FieldFootprintReader());
+            _square = CreateStructure(SQUARE_ROW, SQUARE_ROW);
+            _single = CreateStructure(SINGLE_ROW);
+        }
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown() {
+            Object.DestroyImmediate(_square);
+            Object.DestroyImmediate(_single);
         }
 
         [Test]
         public void WhenASquareStructureIsLaidOut_ThenItStandsAtTheMiddleOfItsCells() {
-            FieldStructureDefinition square = FindSquare();
-
-            Pose pose = _layout.GetFieldPose(square, _anchor, FieldRotation.None, CELL_SIZE);
+            Pose pose = _layout.GetFieldPose(_square, _anchor, FieldRotation.None, CELL_SIZE);
 
             Vector3 expected = new((_anchor.y + SQUARE_SIDE / 2f) * CELL_SIZE, 0f, (_anchor.x + SQUARE_SIDE / 2f) * CELL_SIZE);
             Assert.Less((pose.position - expected).magnitude, TOLERANCE);
@@ -39,7 +48,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenAStructureIsTurned_ThenItsYawFollowsTheQuarterTurns() {
-            Pose pose = _layout.GetFieldPose(FindSquare(), _anchor, FieldRotation.Half, CELL_SIZE);
+            Pose pose = _layout.GetFieldPose(_square, _anchor, FieldRotation.Half, CELL_SIZE);
 
             Assert.AreEqual(HALF_TURN_DEGREES, pose.rotation.eulerAngles.y, TOLERANCE);
         }
@@ -48,19 +57,22 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         public void WhenAFieldPoseIsMovedToTheWorld_ThenItMatchesTheFrameCellCenters() {
             Vector3 forward = Vector3.right;
             FieldFrame frame = new(_frameOrigin, forward, CELL_SIZE, FRAME_SIDE_CELLS, FRAME_SIDE_CELLS);
-            FieldStructureDefinition single = _composition.Catalog.Structures.First(structure => _composition.FootprintReader.Read(structure, FieldRotation.None).Cells.Count == 1);
 
-            Pose world = _layout.ToWorld(_layout.GetFieldPose(single, _anchor, FieldRotation.None, CELL_SIZE), _frameOrigin, forward);
+            Pose world = _layout.ToWorld(_layout.GetFieldPose(_single, _anchor, FieldRotation.None, CELL_SIZE), _frameOrigin, forward);
 
             Assert.Less((world.position - frame.CellToWorld(_anchor)).magnitude, TOLERANCE);
         }
 
-        private FieldStructureDefinition FindSquare() =>
-            _composition.Catalog.Structures.First(IsSquareOfSide);
+        private static FieldStructureDefinition CreateStructure(params string[] rows) {
+            FieldStructureDefinition structure = ScriptableObject.CreateInstance<FieldStructureDefinition>();
+            SerializedObject serializedStructure = new(structure);
+            SerializedProperty rowsProperty = serializedStructure.FindProperty(FOOTPRINT_ROWS_FIELD);
+            rowsProperty.arraySize = rows.Length;
+            for (int i = 0; i < rows.Length; i++)
+                rowsProperty.GetArrayElementAtIndex(i).stringValue = rows[i];
 
-        private bool IsSquareOfSide(FieldStructureDefinition structure) {
-            FieldFootprint footprint = _composition.FootprintReader.Read(structure, FieldRotation.None);
-            return footprint.Width == SQUARE_SIDE && footprint.Height == SQUARE_SIDE && footprint.Cells.Count == SQUARE_SIDE * SQUARE_SIDE;
+            serializedStructure.ApplyModifiedPropertiesWithoutUndo();
+            return structure;
         }
     }
 }
