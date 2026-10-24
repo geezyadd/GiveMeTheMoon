@@ -23,7 +23,7 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
             _fieldBrokenRockWriter = fieldBrokenRockWriter;
         }
 
-        public FieldRockBreakResult ServerBreak(FieldRockId id, FieldRockDestroyCause cause, PlayerKey instigator) {
+        public FieldRockBreakResult ServerBreak(FieldRockId id, FieldRockDestroyCause cause, PlayerKey instigator, string weaponId = "") {
             if (!_fieldBrokenRockWriter.IsAvailable || !_flightFieldServerModel.HasField)
                 return FieldRockBreakResult.NoField;
 
@@ -37,7 +37,7 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
                 return FieldRockBreakResult.Unbreakable;
 
             _fieldBrokenRockWriter.ServerAdd(id);
-            RockDestroyed?.Invoke(new FieldRockDestroyed(rock, cause, instigator, _flightFieldServerModel.Number, _flightFieldServerModel.Field.LoopIndex));
+            RockDestroyed?.Invoke(new FieldRockDestroyed(rock, cause, instigator, weaponId, _flightFieldServerModel.Number, _flightFieldServerModel.Field.LoopIndex));
             return FieldRockBreakResult.Broken;
         }
 

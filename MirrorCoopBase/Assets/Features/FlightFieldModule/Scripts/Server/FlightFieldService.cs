@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Features.FlightFieldModule.Scripts.Generation;
 using Features.FlightFieldModule.Scripts.Model;
@@ -20,16 +21,16 @@ namespace Features.FlightFieldModule.Scripts.Server {
         private readonly FlightFieldServerModel _flightFieldServerModel;
         private readonly IFlightFieldPublisher _flightFieldPublisher;
         private readonly IFieldNetworkedStructures _fieldNetworkedStructures;
-        private readonly IFieldRockReset _fieldRockReset;
+        private readonly List<IFieldRockReset> _fieldRockResets;
 
         public FlightFieldService(IFieldRequestFactory fieldRequestFactory, IFlightFieldGenerator flightFieldGenerator, FlightFieldServerModel flightFieldServerModel,
-                                  IFlightFieldPublisher flightFieldPublisher, IFieldNetworkedStructures fieldNetworkedStructures, IFieldRockReset fieldRockReset) {
+                                  IFlightFieldPublisher flightFieldPublisher, IFieldNetworkedStructures fieldNetworkedStructures, List<IFieldRockReset> fieldRockResets) {
             _fieldRequestFactory = fieldRequestFactory;
             _flightFieldGenerator = flightFieldGenerator;
             _flightFieldServerModel = flightFieldServerModel;
             _flightFieldPublisher = flightFieldPublisher;
             _fieldNetworkedStructures = fieldNetworkedStructures;
-            _fieldRockReset = fieldRockReset;
+            _fieldRockResets = fieldRockResets;
         }
 
         public Task<FlightField> ServerStartGeneration(FlightLaunch launch) {
@@ -39,7 +40,7 @@ namespace Features.FlightFieldModule.Scripts.Server {
         }
 
         public void ServerPublish(FlightField field) {
-            _fieldRockReset.ServerReset();
+            ResetRocks();
             _flightFieldServerModel.SetField(field);
             _fieldNetworkedStructures.ServerSpawn(_flightFieldServerModel);
             _flightFieldPublisher.Publish(_flightFieldServerModel.Field, _flightFieldServerModel.Number);
@@ -54,7 +55,7 @@ namespace Features.FlightFieldModule.Scripts.Server {
             if (NetworkServer.active) {
                 _fieldNetworkedStructures.ServerDespawn(_flightFieldServerModel);
                 _flightFieldPublisher.Clear();
-                _fieldRockReset.ServerReset();
+                ResetRocks();
             }
 
             _flightFieldServerModel.ClearField();
@@ -73,6 +74,12 @@ namespace Features.FlightFieldModule.Scripts.Server {
             _flightFieldServerModel.ShiftFrame(delta);
             _fieldNetworkedStructures.ServerShift(_flightFieldServerModel, delta);
             _flightFieldPublisher.ShiftOrigin(delta);
+        }
+
+        // The broken list and the damage taken belong to one field.
+        private void ResetRocks() {
+            foreach (IFieldRockReset fieldRockReset in _fieldRockResets)
+                fieldRockReset.ServerReset();
         }
     }
 }

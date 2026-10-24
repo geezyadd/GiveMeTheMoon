@@ -2,12 +2,13 @@ using Features.NetworkModelModule.Scripts;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Contracts {
-    // One rock broken on the server: what it was, where, why and by whom (an empty key when nobody did it), and in
-    // which field of which loop.
+    // One rock broken on the server: what it was, where, why and by whom (an empty key when nobody did it), with which
+    // weapon (an empty id when it was not a weapon), and in which field of which loop.
     public readonly struct FieldRockDestroyed {
         public FieldRockDescription Rock { get; }
         public FieldRockDestroyCause Cause { get; }
         public PlayerKey Instigator { get; }
+        public string WeaponId { get; }
         public int FieldNumber { get; }
         public int LoopIndex { get; }
         public FieldRockId Id => Rock.Id;
@@ -16,10 +17,11 @@ namespace Features.FlightFieldModule.Contracts {
         public float Diameter => Rock.Diameter;
         public Vector3 Position => Rock.Center;
 
-        public FieldRockDestroyed(FieldRockDescription rock, FieldRockDestroyCause cause, PlayerKey instigator, int fieldNumber, int loopIndex) {
+        public FieldRockDestroyed(FieldRockDescription rock, FieldRockDestroyCause cause, PlayerKey instigator, string weaponId, int fieldNumber, int loopIndex) {
             Rock = rock;
             Cause = cause;
             Instigator = instigator;
+            WeaponId = weaponId;
             FieldNumber = fieldNumber;
             LoopIndex = loopIndex;
         }

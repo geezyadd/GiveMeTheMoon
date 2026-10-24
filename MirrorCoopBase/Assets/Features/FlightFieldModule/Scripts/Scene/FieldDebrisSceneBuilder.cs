@@ -20,6 +20,8 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         private readonly IFieldDebrisLayout _fieldDebrisLayout;
         private readonly IFieldStructurePool _fieldStructurePool;
         private readonly IFieldBrokenRocks _fieldBrokenRocks;
+        private readonly IFieldRockTargetIds _fieldRockTargetIds;
+        private readonly IFieldRockHitFeedback _fieldRockHitFeedback;
         // Reused: debris is built every frame in flight and allocates nothing once the pool is warm.
         private readonly FieldDebrisWorkspace _workspace;
         private readonly IFieldRandom _lookRandom;
@@ -28,10 +30,12 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         private readonly Stack<FieldBuiltObjects> _freeObjects = new();
 
         public FieldDebrisSceneBuilder(IFieldDebrisLayout fieldDebrisLayout, IFieldStructurePool fieldStructurePool, IFieldRandomFactory fieldRandomFactory,
-                                       IFieldBrokenRocks fieldBrokenRocks) {
+                                       IFieldBrokenRocks fieldBrokenRocks, IFieldRockTargetIds fieldRockTargetIds, IFieldRockHitFeedback fieldRockHitFeedback) {
             _fieldDebrisLayout = fieldDebrisLayout;
             _fieldStructurePool = fieldStructurePool;
             _fieldBrokenRocks = fieldBrokenRocks;
+            _fieldRockTargetIds = fieldRockTargetIds;
+            _fieldRockHitFeedback = fieldRockHitFeedback;
             _workspace = new FieldDebrisWorkspace(fieldRandomFactory.Create(0));
             _lookRandom = fieldRandomFactory.Create(0);
         }
@@ -59,8 +63,10 @@ namespace Features.FlightFieldModule.Scripts.Scene {
                 _lookRandom.Reseed(spot.LookSeed);
                 FieldRockVisual rock = BuildRock(root, recipe, cellCenter + spot.Offset, spot.Diameter);
                 objects.AddRock(rock);
+                FieldRockId id = FieldRockId.CreateDebris(cell, rockIndex);
+                rock.Target.Bind(_fieldRockTargetIds.GetTargetId(id), _fieldRockHitFeedback);
                 // A broken rock keeps its slot, so every rock index still names its rock, but stays hidden.
-                rock.gameObject.SetActive(!_fieldBrokenRocks.IsBroken(FieldRockId.CreateDebris(cell, rockIndex)));
+                rock.gameObject.SetActive(!_fieldBrokenRocks.IsBroken(id));
             }
         }
 
@@ -77,6 +83,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             if (!_objectsByCell.Remove(cell, out FieldBuiltObjects objects))
                 return;
 
+            UnbindRocks(objects);
             foreach (GameObject rock in objects.Objects)
                 _fieldStructurePool.Return(rock);
 
@@ -88,6 +95,7 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             _fieldStructurePool.ReturnAll();
             _workspace.Clear();
             foreach (FieldBuiltObjects objects in _objectsByCell.Values) {
+                UnbindRocks(objects);
                 objects.Clear();
                 _freeObjects.Push(objects);
             }
@@ -104,6 +112,11 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             rock.transform.localScale = new Vector3(AxisScale(recipe) * size, AxisScale(recipe) * size, AxisScale(recipe) * size);
             rock.SetMaterial(recipe.Materials[_lookRandom.Range(0, recipe.Materials.Count)]);
             return rock;
+        }
+
+        private static void UnbindRocks(FieldBuiltObjects objects) {
+            foreach (FieldRockVisual rock in objects.Rocks)
+                rock.Target.Unbind();
         }
 
         private float AxisScale(FieldDebrisRecipe recipe) =>

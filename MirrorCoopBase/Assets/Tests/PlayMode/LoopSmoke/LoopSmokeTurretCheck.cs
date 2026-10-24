@@ -13,7 +13,8 @@ using UnityEngine;
 namespace Tests.PlayMode.LoopSmoke {
     // The minigun turret: installed at a station, then in cruise the host sits down through the seat's use command,
     // aims the turret at the debug dummy (the station's test hook stands in for the mouse) and holds the trigger
-    // until the server has accepted hits on the dummy, then stands up again.
+    // until the server has accepted hits on the dummy, then shoots a field rock until it breaks
+    // (LoopSmokeRockShootCheck) and stands up again.
     public sealed class LoopSmokeTurretCheck {
         private const string MINIGUN_MODULE_ID = "minigun";
         private const string TURRET_SOCKET_ID = "turret-front";
@@ -58,11 +59,12 @@ namespace Tests.PlayMode.LoopSmoke {
             station.DebugHoldTrigger(true);
             yield return _session.WaitForCoroutine(() => AimAndCountHits(station, target), FIRE_TIMEOUT_SECONDS, $"Turret: {MIN_ACCEPTED_HITS} hits the server accepted on the debug target");
             station.DebugHoldTrigger(false);
+            targets.DebugDespawnTarget();
+            yield return new LoopSmokeRockShootCheck(_session).ShootNearestSmallRockCoroutine(station);
 
             use.RequestUse(seat);
             yield return _session.WaitForCoroutine(() => Socket.OccupantNetId == 0 && station.IsOccupiedByLocalPlayer == false, SEAT_TIMEOUT_SECONDS, "Turret: the host stood up from the minigun");
             Assert.IsTrue(Player.GetComponent<ShipRider>().IsRiding, "Turret: the host does not ride the ship after standing up in cruise.");
-            targets.DebugDespawnTarget();
         }
 
         // The dummy sways from side to side: the turret follows it every frame, as a player would.
