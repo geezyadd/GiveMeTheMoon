@@ -127,15 +127,9 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
                 return;
 
             for (int i = 0; i < spots.Count; i++) {
-                if (DistanceToSegment(OnPlane(cell, spots[i], cellSize), start, end) < halfShip + spots[i].Radius)
+                if (FieldPlaneGeometry.DistanceToSegment(OnPlane(cell, spots[i], cellSize), start, end) < halfShip + spots[i].Radius)
                     dodged.Add((cell, i));
             }
-        }
-
-        private static float DistanceToSegment(Vector2 point, Vector2 start, Vector2 end) {
-            Vector2 segment = end - start;
-            float along = Mathf.Clamp01(Vector2.Dot(point - start, segment) / segment.sqrMagnitude);
-            return Vector2.Distance(point, start + segment * along);
         }
 
         // Field plane coordinates: x across (matrix y), y along (matrix x).

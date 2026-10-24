@@ -129,11 +129,12 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private bool IsInEmptyArea(FieldObstacleSample sample, Vector2Int cell) {
             FlightFieldConfiguration configuration = _composition.Configuration;
             FieldRequest request = sample.Request;
-            Vector2 middle = ToGround(sample.Field.Frame.CellToWorld(cell));
-            Vector2 stationA = ToGround(request.StationA);
+            Vector2 middle = FieldPlaneGeometry.ToGround(sample.Field.Frame.CellToWorld(cell));
+            Vector2 stationA = FieldPlaneGeometry.ToGround(request.StationA);
             bool isInStationZone = Vector2.Distance(middle, stationA) <= configuration.StationAZoneRadius
-                                   || Vector2.Distance(middle, ToGround(request.StationB)) <= configuration.StationBZoneRadius;
-            return isInStationZone || DistanceToSegment(middle, stationA, ToGround(CorridorEnd(request))) <= configuration.TakeoffCorridorHalfWidth;
+                                   || Vector2.Distance(middle, FieldPlaneGeometry.ToGround(request.StationB)) <= configuration.StationBZoneRadius;
+            float toCorridor = FieldPlaneGeometry.DistanceToSegment(middle, stationA, FieldPlaneGeometry.ToGround(CorridorEnd(request)));
+            return isInStationZone || toCorridor <= configuration.TakeoffCorridorHalfWidth;
         }
 
         // The corridor runs from A along the takeoff heading past the cruise start (FieldTakeoffCorridorStep).
@@ -146,22 +147,21 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private static bool TryFindReservedCellUnder(FlightField field, FieldSlalomRock rock, out Vector2Int reservedCell) {
             reservedCell = default;
             float cellSize = field.Frame.CellSize;
-            Vector2Int center = FieldPlaneCells.ToCell(rock.Position, cellSize);
             int reach = Mathf.CeilToInt(rock.Radius / cellSize) + 1;
-            for (int x = center.x - reach; x <= center.x + reach; x++) {
-                for (int y = center.y - reach; y <= center.y + reach; y++) {
-                    Vector2Int cell = new(x, y);
-                    bool isReserved = field.Cells.ValidateIndex(cell) && field.Cells[cell].IsReserved;
-                    if (!isReserved || FieldPlaneCells.DistanceToCell(rock.Position, cell, cellSize) >= rock.Radius - GAP_TOLERANCE)
-                        continue;
+            foreach (Vector2Int cell in CellsAround(FieldPlaneCells.ToCell(rock.Position, cellSize), reach)) {
+                if (!IsReservedUnderRock(field, rock, cell))
+                    continue;
 
-                    reservedCell = cell;
-                    return true;
-                }
+                reservedCell = cell;
+                return true;
             }
 
             return false;
         }
+
+        private static bool IsReservedUnderRock(FlightField field, FieldSlalomRock rock, Vector2Int cell) =>
+            field.Cells.ValidateIndex(cell) && field.Cells[cell].IsReserved
+                                            && FieldPlaneCells.DistanceToCell(rock.Position, cell, field.Frame.CellSize) < rock.Radius - GAP_TOLERANCE;
 
         // Every placement stands on exactly its footprint's cells, and no cell of another giant lies within the
         // profile's gap cells around them.
@@ -171,11 +171,8 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             foreach (FieldPlacement placement in field.Placements) {
                 FieldFootprint footprint = _composition.FootprintReader.Read(_composition.Catalog.GetRequired(placement.StructureId), placement.Rotation);
                 footprintCells += footprint.Cells.Count;
-                foreach (Vector2Int cell in footprint.Cells) {
-                    Vector2Int position = placement.Anchor + cell;
-                    if (!field.Cells.ValidateIndex(position) || field.Cells[position].PlacementId != placement.Id)
-                        yield return $"{sample.Name}: placement {placement.Id} ({placement.StructureId}) does not own its footprint cell {position}.";
-                }
+                foreach (Vector2Int position in footprint.Cells.Select(cell => placement.Anchor + cell).Where(position => !IsOwnedBy(field, placement, position)))
+                    yield return $"{sample.Name}: placement {placement.Id} ({placement.StructureId}) does not own its footprint cell {position}.";
             }
 
             int occupiedCells = field.Cells.GetIndexes(IsOccupied).Count();
@@ -188,17 +185,23 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             }
         }
 
+        private static bool IsOwnedBy(FlightField field, FieldPlacement placement, Vector2Int cell) =>
+            field.Cells.ValidateIndex(cell) && field.Cells[cell].PlacementId == placement.Id;
+
         private static bool IsOtherGiantAround(FlightField field, Vector2Int center, int gapCells) {
             int placement = field.Cells[center].PlacementId;
-            for (int x = center.x - gapCells; x <= center.x + gapCells; x++) {
-                for (int y = center.y - gapCells; y <= center.y + gapCells; y++) {
-                    Vector2Int cell = new(x, y);
-                    if (field.Cells.ValidateIndex(cell) && field.Cells[cell].IsOccupied && field.Cells[cell].PlacementId != placement)
-                        return true;
-                }
-            }
+            return CellsAround(center, gapCells).Any(cell => IsOtherGiantCell(field, cell, placement));
+        }
 
-            return false;
+        private static bool IsOtherGiantCell(FlightField field, Vector2Int cell, int placement) =>
+            field.Cells.ValidateIndex(cell) && field.Cells[cell].IsOccupied && field.Cells[cell].PlacementId != placement;
+
+        // The square of cells within the reach around the center, in or out of the field.
+        private static IEnumerable<Vector2Int> CellsAround(Vector2Int center, int reach) {
+            for (int x = center.x - reach; x <= center.x + reach; x++) {
+                for (int y = center.y - reach; y <= center.y + reach; y++)
+                    yield return new Vector2Int(x, y);
+            }
         }
 
         private IEnumerable<string> FindNarrowPlaneGaps(FieldObstacleSample sample) {
@@ -252,15 +255,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 yield return $"{sample.Name}: no way for the ship from the cruise start to B.";
             else if (sample.Report.MinGapMeters < minGap)
                 yield return $"{sample.Name}: the way passes a gap of {sample.Report.MinGapMeters:0.0} m.";
-        }
-
-        private static Vector2 ToGround(Vector3 point) =>
-            new(point.x, point.z);
-
-        private static float DistanceToSegment(Vector2 point, Vector2 start, Vector2 end) {
-            Vector2 segment = end - start;
-            float along = segment.sqrMagnitude > 0f ? Mathf.Clamp01(Vector2.Dot(point - start, segment) / segment.sqrMagnitude) : 0f;
-            return Vector2.Distance(point, start + segment * along);
         }
 
         private static bool IsOccupied(FieldCell cell) =>

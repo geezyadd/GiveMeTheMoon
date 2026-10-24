@@ -65,18 +65,23 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
         private void CollectFittingGiants(FieldGenerationContext context, List<FieldGiantClass> fittingClasses,
                                           Dictionary<FieldGiantClass, List<FieldObstacleOption>> fittingObstacles) {
             foreach (FieldGiantClass giantClass in context.Profile.GiantClasses) {
-                List<FieldObstacleOption> obstacles = new();
-                foreach (FieldObstacleOption obstacle in giantClass.Obstacles) {
-                    if (Fits(_fieldFootprintReader.Read(obstacle.Structure, FieldRotation.None), context.Frame.Size))
-                        obstacles.Add(obstacle);
-                }
-
+                List<FieldObstacleOption> obstacles = CollectFittingObstacles(giantClass, context.Frame.Size);
                 if (!HasWeight(obstacles))
                     continue;
 
                 fittingClasses.Add(giantClass);
                 fittingObstacles.Add(giantClass, obstacles);
             }
+        }
+
+        private List<FieldObstacleOption> CollectFittingObstacles(FieldGiantClass giantClass, Vector2Int frameSize) {
+            List<FieldObstacleOption> obstacles = new();
+            foreach (FieldObstacleOption obstacle in giantClass.Obstacles) {
+                if (Fits(_fieldFootprintReader.Read(obstacle.Structure, FieldRotation.None), frameSize))
+                    obstacles.Add(obstacle);
+            }
+
+            return obstacles;
         }
 
         private static bool Fits(FieldFootprint footprint, Vector2Int frameSize) =>

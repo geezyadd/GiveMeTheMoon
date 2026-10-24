@@ -450,7 +450,7 @@ memory, spawned objects, items and their growth, pads, shifts, the ship's distan
 field objects in cruise and pooled field objects) and fails when memory at the last loop is more than 1.5 times that
 of loop 2. Station drops are never removed, so items grow by about 10 per loop: reported, not failed.
 
-The whole EditMode suite (about 1 000 tests) takes about 2.5 minutes (2 min 35 s, 1015 tests, on 2026-10-25): `Invoke-AgentEditor.ps1 -AgentDir . -Command run-tests -Mode EditMode`. While a test run is on, an error of the MCP for Unity bridge (message with the `MCP-FOR-UNITY` prefix, e.g. a lost websocket) goes to the log as a warning, so it fails no test, OneTimeSetUp or loop test error log; only that prefix, in one place: `Tests/Shared/Editor/TestLogBridgeErrorFilter` (editor, wraps `Debug.unityLogger.logHandler`, run state from the Test Runner callbacks; `TestLogBridgeErrorFilterTests`).
+The whole EditMode suite (about 1 000 tests) takes about 2.5 minutes (2 min 34 s, 1027 tests, on 2026-10-25): `Invoke-AgentEditor.ps1 -AgentDir . -Command run-tests -Mode EditMode`. While a test run is on, an error of the MCP for Unity bridge (message with the `MCP-FOR-UNITY` prefix, e.g. a lost websocket) goes to the log as a warning, so it fails no test, OneTimeSetUp or loop test error log; only that prefix, in one place: `Tests/Shared/Editor/TestLogBridgeErrorFilter` (editor, wraps `Debug.unityLogger.logHandler`, run state from the Test Runner callbacks; `TestLogBridgeErrorFilterTests`).
 
 EditMode guard tests keep the data rules: `ConfigurationLoadingGuardTests` (no `Resources.Load`, every configuration
 address loads), `ModuleCatalogGuardTests` (module ids set and unique, shop and drops only use catalog modules, no code
