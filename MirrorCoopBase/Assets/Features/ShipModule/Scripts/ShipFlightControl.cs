@@ -1,7 +1,8 @@
+using Features.ShipModule.Scripts.Impacts;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    internal sealed class ShipFlightControl : IShipFlightControl
+    internal sealed class ShipFlightControl : IShipFlightControl, IShipKnockback
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         , IShipFlightControlDebug
 #endif
@@ -27,7 +28,7 @@ namespace Features.ShipModule.Scripts {
         internal bool IsActive => _flight.IsActive;
         internal Vector3 Position => _flight.Position;
         internal Quaternion Rotation => _flight.Rotation;
-        internal Vector3 Velocity => _flight.Velocity;
+        public Vector3 Velocity => _flight.Velocity;
 
         internal ShipFlightControl(System.Func<ShipFlightSettings> flightSettings, IShipModules modules, IShipSeats seats) {
             _flightSettings = flightSettings;
@@ -83,6 +84,12 @@ namespace Features.ShipModule.Scripts {
         internal void ShiftWorld(Vector3 delta) =>
             _flight.ShiftWorld(delta);
 
+        public void ApplyKnockback(Vector3 velocity, float fadeSeconds, float maxAcceleration) =>
+            _flight.ApplyKnockback(velocity, fadeSeconds, maxAcceleration);
+
+        public void SustainKnockback(Vector3 direction, float minimumSpeed) =>
+            _flight.SustainKnockback(direction, minimumSpeed);
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public void SetDebugSteer(bool active, float steer) {
             _debugSteerActive = active;
@@ -91,6 +98,10 @@ namespace Features.ShipModule.Scripts {
 
         public void DebugFace(Vector3 worldForward) =>
             _flight.DebugFace(worldForward);
+
+        // Moves the whole flight path like a world shift, so the move itself is no velocity.
+        public void DebugMove(Vector3 delta) =>
+            _flight.ShiftWorld(delta);
 #endif
 
         internal void ServerStep(float dt) {

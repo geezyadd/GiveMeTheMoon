@@ -59,7 +59,8 @@ namespace Tests.PlayMode.LoopSmoke {
             ShipLandingPad startPad = _flight.FindPadUnderShip();
             LoopSmokeHullCheck hullCheck = new LoopSmokeHullCheck();
             LoopSmokeRockBreakCheck rockBreak = new LoopSmokeRockBreakCheck();
-            yield return _flight.FlyLoopCoroutine(1, () => HitHullAndBreakRockInCruiseCoroutine(hullCheck, rockBreak));
+            LoopSmokeRockImpactCheck rockImpact = new LoopSmokeRockImpactCheck();
+            yield return _flight.FlyLoopCoroutine(1, () => HitHullAndRocksInCruiseCoroutine(hullCheck, rockBreak, rockImpact));
             rockBreak.AssertBrokenListClearedAfterLanding();
             ShipLandingPad firstPad = _flight.FindPadUnderShip();
             yield return _flight.AssertLandedSafelyCoroutine(1, startPad, firstPad);
@@ -126,10 +127,11 @@ namespace Tests.PlayMode.LoopSmoke {
             }
         }
 
-        // Both first-cruise checks run in the same cruise, one after the other.
-        private static IEnumerator HitHullAndBreakRockInCruiseCoroutine(LoopSmokeHullCheck hullCheck, LoopSmokeRockBreakCheck rockBreak) {
+        // The first-cruise checks run in the same cruise, one after the other.
+        private IEnumerator HitHullAndRocksInCruiseCoroutine(LoopSmokeHullCheck hullCheck, LoopSmokeRockBreakCheck rockBreak, LoopSmokeRockImpactCheck rockImpact) {
             yield return hullCheck.HitInCruiseCoroutine();
             yield return rockBreak.BreakNearestRockInCruiseCoroutine();
+            yield return rockImpact.HitSmallAndLargeRockInCruiseCoroutine(_session.Ship, _flight);
         }
 
         private IEnumerator ShiftWorldInCruiseCoroutine() =>

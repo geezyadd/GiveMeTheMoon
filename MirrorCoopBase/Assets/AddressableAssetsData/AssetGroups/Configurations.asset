@@ -60,6 +60,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 85127772f40dadc4abcc8a9d83523177
+    m_Address: ShipRockImpactConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 86b71de44a03e2b41a33c2001eec1ae1
     m_Address: FlightFieldConfiguration_Default
     m_ReadOnly: 0
