@@ -24,14 +24,16 @@ MonoBehaviour:
   _casingFadeSeconds: 1
   _casingEjectDirection: {x: 1, y: 0.75, z: -0.15}
   _casingEjectSpeed: 2.6
-  _casingEjectSpeedVariation: 0.3
-  _casingEjectSpreadDegrees: 14
+  _casingEjectSpeedVariation: 0.4
+  _casingEjectSpreadDegrees: 18
   _casingSpinDegreesPerSecond: 900
+  _casingSpinMinShare: 0.5
+  _casingSpinMaxShare: 1.5
   _casingBounciness: 0.35
   _casingFloorFriction: 0.55
   _casingRestSpeed: 0.5
-  _casingRestHeight: 0.0175
-  _casingPileJitter: 0.03
+  _casingRestHeight: 0.01
+  _casingPileJitter: 0.02
   _recoilPositionNoiseMeters: 0.008
   _recoilRotationNoiseDegrees: 0.8
   _recoilNoiseFrequency: 22
@@ -42,18 +44,24 @@ MonoBehaviour:
   _targetDestroyedShakeAmplitude: 0.8
   _shakeFrequency: 16
   _shakeFadeSeconds: 0.35
+  _shakeRollShare: 0.35
   _tracerEveryNthShot: 3
   _tracerColor: {r: 1, g: 0.62, b: 0.2, a: 1}
   _tracerSpeedMetersPerSecond: 380
   _tracerWidthMeters: 0.22
   _tracerLengthMeters: 6
+  _tracerPoolSize: 16
   _impactSparkCount: 10
   _impactSparkSpeed: 7
   _impactDebrisCount: 3
   _impactDebrisSpeed: 4
+  _impactSprayLean: 0.85
+  _impactMinSpeedShare: 0.4
+  _impactDustDriftSpeed: 0.6
   _impactDustSizeMeters: 1.6
   _impactFlashSizeMeters: 2.2
   _impactFlashSeconds: 0.07
+  _impactFlashMinSizeShare: 0.7
   _targetFlashSeconds: 0.08
   _fireLoopClip: {fileID: 8300000, guid: d2f7009334d59f44d92d9f87d2e6709d, type: 3}
   _fireTailClip: {fileID: 8300000, guid: fa6993adf072b664cbad727917ae86db, type: 3}

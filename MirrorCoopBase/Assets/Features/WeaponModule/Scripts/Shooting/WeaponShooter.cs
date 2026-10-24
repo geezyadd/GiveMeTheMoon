@@ -39,7 +39,7 @@ namespace Features.WeaponModule.Scripts.Shooting {
 
         private void Fire(IWeaponHolder holder) =>
             _delivery.Deliver(
-                new WeaponShot(_weapon.Id, holder.Holder, holder.Aim.Origin, holder.Aim.Direction, _weapon.RangeMeters),
+                new WeaponShot(_weapon.Id, holder.Aim.Origin, holder.Aim.Direction, _weapon.RangeMeters),
                 _outcomeReceiver);
     }
 }

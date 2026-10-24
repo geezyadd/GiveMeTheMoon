@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using Features.WeaponModule.Contracts;
 using Mirror;
 using TMPro;
@@ -7,7 +8,7 @@ using Zenject;
 namespace Features.ShipModule.Scripts.Debug {
     // A floating test dummy for weapons, spawned by the debug key in editor / development builds (WeaponDebugTargetSystem).
     // It keeps its place in front of the ship and sways from side to side, counts the hits the server accepted and
-    // flashes on each one on every peer. Compiled in every build because its prefab is a registered network prefab.
+    // flashes on each one on every peer. Its prefab is registered with Mirror at runtime (WeaponDebugTargetPrefabSystem).
     public sealed class WeaponDebugTarget : NetworkBehaviour, IWeaponTarget, IWeaponTargetCollider {
         // Debug targets keep to their own id range, clear of the field rocks' ids.
         private const ulong TARGET_ID_BASE = 0xDEB0000000000000UL;
@@ -86,3 +87,4 @@ namespace Features.ShipModule.Scripts.Debug {
         }
     }
 }
+#endif

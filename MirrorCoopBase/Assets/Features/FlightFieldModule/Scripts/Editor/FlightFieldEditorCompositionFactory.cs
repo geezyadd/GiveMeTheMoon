@@ -20,6 +20,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             DiContainer container = new();
             container.Bind<FlightFieldConfiguration>().FromInstance(configuration).AsSingle();
             container.Bind<FieldStructureCatalog>().FromInstance(catalog).AsSingle();
+            container.Bind<FieldRockDurabilityConfiguration>().FromInstance(AddressableConfigurationLoader.Load<FieldRockDurabilityConfiguration>(Address.Configurations.FieldRockDurabilityConfiguration_Default)).AsSingle();
             FlightFieldModuleInstaller.Install(container);
             return new FlightFieldEditorComposition(configuration, catalog, container.Resolve<IFlightFieldGenerator>(), container.Resolve<IFieldRequestFactory>(),
                 container.Resolve<IFieldFootprintReader>(), container.Resolve<IFieldDebrisLayout>(), container.Resolve<IFieldRandomFactory>(),

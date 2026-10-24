@@ -1,14 +1,12 @@
 using Features.WeaponModule.Scripts.Definitions;
 using Features.WeaponModule.Scripts.Parts.Delivery;
-using Features.WeaponModule.Scripts.Parts.Feel;
 using UnityEngine;
 
 namespace Features.WeaponModule.Scripts.Feel {
     // How a barrel-spinning machine gun looks and feels on one peer, by its WeaponFeelProfile: barrel spin, muzzle
     // glow, a stream of casings, recoil jitter, view shake, tracers, impact bursts and sound hooks. Every effect comes
     // from a pool made at Bind, so continuous fire allocates nothing. The holder drives it every frame with Advance.
-    public sealed class MinigunFeel : MonoBehaviour, IWeaponFeel {
-        private const int TRACER_POOL_SIZE = 16;
+    public sealed class MinigunFeel : MonoBehaviour, IWeaponFeelPresenter {
         private const string EFFECTS_ROOT_NAME = "WeaponFeelEffects";
 
         [SerializeField] private Transform _barrels;
@@ -60,7 +58,7 @@ namespace Features.WeaponModule.Scripts.Feel {
             _recoilJitter = new RecoilJitter(_recoilRoot, profile);
             _viewShake = new ViewShake(_viewShakeRoot, profile);
             _casings = new CasingStream(_effectsRoot, _casingTemplate, floor, profile);
-            _tracers = new TracerStream(_effectsRoot, _tracerTemplate, floor.Frame, profile, TRACER_POOL_SIZE);
+            _tracers = new TracerStream(_effectsRoot, _tracerTemplate, floor.Frame, profile);
             _impacts = new ImpactBursts(_impactFlash, _impactSparks, _impactDebris, _impactDust, floor.Frame, profile);
             _audio = new WeaponFeelAudio(_loopAudio, _oneShotAudio, profile);
         }

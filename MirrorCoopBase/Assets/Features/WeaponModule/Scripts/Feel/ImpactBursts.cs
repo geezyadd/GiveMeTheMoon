@@ -5,12 +5,6 @@ namespace Features.WeaponModule.Scripts.Feel {
     // A flash, sparks, chips and a puff of dust where a shot struck, emitted into shared particle systems that simulate
     // in the floor's frame, so the bursts stay on a target the ship carries along.
     public sealed class ImpactBursts {
-        // How far a spray direction may lean away from the surface normal.
-        private const float SPRAY_LEAN = 0.85f;
-        private const float MIN_SPEED_SHARE = 0.4f;
-        private const float DUST_DRIFT_SPEED = 0.6f;
-        private const float MIN_FLASH_SHARE = 0.7f;
-
         private readonly ParticleSystem _flash;
         private readonly ParticleSystem _sparks;
         private readonly ParticleSystem _debris;
@@ -49,8 +43,8 @@ namespace Features.WeaponModule.Scripts.Feel {
             _emitParams = default;
             _emitParams.position = point;
             for (int i = 0; i < count; i++) {
-                Vector3 direction = (normal + Random.insideUnitSphere * SPRAY_LEAN).normalized;
-                _emitParams.velocity = direction * (speed * Random.Range(MIN_SPEED_SHARE, 1f));
+                Vector3 direction = (normal + Random.insideUnitSphere * _profile.ImpactSprayLean).normalized;
+                _emitParams.velocity = direction * (speed * Random.Range(_profile.ImpactMinSpeedShare, 1f));
                 system.Emit(_emitParams, 1);
             }
         }
@@ -58,7 +52,7 @@ namespace Features.WeaponModule.Scripts.Feel {
         private void EmitFlash(Vector3 point) {
             _emitParams = default;
             _emitParams.position = point;
-            _emitParams.startSize = _profile.ImpactFlashSizeMeters * Random.Range(MIN_FLASH_SHARE, 1f);
+            _emitParams.startSize = _profile.ImpactFlashSizeMeters * Random.Range(_profile.ImpactFlashMinSizeShare, 1f);
             _emitParams.startLifetime = _profile.ImpactFlashSeconds;
             _emitParams.rotation = Random.Range(0f, 360f);
             _flash.Emit(_emitParams, 1);
@@ -67,7 +61,7 @@ namespace Features.WeaponModule.Scripts.Feel {
         private void EmitDust(Vector3 point, Vector3 normal) {
             _emitParams = default;
             _emitParams.position = point;
-            _emitParams.velocity = normal * DUST_DRIFT_SPEED;
+            _emitParams.velocity = normal * _profile.ImpactDustDriftSpeed;
             _emitParams.startSize = _profile.ImpactDustSizeMeters;
             _emitParams.rotation = Random.Range(0f, 360f);
             _dust.Emit(_emitParams, 1);

@@ -29608,7 +29608,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.035, y: 0.05, z: 0.035}
+  m_LocalScale: {x: 0.02, y: 0.029, z: 0.02}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4746861767564087493}
@@ -31159,7 +31159,6 @@ MonoBehaviour:
   _yawPivot: {fileID: 934246134920471790}
   _pitchPivot: {fileID: 4921490061900687757}
   _cameraPoint: {fileID: 6463230316107473706}
-  _feel: {fileID: 7976649416319136040}
   _hands: {fileID: 1893150583278736115}
 --- !u!1 &9160664659992392888
 GameObject:

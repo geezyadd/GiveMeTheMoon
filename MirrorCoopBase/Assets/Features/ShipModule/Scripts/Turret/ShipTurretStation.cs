@@ -24,7 +24,6 @@ namespace Features.ShipModule.Scripts.Turret {
         [SerializeField] private Transform _yawPivot;
         [SerializeField] private Transform _pitchPivot;
         [SerializeField] private Transform _cameraPoint;
-        [SerializeField] private MinigunFeel _feel;
         [SerializeField] private GameObject _hands;
 
         private IGameCameraService _gameCameraService;
@@ -33,6 +32,7 @@ namespace Features.ShipModule.Scripts.Turret {
         private TurretOwnerInput _ownerInput;
 
         private ShipBase _ship;
+        private IWeaponFeelPresenter _feel;
         private TurretAim _aim;
         private TurretAim _receivedAim;
         private TurretAimSmoothing _remoteAim;
@@ -70,6 +70,7 @@ namespace Features.ShipModule.Scripts.Turret {
 
         private void Awake() {
             _ship = GetComponentInParent<ShipBase>();
+            _feel = GetComponent<IWeaponFeelPresenter>();
             _aim = new TurretAim(_definition);
             _receivedAim = new TurretAim(_definition);
             _remoteAim = new TurretAimSmoothing(_definition.RemoteAimSmoothingSeconds);

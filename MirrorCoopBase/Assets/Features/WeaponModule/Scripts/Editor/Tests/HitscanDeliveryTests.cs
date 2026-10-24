@@ -1,4 +1,3 @@
-using Features.NetworkModelModule.Scripts;
 using Features.WeaponModule.Scripts.Parts.Delivery;
 using NUnit.Framework;
 using UnityEngine;
@@ -83,7 +82,7 @@ namespace Features.WeaponModule.Editor.Tests {
             Mathf.Min(step / (float)(RANDOM_STEPS - 1), TOP_UNIT_VALUE);
 
         private static WeaponShot CreateShot(Vector3 aim) =>
-            new WeaponShot(WEAPON_ID, new PlayerKey("client:test"), Vector3.zero, aim, RANGE_METERS);
+            new WeaponShot(WEAPON_ID, Vector3.zero, aim, RANGE_METERS);
 
         private static HitscanDelivery CreateDelivery(float spreadDegrees, IWeaponRaycast raycast, IWeaponRandom random) =>
             new HitscanDelivery(spreadDegrees, raycast, random);

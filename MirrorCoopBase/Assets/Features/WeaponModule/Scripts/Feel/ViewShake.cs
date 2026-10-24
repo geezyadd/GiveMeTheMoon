@@ -8,8 +8,6 @@ namespace Features.WeaponModule.Scripts.Feel {
         private const float ROW_PITCH = 3.1f;
         private const float ROW_YAW = 17.9f;
         private const float ROW_ROLL = 41.7f;
-        // Roll reads as a sea-sick tilt; keep it a fraction of the other axes.
-        private const float ROLL_SHARE = 0.35f;
 
         private readonly Transform _root;
         private readonly Quaternion _restRotation;
@@ -42,7 +40,7 @@ namespace Features.WeaponModule.Scripts.Feel {
             _root.localRotation = _restRotation * Quaternion.Euler(
                 SignedNoise(ROW_PITCH) * amplitude,
                 SignedNoise(ROW_YAW) * amplitude,
-                SignedNoise(ROW_ROLL) * amplitude * ROLL_SHARE);
+                SignedNoise(ROW_ROLL) * amplitude * _profile.ShakeRollShare);
         }
 
         private float SignedNoise(float row) =>

@@ -18,7 +18,8 @@ namespace Features.WeaponModule.Scripts.Feel {
 
         private int _next;
 
-        public TracerStream(Transform container, Transform template, Transform frame, WeaponFeelProfile profile, int poolSize) {
+        public TracerStream(Transform container, Transform template, Transform frame, WeaponFeelProfile profile) {
+            int poolSize = profile.TracerPoolSize;
             _frame = frame;
             _profile = profile;
             _tracers = new Transform[poolSize];

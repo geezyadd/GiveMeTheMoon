@@ -8,8 +8,6 @@ namespace Features.WeaponModule.Scripts.Feel {
     public sealed class CasingStream {
         private const float FULL_TURN_DEGREES = 360f;
         private const float LYING_PITCH_DEGREES = 90f;
-        private const float MIN_SPIN_SHARE = 0.5f;
-        private const float MAX_SPIN_SHARE = 1.5f;
 
         private readonly Transform _frame;
         private readonly IWeaponFeelFloor _floor;
@@ -60,7 +58,7 @@ namespace Features.WeaponModule.Scripts.Feel {
             _velocities[index] = _frame.InverseTransformDirection(worldVelocity);
             _rotations[index] = Random.rotation;
             _spinAxes[index] = Random.onUnitSphere;
-            _spinSpeeds[index] = _profile.CasingSpinDegreesPerSecond * Random.Range(MIN_SPIN_SHARE, MAX_SPIN_SHARE);
+            _spinSpeeds[index] = _profile.CasingSpinDegreesPerSecond * Random.Range(_profile.CasingSpinMinShare, _profile.CasingSpinMaxShare);
             _ages[index] = 0f;
             _isResting[index] = false;
             if (_isActive[index] == false) {

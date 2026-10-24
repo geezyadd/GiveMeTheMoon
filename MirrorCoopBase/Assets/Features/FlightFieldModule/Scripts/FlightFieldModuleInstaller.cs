@@ -1,3 +1,4 @@
+using Features.FlightFieldModule.Contracts;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Debris;
 using Features.FlightFieldModule.Scripts.Decor;
@@ -10,6 +11,7 @@ using Features.FlightFieldModule.Scripts.Generation.Routes;
 using Features.FlightFieldModule.Scripts.Generation.Steps;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Requests;
+using Features.FlightFieldModule.Scripts.Rocks;
 using Features.FlightFieldModule.Scripts.Scene;
 using Features.FlightFieldModule.Scripts.Server;
 using Features.FlightFieldModule.Scripts.Structures;
@@ -24,6 +26,7 @@ namespace Features.FlightFieldModule.Scripts {
             Container.BindInterfacesTo<FieldDifficultyProfileValidator>().AsSingle();
             Container.BindInterfacesTo<FlightFieldDecorConfigurationValidator>().AsSingle();
             Container.BindInterfacesTo<FieldVolumeConfigurationValidator>().AsSingle();
+            Container.BindInterfacesTo<FieldRockDurabilityConfigurationValidator>().AsSingle();
             Container.Bind<IMatrixFactory>().To<MatrixFactory>().AsSingle();
             Container.Bind<IFieldRandomFactory>().To<FieldRandomFactory>().AsSingle();
             Container.Bind<IFieldFootprintReader>().To<FieldFootprintReader>().AsSingle();
@@ -50,7 +53,25 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldRequestFactory>().To<FieldRequestFactory>().AsSingle();
             Container.Bind<IFieldProfileLookup>().To<FieldProfileLookup>().AsSingle();
             InstallLiveField();
+            InstallRocks();
             InstallDecor();
+        }
+
+        // The rocks of the live field one by one: the server finds and breaks them from the field data, every peer
+        // hides a broken one and plays its break.
+        private void InstallRocks() {
+            Container.BindInterfacesTo<LiveFieldBrokenRocks>().AsSingle();
+            Container.Bind<IFieldRockClassifier>().To<FieldRockClassifier>().AsSingle();
+            Container.Bind<IFieldRockReader>().To<FieldRockReader>().AsSingle();
+            Container.Bind<IFieldRockQuery>().To<FieldRockQuery>().AsSingle();
+            Container.BindInterfacesTo<FieldRockBreaker>().AsSingle();
+            Container.Bind<IFieldRockBreakEffectPool>().To<FieldRockBreakEffectPool>().AsSingle();
+            Container.BindInterfacesTo<FieldRockBreakViewSystem>().AsSingle();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Container.Bind<IFieldRockBreakDebug>().To<FieldRockBreakDebug>().AsSingle();
+            Container.BindInterfacesTo<FieldRockBreakDebugKeySystem>().AsSingle();
+            Container.BindInterfacesTo<FieldRockDestroyedLogSystem>().AsSingle();
+#endif
         }
 
         // The visual-only decor every peer builds around its ship; its own pool, because the field's pool is emptied
@@ -72,6 +93,7 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldStructureLayout>().To<FieldStructureLayout>().AsSingle();
             Container.Bind<IFieldPlaneCoverLayout>().To<FieldPlaneCoverLayout>().AsSingle();
             Container.Bind<IFieldClusterLayout>().To<FieldClusterLayout>().AsSingle();
+            Container.Bind<IFieldPlacementRockLayout>().To<FieldPlacementRockLayout>().AsSingle();
             Container.BindInterfacesTo<FlightFieldPublisher>().AsSingle();
             Container.Bind<IFieldNetworkedStructures>().To<FieldNetworkedStructures>().AsSingle();
             Container.Bind<IFieldNetworkedPrefabRegistration>().To<FieldNetworkedPrefabRegistration>().AsSingle();

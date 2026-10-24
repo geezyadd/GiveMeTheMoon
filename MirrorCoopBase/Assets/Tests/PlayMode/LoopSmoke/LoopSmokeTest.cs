@@ -62,7 +62,9 @@ namespace Tests.PlayMode.LoopSmoke {
 
             ShipLandingPad startPad = _flight.FindPadUnderShip();
             LoopSmokeHullCheck hullCheck = new LoopSmokeHullCheck();
-            yield return _flight.FlyLoopCoroutine(1, hullCheck.HitInCruiseCoroutine);
+            LoopSmokeRockBreakCheck rockBreak = new LoopSmokeRockBreakCheck();
+            yield return _flight.FlyLoopCoroutine(1, () => HitHullAndBreakRockInCruiseCoroutine(hullCheck, rockBreak));
+            rockBreak.AssertBrokenListClearedAfterLanding();
             ShipLandingPad firstPad = _flight.FindPadUnderShip();
             yield return _flight.AssertLandedSafelyCoroutine(1, startPad, firstPad);
             hullCheck.AssertRepairedAfterLanding(1);
@@ -135,6 +137,12 @@ namespace Tests.PlayMode.LoopSmoke {
                 return ShiftWorldInCruiseCoroutine;
 
             return loopIndex == TURRET_LOOP ? _turretCheck.FireAtDebugTargetInCruiseCoroutine : null;
+        }
+
+        // Both first-cruise checks run in the same cruise, one after the other.
+        private static IEnumerator HitHullAndBreakRockInCruiseCoroutine(LoopSmokeHullCheck hullCheck, LoopSmokeRockBreakCheck rockBreak) {
+            yield return hullCheck.HitInCruiseCoroutine();
+            yield return rockBreak.BreakNearestRockInCruiseCoroutine();
         }
 
         private IEnumerator ShiftWorldInCruiseCoroutine() =>

@@ -12,6 +12,8 @@ namespace Features.FlightFieldModule.Scripts.Scene {
         public Vector3 Scale { get; }
         // A rock that closes the flight plane over footprint cells; it may reach a little past the footprint.
         public bool IsPlaneCover { get; }
+        // The rock's mesh stays within this diameter around its offset however it is turned.
+        public float BoundingDiameter => 2f * FieldRockVisual.MESH_REACH * Mathf.Max(Scale.x, Mathf.Max(Scale.y, Scale.z));
 
         public FieldClusterRockPose(FieldRockVisual prefab, Material material, Vector3 offset, Quaternion rotation, Vector3 scale)
             : this(prefab, material, offset, rotation, scale, false) { }

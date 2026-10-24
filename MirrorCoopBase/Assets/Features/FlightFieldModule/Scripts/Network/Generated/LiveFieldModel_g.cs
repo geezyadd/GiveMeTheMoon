@@ -24,6 +24,8 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteCellEntry> RouteCells => _routeCells;
         private readonly List<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> _debrisRuns = new();
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> DebrisRuns => _debrisRuns;
+        private readonly List<global::Features.FlightFieldModule.Contracts.FieldRockId> _brokenRocks = new();
+        public IReadOnlyList<global::Features.FlightFieldModule.Contracts.FieldRockId> BrokenRocks => _brokenRocks;
 
         public event Action OnNumberChanged;
         public event Action OnSeedChanged;
@@ -53,6 +55,11 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> OnDebrisRunsSet;
         public event Action OnDebrisRunsCleared;
         public event Action OnDebrisRunsChanged;
+        public event Action<int, global::Features.FlightFieldModule.Contracts.FieldRockId> OnBrokenRocksAdded;
+        public event Action<int, global::Features.FlightFieldModule.Contracts.FieldRockId> OnBrokenRocksRemoved;
+        public event Action<int, global::Features.FlightFieldModule.Contracts.FieldRockId> OnBrokenRocksSet;
+        public event Action OnBrokenRocksCleared;
+        public event Action OnBrokenRocksChanged;
 
         internal void ApplyState(LiveFieldState state) {
             bool numberChanged = EqualityComparer<int>.Default.Equals(Number, state.Number) == false;
@@ -337,6 +344,69 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
 
             for (int i = 0; i < _debrisRuns.Count; i++) {
                 if (EqualityComparer<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry>.Default.Equals(_debrisRuns[i], values[i]) == false)
+                    return false;
+            }
+
+            return true;
+        }
+
+        internal void AddBrokenRocks(int index, global::Features.FlightFieldModule.Contracts.FieldRockId value) {
+            _brokenRocks.Insert(index, value);
+            OnBrokenRocksAdded?.Invoke(index, value);
+            OnBrokenRocksChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void SetBrokenRocks(int index, global::Features.FlightFieldModule.Contracts.FieldRockId value) {
+            if (EqualityComparer<global::Features.FlightFieldModule.Contracts.FieldRockId>.Default.Equals(_brokenRocks[index], value))
+                return;
+
+            _brokenRocks[index] = value;
+            OnBrokenRocksSet?.Invoke(index, value);
+            OnBrokenRocksChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void RemoveBrokenRocksAt(int index, global::Features.FlightFieldModule.Contracts.FieldRockId removed) {
+            if (index >= 0 && index < _brokenRocks.Count)
+                _brokenRocks.RemoveAt(index);
+
+            OnBrokenRocksRemoved?.Invoke(index, removed);
+            OnBrokenRocksChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void ClearBrokenRocks() {
+            if (_brokenRocks.Count == 0)
+                return;
+
+            _brokenRocks.Clear();
+            OnBrokenRocksCleared?.Invoke();
+            OnBrokenRocksChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        internal void ReplaceBrokenRocks(IReadOnlyList<global::Features.FlightFieldModule.Contracts.FieldRockId> values) {
+            if (BrokenRocksMatch(values))
+                return;
+
+            _brokenRocks.Clear();
+            OnBrokenRocksCleared?.Invoke();
+            for (int i = 0; i < values.Count; i++) {
+                global::Features.FlightFieldModule.Contracts.FieldRockId value = values[i];
+                _brokenRocks.Add(value);
+                OnBrokenRocksAdded?.Invoke(i, value);
+            }
+            OnBrokenRocksChanged?.Invoke();
+            RaiseChanged();
+        }
+
+        private bool BrokenRocksMatch(IReadOnlyList<global::Features.FlightFieldModule.Contracts.FieldRockId> values) {
+            if (_brokenRocks.Count != values.Count)
+                return false;
+
+            for (int i = 0; i < _brokenRocks.Count; i++) {
+                if (EqualityComparer<global::Features.FlightFieldModule.Contracts.FieldRockId>.Default.Equals(_brokenRocks[i], values[i]) == false)
                     return false;
             }
 

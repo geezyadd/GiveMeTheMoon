@@ -18,12 +18,9 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private GameObject _padPrefab;
         [SerializeField] private GameObject _wreckPrefab;
         [SerializeField] private DropEntry[] _drops;
-        [Tooltip("Editor / development builds only: the weapon test dummy F8 puts in front of the ship.")]
-        [SerializeField] private GameObject _weaponDebugTargetPrefab;
 
         public GameObject PadPrefab => _padPrefab;
         public GameObject WreckPrefab => _wreckPrefab;
         public DropEntry[] Drops => _drops;
-        public GameObject WeaponDebugTargetPrefab => _weaponDebugTargetPrefab;
     }
 }

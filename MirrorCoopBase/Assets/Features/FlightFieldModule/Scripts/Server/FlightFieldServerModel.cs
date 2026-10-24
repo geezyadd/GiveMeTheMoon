@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Network;
 using Mirror;
+using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Server {
     // The server's side of the live field: the generated field, its number and the Mirror objects spawned for it.
@@ -13,6 +14,8 @@ namespace Features.FlightFieldModule.Scripts.Server {
         public bool HasField => Field != null;
         public FlightField Field { get; private set; }
         public int Number { get; private set; }
+        // The field's frame as it stands now: the generated one moved by every world shift since.
+        public FieldFrame Frame { get; private set; }
         public IReadOnlyList<NetworkIdentity> NetworkedStructures => _networkedStructures;
 
         public void SetField(FlightField field) {
@@ -20,7 +23,11 @@ namespace Features.FlightFieldModule.Scripts.Server {
             _publishedFields++;
             Field = field;
             Number = _publishedFields;
+            Frame = field.Frame;
         }
+
+        public void ShiftFrame(Vector3 delta) =>
+            Frame = Frame.Shift(delta);
 
         public void AddNetworkedStructure(NetworkIdentity structure) =>
             _networkedStructures.Add(structure);

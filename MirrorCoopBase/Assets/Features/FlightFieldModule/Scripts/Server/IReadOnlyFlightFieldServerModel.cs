@@ -8,6 +8,8 @@ namespace Features.FlightFieldModule.Scripts.Server {
         // The generated field with its working grid (station zones, corridors) for the debug map; null without a field.
         public FlightField Field { get; }
         public int Number { get; }
+        // The field's frame as it stands now, after every world shift.
+        public FieldFrame Frame { get; }
         public IReadOnlyList<NetworkIdentity> NetworkedStructures { get; }
     }
 }
