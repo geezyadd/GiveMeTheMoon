@@ -22773,6 +22773,7 @@ Transform:
   - {fileID: 3336673348586653716}
   - {fileID: 3305458248981845295}
   - {fileID: 4921490061900687757}
+  - {fileID: 9178110999724772320}
   m_Father: {fileID: 6452991988274270757}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4427686104259189208
@@ -22972,11 +22973,11 @@ Transform:
   m_GameObject: {fileID: 4431454916586535157}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -0.95}
+  m_LocalPosition: {x: 0, y: 0.02, z: -0.95}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 6452991988274270757}
+  m_Father: {fileID: 934246134920471790}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4454938761332548599
 GameObject:
@@ -31098,7 +31099,6 @@ Transform:
   - {fileID: 934246134920471790}
   - {fileID: 4746861767564087493}
   - {fileID: 4120875208734720472}
-  - {fileID: 9178110999724772320}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6240811218183640246
@@ -31160,6 +31160,7 @@ MonoBehaviour:
   _pitchPivot: {fileID: 4921490061900687757}
   _cameraPoint: {fileID: 6463230316107473706}
   _hands: {fileID: 1893150583278736115}
+  _seat: {fileID: 6240811218183640246}
 --- !u!1 &9160664659992392888
 GameObject:
   m_ObjectHideFlags: 0

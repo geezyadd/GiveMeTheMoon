@@ -65,8 +65,10 @@ namespace Features.ShipModule.Scripts {
         private float _rideRestY;
         private float _rideFloorY;
         private readonly RideVertical _vertical = new RideVertical();
+        private readonly SeatStandingSpot _standingSpot = new SeatStandingSpot();
         private Vector3 _rideVelocity;
         private float _reboardAt;
+        private Transform _seatPoint;
 
         internal Vector3 DebugLocalOffset => _localOffset;
         public bool IsRiding => _bound;
@@ -74,6 +76,7 @@ namespace Features.ShipModule.Scripts {
         internal ShipRideDiagnostics RideDiagnostics { get; } = new ShipRideDiagnostics();
 #endif
         public bool IsSeated => _seated;
+        private bool IsFollowingSeatPoint => _seated && _seatPoint != null;
         internal bool IsHelmSeat => _helmSeat;
         internal float CurrentSteer => _input != null ? _input.MoveStick.x : 0f;
 
@@ -249,8 +252,36 @@ namespace Features.ShipModule.Scripts {
         }
 
         internal void ServerUnlockSeat() {
+            if (_seated && TryMoveToStandingSpot())
+                ServerSyncStandingSpot();
+
             _seated = false;
             _helmSeat = false;
+        }
+
+        // A seat station whose seat point moves with it (a turret's yaw) has the seated rider follow that point on
+        // every peer, from the aim that peer shows; no offset is sent while seated.
+        internal void FollowSeatPoint(Transform seatPoint) =>
+            _seatPoint = seatPoint;
+
+        internal void StopFollowingSeatPoint(Transform seatPoint) {
+            if (ReferenceEquals(_seatPoint, seatPoint))
+                _seatPoint = null;
+        }
+
+        // A moving seat point (a turret's) leaves the rider away from the offset it sat down at: the others stand it up
+        // where the server saw it.
+        private void ServerSyncStandingSpot() {
+            _syncedOffsetTime = NetworkTime.time;
+            _syncedLocalOffset = _localOffset;
+        }
+
+        private bool TryMoveToStandingSpot() {
+            if (_bound == false || _standingSpot.TryResolve(_localOffset, _ship.DeckGeometry, _deckInset, out Vector3 standingOffset) == false)
+                return false;
+
+            _localOffset = standingOffset;
+            return true;
         }
 
         internal void Follow(float dt) {
@@ -278,6 +309,7 @@ namespace Features.ShipModule.Scripts {
 
             Vector3 next = RideOffset();
             _localOffset = next;
+            _standingSpot.Track(IsFollowingSeatPoint);
             Vector3 previousWorld = transform.position;
             ApplyWorldPose();
             TrackRideVelocity(previousWorld, dt);
@@ -410,6 +442,9 @@ namespace Features.ShipModule.Scripts {
         }
 
         private Vector3 RideOffset() {
+            if (IsFollowingSeatPoint)
+                return Quaternion.Inverse(_platform.rotation) * (_seatPoint.position - _platform.position);
+
             if (isOwned || _seated)
                 return _localOffset;
 
@@ -432,6 +467,7 @@ namespace Features.ShipModule.Scripts {
         // Standing up must not blend back to the offset from before the seat.
         private void OnSeatedChanged(bool previous, bool current) {
             if (isOwned && current == false) {
+                TryMoveToStandingSpot();
                 // Standing up starts from rest on the seat, never with a velocity left over from before sitting.
                 ResetVertical(0f);
                 return;
