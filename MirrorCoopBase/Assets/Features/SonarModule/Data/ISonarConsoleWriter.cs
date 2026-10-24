@@ -7,7 +7,6 @@ namespace Features.SonarModule.Data {
         public void ServerAddMarks(SonarMark value);
         public void ServerSetMarks(int index, SonarMark value);
         public void ServerRemoveMarksAt(int index);
-        public void ServerClearMarks();
         public void ServerOpenConsole(NetworkConnectionToClient connection, string navigatorKey);
     }
 }

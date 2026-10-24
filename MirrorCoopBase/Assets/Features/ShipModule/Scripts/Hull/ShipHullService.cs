@@ -1,4 +1,5 @@
 using Features.GameCoreModule.Contracts;
+using UnityEngine;
 
 namespace Features.ShipModule.Scripts.Hull {
     // Server: the one way the run's hull loses or gets back HP. It knows the hit, not what made it.
@@ -28,6 +29,11 @@ namespace Features.ShipModule.Scripts.Hull {
             _shipHullEventPublisher.PublishDamaged(damage, hull.Current);
             if (hull.Current <= 0f)
                 _shipHullEventPublisher.PublishDestroyed();
+        }
+
+        public void ServerHeal(float amount) {
+            if (_shipHullStatSource.TryGetHull(out IShipHullStat hull) && hull.Current > 0f)
+                hull.ServerAdd(Mathf.Max(0f, amount));
         }
 
         public void ServerRepairAfterLanding() {

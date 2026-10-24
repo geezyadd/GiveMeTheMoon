@@ -1,6 +1,7 @@
 using Features.MvpModule;
 using Features.SonarModule.Data;
 using Features.SonarModule.Scripts.Configurations;
+using UnityEngine;
 
 namespace Features.SonarModule.Scripts.UI {
     // The sonar window: the scope from the local scope model, the navigator's clicks as console requests.
@@ -11,6 +12,11 @@ namespace Features.SonarModule.Scripts.UI {
         private readonly SonarScopeModel _sonarScopeModel;
         private readonly SonarConsoleRequests _sonarConsoleRequests;
         private readonly SonarConfiguration _sonarConfiguration;
+
+        private bool _hasShownStatus;
+        private int _shownRangeMeters;
+        private int _shownMarkCount;
+        private bool _shownIsWorking;
 
         public SonarScopePresenter(SonarScopeModel sonarScopeModel, SonarConsoleRequests sonarConsoleRequests, SonarConfiguration sonarConfiguration) {
             _sonarScopeModel = sonarScopeModel;
@@ -42,7 +48,21 @@ namespace Features.SonarModule.Scripts.UI {
             View.ShowWave(frame.WaveShare);
             View.ShowCooldown(frame.CooldownShare);
             View.ShowNoise(frame.IsWorking == false);
-            View.ShowStatus(frame.IsWorking ? string.Format(STATUS_FORMAT, frame.RangeMeters, frame.MarkCount, frame.MarkLimit) : NO_SIGNAL_STATUS);
+            ShowStatusOnChange(frame);
+        }
+
+        // The status text is built only when what it says changes, not every frame.
+        private void ShowStatusOnChange(SonarScopeFrame frame) {
+            int rangeMeters = Mathf.RoundToInt(frame.RangeMeters);
+            bool isStatusChanged = _hasShownStatus == false || rangeMeters != _shownRangeMeters || frame.MarkCount != _shownMarkCount || frame.IsWorking != _shownIsWorking;
+            if (isStatusChanged == false)
+                return;
+
+            _hasShownStatus = true;
+            _shownRangeMeters = rangeMeters;
+            _shownMarkCount = frame.MarkCount;
+            _shownIsWorking = frame.IsWorking;
+            View.ShowStatus(frame.IsWorking ? string.Format(STATUS_FORMAT, rangeMeters, frame.MarkCount, frame.MarkLimit) : NO_SIGNAL_STATUS);
         }
 
         private void OnPinged() =>

@@ -1,4 +1,5 @@
 using Features.NetworkModelModule.Scripts;
+using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Generated;
 using Features.SonarModule.Data;
 using Features.SonarModule.Data.Generated;
@@ -14,7 +15,6 @@ namespace Features.SonarModule.Scripts.Systems {
     public sealed class SonarNavigatorSystem : ISonarNavigatorSystem, ITickable {
         private readonly IPlayerIdentityService _playerIdentityService;
         private readonly ISonarConsoleRule _sonarConsoleRule;
-        private readonly ISonarFlightRule _sonarFlightRule;
         private readonly IReadOnlySonarConsoleModel _sonarConsoleModel;
         private readonly SonarConsoleBindingModel _sonarConsoleBindingModel;
         private readonly IReadOnlyShipRunModel _shipRunModel;
@@ -22,25 +22,23 @@ namespace Features.SonarModule.Scripts.Systems {
 
         private float _nextCheckAt;
 
+        private bool HasNavigator =>
+            string.IsNullOrEmpty(_sonarConsoleModel.NavigatorKey) == false;
+
         public SonarNavigatorSystem(
             IPlayerIdentityService playerIdentityService,
             ISonarConsoleRule sonarConsoleRule,
-            ISonarFlightRule sonarFlightRule,
             IReadOnlySonarConsoleModel sonarConsoleModel,
             SonarConsoleBindingModel sonarConsoleBindingModel,
             IReadOnlyShipRunModel shipRunModel,
             SonarConfiguration sonarConfiguration) {
             _playerIdentityService = playerIdentityService;
             _sonarConsoleRule = sonarConsoleRule;
-            _sonarFlightRule = sonarFlightRule;
             _sonarConsoleModel = sonarConsoleModel;
             _sonarConsoleBindingModel = sonarConsoleBindingModel;
             _shipRunModel = shipRunModel;
             _sonarConfiguration = sonarConfiguration;
         }
-
-        private bool HasNavigator =>
-            string.IsNullOrEmpty(_sonarConsoleModel.NavigatorKey) == false;
 
         public void ServerEnter(ISonarConsoleWriter writer, NetworkConnectionToClient connection, bool isConsoleActive) {
             string playerKey = _playerIdentityService.GetKey(connection).Id;
@@ -70,7 +68,7 @@ namespace Features.SonarModule.Scripts.Systems {
         }
 
         private bool IsNavigatorAtConsole() {
-            if (_sonarFlightRule.IsFlying(_shipRunModel.Phase) == false || TryFindNavigatorConnection(out NetworkConnectionToClient connection) == false)
+            if (_shipRunModel.Phase.IsFlight() == false || TryFindNavigatorConnection(out NetworkConnectionToClient connection) == false)
                 return false;
 
             return connection.identity != null

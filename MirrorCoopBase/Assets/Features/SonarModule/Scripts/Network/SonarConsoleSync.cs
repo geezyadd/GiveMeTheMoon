@@ -1,3 +1,4 @@
+using Features.ShipModule.Scripts;
 using Features.SonarModule.Data;
 using Features.SonarModule.Data.Generated;
 using Features.SonarModule.Scripts.Systems;
@@ -10,6 +11,7 @@ namespace Features.SonarModule.Scripts.Network {
     // navigator's requests to the server and the server's message that seats a navigator on their own peer.
     public sealed class SonarConsoleSync : SonarConsoleBridge, ISonarConsoleWriter {
         [SerializeField] private Transform _consolePoint;
+        [SerializeField] private ShipSocket _socket;
 
         private SonarConsoleBindingModel _sonarConsoleBindingModel;
         private SonarScopeModel _sonarScopeModel;
@@ -33,7 +35,7 @@ namespace Features.SonarModule.Scripts.Network {
 
         public override void OnStartServer() {
             base.OnStartServer();
-            _sonarConsoleBindingModel.Bind(this, _consolePoint);
+            _sonarConsoleBindingModel.Bind(this, _consolePoint, _socket.SocketId);
         }
 
         public override void OnStopServer() =>
@@ -41,7 +43,7 @@ namespace Features.SonarModule.Scripts.Network {
 
         public override void OnStartClient() {
             base.OnStartClient();
-            _sonarConsoleBindingModel.Bind(this, _consolePoint);
+            _sonarConsoleBindingModel.Bind(this, _consolePoint, _socket.SocketId);
             _sonarConsoleRequests.OnMarkRequested += OnMarkRequested;
             _sonarScopeModel.OnOpenChanged += OnScopeOpenChanged;
         }

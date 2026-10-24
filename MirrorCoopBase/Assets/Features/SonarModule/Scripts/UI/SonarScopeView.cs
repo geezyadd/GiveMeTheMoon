@@ -24,9 +24,14 @@ namespace Features.SonarModule.Scripts.UI {
         [SerializeField] private AudioSource _pingAudio;
 
         private readonly List<SonarBlipButton> _blips = new();
-        private readonly List<Image> _rings = new();
 
         private float ScopeRadiusPixels => _scope.rect.width * HALF;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Test hooks: the loop test presses the window's own buttons, as a player clicks them.
+        public Button DebugPingButton => _pingButton;
+        public Button DebugLeaveButton => _closeButton;
+#endif
 
         protected override void OnEnable() {
             base.OnEnable();
@@ -53,7 +58,6 @@ namespace Features.SonarModule.Scripts.UI {
                 Image ring = Instantiate(_ringTemplate, _ringTemplate.transform.parent);
                 ring.gameObject.SetActive(true);
                 ring.rectTransform.localScale = Vector3.one * ((float)i / ringCount);
-                _rings.Add(ring);
             }
         }
 

@@ -2,8 +2,6 @@ using System.Collections.Generic;
 using Features.FlightFieldModule.Contracts;
 using Features.GameCoreModule.Contracts;
 using Features.NetworkModelModule.Scripts;
-using Features.ShipModule.Scripts.Generated;
-using Mirror;
 using UnityEngine;
 using Zenject;
 
@@ -14,68 +12,49 @@ namespace Features.ShipModule.Scripts.Impacts {
     public sealed class ShipRockCollisionSystem : IFixedTickable {
         private static readonly PlayerKey _noInstigator = new(string.Empty);
 
-        private readonly IShipRunBindingModel _shipRunBindingModel;
-        private readonly IReadOnlyShipRunModel _shipRunModel;
+        private readonly IShipHullStepSource _shipHullStepSource;
         private readonly IShipHullRockScanner _shipHullRockScanner;
         private readonly IShipRockKnockbackRule _shipRockKnockbackRule;
         private readonly IShipRockDamageRule _shipRockDamageRule;
         private readonly IFieldRockBreaker _fieldRockBreaker;
         private readonly IShipHull _shipHull;
+        private readonly IShipServerImpactEventPublisher _shipServerImpactEventPublisher;
         private readonly ShipRockImpactConfiguration _shipRockImpactConfiguration;
         private readonly List<ShipRockContact> _contacts = new();
         private readonly ShipRockContactCooldowns _cooldowns = new();
 
-        private Pose _lastPose;
-        private bool _hasLastPose;
-
         public ShipRockCollisionSystem(
-            IShipRunBindingModel shipRunBindingModel,
-            IReadOnlyShipRunModel shipRunModel,
+            IShipHullStepSource shipHullStepSource,
             IShipHullRockScanner shipHullRockScanner,
             IShipRockKnockbackRule shipRockKnockbackRule,
             IShipRockDamageRule shipRockDamageRule,
             IFieldRockBreaker fieldRockBreaker,
             IShipHull shipHull,
+            IShipServerImpactEventPublisher shipServerImpactEventPublisher,
             ShipRockImpactConfiguration shipRockImpactConfiguration) {
-            _shipRunBindingModel = shipRunBindingModel;
-            _shipRunModel = shipRunModel;
+            _shipHullStepSource = shipHullStepSource;
             _shipHullRockScanner = shipHullRockScanner;
             _shipRockKnockbackRule = shipRockKnockbackRule;
             _shipRockDamageRule = shipRockDamageRule;
             _fieldRockBreaker = fieldRockBreaker;
             _shipHull = shipHull;
+            _shipServerImpactEventPublisher = shipServerImpactEventPublisher;
             _shipRockImpactConfiguration = shipRockImpactConfiguration;
         }
 
         public void FixedTick() {
-            ShipBase ship = _shipRunBindingModel.Ship;
-            if (!NetworkServer.active || ship == null || !ship.IsFlying || !IsCheckedPhase(_shipRunModel.Phase)) {
-                ResetContacts();
+            if (!_shipHullStepSource.TryGetStep(out ShipHullStep step)) {
+                _cooldowns.Clear();
                 return;
             }
 
-            Pose pose = new(ship.transform.position, ship.transform.rotation);
-            Pose from = IsSweepable(pose) ? _lastPose : pose;
-            _lastPose = pose;
-            _hasLastPose = true;
+            ShipBase ship = step.Ship;
             Vector3 velocity = ship.Knockback.Velocity;
-            _shipHullRockScanner.Scan(ship.HullVolume.Boxes, from, pose, _shipRockKnockbackRule.CalculateLargeLookAhead(velocity), _contacts);
+            _shipHullRockScanner.Scan(step.Boxes, step.From, step.To, _shipRockKnockbackRule.CalculateLargeLookAhead(velocity), _contacts);
             foreach (ShipRockContact contact in _contacts)
                 HandleContact(ship, contact, velocity);
 
             _cooldowns.ForgetCooledDown(Time.time, _shipRockImpactConfiguration.LargeHitCooldownSeconds);
-        }
-
-        private static bool IsCheckedPhase(ShipRunPhase phase) =>
-            phase is ShipRunPhase.Takeoff or ShipRunPhase.Cruise or ShipRunPhase.Landing;
-
-        // A world shift or a debug move jumps the ship: that jump is not swept.
-        private bool IsSweepable(Pose pose) =>
-            _hasLastPose && (pose.position - _lastPose.position).sqrMagnitude <= _shipRockImpactConfiguration.MaxSweepMeters * _shipRockImpactConfiguration.MaxSweepMeters;
-
-        private void ResetContacts() {
-            _hasLastPose = false;
-            _cooldowns.Clear();
         }
 
         private void HandleContact(ShipBase ship, ShipRockContact contact, Vector3 velocity) {
@@ -94,7 +73,7 @@ namespace Features.ShipModule.Scripts.Impacts {
             float speed = velocity.magnitude;
             ApplyDamage(_shipRockDamageRule.CalculateSmallRockDamage(contact.Rock.Diameter, speed), contact);
             ApplyKnockback(ship, _shipRockKnockbackRule.CalculateSmallPush(away, heading, velocity));
-            ship.ImpactSync.ServerBroadcast(new ShipRockImpact(ShipRockImpactKind.Small, contact.HullPoint, _shipRockDamageRule.CalculateStrength(speed)));
+            BroadcastImpact(ship, new ShipRockImpact(ShipRockImpactKind.Small, contact.HullPoint, _shipRockDamageRule.CalculateStrength(speed)));
         }
 
         private void TouchLargeRock(ShipBase ship, ShipRockContact contact, Vector3 away, Vector3 heading, Vector3 velocity) {
@@ -108,7 +87,12 @@ namespace Features.ShipModule.Scripts.Impacts {
             if (damage > 0f)
                 ApplyDamage(damage, contact);
 
-            ship.ImpactSync.ServerBroadcast(new ShipRockImpact(ShipRockImpactKind.Large, contact.HullPoint, _shipRockDamageRule.CalculateStrength(velocity.magnitude)));
+            BroadcastImpact(ship, new ShipRockImpact(ShipRockImpactKind.Large, contact.HullPoint, _shipRockDamageRule.CalculateStrength(velocity.magnitude)));
+        }
+
+        private void BroadcastImpact(ShipBase ship, ShipRockImpact impact) {
+            _shipServerImpactEventPublisher.PublishServerImpact(impact);
+            ship.ImpactSync.ServerBroadcast(impact);
         }
 
         private void ApplyDamage(float amount, ShipRockContact contact) =>

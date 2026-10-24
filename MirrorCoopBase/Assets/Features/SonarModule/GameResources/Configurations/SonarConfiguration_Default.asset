@@ -25,8 +25,11 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c9e6921bf57271343a9ada775a0ad1b0, type: 2}
   - {fileID: 11400000, guid: 0d73de613562993449c922c389c3e8ad, type: 2}
   - {fileID: 11400000, guid: 860a193a0261fec4d93c2118dccc9ce7, type: 2}
+  - {fileID: 11400000, guid: 5e946e5f004057046b015d272e17ee1d, type: 2}
   _stationKind: {fileID: 11400000, guid: c9e6921bf57271343a9ada775a0ad1b0, type: 2}
   _largeRockKind: {fileID: 11400000, guid: 0d73de613562993449c922c389c3e8ad, type: 2}
   _debrisKind: {fileID: 11400000, guid: 860a193a0261fec4d93c2118dccc9ce7, type: 2}
+  _targetKind: {fileID: 11400000, guid: 5e946e5f004057046b015d272e17ee1d, type: 2}
   _debrisCellMeters: 120
   _debrisMinRocks: 6
+  _debrisCellHalfHeightMeters: 2000

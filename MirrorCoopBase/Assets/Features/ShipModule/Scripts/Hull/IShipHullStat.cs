@@ -5,6 +5,7 @@ namespace Features.ShipModule.Scripts.Hull {
         public float Max { get; }
         public float Armor { get; }
         public void ServerSubtract(float amount);
+        public void ServerAdd(float amount);
         public void ServerRepair();
     }
 }

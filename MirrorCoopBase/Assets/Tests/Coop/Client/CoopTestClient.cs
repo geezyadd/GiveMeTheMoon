@@ -6,6 +6,7 @@ using Features.PlayerLifeModule.Scripts;
 using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Generated;
+using Features.SonarModule.Data.Generated;
 using Game.Connection;
 using Tests.Coop.Shared;
 using Tests.PlayMode.LoopSmoke;
@@ -85,9 +86,18 @@ namespace Tests.Coop.Client {
 
         private IEnumerator RideLoopCoroutine(int loopIndex) {
             yield return WaitForCruiseCoroutine(loopIndex);
+            if (loopIndex == CoopTestSteps.SONAR_MARK_LOOP)
+                yield return WaitForSonarMarkCoroutine();
+
             yield return WaitForCoroutine(() => SessionQueries.IsAtStationAfterLoop(loopIndex), $"Build after loop {loopIndex}");
             yield return _settle;
             Report(CoopObserver.CaptureGame(CoopTestSteps.LANDED));
+        }
+
+        // The host navigator marks a contact in this cruise: the mark must reach this client's synced sonar model.
+        private IEnumerator WaitForSonarMarkCoroutine() {
+            yield return WaitForCoroutine(() => SessionQueries.Resolve<IReadOnlySonarConsoleModel>().Marks.Count > 0, "the host navigator's sonar mark");
+            Report(CoopObserver.CaptureGame(CoopTestSteps.SONAR_MARK_SEEN));
         }
 
         private IEnumerator LeaveInFlightCoroutine() {

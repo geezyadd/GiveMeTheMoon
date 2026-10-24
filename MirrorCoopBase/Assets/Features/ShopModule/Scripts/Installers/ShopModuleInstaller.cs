@@ -23,6 +23,7 @@ namespace Features.ShopModule.Scripts.Installers {
             Container.BindInterfacesTo<ShopWindowSystem>().AsSingle();
             Container.BindInterfacesTo<ShopKioskRangeSystem>().AsSingle();
             Container.BindInterfacesTo<DeadCrewSystem>().AsSingle();
+            Container.BindInterfacesTo<FieldTargetRewardSystem>().AsSingle();
         }
     }
 }

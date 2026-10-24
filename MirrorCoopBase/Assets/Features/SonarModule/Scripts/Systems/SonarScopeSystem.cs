@@ -148,7 +148,8 @@ namespace Features.SonarModule.Scripts.Systems {
         private void OnPingRequested() {
             ShipBase ship = _shipClientBindingModel.Ship;
             float now = Time.time;
-            if (_sonarScopeModel.IsOpen == false || ship == null || _sonarPingRule.CanPing(now, _sonarScopeModel.LastPingAt) == false)
+            bool canPing = _sonarScopeModel.IsOpen && ship != null && _sonarPingRule.CanPing(now, _sonarScopeModel.LastPingAt);
+            if (canPing == false)
                 return;
 
             _sonarScopeModel.StartPing(now);

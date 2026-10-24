@@ -5,25 +5,26 @@ using Features.SonarModule.Scripts.Configurations;
 using UnityEngine;
 
 namespace Features.SonarModule.Scripts.Sources {
-    // The dangers of the flight field from its data (IFieldRockQuery: broken rocks are already left out): every
+    // The dangers of the flight field from the data this peer has (IPeerFieldRockQuery: the published field, broken
+    // rocks already left out), so a navigator on a client sees them as one on the host: every
     // large rock is a contact of its own, small rocks only count where a debris cell holds enough of them.
     public sealed class RockSonarContactSource : ISonarContactSource {
         private const float HALF = 0.5f;
 
-        private readonly IFieldRockQuery _fieldRockQuery;
+        private readonly IPeerFieldRockQuery _peerFieldRockQuery;
         private readonly IRockSonarContactIds _rockSonarContactIds;
         private readonly SonarConfiguration _sonarConfiguration;
         private readonly List<FieldRockDescription> _rocks = new();
         private readonly Dictionary<Vector2Int, DebrisCellSum> _debrisCells = new();
 
-        public RockSonarContactSource(IFieldRockQuery fieldRockQuery, IRockSonarContactIds rockSonarContactIds, SonarConfiguration sonarConfiguration) {
-            _fieldRockQuery = fieldRockQuery;
+        public RockSonarContactSource(IPeerFieldRockQuery peerFieldRockQuery, IRockSonarContactIds rockSonarContactIds, SonarConfiguration sonarConfiguration) {
+            _peerFieldRockQuery = peerFieldRockQuery;
             _rockSonarContactIds = rockSonarContactIds;
             _sonarConfiguration = sonarConfiguration;
         }
 
         public void CollectContacts(Vector3 center, float radius, List<SonarContact> results) {
-            _fieldRockQuery.FindInSphere(center, radius, _rocks);
+            _peerFieldRockQuery.FindInSphere(center, radius, _rocks);
             _debrisCells.Clear();
             for (int i = 0; i < _rocks.Count; i++) {
                 FieldRockDescription rock = _rocks[i];
@@ -49,7 +50,7 @@ namespace Features.SonarModule.Scripts.Sources {
 
         private bool TryGetLargeRock(FieldRockId rockId, out SonarContact contact) {
             contact = default;
-            if (_fieldRockQuery.TryGetRock(rockId, out FieldRockDescription rock) == false || rock.Size != FieldRockSize.Large)
+            if (_peerFieldRockQuery.TryGetRock(rockId, out FieldRockDescription rock) == false || rock.Size != FieldRockSize.Large)
                 return false;
 
             contact = CreateRockContact(rock);
@@ -62,7 +63,7 @@ namespace Features.SonarModule.Scripts.Sources {
             Vector3 cellCenter = new Vector3((cell.x + HALF) * _sonarConfiguration.DebrisCellMeters, 0f, (cell.y + HALF) * _sonarConfiguration.DebrisCellMeters);
             Vector3 halfExtents = new Vector3(halfCell, _sonarConfiguration.DebrisCellHalfHeightMeters, halfCell);
             DebrisCellSum sum = default;
-            _fieldRockQuery.FindInBox(cellCenter, halfExtents, Quaternion.identity, _rocks);
+            _peerFieldRockQuery.FindInBox(cellCenter, halfExtents, Quaternion.identity, _rocks);
             for (int i = 0; i < _rocks.Count; i++) {
                 FieldRockDescription rock = _rocks[i];
                 if (rock.Size != FieldRockSize.Large && ToCell(rock.Center) == cell)

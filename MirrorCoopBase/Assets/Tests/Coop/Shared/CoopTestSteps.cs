@@ -13,6 +13,9 @@ namespace Tests.Coop.Shared {
         public const string REJOINED = "rejoined";
         public const string DIED = "died";
         public const string REVIVED = "revived";
+        public const string SONAR_MARK_SEEN = "sonar-mark-seen";
+        // The loop whose cruise the host navigator marks a contact in.
+        public const int SONAR_MARK_LOOP = 1;
         public const string FINISHED = "finished";
         public const string FAILED = "failed";
 

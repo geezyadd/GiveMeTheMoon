@@ -14,7 +14,6 @@ namespace Features.SonarModule.Scripts.Installers {
             Container.Bind<ISonarRangeService>().To<SonarRangeService>().AsSingle();
             Container.Bind<ISonarMarkRule>().To<SonarMarkRule>().AsSingle();
             Container.Bind<ISonarConsoleRule>().To<SonarConsoleRule>().AsSingle();
-            Container.Bind<ISonarFlightRule>().To<SonarFlightRule>().AsSingle();
             Container.Bind<ISonarPingRule>().To<SonarPingRule>().AsSingle();
             Container.Bind<ISonarScopeLayout>().To<SonarScopeLayout>().AsSingle();
             Container.Bind<ISonarMarkerProjection>().To<SonarMarkerProjection>().AsSingle();
@@ -31,7 +30,8 @@ namespace Features.SonarModule.Scripts.Installers {
             Container.Bind<IRockSonarContactIds>().To<RockSonarContactIds>().AsSingle();
             Container.Bind<ISonarContactSource>().To<RockSonarContactSource>().AsSingle();
             Container.Bind<ISonarContactSource>().To<StationSonarContactSource>().AsSingle();
-            Container.Bind<ISonarCondition>().To<WorkingSonarCondition>().AsSingle();
+            Container.Bind<ISonarContactSource>().To<TargetSonarContactSource>().AsSingle();
+            Container.Bind<ISonarCondition>().To<RadarSonarCondition>().AsSingle();
             Container.Bind<ISonarContactService>().To<SonarContactService>().AsSingle();
         }
     }

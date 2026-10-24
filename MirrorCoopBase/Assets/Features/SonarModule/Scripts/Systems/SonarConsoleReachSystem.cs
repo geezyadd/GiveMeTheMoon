@@ -43,7 +43,8 @@ namespace Features.SonarModule.Scripts.Systems {
 
         private bool CanStayAtConsole() {
             PlayerLifeBody body = _playerBodyRegistry.LocalBody;
-            if (_sonarConsoleBindingModel.IsBound == false || body == null || _playerLifeQuery.LocalState != PlayerLifeState.Alive)
+            bool isAliveAtBoundConsole = _sonarConsoleBindingModel.IsBound && body != null && _playerLifeQuery.LocalState == PlayerLifeState.Alive;
+            if (isAliveAtBoundConsole == false)
                 return false;
 
             return IsSeatLost() == false && _sonarConsoleRule.IsWithinReach(body.transform.position, _sonarConsoleBindingModel.Console.position);

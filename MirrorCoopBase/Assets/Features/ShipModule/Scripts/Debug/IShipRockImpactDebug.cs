@@ -9,6 +9,9 @@ namespace Features.ShipModule.Scripts.Debug {
         // to the rock, so it flies into it.
         public bool TryDebugAimAtNearestRock(ShipRockImpactKind kind, out FieldRockDescription rock);
         public void DebugMoveShipTo(Vector3 position);
+        // The middle of the hull boxes above the ship's pivot, meters: where a thing must stand for the ship to fly
+        // into it.
+        public float DebugGetHullMiddleHeight();
     }
 }
 #endif

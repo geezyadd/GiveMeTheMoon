@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Features.SonarModule.Editor.Tests {
     // A field of rocks for a test: the query finds what touches the volume, a broken rock is left out as the real
     // query does.
-    public sealed class FakeFieldRockQuery : IFieldRockQuery {
+    public sealed class FakeFieldRockQuery : IPeerFieldRockQuery {
         private readonly List<FieldRockDescription> _rocks = new();
 
         public void Add(FieldRockDescription rock) =>

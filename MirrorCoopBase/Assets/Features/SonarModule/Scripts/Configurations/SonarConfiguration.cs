@@ -36,6 +36,7 @@ namespace Features.SonarModule.Scripts.Configurations {
         [SerializeField] private SonarContactKind _stationKind;
         [SerializeField] private SonarContactKind _largeRockKind;
         [SerializeField] private SonarContactKind _debrisKind;
+        [SerializeField] private SonarContactKind _targetKind;
         [Tooltip("Small rocks are counted in square cells of this size; a cell with enough of them is one debris contact.")]
         [SerializeField] private float _debrisCellMeters = 120f;
         [SerializeField] private int _debrisMinRocks = 6;
@@ -55,6 +56,7 @@ namespace Features.SonarModule.Scripts.Configurations {
         public SonarContactKind StationKind => _stationKind;
         public SonarContactKind LargeRockKind => _largeRockKind;
         public SonarContactKind DebrisKind => _debrisKind;
+        public SonarContactKind TargetKind => _targetKind;
         public float DebrisCellMeters => _debrisCellMeters;
         public int DebrisMinRocks => _debrisMinRocks;
         public float DebrisCellHalfHeightMeters => _debrisCellHalfHeightMeters;

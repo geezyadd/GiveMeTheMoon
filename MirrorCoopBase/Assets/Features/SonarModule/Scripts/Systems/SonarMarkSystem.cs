@@ -46,9 +46,9 @@ namespace Features.SonarModule.Scripts.Systems {
             SonarMarkRequest request = new SonarMarkRequest(isNavigator, isContactFound, isContactFound && contact.Kind.IsMarkable, markIndex != NO_MARK, _sonarConsoleModel.Marks.Count);
             SonarMarkResult result = _sonarMarkRule.Evaluate(request);
             if (result == SonarMarkResult.Marked)
-                writer.ServerAddMarks(CreateMark(contact));
+                writer.ServerAddMarks(_sonarMarkRule.CreateMark(contact, NetworkTime.time));
             else if (result == SonarMarkResult.Refreshed)
-                writer.ServerSetMarks(markIndex, CreateMark(contact));
+                writer.ServerSetMarks(markIndex, _sonarMarkRule.CreateMark(contact, NetworkTime.time));
         }
 
         public void Tick() {
@@ -81,9 +81,5 @@ namespace Features.SonarModule.Scripts.Systems {
 
             return NO_MARK;
         }
-
-        // The marker floats over the top of its object.
-        private static SonarMark CreateMark(SonarContact contact) =>
-            new(contact.Id, contact.Kind.Id, contact.Position + Vector3.up * contact.Radius, NetworkTime.time + contact.Kind.MarkSeconds);
     }
 }

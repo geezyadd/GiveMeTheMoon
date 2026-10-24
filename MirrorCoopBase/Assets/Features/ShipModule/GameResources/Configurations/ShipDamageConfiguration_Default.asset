@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ff475f95bccf6942baf01ebb63045b6, type: 3}
+  m_Name: ShipDamageConfiguration_Default
+  m_EditorClassIdentifier: 
+  _moduleSearchRadius: 6
+  _moduleBreakChance: 0.5
+  _breachChance: 0.6
+  _maxOpenBreaches: 4
+  _hullPerRepairedBreach: 10
+  _leakHullPerSecond: 0.5
+  _leakStepHull: 1
+  _repairSeconds: 2.5

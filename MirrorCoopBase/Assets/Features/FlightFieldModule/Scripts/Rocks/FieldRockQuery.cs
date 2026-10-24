@@ -5,22 +5,20 @@ using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Debris;
 using Features.FlightFieldModule.Scripts.Generation;
 using Features.FlightFieldModule.Scripts.Model;
-using Features.FlightFieldModule.Scripts.Requests;
-using Features.FlightFieldModule.Scripts.Server;
+using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Rocks {
-    // Server: finds the rocks of the current field in a world volume from the generated field, not from the scene
-    // (the server builds only the rocks around its own camera). It looks only at the cells under the volume, widened
+    // Finds the rocks of the current field in a world volume from the field data, not from the scene (a peer builds
+    // only the rocks around its own camera): the server reads its generated field, every peer the published one
+    // (IFieldRockFieldSource), through the same reader and layouts. It looks only at the cells under the volume, widened
     // by the farthest a rock can reach past its own cell, reads their placements and debris through IFieldRockReader
     // and leaves out broken rocks. Allocates nothing per call once its lists have grown.
     public sealed class FieldRockQuery : IFieldRockQuery {
         private const float HALF = 0.5f;
 
-        private readonly IReadOnlyFlightFieldServerModel _flightFieldServerModel;
-        private readonly FieldStructureCatalog _fieldStructureCatalog;
-        private readonly IFieldProfileLookup _fieldProfileLookup;
+        private readonly IFieldRockFieldSource _fieldRockFieldSource;
         private readonly IFieldRockReader _fieldRockReader;
         private readonly IFieldBrokenRocks _fieldBrokenRocks;
         private readonly FieldRockFieldData _fieldData;
@@ -29,11 +27,9 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
         private readonly List<FieldRockDescription> _cellRocks = new();
         private readonly HashSet<int> _visitedPlacements = new();
 
-        public FieldRockQuery(IReadOnlyFlightFieldServerModel flightFieldServerModel, FieldStructureCatalog fieldStructureCatalog, FlightFieldConfiguration flightFieldConfiguration,
-                              IFieldProfileLookup fieldProfileLookup, IFieldRockReader fieldRockReader, IFieldBrokenRocks fieldBrokenRocks, IFieldRandomFactory fieldRandomFactory) {
-            _flightFieldServerModel = flightFieldServerModel;
-            _fieldStructureCatalog = fieldStructureCatalog;
-            _fieldProfileLookup = fieldProfileLookup;
+        public FieldRockQuery(IFieldRockFieldSource fieldRockFieldSource, FieldStructureCatalog fieldStructureCatalog, FlightFieldConfiguration flightFieldConfiguration,
+                              IFieldRockReader fieldRockReader, IFieldBrokenRocks fieldBrokenRocks, IFieldRandomFactory fieldRandomFactory) {
+            _fieldRockFieldSource = fieldRockFieldSource;
             _fieldRockReader = fieldRockReader;
             _fieldBrokenRocks = fieldBrokenRocks;
             _fieldData = new FieldRockFieldData(new FieldDebrisWorkspace(fieldRandomFactory.Create(0)));
@@ -63,7 +59,7 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
             if (!TryReadField())
                 return;
 
-            FieldFrame frame = _flightFieldServerModel.Frame;
+            FieldFrame frame = _fieldRockFieldSource.Frame;
             Vector3 local = Quaternion.Inverse(Quaternion.LookRotation(frame.Forward, Vector3.up)) * (volume.Center - frame.Origin);
             // One more cell: a giant's main rock may stick out of its footprint by about a cell.
             float reach = volume.BoundingRadius + _reachPastCell + frame.CellSize;
@@ -77,13 +73,13 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
         }
 
         private void AddCellRocks(FieldFrame frame, Vector2Int cell, FieldRockVolume volume, List<FieldRockDescription> results) {
-            FieldCell fieldCell = _fieldData.Field.Cells[cell];
-            if (fieldCell.IsOccupied && _fieldData.TryGetPlacementIndex(fieldCell.PlacementId, out int placementIndex) && _visitedPlacements.Add(placementIndex)) {
+            IFieldRockCells cells = _fieldData.Cells;
+            if (cells.TryGetPlacementId(cell, out int placementId) && _fieldData.TryGetPlacementIndex(placementId, out int placementIndex) && _visitedPlacements.Add(placementIndex)) {
                 _fieldRockReader.ReadPlacement(_fieldData, frame, placementIndex, _cellRocks);
                 AddTouching(volume, results);
             }
 
-            if (!fieldCell.HasDebris)
+            if (!cells.TryGetDebrisId(cell, out _))
                 return;
 
             _fieldRockReader.ReadDebrisCell(_fieldData, frame, cell, _cellRocks);
@@ -98,16 +94,16 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
         }
 
         private bool TryReadRocksOf(FieldRockId id) {
-            FieldFrame frame = _flightFieldServerModel.Frame;
+            FieldFrame frame = _fieldRockFieldSource.Frame;
             switch (id.Source) {
                 case FieldRockSource.Cluster:
-                    if (id.PlacementIndex < 0 || id.PlacementIndex >= _fieldData.Field.Placements.Count)
+                    if (id.PlacementIndex < 0 || id.PlacementIndex >= _fieldData.Placements.Count)
                         return false;
 
                     _fieldRockReader.ReadPlacement(_fieldData, frame, id.PlacementIndex, _cellRocks);
                     return true;
                 case FieldRockSource.Debris:
-                    if (!_fieldData.Field.Cells.ValidateIndex(id.DebrisCell))
+                    if (!_fieldData.Cells.IsInField(id.DebrisCell))
                         return false;
 
                     _fieldRockReader.ReadDebrisCell(_fieldData, frame, id.DebrisCell, _cellRocks);
@@ -117,21 +113,19 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
             }
         }
 
-        // The field data follows the server's field: read again when a new one stands, dropped when none does.
+        // The field data follows the source's field: read again when a new one stands, dropped when none does.
         private bool TryReadField() {
-            if (!_flightFieldServerModel.HasField) {
-                if (_fieldData.Field != null)
+            int number = _fieldRockFieldSource.Number;
+            if (number == LiveFieldNumbers.NO_FIELD) {
+                if (_fieldData.HasField)
                     _fieldData.Clear();
 
                 return false;
             }
 
-            if (_fieldData.Number == _flightFieldServerModel.Number)
-                return true;
+            if (_fieldData.Number != number)
+                _fieldRockFieldSource.Read(_fieldData);
 
-            FlightField field = _flightFieldServerModel.Field;
-            FieldDifficultyProfile profile = _fieldProfileLookup.GetRequired(field.ProfileId);
-            _fieldData.Read(field, _flightFieldServerModel.Number, new MatrixFieldDebrisCells(field.Cells, _fieldStructureCatalog, profile));
             return true;
         }
 

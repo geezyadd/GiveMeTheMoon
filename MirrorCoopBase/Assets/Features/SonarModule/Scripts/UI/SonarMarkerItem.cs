@@ -7,6 +7,7 @@ namespace Features.SonarModule.Scripts.UI {
     // arrow turned to the object while it is off screen.
     public sealed class SonarMarkerItem : MonoBehaviour {
         private const string DISTANCE_FORMAT = "{0:N0} m";
+        private const int NO_METERS_SHOWN = -1;
 
         [SerializeField] private RectTransform _rect;
         [SerializeField] private Image _icon;
@@ -15,7 +16,7 @@ namespace Features.SonarModule.Scripts.UI {
         [SerializeField] private Image _arrowImage;
         [SerializeField] private Text _distance;
 
-        private int _shownMeters = -1;
+        private int _shownMeters = NO_METERS_SHOWN;
 
         public void Show(SonarMarkerDisplay marker, Vector2 localPosition) {
             gameObject.SetActive(true);

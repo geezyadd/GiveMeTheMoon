@@ -114,6 +114,31 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             }
         }
 
+        [TestCase(GIANTS_PROFILE)]
+        [TestCase(CORRIDOR_PROFILE)]
+        public void WhenAPeerQueriesThePublishedField_ThenItFindsTheSameRocksAsTheServer(string profileId) {
+            FlightField field = GetField(profileId);
+            FieldRockTestRig rig = new(_composition, _durability, field);
+            PublishedFieldRockReader publishedReader = new(_composition.Catalog, _composition.FootprintReader, _composition.ProfileLookup);
+            FieldRockQuery peerQuery = new(new RecordedFieldRockFieldSource(Publish(field), publishedReader), _composition.Catalog, _composition.Configuration, rig.Reader,
+                rig.BrokenRocks, new FieldRandomFactory());
+            List<FieldRockDescription> serverFound = new();
+            List<FieldRockDescription> peerFound = new();
+
+            int compared = 0;
+            foreach (Vector3 probe in CreateProbes(field.Frame)) {
+                rig.Query.FindInSphere(probe, PROBE_RADIUS, serverFound);
+                peerQuery.FindInSphere(probe, PROBE_RADIUS, peerFound);
+                AssertSameRocks(serverFound.ToDictionary(rock => rock.Id), peerFound.ToDictionary(rock => rock.Id), Vector3.zero, $"{profileId} peer sphere at {probe}");
+                compared += serverFound.Count;
+            }
+
+            Assert.Greater(compared, 0, $"{profileId}: no rock to compare.");
+            FieldRockDescription anyRock = ReadEveryRock(rig, field).First();
+            Assert.IsTrue(peerQuery.TryGetRock(anyRock.Id, out FieldRockDescription peerRock), $"{profileId}: a peer does not find rock {anyRock.Id} by id.");
+            Assert.Less((anyRock.Center - peerRock.Center).magnitude, POSITION_TOLERANCE);
+        }
+
         [Test]
         public void WhenARockIsBroken_ThenTheQueryLeavesItOut() {
             FieldRockTestRig rig = new(_composition, _durability, GetField(GIANTS_PROFILE));

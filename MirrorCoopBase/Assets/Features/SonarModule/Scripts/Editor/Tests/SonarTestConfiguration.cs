@@ -6,7 +6,7 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace Features.SonarModule.Editor.Tests {
-    // A sonar configuration with its three kinds made in memory for a test, set through the serialized fields.
+    // A sonar configuration with its four kinds made in memory for a test, set through the serialized fields.
     public sealed class SonarTestConfiguration : IDisposable {
         public const int MARK_LIMIT = 2;
         public const float DEBRIS_CELL_METERS = 100f;
@@ -22,11 +22,13 @@ namespace Features.SonarModule.Editor.Tests {
         public SonarContactKind StationKind { get; }
         public SonarContactKind LargeRockKind { get; }
         public SonarContactKind DebrisKind { get; }
+        public SonarContactKind TargetKind { get; }
 
         public SonarTestConfiguration() {
             StationKind = CreateKind("station", true);
             LargeRockKind = CreateKind("large-rock", false);
             DebrisKind = CreateKind("debris", false);
+            TargetKind = CreateKind("target", false);
             Configuration = ScriptableObject.CreateInstance<SonarConfiguration>();
             SerializedObject configuration = new SerializedObject(Configuration);
             configuration.FindProperty("_markLimit").intValue = MARK_LIMIT;
@@ -41,11 +43,13 @@ namespace Features.SonarModule.Editor.Tests {
             configuration.FindProperty("_stationKind").objectReferenceValue = StationKind;
             configuration.FindProperty("_largeRockKind").objectReferenceValue = LargeRockKind;
             configuration.FindProperty("_debrisKind").objectReferenceValue = DebrisKind;
+            configuration.FindProperty("_targetKind").objectReferenceValue = TargetKind;
             SerializedProperty kinds = configuration.FindProperty("_kinds");
-            kinds.arraySize = 3;
+            kinds.arraySize = 4;
             kinds.GetArrayElementAtIndex(0).objectReferenceValue = StationKind;
             kinds.GetArrayElementAtIndex(1).objectReferenceValue = LargeRockKind;
             kinds.GetArrayElementAtIndex(2).objectReferenceValue = DebrisKind;
+            kinds.GetArrayElementAtIndex(3).objectReferenceValue = TargetKind;
             configuration.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -54,6 +58,7 @@ namespace Features.SonarModule.Editor.Tests {
             Object.DestroyImmediate(StationKind);
             Object.DestroyImmediate(LargeRockKind);
             Object.DestroyImmediate(DebrisKind);
+            Object.DestroyImmediate(TargetKind);
         }
 
         private static SonarContactKind CreateKind(string id, bool isShownBeyondRange) {

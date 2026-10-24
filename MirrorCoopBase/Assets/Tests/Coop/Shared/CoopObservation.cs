@@ -31,13 +31,15 @@ namespace Tests.Coop.Shared {
         public string RejectReason;
         public bool IsRejectTextShown;
         public string Message;
+        public string[] SonarMarks;
         public string[] Errors;
 
         public string Describe() =>
             $"{Step} at {RealTime:0.0} s: phase {Phase}, loop {LoopIndex}, {LifeState}, spectating {IsSpectating}, on deck {IsOnDeck} at {Position}, "
             + $"field #{FieldNumber} seed {FieldSeed} placements {FieldPlacements}, nameplate '{OtherNameplate}', "
             + $"sockets [{string.Join(LIST_SEPARATOR, Sockets ?? Array.Empty<string>())}], "
-            + $"stats thrust {Thrust} dodge {DodgeRange} handling {Handling} armor {Armor} speed {FlightSpeed}, balance {Balance}"
+            + $"stats thrust {Thrust} dodge {DodgeRange} handling {Handling} armor {Armor} speed {FlightSpeed}, balance {Balance}, "
+            + $"sonar marks [{string.Join(LIST_SEPARATOR, SonarMarks ?? Array.Empty<string>())}]"
             + (string.IsNullOrEmpty(Message) ? string.Empty : $", message: {Message}");
     }
 }

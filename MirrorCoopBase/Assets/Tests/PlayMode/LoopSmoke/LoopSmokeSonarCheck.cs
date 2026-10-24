@@ -22,15 +22,15 @@ namespace Tests.PlayMode.LoopSmoke {
     // Ping button finds the station, a click on its echo marks it for the crew (synced model and the HUD marker), the
     // Leave button frees the console and the mark runs out (LoopSmokeSonarConfigOverride keeps it short).
     public sealed class LoopSmokeSonarCheck {
-        private const string STATION_CONTACT_ID = "station";
-        private const string PING_BUTTON = "PingButton";
-        private const string LEAVE_BUTTON = "CloseButton";
+        public const string STATION_CONTACT_ID = "station";
+
+        private const string RADAR_MODULE_ID = "radar";
         private const float RADAR_RANGE_METERS = 800f;
         private const float TIMEOUT_SECONDS = 4f;
         private const float BOARD_SETTLE_SECONDS = 0.6f;
         private const float DROP_HEIGHT = 0.5f;
         // Behind the radar console on the deck, facing its screen.
-        private static readonly Vector3 _navigatorSpot = new Vector3(2.6f, 0.3f, 1.4f);
+        private static readonly Vector3 _navigatorSpot = new Vector3(2.0f, 0.3f, 1.4f);
 
         private readonly LoopSmokeSession _session;
 
@@ -38,6 +38,14 @@ namespace Tests.PlayMode.LoopSmoke {
 
         public LoopSmokeSonarCheck(LoopSmokeSession session) =>
             _session = session;
+
+        // A run that did not reinstall the radar by hand puts it in at the station.
+        public void InstallRadarAtStation() {
+            foreach (ShipSocket socket in _session.Ship.Sockets) {
+                if (socket.AcceptedType == ShipModuleType.Radar)
+                    Assert.IsTrue(socket.ServerTryInstall(RADAR_MODULE_ID), "Sonar: the radar was not installed at the station.");
+            }
+        }
 
         public IEnumerator StandByConsoleCoroutine() {
             SonarConsoleInteractable console = FindConsole();
@@ -47,6 +55,15 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         public IEnumerator UseConsoleInCruiseCoroutine() {
+            yield return MarkStationInCruiseCoroutine();
+            IReadOnlySonarConsoleModel synced = SessionQueries.Resolve<IReadOnlySonarConsoleModel>();
+            float markTimeout = LoopSmokeSonarConfigOverride.STATION_MARK_SECONDS + TIMEOUT_SECONDS;
+            yield return _session.WaitForCoroutine(() => synced.Marks.Count == 0, markTimeout, "Sonar: the station mark running out");
+            Assert.IsTrue(Player.GetComponent<ShipRider>().IsRiding, "Sonar: the host does not ride the ship after the console.");
+        }
+
+        // Takes the console, pings, marks the station and leaves the console again; the mark stays.
+        public IEnumerator MarkStationInCruiseCoroutine() {
             SonarConsoleInteractable console = FindConsole();
             SonarScopeModel scope = SessionQueries.Resolve<SonarScopeModel>();
             IReadOnlySonarConsoleModel synced = SessionQueries.Resolve<IReadOnlySonarConsoleModel>();
@@ -57,7 +74,7 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.IsFalse(string.IsNullOrEmpty(synced.NavigatorKey), "Sonar: the synced console has no navigator.");
             Assert.IsTrue(SessionQueries.Resolve<PlayerControlBlockModel>().IsBlocked, "Sonar: walking and aim are not blocked at the console.");
 
-            ClickWindowButton(PING_BUTTON);
+            FindScopeView().DebugPingButton.onClick.Invoke();
             yield return _session.WaitForCoroutine(() => HasBlip(scope, STATION_CONTACT_ID), TIMEOUT_SECONDS, "Sonar: the ping's echo of the station");
             Assert.AreEqual(RADAR_RANGE_METERS, scope.Frame.RangeMeters, "Sonar: the range is not the radar module's SonarRange stat.");
 
@@ -65,22 +82,18 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return _session.WaitForCoroutine(() => HasMark(synced, STATION_CONTACT_ID), TIMEOUT_SECONDS, "Sonar: the station mark in the synced model");
             yield return _session.WaitForCoroutine(() => SessionQueries.Resolve<SonarMarkerScreenModel>().Markers.Count == 1, TIMEOUT_SECONDS, "Sonar: the station marker on the HUD");
 
-            ClickWindowButton(LEAVE_BUTTON);
+            FindScopeView().DebugLeaveButton.onClick.Invoke();
             yield return _session.WaitForCoroutine(() => scope.IsOpen == false && IsWindowOpen() == false && string.IsNullOrEmpty(synced.NavigatorKey), TIMEOUT_SECONDS, "Sonar: the console left and freed");
             Assert.IsFalse(SessionQueries.Resolve<PlayerControlBlockModel>().IsBlocked, "Sonar: the player is still blocked after leaving the console.");
-
-            float markTimeout = LoopSmokeSonarConfigOverride.STATION_MARK_SECONDS + TIMEOUT_SECONDS;
-            yield return _session.WaitForCoroutine(() => synced.Marks.Count == 0, markTimeout, "Sonar: the station mark running out");
-            Assert.IsTrue(Player.GetComponent<ShipRider>().IsRiding, "Sonar: the host does not ride the ship after the console.");
         }
 
         private static bool IsWindowOpen() =>
             SessionQueries.Resolve<IWindowsService>().GetWindow(typeof(SonarWindow)).WindowStatus != WindowStatus.Closed;
 
-        private static void ClickWindowButton(string path) {
+        private static SonarScopeView FindScopeView() {
             SonarScopeView view = Object.FindAnyObjectByType<SonarScopeView>();
             Assert.IsNotNull(view, "Sonar: no scope view in the open window.");
-            view.transform.Find(path).GetComponent<Button>().onClick.Invoke();
+            return view;
         }
 
         private static void ClickBlip(string contactId) {

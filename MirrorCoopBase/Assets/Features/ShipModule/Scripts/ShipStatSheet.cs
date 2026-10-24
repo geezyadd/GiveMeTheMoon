@@ -9,6 +9,8 @@ namespace Features.ShipModule.Scripts {
         private readonly ShipStatEntity _stats;
         private readonly Dictionary<string, KeyValuePair<ShipStatType, StatModifier>[]> _moduleModifiers =
             new Dictionary<string, KeyValuePair<ShipStatType, StatModifier>[]>();
+        // Sockets whose module is broken: its modifiers are kept here but are off the stats until it is repaired.
+        private readonly HashSet<string> _suspendedSockets = new HashSet<string>();
 
         public ShipStatSheet(ShipStatEntity stats) =>
             _stats = stats;
@@ -42,8 +44,31 @@ namespace Features.ShipModule.Scripts {
             if (_moduleModifiers.Remove(socketId, out KeyValuePair<ShipStatType, StatModifier>[] applied) == false)
                 return false;
 
+            if (_suspendedSockets.Remove(socketId) == false)
+                RemoveModifiers(applied);
+
+            return true;
+        }
+
+        // A broken module: its modifiers come off the stats but stay remembered, so a repair puts exactly them back.
+        public bool SuspendModule(string socketId) {
+            if (_moduleModifiers.TryGetValue(socketId, out KeyValuePair<ShipStatType, StatModifier>[] applied) == false)
+                return false;
+
+            if (_suspendedSockets.Add(socketId) == false)
+                return false;
+
+            RemoveModifiers(applied);
+            return true;
+        }
+
+        public bool ResumeModule(string socketId) {
+            if (_suspendedSockets.Remove(socketId) == false)
+                return false;
+
+            KeyValuePair<ShipStatType, StatModifier>[] applied = _moduleModifiers[socketId];
             for (int i = 0; i < applied.Length; i++)
-                _stats.RemoveModifier(applied[i].Key, applied[i].Value);
+                _stats.AddModifier(applied[i].Key, applied[i].Value);
 
             return true;
         }
@@ -57,6 +82,10 @@ namespace Features.ShipModule.Scripts {
         // An accumulative stat stops at its minimum (0).
         public void Subtract(ShipStatType type, float amount) =>
             _stats.GetStat(type).Subtract(amount);
+
+        // An accumulative stat stops at its maximum.
+        public void Add(ShipStatType type, float amount) =>
+            _stats.GetStat(type).AddValue(amount);
 
         public void Refill(ShipStatType type) {
             IStat stat = _stats.GetStat(type);
@@ -74,5 +103,10 @@ namespace Features.ShipModule.Scripts {
                 HullMax = GetMax(ShipStatType.Hull),
                 SonarRange = GetFull(ShipStatType.SonarRange)
             };
+
+        private void RemoveModifiers(KeyValuePair<ShipStatType, StatModifier>[] applied) {
+            for (int i = 0; i < applied.Length; i++)
+                _stats.RemoveModifier(applied[i].Key, applied[i].Value);
+        }
     }
 }

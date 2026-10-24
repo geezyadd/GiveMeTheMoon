@@ -1,5 +1,8 @@
+using Features.SonarModule.Contracts;
+using Features.SonarModule.Data;
 using Features.SonarModule.Scripts.Core;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace Features.SonarModule.Editor.Tests {
     public sealed class SonarMarkRuleTests {
@@ -39,6 +42,18 @@ namespace Features.SonarModule.Editor.Tests {
         [Test]
         public void WhenAMarkedContactIsMarkedAgainAtTheLimit_ThenItsMarkIsRenewed() =>
             Assert.AreEqual(SonarMarkResult.Refreshed, _rule.Evaluate(new SonarMarkRequest(true, true, true, true, SonarTestConfiguration.MARK_LIMIT)));
+
+        [Test]
+        public void WhenAContactIsMarked_ThenTheMarkFloatsOverItAndLastsTheKindsTime() {
+            SonarContact rock = new("rock:c:4:0", _configuration.LargeRockKind, new Vector3(10f, 100f, 300f), 25f);
+
+            SonarMark mark = _rule.CreateMark(rock, 50.0);
+
+            Assert.AreEqual(rock.Id, mark.ContactId);
+            Assert.AreEqual(_configuration.LargeRockKind.Id, mark.KindId);
+            Assert.AreEqual(new Vector3(10f, 125f, 300f), mark.Position);
+            Assert.AreEqual(50.0 + _configuration.LargeRockKind.MarkSeconds, mark.ExpiresAt, 0.0001);
+        }
 
         [TestCase(9.99, false)]
         [TestCase(10.0, true)]

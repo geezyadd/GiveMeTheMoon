@@ -8,6 +8,7 @@ using Features.LobbyModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
 using Features.PlayerProfileModule.Scripts;
 using Features.ShipModule.Scripts;
+using Features.ShipModule.Scripts.Damage;
 using Features.ShipModule.Scripts.Hull;
 using Features.ShipModule.Scripts.Impacts;
 using Features.ShopModule.Scripts.Configurations;
@@ -31,6 +32,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
                     Address.Configurations.ShipAccumulativeStatsConfiguration_Default)
                 .AsSingle();
             Container.BindConfigurationFromAddressables<ShipHullConfiguration>(Address.Configurations.ShipHullConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ShipDamageConfiguration>(Address.Configurations.ShipDamageConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShipHullHudConfiguration>(Address.Configurations.ShipHullHudConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShipRockImpactConfiguration>(Address.Configurations.ShipRockImpactConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShopCatalog>(Address.Configurations.ShopCatalog_Default).AsSingle();
@@ -50,6 +52,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<FieldStructureCatalog>(Address.Configurations.FieldStructureCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FieldRockDurabilityConfiguration>(Address.Configurations.FieldRockDurabilityConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<FieldTargetCatalog>(Address.Configurations.FieldTargetCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<FieldTargetConfiguration>(Address.Configurations.FieldTargetConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<StagePresetCatalog>(Address.Configurations.StagePresetCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WeaponCatalog>(Address.Configurations.WeaponCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WeaponHitRuleConfiguration>(Address.Configurations.WeaponHitRuleConfiguration_Default).AsSingle();

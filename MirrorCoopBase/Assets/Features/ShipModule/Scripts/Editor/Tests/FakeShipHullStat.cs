@@ -17,6 +17,9 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
         public void ServerSubtract(float amount) =>
             Current = Mathf.Max(0f, Current - amount);
 
+        public void ServerAdd(float amount) =>
+            Current = Mathf.Min(Max, Current + amount);
+
         public void ServerRepair() {
             Current = Max;
             RepairCount++;

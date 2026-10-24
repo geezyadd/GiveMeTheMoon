@@ -1,8 +1,8 @@
 using System.Collections.Generic;
+using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Generated;
 using Features.SonarModule.Contracts;
 using Features.SonarModule.Scripts.Configurations;
-using Features.SonarModule.Scripts.Core;
 using UnityEngine;
 
 namespace Features.SonarModule.Scripts.Sources {
@@ -12,17 +12,15 @@ namespace Features.SonarModule.Scripts.Sources {
         private const string STATION_CONTACT_ID = "station";
 
         private readonly IReadOnlyShipRunModel _shipRunModel;
-        private readonly ISonarFlightRule _sonarFlightRule;
         private readonly SonarConfiguration _sonarConfiguration;
 
-        public StationSonarContactSource(IReadOnlyShipRunModel shipRunModel, ISonarFlightRule sonarFlightRule, SonarConfiguration sonarConfiguration) {
+        private bool IsFlying =>
+            _shipRunModel.IsAvailable && _shipRunModel.Phase.IsFlight();
+
+        public StationSonarContactSource(IReadOnlyShipRunModel shipRunModel, SonarConfiguration sonarConfiguration) {
             _shipRunModel = shipRunModel;
-            _sonarFlightRule = sonarFlightRule;
             _sonarConfiguration = sonarConfiguration;
         }
-
-        private bool IsFlying =>
-            _shipRunModel.IsAvailable && _sonarFlightRule.IsFlying(_shipRunModel.Phase);
 
         public void CollectContacts(Vector3 center, float radius, List<SonarContact> results) {
             if (IsFlying)

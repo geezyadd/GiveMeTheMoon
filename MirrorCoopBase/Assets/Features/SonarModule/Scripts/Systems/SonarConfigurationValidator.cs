@@ -20,6 +20,7 @@ namespace Features.SonarModule.Scripts.Systems {
             ValidateKindListed(_sonarConfiguration.StationKind, nameof(SonarConfiguration.StationKind));
             ValidateKindListed(_sonarConfiguration.LargeRockKind, nameof(SonarConfiguration.LargeRockKind));
             ValidateKindListed(_sonarConfiguration.DebrisKind, nameof(SonarConfiguration.DebrisKind));
+            ValidateKindListed(_sonarConfiguration.TargetKind, nameof(SonarConfiguration.TargetKind));
             ValidatePositive(_sonarConfiguration.MinRangeMeters, nameof(SonarConfiguration.MinRangeMeters));
             ValidatePositive(_sonarConfiguration.PingCooldownSeconds, nameof(SonarConfiguration.PingCooldownSeconds));
             ValidatePositive(_sonarConfiguration.PingWaveSeconds, nameof(SonarConfiguration.PingWaveSeconds));

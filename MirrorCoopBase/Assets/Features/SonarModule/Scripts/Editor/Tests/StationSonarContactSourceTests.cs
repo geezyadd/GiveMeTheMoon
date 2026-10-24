@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Features.ShipModule.Scripts;
 using Features.SonarModule.Contracts;
-using Features.SonarModule.Scripts.Core;
 using Features.SonarModule.Scripts.Sources;
 using NUnit.Framework;
 using UnityEngine;
@@ -22,7 +21,7 @@ namespace Features.SonarModule.Editor.Tests {
         public void SetUp() {
             _configuration = new SonarTestConfiguration();
             _run = new FakeShipRunModel { Phase = ShipRunPhase.Cruise, TransitDestination = _destination };
-            _source = new StationSonarContactSource(_run, new SonarFlightRule(), _configuration.Configuration);
+            _source = new StationSonarContactSource(_run, _configuration.Configuration);
             _contacts.Clear();
         }
 

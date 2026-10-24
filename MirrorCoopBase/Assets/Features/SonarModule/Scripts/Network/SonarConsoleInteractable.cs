@@ -2,7 +2,6 @@ using Features.GrabModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Generated;
 using Features.SonarModule.Data.Generated;
-using Features.SonarModule.Scripts.Core;
 using Mirror;
 using UnityEngine;
 using Zenject;
@@ -19,21 +18,18 @@ namespace Features.SonarModule.Scripts.Network {
         private IReadOnlyShipRunModel _shipRunModel;
         private IReadOnlyShipSocketsModel _shipSocketsModel;
         private IReadOnlySonarConsoleModel _sonarConsoleModel;
-        private ISonarFlightRule _sonarFlightRule;
 
         public bool IsConsoleActive =>
-            _socket.IsOccupied && _sonarFlightRule.IsFlying(_shipRunModel.Phase);
+            _socket.IsOccupied && _shipRunModel.Phase.IsFlight();
 
         [Inject]
         private void InjectDependencies(
             IReadOnlyShipRunModel shipRunModel,
             IReadOnlyShipSocketsModel shipSocketsModel,
-            IReadOnlySonarConsoleModel sonarConsoleModel,
-            ISonarFlightRule sonarFlightRule) {
+            IReadOnlySonarConsoleModel sonarConsoleModel) {
             _shipRunModel = shipRunModel;
             _shipSocketsModel = shipSocketsModel;
             _sonarConsoleModel = sonarConsoleModel;
-            _sonarFlightRule = sonarFlightRule;
         }
 
         private void Awake() =>

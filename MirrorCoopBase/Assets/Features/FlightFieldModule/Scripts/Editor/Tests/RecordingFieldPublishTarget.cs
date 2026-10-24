@@ -7,6 +7,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     public sealed class RecordingFieldPublishTarget : IFieldPublishTarget {
         public List<FieldPlacementEntry> Placements { get; } = new();
         public List<FieldDebrisRunEntry> DebrisRuns { get; } = new();
+        public List<FieldTargetEntry> Targets { get; } = new();
         public int Routes { get; private set; }
         public int RouteCells { get; private set; }
         public int DebrisCells { get; private set; }
@@ -35,6 +36,11 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         public void AddDebrisRun(FieldDebrisRunEntry debrisRun) {
             DebrisRuns.Add(debrisRun);
             DebrisCells += debrisRun.Length;
+            EntriesInBatch++;
+        }
+
+        public void AddTarget(FieldTargetEntry target) {
+            Targets.Add(target);
             EntriesInBatch++;
         }
 
