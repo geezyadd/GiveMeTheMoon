@@ -7,16 +7,13 @@ using UnityEngine;
 namespace Features.FlightFieldModule.Scripts.Editor {
     // Paints a generated field top-down: A -> B points up, the field's right points right. The zone layer shows
     // structures grey with a dark outline per placement, debris cells tinted by their density and the reserved zones;
-    // the density layer shows the density map, glades and voids. On top: every route centerline by kind, the
-    // shortest way along the route and the shortest way outside all corridors, and the stations.
+    // the density layer shows the density map and voids. On top: the main centerline and the stations.
     public sealed class FlightFieldMapPainter {
         private const int MARKER_INSET_DIVIDER = 4;
-        private const int PATH_INSET_DIVIDER = 3;
         private const float DEBRIS_TINT = 0.6f;
-        private const float GLADE_TINT = 0.45f;
         private const float MIN_DEBRIS_TINT = 0.35f;
 
-        public Texture2D Paint(FlightField field, int pixelsPerCell, FlightFieldMapLayer layer, bool isShowingPaths) {
+        public Texture2D Paint(FlightField field, int pixelsPerCell, FlightFieldMapLayer layer) {
             Vector2Int size = field.Frame.Size;
             Texture2D texture = new(size.y * pixelsPerCell, size.x * pixelsPerCell, TextureFormat.RGBA32, false) {
                 filterMode = FilterMode.Point,
@@ -27,12 +24,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             }
 
             foreach (FieldRoute route in field.Routes)
-                PaintCells(texture, route.Centerline, pixelsPerCell, GetCenterlineColor(route), MARKER_INSET_DIVIDER);
-
-            if (isShowingPaths) {
-                PaintCells(texture, field.Metrics.FreePath, pixelsPerCell, FlightFieldMapLegend.FreePath, PATH_INSET_DIVIDER);
-                PaintCells(texture, field.Metrics.RoutePath, pixelsPerCell, FlightFieldMapLegend.RoutePath, PATH_INSET_DIVIDER);
-            }
+                PaintCells(texture, route.Centerline, pixelsPerCell, FlightFieldMapLegend.Centerline, MARKER_INSET_DIVIDER);
 
             PaintMarker(texture, field.StationACell, pixelsPerCell, FlightFieldMapLegend.StationA, MARKER_INSET_DIVIDER);
             PaintMarker(texture, field.StationBCell, pixelsPerCell, FlightFieldMapLegend.StationB, MARKER_INSET_DIVIDER);
@@ -93,8 +85,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             if (density.IsVoid(cell))
                 return FlightFieldMapLegend.Void;
 
-            Color color = Color.Lerp(FlightFieldMapLegend.DensityLow, FlightFieldMapLegend.DensityHigh, density.GetDensity(cell));
-            return density.IsGlade(cell) ? Color.Lerp(color, FlightFieldMapLegend.Glade, GLADE_TINT) : color;
+            return Color.Lerp(FlightFieldMapLegend.DensityLow, FlightFieldMapLegend.DensityHigh, density.GetDensity(cell));
         }
 
         // Texture x is the field's y (right) and texture y is the field's x (forward).
@@ -122,18 +113,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
                 FieldReserveKind.None => FlightFieldMapLegend.Free,
                 FieldReserveKind.StationZone => FlightFieldMapLegend.StationZone,
                 FieldReserveKind.TakeoffCorridor => FlightFieldMapLegend.TakeoffCorridor,
-                FieldReserveKind.RouteCorridor => FlightFieldMapLegend.RouteCorridor,
-                FieldReserveKind.AlternativeCorridor => FlightFieldMapLegend.AlternativeCorridor,
-                FieldReserveKind.DeadEndCorridor => FlightFieldMapLegend.DeadEndCorridor,
                 _ => throw new ArgumentOutOfRangeException(nameof(reserve), reserve, "No map color for this reserve."),
-            };
-
-        private static Color GetCenterlineColor(FieldRoute route) =>
-            route.Kind switch {
-                FieldRouteKind.Main => FlightFieldMapLegend.Centerline,
-                FieldRouteKind.Alternative => route.IsClosed ? FlightFieldMapLegend.ClosedAlternativeCenterline : FlightFieldMapLegend.AlternativeCenterline,
-                FieldRouteKind.DeadEnd => FlightFieldMapLegend.DeadEndCenterline,
-                _ => throw new ArgumentOutOfRangeException(nameof(route), route.Kind, "No map color for this route kind."),
             };
 
         private static void PaintCells(Texture2D texture, IReadOnlyList<Vector2Int> cells, int pixelsPerCell, Color color, int insetDivider) {

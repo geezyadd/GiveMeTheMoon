@@ -67,24 +67,8 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [SerializeField, Min(0f)] private float _debrisGapMarginMeters = 6f;
         [Tooltip("Spacing of the grid the rocks of passable cells are drawn on, meters: finer gives more candidate spots.")]
         [SerializeField, Min(1f)] private float _debrisGridSpacingMeters = 25f;
-        [Tooltip("Room a passable cell's rock keeps from the nearest closed cell beyond its radius, meters. Small: the rocks stand against the walls and no free lane runs along them; a channel stays open because it is wider than the widest rock plus the ship gap plus the wall rocks' spill on both sides (checked by the slalom tests).")]
-        [SerializeField, Min(0f)] private float _debrisWallClearanceMeters = 5f;
-        [Tooltip("The widest gap allowed at the flight plane inside or between occupied cells, meters; below the ship width, so a ridge is closed.")]
-        [SerializeField, Min(0f)] private float _maxPlaneGapMeters = 4f;
-        [Tooltip("Half of the slab around the flight plane that ridges must close, meters: half the ship's height and a margin.")]
-        [SerializeField, Min(0f)] private float _planeHalfThicknessMeters = 8f;
         [Tooltip("Speed the dodges-per-minute metric flies the main route at, m/s (the base cruise speed).")]
         [SerializeField, Min(0.1f)] private float _metricCruiseSpeed = 14f;
-        [Tooltip("How far the zone shares of a field may lie from its profile's shares (0..1).")]
-        [SerializeField, Range(0f, 1f)] private float _zoneShareTolerance = 0.08f;
-
-        [Header("Passage")]
-        [Tooltip("Free cells needed on every side of a passage cell, diagonals included (the ship is about 10 x 19 m).")]
-        [SerializeField, Min(0)] private int _passageClearanceCells = 1;
-        [Tooltip("Rounds of removing the structures that block a route before the field is generated with another seed.")]
-        [SerializeField, Min(0)] private int _maxRepairRounds = 2;
-        [Tooltip("Seeds tried before the route corridors are cleared by force.")]
-        [SerializeField, Min(1)] private int _maxSeedAttempts = 3;
 
         [Header("Publishing")]
         [Tooltip("Placements, routes and route cells written into the live field model per batch; one placement is about 23 bytes, so a batch stays well below the 16 KB Telepathy message limit.")]
@@ -122,14 +106,7 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public float DebrisGapMarginMeters => _debrisGapMarginMeters;
         public float DebrisMinGapMeters => _shipWidthMeters + _debrisGapMarginMeters;
         public float DebrisGridSpacingMeters => _debrisGridSpacingMeters;
-        public float DebrisWallClearanceMeters => _debrisWallClearanceMeters;
-        public float MaxPlaneGapMeters => _maxPlaneGapMeters;
-        public float PlaneHalfThicknessMeters => _planeHalfThicknessMeters;
         public float MetricCruiseSpeed => _metricCruiseSpeed;
-        public float ZoneShareTolerance => _zoneShareTolerance;
-        public int PassageClearanceCells => _passageClearanceCells;
-        public int MaxRepairRounds => _maxRepairRounds;
-        public int MaxSeedAttempts => _maxSeedAttempts;
         public int PublishEntriesPerBatch => _publishEntriesPerBatch;
         public float PublishBatchIntervalSeconds => _publishBatchIntervalSeconds;
         public int StructuresBuiltPerFrame => _structuresBuiltPerFrame;

@@ -47,8 +47,8 @@ namespace Features.FlightFieldModule.Scripts.Scene {
             rocks.Add(CreateRock(recipe, new Vector3(0f, height, 0f), size, random));
         }
 
-        // A rock over a random cell of the footprint, kept inside that cell: the client does not know the corridor
-        // cells, so a rock must not reach into a neighbouring one.
+        // A rock over a random cell of the footprint, kept inside that cell: the client does not know which cells
+        // around it are kept open, so a rock must not reach into a neighbouring one.
         private static FieldClusterRockPose CreateCellRock(FieldClusterRecipe recipe, FieldFootprint footprint, float cellSize, Vector2 sizeRange, IFieldRandom random) {
             Vector2Int cell = footprint.Cells[random.Range(0, footprint.Cells.Count)];
             float size = Mathf.Min(Mathf.Lerp(sizeRange.x, sizeRange.y, random.Value()) * cellSize, LargestSizeInside(cellSize, recipe));

@@ -39,15 +39,13 @@ namespace Tests.PlayMode.LoopSmoke {
         private const string LOOP_ROUTES_PROPERTY = "_routesByLoop";
         private const string LOOP_PROFILES_PROPERTY = "_profiles";
         private const string LOOP_PROFILE_PROPERTY = "_profile";
-        private const string RIDGE_OBSTACLES_PROPERTY = "_ridgeObstacles";
         private const string OBSTACLE_STRUCTURE_PROPERTY = "_structure";
         private const string OBSTACLE_WEIGHT_PROPERTY = "_weight";
         private const string GIANT_CLASSES_PROPERTY = "_giantClasses";
         private const string GIANT_CLASS_NAME_PROPERTY = "_name";
         private const string GIANT_CLASS_OBSTACLES_PROPERTY = "_obstacles";
         private const string DEBUG_GIANT_CLASS_NAME = "Debug networked beacon";
-        // Against weight 1 of the single-cell rock: about one beacon in a Channels warm-up field (almost all big wall
-        // footprints, ~5 single cells), a dozen in the busiest fields, not hundreds of Mirror objects.
+        // The weight of the beacon's giant class: a few beacons per field, not hundreds of Mirror objects.
         private const float BEACON_WEIGHT = 0.25f;
 #endif
 
@@ -91,8 +89,8 @@ namespace Tests.PlayMode.LoopSmoke {
             return copy;
         }
 
-        // A copy of the game's field configuration whose difficulty profiles (copies too) may close a ridge cell with
-        // the debug networked beacon: the obstacle types of a field come from its profile. The copies go to the list.
+        // A copy of the game's field configuration whose difficulty profiles (copies too) may place the debug
+        // networked beacon as a giant: the obstacle types of a field come from its profile. The copies go to the list.
         public static FlightFieldConfiguration CreateConfigurationWithNetworkedObstacle(FlightFieldConfiguration configuration, List<Object> copies) {
             FlightFieldConfiguration copy = Object.Instantiate(configuration);
             copies.Add(copy);
@@ -121,17 +119,12 @@ namespace Tests.PlayMode.LoopSmoke {
         private static Object CreateProfileWithNetworkedObstacle(Object profile) {
             Object copy = Object.Instantiate(profile);
             SerializedObject serializedCopy = new SerializedObject(copy);
-            SerializedProperty ridge = serializedCopy.FindProperty(RIDGE_OBSTACLES_PROPERTY);
-            ridge.arraySize++;
-            SerializedProperty beacon = ridge.GetArrayElementAtIndex(ridge.arraySize - 1);
-            beacon.FindPropertyRelative(OBSTACLE_STRUCTURE_PROPERTY).objectReferenceValue = AssetDatabase.LoadAssetAtPath<FieldStructureDefinition>(DEBUG_NETWORKED_STRUCTURE_PATH);
-            beacon.FindPropertyRelative(OBSTACLE_WEIGHT_PROPERTY).floatValue = BEACON_WEIGHT;
             AddNetworkedGiantClass(serializedCopy.FindProperty(GIANT_CLASSES_PROPERTY));
             serializedCopy.ApplyModifiedPropertiesWithoutUndo();
             return copy;
         }
 
-        // An obstacle profile places giants, not ridges: the beacon comes as a giant class of its own.
+        // The beacon comes as a giant class of its own.
         private static void AddNetworkedGiantClass(SerializedProperty giantClasses) {
             giantClasses.arraySize++;
             SerializedProperty giantClass = giantClasses.GetArrayElementAtIndex(giantClasses.arraySize - 1);

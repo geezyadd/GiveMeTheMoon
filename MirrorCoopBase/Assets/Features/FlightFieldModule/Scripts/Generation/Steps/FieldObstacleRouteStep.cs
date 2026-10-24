@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Model;
 using UnityEngine;
 
@@ -11,16 +10,13 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
         private const int MAIN_ROUTE_ID = 0;
         private const int NO_CORRIDOR_HALF_WIDTH = 0;
 
-        public bool IsUsedBy(FieldLayoutKind layout) =>
-            layout == FieldLayoutKind.Obstacles;
-
         public void Execute(FieldGenerationContext context) {
             List<Vector2Int> centerline = CreateStraightLine(ClampInside(context.CruiseStartCell, context.Frame.Size), context.StationBCell);
             List<int> halfWidths = new(centerline.Count);
             for (int i = 0; i < centerline.Count; i++)
                 halfWidths.Add(NO_CORRIDOR_HALF_WIDTH);
 
-            context.AddRoute(new FieldRoute(MAIN_ROUTE_ID, FieldRouteKind.Main, context.Difficulty, centerline, halfWidths, false));
+            context.AddRoute(new FieldRoute(MAIN_ROUTE_ID, FieldRouteKind.Main, context.Difficulty, centerline, halfWidths));
         }
 
         private static List<Vector2Int> CreateStraightLine(Vector2Int start, Vector2Int end) {

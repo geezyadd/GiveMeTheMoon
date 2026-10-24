@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: FieldProfile_ObstaclesGiants
   m_EditorClassIdentifier: 
   _id: obstacles_giants
-  _layout: 2
   _volume: {fileID: 11400000, guid: 22c21882c3d44bd688f6a25115809a97, type: 2}
   _noiseScaleCells:
     _easy: 10
@@ -22,9 +21,6 @@ MonoBehaviour:
   _contrast:
     _easy: 1.2
     _hard: 1.4
-  _gladeThreshold:
-    _easy: 0
-    _hard: 0
   _voidCount:
     _easy: 0
     _hard: 0

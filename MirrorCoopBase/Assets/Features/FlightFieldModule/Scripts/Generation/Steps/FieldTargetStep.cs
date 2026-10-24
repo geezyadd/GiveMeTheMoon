@@ -8,11 +8,11 @@ using Features.FlightFieldModule.Scripts.Targets;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Generation.Steps {
-    // The target balloons of a field, the last step for every layout: the count from the loop and the stage preset,
-    // each balloon of a kind picked by weight in a passable cell (no placement, nothing reserved, no wall or ridge)
+    // The target balloons of a field, the last step: the count from the loop and the stage preset,
+    // each balloon of a kind picked by weight in a passable cell (no placement, nothing reserved, no giant)
     // within reach of the main course, picked more often the farther it is from the course, at a random spot and
-    // height in the cell, kept only clear of every rock and of the other balloons. It changes no cell, so routes,
-    // passage and walls stay as they are. Its own random sequence from the field seed: the same field gets the same
+    // height in the cell, kept only clear of every rock and of the other balloons. It changes no cell, so the rocks
+    // stay as they are. Its own random sequence from the field seed: the same field gets the same
     // balloons, and the other steps draw what they drew before.
     public sealed class FieldTargetStep : IFieldGenerationStep {
         private const int SEED_SALT = 0x7A26E7;
@@ -36,9 +36,6 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             _fieldTargetRockClearance = fieldTargetRockClearance;
             _fieldRandomFactory = fieldRandomFactory;
         }
-
-        public bool IsUsedBy(FieldLayoutKind layout) =>
-            true;
 
         public void Execute(FieldGenerationContext context) {
             IFieldRandom random = _fieldRandomFactory.Create(unchecked(context.Seed ^ SEED_SALT));
@@ -143,7 +140,7 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
         // Per generation: generations may run on several threads at once.
         private FieldTargetRockWorkspace ReadRocks(FieldGenerationContext context) {
             FlightField field = new(context.Frame, context.Seed, context.Cells, context.Placements, context.Routes, context.StationACell, context.StationBCell,
-                context.CruiseStartCell, isPassageForced: false, context.Profile.Id, context.Difficulty, context.Density, context.Metrics, context.Request.LoopIndex, context.Targets);
+                context.CruiseStartCell, context.Profile.Id, context.Difficulty, context.Density, context.Metrics, context.Request.LoopIndex, context.Targets);
             FieldRockFieldData fieldData = new(new FieldDebrisWorkspace(_fieldRandomFactory.Create(NO_DEBRIS_SEED)));
             fieldData.Read(field, GENERATION_FIELD_NUMBER, new MatrixFieldDebrisCells(context.Cells, _fieldStructureCatalog, context.Profile));
             return new FieldTargetRockWorkspace(fieldData);
