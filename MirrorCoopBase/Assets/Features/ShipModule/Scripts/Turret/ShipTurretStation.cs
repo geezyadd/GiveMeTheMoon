@@ -16,7 +16,8 @@ namespace Features.ShipModule.Scripts.Turret {
     // A turret's slot view as a seat station. On the seated owner's peer the mouse turns it at once, the fire button
     // fires and the view rides the camera point behind the gun; on every other peer the turret follows the synced aim,
     // smoothed, and replays the fire from the synced trigger. On the server the seated player holds the weapon, so
-    // its hit reports are accepted. A broken turret module does not fire until it is repaired.
+    // its hit reports are accepted. A broken turret module does not fire until it is repaired. The seat point turns with
+    // the gun, and the seated player's body follows it on every peer.
     public sealed class ShipTurretStation : MonoBehaviour, ISeatStation {
         private const string WEAPON_NOT_IN_CATALOG_FORMAT = "{0}: weapon {1} is not in the {2}; add it there, the server checks every hit against the catalog.";
 
@@ -26,6 +27,9 @@ namespace Features.ShipModule.Scripts.Turret {
         [SerializeField] private Transform _pitchPivot;
         [SerializeField] private Transform _cameraPoint;
         [SerializeField] private GameObject _hands;
+        [SerializeField] private ShipSeat _seat;
+
+        private readonly SeatedOwnerBody _ownerBody = new SeatedOwnerBody();
 
         private IGameCameraService _gameCameraService;
         private IWeaponShooterFactory _weaponShooterFactory;
@@ -45,6 +49,7 @@ namespace Features.ShipModule.Scripts.Turret {
         private WeaponShooter _ownerShooter;
         private Quaternion _yawRest;
         private Quaternion _pitchRest;
+        private Transform _seatPoint;
         private int _weaponIndex;
         private uint _occupantNetId;
         private WeaponHolderSync _occupantWeapon;
@@ -85,6 +90,7 @@ namespace Features.ShipModule.Scripts.Turret {
             _holder = new ShipTurretWeaponHolder(_feel.Muzzle);
             _yawRest = _yawPivot.localRotation;
             _pitchRest = _pitchPivot.localRotation;
+            _seatPoint = _seat.SitPoint;
             _weaponIndex = FindWeaponIndex();
             _feel.Bind(_weapon.FeelProfile, new ShipDeckFeelFloor(_ship.transform, _ship.DeckGeometry));
             _replayShooter = _weaponShooterFactory.Create(_weapon, _feel, new ShownShotOutcomes(_feel));
@@ -127,6 +133,10 @@ namespace Features.ShipModule.Scripts.Turret {
             if (_isServerHolding && _occupantWeapon != null)
                 _occupantWeapon.ServerEndHolding();
 
+            // The rider may already be gone with its player object.
+            if (_occupantRider != null)
+                _occupantRider.StopFollowingSeatPoint(_seatPoint);
+
             _isServerHolding = false;
             _occupantNetId = 0;
             _occupantWeapon = null;
@@ -153,7 +163,9 @@ namespace Features.ShipModule.Scripts.Turret {
                 return;
 
             _occupantWeapon = weapon;
-            occupant.TryGetComponent(out _occupantRider);
+            if (occupant.TryGetComponent(out _occupantRider))
+                _occupantRider.FollowSeatPoint(_seatPoint);
+
             if (NetworkServer.active) {
                 weapon.ServerBeginHolding(_weapon, _weaponIndex, _holder);
                 _isServerHolding = true;
@@ -177,6 +189,7 @@ namespace Features.ShipModule.Scripts.Turret {
             _aimSendSchedule.Reset();
             _ownerInput.Listen();
             _gameCameraService.BeginFixedView(_cameraPoint);
+            _ownerBody.Hide(_occupantWeapon);
             _occupantWeapon.OwnerBeginHolding(_weaponIndex);
             _ownerShooter = _weaponShooterFactory.Create(_weapon, _feel, new ReportedShotOutcomes(_feel, _occupantWeapon));
             _feel.SetViewOwned(true);
@@ -186,6 +199,7 @@ namespace Features.ShipModule.Scripts.Turret {
             _isOwner = false;
             _ownerInput.StopListening();
             _gameCameraService.EndFixedView();
+            _ownerBody.Show();
             _feel.SetViewOwned(false);
             _ownerShooter = null;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
