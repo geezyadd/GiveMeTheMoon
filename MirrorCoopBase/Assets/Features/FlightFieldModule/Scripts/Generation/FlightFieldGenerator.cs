@@ -60,6 +60,6 @@ namespace Features.FlightFieldModule.Scripts.Generation {
 
         private static FlightField CreateField(FieldGenerationContext context, bool isPassageForced) =>
             new(context.Frame, context.Seed, context.Cells, context.Placements, context.Routes, context.StationACell, context.StationBCell,
-                context.CruiseStartCell, isPassageForced, context.Profile.Id, context.Difficulty, context.Density, context.Metrics);
+                context.CruiseStartCell, isPassageForced, context.Profile.Id, context.Difficulty, context.Density, context.Metrics, context.Request.LoopIndex);
     }
 }

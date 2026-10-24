@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Network;
-using Features.FlightFieldModule.Scripts.Network.Generated;
 using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
@@ -14,14 +13,15 @@ namespace Features.FlightFieldModule.Scripts.Debris {
 
         public FieldDifficultyProfile Profile { get; private set; }
 
-        public void Read(IReadOnlyLiveFieldModel liveFieldModel, FieldStructureCatalog catalog, IFieldFootprintReader footprintReader, FieldDifficultyProfile profile) {
+        public void Read(IReadOnlyList<FieldDebrisRunEntry> debrisRuns, IReadOnlyList<FieldPlacementEntry> placements, FieldStructureCatalog catalog,
+                         IFieldFootprintReader footprintReader, FieldDifficultyProfile profile) {
             Profile = profile;
             _debrisByCell.Clear();
             _blockedCells.Clear();
-            foreach (FieldDebrisRunEntry run in liveFieldModel.DebrisRuns)
+            foreach (FieldDebrisRunEntry run in debrisRuns)
                 AddRun(run, catalog.GetRequiredDebris(run.DebrisId).Recipe);
 
-            foreach (FieldPlacementEntry placement in liveFieldModel.Placements)
+            foreach (FieldPlacementEntry placement in placements)
                 AddPlacement(placement, catalog, footprintReader);
         }
 

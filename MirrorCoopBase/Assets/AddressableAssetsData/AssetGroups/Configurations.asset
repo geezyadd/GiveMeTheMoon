@@ -90,6 +90,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: abd9dae1f011a414f81a354c37ab0fee
+    m_Address: FieldRockDurabilityConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ae144bf2cfcc83e41911d615c268f231
     m_Address: ShopCatalog_Default
     m_ReadOnly: 0

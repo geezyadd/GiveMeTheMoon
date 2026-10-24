@@ -29,8 +29,15 @@ namespace Features.FlightFieldModule.Scripts.Model {
             Origin + Forward * ((cell.x + CELL_CENTER) * CellSize) + Right * ((cell.y + CELL_CENTER) * CellSize);
 
         // The flight plane in field space: x along Right, y along Forward (the field root's local x and z).
-        public Vector2 CellToPlane(Vector2Int cell) =>
-            new((cell.y + CELL_CENTER) * CellSize, (cell.x + CELL_CENTER) * CellSize);
+        public Vector2 CellToPlane(Vector2Int cell) {
+            Vector3 center = CellCenterInField(cell, CellSize);
+            return new Vector2(center.x, center.z);
+        }
+
+        // The middle of a cell on the flight plane in field space (the field root's local space: x along Right, y up,
+        // z along Forward): where the rocks of a debris cell are laid out from, on every peer and on the server.
+        public static Vector3 CellCenterInField(Vector2Int cell, float cellSize) =>
+            new((cell.y + CELL_CENTER) * cellSize, 0f, (cell.x + CELL_CENTER) * cellSize);
 
         public Vector2 WorldToPlane(Vector3 point) {
             Vector3 offset = point - Origin;

@@ -51,3 +51,5 @@ MonoBehaviour:
   _extraRocksPerCell: 0
   _extraHeightMeters: {x: 25, y: 130}
   _extraDiameterMeters: {x: 15, y: 70}
+  _isBreakable: 0
+  _isAlwaysLarge: 1

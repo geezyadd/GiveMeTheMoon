@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2398944348802494875}
   - component: {fileID: 830726972594650936}
-  m_Layer: 2
+  m_Layer: 8
   m_Name: Trigger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -62,7 +62,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8965819591789933196}
-  m_Layer: 2
+  m_Layer: 8
   m_Name: Rock_3x3
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -30,6 +30,12 @@ namespace Features.FlightFieldModule.Scripts.Structures {
         [Tooltip("Debris size as a share of the cell, min and max.")]
         [SerializeField] private Vector2 _debrisSize = new(0.03f, 0.08f);
 
+        [Header("Breaking")]
+        [Tooltip("The rocks of this recipe can be broken (by a ship collision or a weapon).")]
+        [SerializeField] private bool _isBreakable = true;
+        [Tooltip("Every rock of this recipe counts as large whatever its diameter (giants, walls).")]
+        [SerializeField] private bool _isAlwaysLarge;
+
         [Header("Dense rock field (walls and ridges)")]
         [Tooltip("Chunky rocks that close the footprint at the flight plane, at random positions, sizes and 3D turns. Empty = no dense field (the main rock and satellites instead).")]
         [SerializeField] private FieldClusterRockOption[] _planeRocks = Array.Empty<FieldClusterRockOption>();
@@ -69,6 +75,8 @@ namespace Features.FlightFieldModule.Scripts.Structures {
         public float DebrisChance => _debrisChance;
         public Vector2Int DebrisCount => _debrisCount;
         public Vector2 DebrisSize => _debrisSize;
+        public bool IsBreakable => _isBreakable;
+        public bool IsAlwaysLarge => _isAlwaysLarge;
         public IReadOnlyList<FieldClusterRockOption> PlaneRocks => _planeRocks;
         public bool HasPlaneCover => _planeRocks.Length > 0;
         public float PlaneHalfExtentShare => _planeHalfExtentShare;

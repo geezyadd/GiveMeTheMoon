@@ -15,6 +15,7 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         private readonly SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteEntry> _routes = new();
         private readonly SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteCellEntry> _routeCells = new();
         private readonly SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> _debrisRuns = new();
+        private readonly SyncList<global::Features.FlightFieldModule.Contracts.FieldRockId> _brokenRocks = new();
 
         [Server]
         public void ServerSetNumber(int value) {
@@ -180,12 +181,37 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public void ServerClearDebrisRuns() =>
             _debrisRuns.Clear();
 
+        [Server]
+        public void ServerAddBrokenRocks(global::Features.FlightFieldModule.Contracts.FieldRockId value) =>
+            _brokenRocks.Add(value);
+
+        [Server]
+        public void ServerInsertBrokenRocks(int index, global::Features.FlightFieldModule.Contracts.FieldRockId value) =>
+            _brokenRocks.Insert(index, value);
+
+        [Server]
+        public void ServerSetBrokenRocks(int index, global::Features.FlightFieldModule.Contracts.FieldRockId value) =>
+            _brokenRocks[index] = value;
+
+        [Server]
+        public bool ServerRemoveBrokenRocks(global::Features.FlightFieldModule.Contracts.FieldRockId value) =>
+            _brokenRocks.Remove(value);
+
+        [Server]
+        public void ServerRemoveBrokenRocksAt(int index) =>
+            _brokenRocks.RemoveAt(index);
+
+        [Server]
+        public void ServerClearBrokenRocks() =>
+            _brokenRocks.Clear();
+
         protected override void PushFullState() {
             Model.ApplyState(_state);
             Model.ReplacePlacements(_placements);
             Model.ReplaceRoutes(_routes);
             Model.ReplaceRouteCells(_routeCells);
             Model.ReplaceDebrisRuns(_debrisRuns);
+            Model.ReplaceBrokenRocks(_brokenRocks);
         }
 
         protected override void ClearLocal() {
@@ -194,6 +220,7 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
             Model.ClearRoutes();
             Model.ClearRouteCells();
             Model.ClearDebrisRuns();
+            Model.ClearBrokenRocks();
         }
 
         protected override void BindCallbacks() {
@@ -201,6 +228,7 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
             _routes.Callback += HandleRoutesChanged;
             _routeCells.Callback += HandleRouteCellsChanged;
             _debrisRuns.Callback += HandleDebrisRunsChanged;
+            _brokenRocks.Callback += HandleBrokenRocksChanged;
         }
 
         protected override void ReleaseCallbacks() {
@@ -208,6 +236,7 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
             _routes.Callback -= HandleRoutesChanged;
             _routeCells.Callback -= HandleRouteCellsChanged;
             _debrisRuns.Callback -= HandleDebrisRunsChanged;
+            _brokenRocks.Callback -= HandleBrokenRocksChanged;
         }
 
         private void OnStateSynced(LiveFieldState previous, LiveFieldState current) =>
@@ -287,6 +316,26 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
                     break;
                 case SyncList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry>.Operation.OP_CLEAR:
                     Model.ClearDebrisRuns();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(operation), operation, null);
+            }
+        }
+
+        private void HandleBrokenRocksChanged(SyncList<global::Features.FlightFieldModule.Contracts.FieldRockId>.Operation operation, int index, global::Features.FlightFieldModule.Contracts.FieldRockId oldValue, global::Features.FlightFieldModule.Contracts.FieldRockId newValue) {
+            switch (operation) {
+                case SyncList<global::Features.FlightFieldModule.Contracts.FieldRockId>.Operation.OP_ADD:
+                case SyncList<global::Features.FlightFieldModule.Contracts.FieldRockId>.Operation.OP_INSERT:
+                    Model.AddBrokenRocks(index, newValue);
+                    break;
+                case SyncList<global::Features.FlightFieldModule.Contracts.FieldRockId>.Operation.OP_SET:
+                    Model.SetBrokenRocks(index, newValue);
+                    break;
+                case SyncList<global::Features.FlightFieldModule.Contracts.FieldRockId>.Operation.OP_REMOVEAT:
+                    Model.RemoveBrokenRocksAt(index, oldValue);
+                    break;
+                case SyncList<global::Features.FlightFieldModule.Contracts.FieldRockId>.Operation.OP_CLEAR:
+                    Model.ClearBrokenRocks();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(operation), operation, null);
