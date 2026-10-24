@@ -28,7 +28,6 @@ namespace Features.FlightFieldModule.Scripts.Generation {
         public Vector2Int StationACell { get; set; }
         public Vector2Int StationBCell { get; set; }
         public Vector2Int CruiseStartCell { get; set; }
-        public bool HasPassage { get; set; }
         public int NextPlacementId => _lastPlacementId + 1;
 
         public FieldGenerationContext(FieldRequest request, int seed, IFieldRandom random) {
@@ -40,17 +39,6 @@ namespace Features.FlightFieldModule.Scripts.Generation {
         public void AddPlacement(FieldPlacement placement) {
             _placements.Add(placement);
             _lastPlacementId = placement.Id;
-        }
-
-        // Removed ids are not given out again: the next placement still gets an id above every earlier one.
-        public FieldPlacement RemovePlacement(int placementId) {
-            int index = _placements.FindIndex(placement => placement.Id == placementId);
-            if (index < 0)
-                throw new KeyNotFoundException($"No placement {placementId} in the field.");
-
-            FieldPlacement removed = _placements[index];
-            _placements.RemoveAt(index);
-            return removed;
         }
 
         public void AddRoute(FieldRoute route) =>

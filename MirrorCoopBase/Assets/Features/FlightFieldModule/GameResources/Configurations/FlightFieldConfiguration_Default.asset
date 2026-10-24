@@ -61,14 +61,6 @@ MonoBehaviour:
     - _profile: {fileID: 11400000, guid: 20944875f1ef4239ab09f4a43a9a923c, type: 2}
       _weight: 1
   _difficultyProfiles:
-  - {fileID: 11400000, guid: de460ba1713a5774589405e0ca382a66, type: 2}
-  - {fileID: 11400000, guid: 161a9e51794c3214fbe3ecf1216c7a14, type: 2}
-  - {fileID: 11400000, guid: bf2d44d4f5473394fb8047bd7b3ce734, type: 2}
-  - {fileID: 11400000, guid: 2c2fc55148917af4c82cd89af7946de1, type: 2}
-  - {fileID: 11400000, guid: 4d90c480f061d0e4a9ffe0eec0e8a7c3, type: 2}
-  - {fileID: 11400000, guid: 9e30c59982ca059488e05977ad0f462d, type: 2}
-  - {fileID: 11400000, guid: 1fea97a82938598499b3c68e5edc373f, type: 2}
-  - {fileID: 11400000, guid: fbd000f9c953a8146a5e97f83c9a82fb, type: 2}
   - {fileID: 11400000, guid: 0ef421e4b3e2434095ef8b228caf5aff, type: 2}
   - {fileID: 11400000, guid: 20944875f1ef4239ab09f4a43a9a923c, type: 2}
   - {fileID: 11400000, guid: ce43379fbabf475785ab698bed9504d0, type: 2}
@@ -77,14 +69,7 @@ MonoBehaviour:
   _shipWidthMeters: 10
   _debrisGapMarginMeters: 6
   _debrisGridSpacingMeters: 25
-  _debrisWallClearanceMeters: 5
-  _maxPlaneGapMeters: 6
-  _planeHalfThicknessMeters: 8
   _metricCruiseSpeed: 14
-  _zoneShareTolerance: 0.08
-  _passageClearanceCells: 1
-  _maxRepairRounds: 2
-  _maxSeedAttempts: 3
   _publishEntriesPerBatch: 300
   _publishBatchIntervalSeconds: 0.1
   _structuresBuiltPerFrame: 16

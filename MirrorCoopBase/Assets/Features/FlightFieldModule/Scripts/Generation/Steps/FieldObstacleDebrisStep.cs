@@ -1,4 +1,3 @@
-using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Generation.Obstacles;
 using Features.FlightFieldModule.Scripts.Generation.Placement;
 using Features.FlightFieldModule.Scripts.Model;
@@ -16,9 +15,6 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             _fieldDebrisPicker = fieldDebrisPicker;
             _fieldObstacleDensity = fieldObstacleDensity;
         }
-
-        public bool IsUsedBy(FieldLayoutKind layout) =>
-            layout == FieldLayoutKind.Obstacles;
 
         public void Execute(FieldGenerationContext context) {
             string debris = _fieldDebrisPicker.Pick(context.Profile, context.Random);

@@ -6,9 +6,9 @@ using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Targets {
     // Checks a balloon spot against the rocks of a field. The debris of the cells around the spot is read exactly, as
-    // the rock reader lays it out; a cell a placement stands on (a giant, a wall or ridge rock) keeps the spot a cell
+    // the rock reader lays it out; a cell a placement stands on (a giant) keeps the spot a cell
     // farther away than the sphere, because its rocks stick out of the footprint by at most about a cell (a giant's
-    // main rock, a wall's plane cover spill of 35 m): laying out every wall rock near every tried spot is far too slow.
+    // main rock): laying out every giant near every tried spot is far too slow.
     // Keeps nothing between calls: the debris it laid out lives in the caller's workspace, so the generation threads
     // share no state and a cell is laid out once per field.
     public sealed class FieldTargetRockClearance : IFieldTargetRockClearance {

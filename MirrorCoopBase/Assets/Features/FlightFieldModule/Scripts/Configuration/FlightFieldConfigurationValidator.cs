@@ -4,7 +4,7 @@ using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Configuration {
     // The one startup check of the flight field configuration: routes for loop 0 on, every loop entry with a profile of
-    // the configuration's list; a plane gap below the ship width; release radii not below their build radii.
+    // the configuration's list; release radii not below their build radii.
     public sealed class FlightFieldConfigurationValidator : IInitializable {
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
 
@@ -13,7 +13,6 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
 
         public void Initialize() {
             ValidateRoutes();
-            ValidateGaps();
             ValidateStreaming();
         }
 
@@ -25,12 +24,6 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
             if (_flightFieldConfiguration.DebrisReleaseRadius < _flightFieldConfiguration.DebrisBuildRadius)
                 throw new InvalidOperationException(
                     $"{_flightFieldConfiguration.name}: the debris release radius ({_flightFieldConfiguration.DebrisReleaseRadius} m) is below the debris build radius ({_flightFieldConfiguration.DebrisBuildRadius} m).");
-        }
-
-        private void ValidateGaps() {
-            if (_flightFieldConfiguration.MaxPlaneGapMeters >= _flightFieldConfiguration.ShipWidthMeters)
-                throw new InvalidOperationException(
-                    $"{_flightFieldConfiguration.name}: the plane gap ({_flightFieldConfiguration.MaxPlaneGapMeters} m) lets the ship ({_flightFieldConfiguration.ShipWidthMeters} m wide) through a ridge.");
         }
 
         private void ValidateRoutes() {

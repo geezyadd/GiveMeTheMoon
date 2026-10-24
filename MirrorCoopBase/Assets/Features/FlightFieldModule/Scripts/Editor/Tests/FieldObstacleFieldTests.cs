@@ -34,7 +34,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [OneTimeSetUp]
         public void OneTimeSetUp() {
             _composition = new FlightFieldEditorCompositionFactory().Create();
-            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Obstacles(_composition.Configuration)) {
+            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
                 foreach (int loop in _loops)
                     _results[(profile.Id, loop)] = SummarizeAll(profile, loop);
             }
@@ -45,7 +45,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [Test]
         public void WhenTheConfigurationIsRead_ThenItHasTheFourObstacleVariants() =>
             CollectionAssert.AreEquivalent(new[] { "obstacles_sparse", "obstacles_medium", "obstacles_dense", "obstacles_giants" },
-                FieldTestProfiles.Obstacles(_composition.Configuration).Select(profile => profile.Id));
+                _composition.Configuration.DifficultyProfiles.Select(profile => profile.Id));
 
         [TestCaseSource(nameof(Loops))]
         public void WhenObstacleFieldsAreGenerated_ThenAShipFindsAWayToB(int loop) {
@@ -83,7 +83,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [TestCaseSource(nameof(Loops))]
         public void WhenSameSeedIsGeneratedTwice_ThenGiantsDebrisAndRocksAreEqual(int loop) {
-            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Obstacles(_composition.Configuration)) {
+            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
                 FlightField first = Generate(profile, FIRST_SEED, loop);
                 FlightField again = Generate(profile, FIRST_SEED, loop);
 

@@ -56,7 +56,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [Test]
         public void WhenChunksAreLaidOut_ThenEveryRockStaysInABandAndClearOfTheFlightPlane() {
             IFieldRandom random = _randomFactory.Create(0);
-            FieldVolumeConfiguration volume = _configuration.Volume;
+            FieldVolumeConfiguration volume = _sourceReader.Source.Volume;
             for (int seed = FIRST_SEED; seed <= SEEDS; seed++) {
                 foreach (FieldClusterRockPose rock in LayChunk(random, seed, new Vector2Int(seed % CHUNK_REACH, -seed % CHUNK_REACH))) {
                     float radius = Reach(rock);
@@ -68,7 +68,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenNeighbouringChunksAreLaidOut_ThenNoTwoRocksFuse() {
-            float gap = SmallestGap(_configuration.Volume);
+            float gap = SmallestGap(_sourceReader.Source.Volume);
             for (int seed = FIRST_SEED; seed <= SEEDS / CHUNK_REACH; seed++) {
                 List<FieldClusterRockPose> rocks = new();
                 for (int x = 0; x < CHUNK_REACH; x++) {
@@ -84,7 +84,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         public void WhenTheRouteEndsAreNear_ThenNoRockStandsBelowThePlaneThere() {
             UseSource(_configuration.DifficultyProfiles[0], Vector2.zero);
             try {
-                float clearance = _configuration.Volume.StationClearanceMeters;
+                float clearance = _sourceReader.Source.Volume.StationClearanceMeters;
                 for (int seed = FIRST_SEED; seed <= SEEDS; seed++) {
                     foreach (FieldClusterRockPose rock in LayChunk(_randomFactory.Create(0), seed, Vector2Int.zero)) {
                         bool isBelowNearStart = rock.Offset.y < 0f && new Vector2(rock.Offset.x, rock.Offset.z).magnitude < clearance;

@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // The rocks of a cluster come only from the seed (every peer builds the same field), the first rock crosses the
     // flight plane, every rock stays within the footprint (a dense field: within its spill, because the client does
-    // not know the corridor cells) and within the recipe's height, and the game's recipes are complete visual-only
+    // not know which cells around it are kept open) and within the recipe's height, and the game's recipes are complete visual-only
     // data whose meshes fit the layout's reach.
     public sealed class FieldClusterLayoutTests {
         private const float CELL_SIZE = 40f;
