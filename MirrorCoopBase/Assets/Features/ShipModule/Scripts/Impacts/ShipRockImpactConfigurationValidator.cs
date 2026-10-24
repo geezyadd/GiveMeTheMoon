@@ -36,8 +36,15 @@ namespace Features.ShipModule.Scripts.Impacts {
             RequireAboveZero(configuration.ContactPushOutSpeed, nameof(ShipRockImpactConfiguration.ContactPushOutSpeed));
             RequireAboveZero(configuration.LargeContactRadiusShare, nameof(ShipRockImpactConfiguration.LargeContactRadiusShare));
             RequireAboveZero(configuration.MaxSweepMeters, nameof(ShipRockImpactConfiguration.MaxSweepMeters));
-            RequireAboveZero(configuration.SmallFeel.ShakeSeconds, nameof(ShipRockImpactConfiguration.SmallFeel));
-            RequireAboveZero(configuration.LargeFeel.ShakeSeconds, nameof(ShipRockImpactConfiguration.LargeFeel));
+            RequireShake(configuration.SmallFeel, nameof(ShipRockImpactConfiguration.SmallFeel));
+            RequireShake(configuration.LargeFeel, nameof(ShipRockImpactConfiguration.LargeFeel));
+        }
+
+        private void RequireShake(ShipRockImpactFeel feel, string field) {
+            if (feel.Shake == null)
+                throw new InvalidOperationException($"{_shipRockImpactConfiguration.name}: {field} has no camera shake profile.");
+
+            RequireAboveZero(feel.Shake.Seconds, field);
         }
 
         private void RequireAtLeastZero(float value, string field) {

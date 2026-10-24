@@ -38,13 +38,10 @@ MonoBehaviour:
   _recoilRotationNoiseDegrees: 0.8
   _recoilNoiseFrequency: 22
   _recoilSettleSeconds: 0.15
-  _fireShakeAmplitude: 0.35
-  _nearImpactShakeAmplitude: 1.6
+  _fireShake: {fileID: 11400000, guid: 41d10079caafb204d96df56c76656133, type: 2}
+  _nearImpactShake: {fileID: 11400000, guid: 8e2e2948c5694d84ba42a9dad7b1f7d3, type: 2}
   _nearImpactDistanceMeters: 30
   _targetDestroyedShakeAmplitude: 0.8
-  _shakeFrequency: 16
-  _shakeFadeSeconds: 0.35
-  _shakeRollShare: 0.35
   _tracerEveryNthShot: 3
   _tracerColor: {r: 1, g: 0.62, b: 0.2, a: 1}
   _tracerSpeedMetersPerSecond: 380
