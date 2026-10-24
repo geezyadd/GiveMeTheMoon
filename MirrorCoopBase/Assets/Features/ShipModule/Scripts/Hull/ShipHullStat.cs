@@ -18,6 +18,11 @@ namespace Features.ShipModule.Scripts.Hull {
             _modules.ServerPublishStats();
         }
 
+        public void ServerAdd(float amount) {
+            _stats.Add(ShipStatType.Hull, amount);
+            _modules.ServerPublishStats();
+        }
+
         public void ServerRepair() {
             _stats.Refill(ShipStatType.Hull);
             _modules.ServerPublishStats();

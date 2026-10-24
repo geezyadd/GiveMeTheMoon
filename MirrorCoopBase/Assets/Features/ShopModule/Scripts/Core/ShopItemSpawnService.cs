@@ -1,5 +1,4 @@
 using Features.GrabModule.Scripts;
-using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Configurations;
 using Mirror;
 using UnityEngine;
@@ -20,14 +19,14 @@ namespace Features.ShopModule.Scripts.Core {
             _grabConfiguration = grabConfiguration;
         }
 
-        public void SpawnAtDelivery(ShipItem itemPrefab, Transform deliveryPoint) {
+        public void SpawnAtDelivery(GameObject itemPrefab, Transform deliveryPoint) {
             int itemsThere = CountItemsAt(deliveryPoint.position);
             Quaternion scatterTurn = Quaternion.AngleAxis(itemsThere * GOLDEN_ANGLE_DEGREES, Vector3.up);
             Vector3 scatter = scatterTurn * deliveryPoint.forward * (itemsThere > 0 ? _shopKioskConfiguration.DeliveryScatter : 0f);
             Vector3 position = deliveryPoint.position
                 + scatter
                 + Vector3.up * (itemsThere * _shopKioskConfiguration.DeliveryStackStep);
-            GameObject instance = Object.Instantiate(itemPrefab.gameObject, position, deliveryPoint.rotation);
+            GameObject instance = Object.Instantiate(itemPrefab, position, deliveryPoint.rotation);
             NetworkServer.Spawn(instance);
         }
 

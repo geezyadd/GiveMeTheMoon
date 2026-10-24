@@ -1,13 +1,15 @@
-using Features.ShipModule.Scripts;
+using UnityEngine;
 
 namespace Features.ShopModule.Scripts.Core {
     public readonly struct ShopPurchaseResult {
         public ShopPurchaseStatus Status { get; }
-        public ModuleDefinition Module { get; }
+        public long Price { get; }
+        public GameObject ItemPrefab { get; }
 
-        public ShopPurchaseResult(ShopPurchaseStatus status, ModuleDefinition module) {
+        public ShopPurchaseResult(ShopPurchaseStatus status, long price, GameObject itemPrefab) {
             Status = status;
-            Module = module;
+            Price = price;
+            ItemPrefab = itemPrefab;
         }
     }
 }

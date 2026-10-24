@@ -115,6 +115,29 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
             Assert.AreEqual(0, hull.RepairCount);
         }
 
+        [Test]
+        public void WhenDamagedHullHealed_ThenItGetsTheHpBackUpToTheMax() {
+            FakeShipHullStat hull = new FakeShipHullStat(HULL_MAX, 0f);
+            ShipHullService service = CreateService(hull);
+            service.ServerApplyDamage(Hit(HIT));
+
+            service.ServerHeal(HIT / 3f);
+            Assert.AreEqual(HULL_MAX - HIT + HIT / 3f, hull.Current, TOLERANCE, "A heal did not give the HP back.");
+
+            service.ServerHeal(LETHAL_HIT);
+            Assert.AreEqual(HULL_MAX, hull.Current, TOLERANCE, "A heal went past the hull max.");
+        }
+
+        [Test]
+        public void WhenDestroyedHullHealed_ThenItStaysDestroyed() {
+            FakeShipHullStat hull = new FakeShipHullStat(HULL_MAX, 0f);
+            ShipHullService service = CreateService(hull);
+            service.ServerApplyDamage(Hit(LETHAL_HIT));
+
+            service.ServerHeal(HIT);
+            Assert.AreEqual(0f, hull.Current, TOLERANCE, "A heal brought a destroyed hull back.");
+        }
+
         private ShipHullService CreateService(IShipHullStat hull) =>
             new ShipHullService(new FakeShipHullStatSource(hull), new ShipHullDamageRule(_configuration), _events, _configuration);
 

@@ -9,6 +9,12 @@ namespace Features.GrabModule.Scripts {
 
         public abstract void ServerUse(NetworkIdentity user, GrabController grab);
 
+        // A target that is used by holding the interact button: how long the hold lasts. ServerUse runs when it ends.
+        public virtual bool TryGetHoldSeconds(GrabController grab, out float seconds) {
+            seconds = 0f;
+            return false;
+        }
+
         public void SetHovered(bool hovered) {
             if (_outline == null)
                 return;

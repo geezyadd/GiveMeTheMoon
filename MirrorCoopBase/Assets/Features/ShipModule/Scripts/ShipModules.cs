@@ -5,6 +5,7 @@ namespace Features.ShipModule.Scripts {
         private readonly ShipSocket[] _sockets;
         private readonly ShipStatSheet _stats;
         private readonly ShipStatsSync _statsSync;
+        private readonly ShipConditionSync _conditionSync;
         // Read on use: the configuration can be injected after the parts are created.
         private readonly Func<ShipAccumulativeStatsConfiguration> _statsConfiguration;
 
@@ -12,10 +13,12 @@ namespace Features.ShipModule.Scripts {
             ShipSocket[] sockets,
             ShipStatSheet stats,
             ShipStatsSync statsSync,
+            ShipConditionSync conditionSync,
             Func<ShipAccumulativeStatsConfiguration> statsConfiguration) {
             _sockets = sockets;
             _stats = stats;
             _statsSync = statsSync;
+            _conditionSync = conditionSync;
             _statsConfiguration = statsConfiguration;
         }
 
@@ -24,8 +27,16 @@ namespace Features.ShipModule.Scripts {
             ServerPublishStats();
         }
 
+        // A module taken off (or reset) takes its broken state with it: reinstalled, it works again.
         public void ServerOnModuleUninstalled(ShipSocket socket) {
+            _conditionSync.ServerRemoveBrokenSockets(socket.SocketId);
             if (_stats.RemoveModule(socket.SocketId))
+                ServerPublishStats();
+        }
+
+        public void ServerSetModuleWorking(string socketId, bool isWorking) {
+            bool isChanged = isWorking ? _stats.ResumeModule(socketId) : _stats.SuspendModule(socketId);
+            if (isChanged)
                 ServerPublishStats();
         }
 

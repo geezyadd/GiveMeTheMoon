@@ -59,16 +59,19 @@ namespace Tests.PlayMode.LoopSmoke {
             int startStationItems = LoopSmokeSpawnCounts.CountSceneObjects<ShipItem>();
             Assert.Greater(startStationItems, 0, "Run 1 has no items at the start station.");
             yield return new LoopSmokeHandCheck(_session.Ship).ReinstallRadarByHandCoroutine();
+            LoopSmokeRepairCheck repairCheck = new LoopSmokeRepairCheck(_session.Ship);
+            yield return repairCheck.RepairEngineAndBreachAtStationCoroutine();
 
             ShipLandingPad startPad = _flight.FindPadUnderShip();
             LoopSmokeHullCheck hullCheck = new LoopSmokeHullCheck();
             LoopSmokeRockBreakCheck rockBreak = new LoopSmokeRockBreakCheck();
             LoopSmokeRockImpactCheck rockImpact = new LoopSmokeRockImpactCheck();
-            yield return _flight.FlyLoopCoroutine(1, () => HitHullAndRocksInCruiseCoroutine(hullCheck, rockBreak, rockImpact));
+            yield return _flight.FlyLoopCoroutine(1, () => HitHullAndRocksInCruiseCoroutine(hullCheck, rockBreak, rockImpact, repairCheck));
             rockBreak.AssertBrokenListClearedAfterLanding();
             ShipLandingPad firstPad = _flight.FindPadUnderShip();
             yield return _flight.AssertLandedSafelyCoroutine(1, startPad, firstPad);
             hullCheck.AssertRepairedAfterLanding(1);
+            repairCheck.AssertRepairedAfterLanding(1);
             int firstLandingSpawns = LoopSmokeSpawnCounts.CountRuntimeNonPlayerObjects(NetworkServer.spawned.Values);
             LoopSmokeSpawnCounts.Log("run 1 after the first landing");
             Assert.Greater(firstLandingSpawns, 0, "Run 1 spawned no pad or drops on landing.");
@@ -141,10 +144,11 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         // The first-cruise checks run in the same cruise, one after the other.
-        private IEnumerator HitHullAndRocksInCruiseCoroutine(LoopSmokeHullCheck hullCheck, LoopSmokeRockBreakCheck rockBreak, LoopSmokeRockImpactCheck rockImpact) {
+        private IEnumerator HitHullAndRocksInCruiseCoroutine(LoopSmokeHullCheck hullCheck, LoopSmokeRockBreakCheck rockBreak, LoopSmokeRockImpactCheck rockImpact, LoopSmokeRepairCheck repairCheck) {
             yield return hullCheck.HitInCruiseCoroutine();
             yield return rockBreak.BreakNearestRockInCruiseCoroutine();
             yield return rockImpact.HitSmallAndLargeRockInCruiseCoroutine(_session.Ship, _flight);
+            yield return repairCheck.BreakInCruiseCoroutine();
         }
 
         private IEnumerator ShiftWorldInCruiseCoroutine() =>

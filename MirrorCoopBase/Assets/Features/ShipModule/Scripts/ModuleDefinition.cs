@@ -28,6 +28,10 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private bool _isRemovable;
         [Tooltip("When installed, the helm pilot steers the ship by hand.")]
         [SerializeField] private bool _isControlModule;
+        [Tooltip("A rock impact nearby can break this module; a broken module stays installed but does not work.")]
+        [SerializeField] private bool _canBreak = true;
+        [Tooltip("Multiplies the configured break chance of an impact for this module: 1 = as configured.")]
+        [SerializeField, Min(0f)] private float _breakChanceMultiplier = 1f;
 
         public string Id => _id;
         public ShipModuleType SlotType => _slotType;
@@ -40,5 +44,7 @@ namespace Features.ShipModule.Scripts {
         public IReadOnlyList<StatModifierEntry> StatModifiers => _statModifiers;
         public bool IsRemovable => _isRemovable;
         public bool IsControlModule => _isControlModule;
+        public bool CanBreak => _canBreak;
+        public float BreakChanceMultiplier => _breakChanceMultiplier;
     }
 }

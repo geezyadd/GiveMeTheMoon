@@ -20,7 +20,9 @@ namespace Game.Connection
                 for (int j = 0; j < identities.Length; j++)
                 {
                     NetworkIdentity identity = identities[j];
-                    if (identity.sceneId != 0)
+                    // An object the server already spawned at runtime (the host assigns again after its server
+                    // started the scene) is no scene object: an id would make clients look for it in their scene.
+                    if (identity.sceneId != 0 || identity.netId != 0)
                         continue;
 
                     identity.sceneId = StableSceneId(identity);

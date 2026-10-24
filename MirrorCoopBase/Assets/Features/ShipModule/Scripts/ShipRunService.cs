@@ -1,6 +1,6 @@
 using Features.GameCoreModule.Contracts;
 using Features.ShipModule.Scripts.Generated;
-using Features.ShipModule.Scripts.Hull;
+using Features.ShipModule.Scripts.Damage;
 using Game.Connection;
 using Mirror;
 using UnityEngine;
@@ -23,7 +23,7 @@ namespace Features.ShipModule.Scripts {
         private readonly ConnectionSpawnModel _spawn;
         private readonly IFlightRouteListener _flightRouteListener;
         private readonly IShipRunStage _runStage;
-        private readonly IShipHullRepair _shipHullRepair;
+        private readonly IShipLandingRepair _shipLandingRepair;
 
         private float _wreckUntil;
 
@@ -44,7 +44,7 @@ namespace Features.ShipModule.Scripts {
             IShipWorldShiftService worldShift,
             IFlightRouteListener flightRouteListener,
             IShipRunStage runStage,
-            IShipHullRepair shipHullRepair) {
+            IShipLandingRepair shipLandingRepair) {
             _model = model;
             _config = config;
             _radar = radar;
@@ -57,7 +57,7 @@ namespace Features.ShipModule.Scripts {
             _worldShift = worldShift;
             _flightRouteListener = flightRouteListener;
             _runStage = runStage;
-            _shipHullRepair = shipHullRepair;
+            _shipLandingRepair = shipLandingRepair;
         }
 
         public void CleanupGameplay() {
@@ -75,6 +75,7 @@ namespace Features.ShipModule.Scripts {
             if (ship != null && startPad != null) {
                 ship.ServerResetForBuild(startPad.BuildBerth.position, startPad.BuildBerth.rotation);
                 _runStage.ServerPrepareShip(ship);
+                ship.ToolRack.ServerStock();
             }
 
             _radar.BindShip(ship);
@@ -251,7 +252,7 @@ namespace Features.ShipModule.Scripts {
 
         private void FinishLanded() {
             Ship.ServerSettleAfterLanding();
-            _shipHullRepair.ServerRepairAfterLanding();
+            _shipLandingRepair.ServerRepairAfterLanding();
             EnterStation(CurrentPad, ShipRunPhase.Build, _model.LastAbortReason);
             // After EnterStation's origin shift: riders still bound are carried by it, released ones would stay behind.
             Ship.Riders.ServerReleaseRiders();
