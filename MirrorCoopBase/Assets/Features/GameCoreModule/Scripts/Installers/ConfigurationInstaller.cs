@@ -51,6 +51,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<FieldStructureCatalog>(Address.Configurations.FieldStructureCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FieldRockDurabilityConfiguration>(Address.Configurations.FieldRockDurabilityConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<FieldTargetCatalog>(Address.Configurations.FieldTargetCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<FieldTargetConfiguration>(Address.Configurations.FieldTargetConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<StagePresetCatalog>(Address.Configurations.StagePresetCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WeaponCatalog>(Address.Configurations.WeaponCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WeaponHitRuleConfiguration>(Address.Configurations.WeaponHitRuleConfiguration_Default).AsSingle();

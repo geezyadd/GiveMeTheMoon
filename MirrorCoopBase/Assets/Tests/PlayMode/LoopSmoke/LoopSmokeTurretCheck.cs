@@ -14,7 +14,7 @@ namespace Tests.PlayMode.LoopSmoke {
     // The minigun turret: installed at a station, then in cruise the host sits down through the seat's use command,
     // aims the turret at the debug dummy (the station's test hook stands in for the mouse) and holds the trigger
     // until the server has accepted hits on the dummy, then shoots a field rock until it breaks
-    // (LoopSmokeRockShootCheck) and stands up again.
+    // (LoopSmokeRockShootCheck) and a target balloon until it pops (LoopSmokeTargetCheck), and stands up again.
     public sealed class LoopSmokeTurretCheck {
         private const string MINIGUN_MODULE_ID = "minigun";
         private const string TURRET_SOCKET_ID = "turret-front";
@@ -28,12 +28,15 @@ namespace Tests.PlayMode.LoopSmoke {
         private static readonly Vector3 _gunnerSpot = new Vector3(-2.6f, 0.3f, 1.3f);
 
         private readonly LoopSmokeSession _session;
+        private readonly LoopSmokeTargetCheck _targetCheck;
 
         private ShipSocket Socket => FindSocket(_session.Ship);
         private static NetworkIdentity Player => SessionQueries.LocalPlayer;
 
-        public LoopSmokeTurretCheck(LoopSmokeSession session) =>
+        public LoopSmokeTurretCheck(LoopSmokeSession session, LoopSmokeTargetCheck targetCheck) {
             _session = session;
+            _targetCheck = targetCheck;
+        }
 
         // The minigun goes in at the station and the host walks over to it before the launch.
         public IEnumerator InstallMinigunAndStandByItCoroutine() {
@@ -62,6 +65,7 @@ namespace Tests.PlayMode.LoopSmoke {
             station.DebugHoldTrigger(false);
             targets.DebugDespawnTarget();
             yield return new LoopSmokeRockShootCheck(_session).ShootNearestSmallRockCoroutine(station);
+            yield return _targetCheck.ShootBalloonCoroutine(station);
 
             use.RequestUse(seat);
             yield return _session.WaitForCoroutine(() => Socket.OccupantNetId == 0 && station.IsOccupiedByLocalPlayer == false, SEAT_TIMEOUT_SECONDS, "Turret: the host stood up from the minigun");

@@ -5,6 +5,7 @@ using Features.FlightFieldModule.Scripts.Debris;
 using Features.FlightFieldModule.Scripts.Generation;
 using Features.FlightFieldModule.Scripts.Requests;
 using Features.FlightFieldModule.Scripts.Structures;
+using Features.FlightFieldModule.Scripts.Targets;
 using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Editor {
@@ -21,6 +22,10 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             container.Bind<FlightFieldConfiguration>().FromInstance(configuration).AsSingle();
             container.Bind<FieldStructureCatalog>().FromInstance(catalog).AsSingle();
             container.Bind<FieldRockDurabilityConfiguration>().FromInstance(AddressableConfigurationLoader.Load<FieldRockDurabilityConfiguration>(Address.Configurations.FieldRockDurabilityConfiguration_Default)).AsSingle();
+            container.Bind<FieldTargetCatalog>().FromInstance(AddressableConfigurationLoader.Load<FieldTargetCatalog>(Address.Configurations.FieldTargetCatalog_Default)).AsSingle();
+            container.Bind<FieldTargetConfiguration>().FromInstance(AddressableConfigurationLoader.Load<FieldTargetConfiguration>(Address.Configurations.FieldTargetConfiguration_Default)).AsSingle();
+            // The game binds the models in DataInstaller; the editor generates with the configuration's count.
+            container.BindInterfacesAndSelfTo<FieldTargetCountScaleModel>().AsSingle();
             FlightFieldModuleInstaller.Install(container);
             return new FlightFieldEditorComposition(configuration, catalog, container.Resolve<IFlightFieldGenerator>(), container.Resolve<IFieldRequestFactory>(),
                 container.Resolve<IFieldFootprintReader>(), container.Resolve<IFieldDebrisLayout>(), container.Resolve<IFieldRandomFactory>(),

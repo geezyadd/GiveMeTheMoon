@@ -2,8 +2,6 @@ using System.Collections.Generic;
 using Features.FlightFieldModule.Contracts;
 using Features.GameCoreModule.Contracts;
 using Features.NetworkModelModule.Scripts;
-using Features.ShipModule.Scripts.Generated;
-using Mirror;
 using UnityEngine;
 using Zenject;
 
@@ -14,8 +12,7 @@ namespace Features.ShipModule.Scripts.Impacts {
     public sealed class ShipRockCollisionSystem : IFixedTickable {
         private static readonly PlayerKey _noInstigator = new(string.Empty);
 
-        private readonly IShipRunBindingModel _shipRunBindingModel;
-        private readonly IReadOnlyShipRunModel _shipRunModel;
+        private readonly IShipHullStepSource _shipHullStepSource;
         private readonly IShipHullRockScanner _shipHullRockScanner;
         private readonly IShipRockKnockbackRule _shipRockKnockbackRule;
         private readonly IShipRockDamageRule _shipRockDamageRule;
@@ -26,12 +23,8 @@ namespace Features.ShipModule.Scripts.Impacts {
         private readonly List<ShipRockContact> _contacts = new();
         private readonly ShipRockContactCooldowns _cooldowns = new();
 
-        private Pose _lastPose;
-        private bool _hasLastPose;
-
         public ShipRockCollisionSystem(
-            IShipRunBindingModel shipRunBindingModel,
-            IReadOnlyShipRunModel shipRunModel,
+            IShipHullStepSource shipHullStepSource,
             IShipHullRockScanner shipHullRockScanner,
             IShipRockKnockbackRule shipRockKnockbackRule,
             IShipRockDamageRule shipRockDamageRule,
@@ -39,8 +32,7 @@ namespace Features.ShipModule.Scripts.Impacts {
             IShipHull shipHull,
             IShipServerImpactEventPublisher shipServerImpactEventPublisher,
             ShipRockImpactConfiguration shipRockImpactConfiguration) {
-            _shipRunBindingModel = shipRunBindingModel;
-            _shipRunModel = shipRunModel;
+            _shipHullStepSource = shipHullStepSource;
             _shipHullRockScanner = shipHullRockScanner;
             _shipRockKnockbackRule = shipRockKnockbackRule;
             _shipRockDamageRule = shipRockDamageRule;
@@ -51,34 +43,18 @@ namespace Features.ShipModule.Scripts.Impacts {
         }
 
         public void FixedTick() {
-            ShipBase ship = _shipRunBindingModel.Ship;
-            if (!NetworkServer.active || ship == null || !ship.IsFlying || !IsCheckedPhase(_shipRunModel.Phase)) {
-                ResetContacts();
+            if (!_shipHullStepSource.TryGetStep(out ShipHullStep step)) {
+                _cooldowns.Clear();
                 return;
             }
 
-            Pose pose = new(ship.transform.position, ship.transform.rotation);
-            Pose from = IsSweepable(pose) ? _lastPose : pose;
-            _lastPose = pose;
-            _hasLastPose = true;
+            ShipBase ship = step.Ship;
             Vector3 velocity = ship.Knockback.Velocity;
-            _shipHullRockScanner.Scan(ship.HullVolume.Boxes, from, pose, _shipRockKnockbackRule.CalculateLargeLookAhead(velocity), _contacts);
+            _shipHullRockScanner.Scan(step.Boxes, step.From, step.To, _shipRockKnockbackRule.CalculateLargeLookAhead(velocity), _contacts);
             foreach (ShipRockContact contact in _contacts)
                 HandleContact(ship, contact, velocity);
 
             _cooldowns.ForgetCooledDown(Time.time, _shipRockImpactConfiguration.LargeHitCooldownSeconds);
-        }
-
-        private static bool IsCheckedPhase(ShipRunPhase phase) =>
-            phase is ShipRunPhase.Takeoff or ShipRunPhase.Cruise or ShipRunPhase.Landing;
-
-        // A world shift or a debug move jumps the ship: that jump is not swept.
-        private bool IsSweepable(Pose pose) =>
-            _hasLastPose && (pose.position - _lastPose.position).sqrMagnitude <= _shipRockImpactConfiguration.MaxSweepMeters * _shipRockImpactConfiguration.MaxSweepMeters;
-
-        private void ResetContacts() {
-            _hasLastPose = false;
-            _cooldowns.Clear();
         }
 
         private void HandleContact(ShipBase ship, ShipRockContact contact, Vector3 velocity) {

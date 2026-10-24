@@ -15,6 +15,7 @@ using Features.FlightFieldModule.Scripts.Rocks;
 using Features.FlightFieldModule.Scripts.Scene;
 using Features.FlightFieldModule.Scripts.Server;
 using Features.FlightFieldModule.Scripts.Structures;
+using Features.FlightFieldModule.Scripts.Targets;
 using Features.MatrixModule.Scripts.MatrixFactory;
 using Zenject;
 
@@ -27,6 +28,8 @@ namespace Features.FlightFieldModule.Scripts {
             Container.BindInterfacesTo<FlightFieldDecorConfigurationValidator>().AsSingle();
             Container.BindInterfacesTo<FieldVolumeConfigurationValidator>().AsSingle();
             Container.BindInterfacesTo<FieldRockDurabilityConfigurationValidator>().AsSingle();
+            Container.BindInterfacesTo<FieldTargetCatalogValidator>().AsSingle();
+            Container.BindInterfacesTo<FieldTargetConfigurationValidator>().AsSingle();
             Container.Bind<IMatrixFactory>().To<MatrixFactory>().AsSingle();
             Container.Bind<IFieldRandomFactory>().To<FieldRandomFactory>().AsSingle();
             Container.Bind<IFieldFootprintReader>().To<FieldFootprintReader>().AsSingle();
@@ -54,6 +57,7 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldProfileLookup>().To<FieldProfileLookup>().AsSingle();
             InstallLiveField();
             InstallRocks();
+            InstallTargets();
             InstallDecor();
         }
 
@@ -78,6 +82,28 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldRockBreakDebug>().To<FieldRockBreakDebug>().AsSingle();
             Container.BindInterfacesTo<FieldRockBreakDebugKeySystem>().AsSingle();
             Container.BindInterfacesTo<FieldRockDestroyedLogSystem>().AsSingle();
+#endif
+        }
+
+        // The target balloons of the live field: the server finds, damages and pops them from the field data (once per
+        // balloon, one event), every peer builds the ones near its camera from their own pool, makes them weapon
+        // targets, hides a popped one and plays its pop.
+        private void InstallTargets() {
+            Container.Bind<IFieldTargetCountRule>().To<FieldTargetCountRule>().AsSingle();
+            Container.Bind<IFieldTargetRockClearance>().To<FieldTargetRockClearance>().AsSingle();
+            Container.BindInterfacesTo<LiveFieldPoppedTargets>().AsSingle();
+            Container.Bind<IFieldTargetQuery>().To<FieldTargetQuery>().AsSingle();
+            Container.BindInterfacesTo<FieldTargetPopper>().AsSingle();
+            Container.BindInterfacesTo<FieldTargetDamageService>().AsSingle();
+            Container.Bind<IFieldTargetWeaponIds>().To<FieldTargetWeaponIds>().AsSingle();
+            Container.Bind<FieldTargetWeaponTarget>().AsSingle();
+            Container.BindInterfacesTo<FieldTargetWeaponTargetSystem>().AsSingle();
+            Container.Bind<IFieldTargetSceneBuilder>().To<FieldTargetSceneBuilder>().AsSingle().WithArguments(new FieldStructurePool());
+            Container.BindInterfacesTo<FieldTargetBuildSystem>().AsSingle();
+            Container.Bind<IFieldTargetPopEffectPool>().To<FieldTargetPopEffectPool>().AsSingle();
+            Container.BindInterfacesTo<FieldTargetPopViewSystem>().AsSingle();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Container.BindInterfacesTo<FieldTargetPoppedLogSystem>().AsSingle();
 #endif
         }
 
@@ -134,6 +160,7 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldGenerationStep>().To<FieldObstaclePassageStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldPathMetricStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldBalanceMetricStep>().AsSingle();
+            Container.Bind<IFieldGenerationStep>().To<FieldTargetStep>().AsSingle();
         }
     }
 }
