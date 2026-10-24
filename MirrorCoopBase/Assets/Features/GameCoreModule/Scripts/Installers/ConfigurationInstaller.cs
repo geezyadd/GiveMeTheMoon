@@ -9,6 +9,7 @@ using Features.PlayerLifeModule.Scripts;
 using Features.PlayerProfileModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Hull;
+using Features.ShipModule.Scripts.Impacts;
 using Features.ShopModule.Scripts.Configurations;
 using Features.StagePresetModule.Scripts.Configurations;
 using Features.WeaponModule.Scripts.Definitions;
@@ -30,6 +31,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
                 .AsSingle();
             Container.BindConfigurationFromAddressables<ShipHullConfiguration>(Address.Configurations.ShipHullConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShipHullHudConfiguration>(Address.Configurations.ShipHullHudConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ShipRockImpactConfiguration>(Address.Configurations.ShipRockImpactConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShopCatalog>(Address.Configurations.ShopCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WalletConfiguration>(Address.Configurations.WalletConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShopKioskConfiguration>(Address.Configurations.ShopKioskConfiguration_Default).AsSingle();

@@ -7,5 +7,6 @@ namespace Features.ShipModule.Scripts {
         public void UnregisterRider(ShipRider rider);
         public void TrackRider(ShipRider rider);
         public void ServerReleaseRiders();
+        public bool IsLocalPlayerRiding();
     }
 }

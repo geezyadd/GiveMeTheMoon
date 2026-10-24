@@ -5,6 +5,7 @@ namespace Features.ShipModule.Scripts {
     public interface IShipFlightControlDebug {
         public void SetDebugSteer(bool active, float steer);
         public void DebugFace(Vector3 worldForward);
+        public void DebugMove(Vector3 delta);
     }
 }
 #endif

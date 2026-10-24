@@ -46,8 +46,8 @@ is not final yet and needs evaluation. **How the code works now** (`ShipFlightSe
 - at every launch (`TravelInSpace` only) the server generates a **flight field** of rocks between the stations
   (`FlightFieldModule`) on a worker thread and publishes it in the `LiveField` model a tick after it is done, during
   the takeoff; every peer builds only the rocks near its camera from the placement list. The field follows world shifts and is cleared on landing, wreck / abort and the end of the run.
-  The rocks do nothing to the ship yet (see "Known limits"); the server can already break a single rock (see
-  "Breakable rocks" in Key places);
+  The server checks the ship's hull against the field's rocks in every flight phase: a small rock breaks and damages
+  the hull, a large one knocks the ship back (see "Rock collisions" in Key places);
 - the old mode `HoverInPlace` is still in the code: the ship hangs at the hover point, progress is the `ShipTransit`
   timer and the next pad spawns at landing. It is chosen in the config asset or, in editor / development builds,
   through `IShipRouteDebug.DebugUseFlightMode`.
@@ -105,7 +105,8 @@ The loop runs from start to end, but it does not match the design yet:
   amount to the current hull; taking it off lowers the max and only clamps the current hull to it (never heals).
   Hull 0 sends the whole crew to the lobby once, through the same exit as "the whole crew is dead"
   (`IShipHullEvents.OnDestroyed` -> `PlayerLifeSystem`, after `AllDeadReturnDelay`), not through `ServerAbort` / `Wreck`.
-  Nothing in the game deals hull damage yet except the debug keys (rocks are the next task);
+  Small rocks the ship flies into deal hull damage (see "Rock collisions" in Key places); large rocks deal none by
+  default (`ShipRockImpactConfiguration.LargeRockDamage` = 0);
 - a crew that does not steer to the destination can fly forever: the autopilot only keeps the heading and there is no
   timeout;
 - the run has no goal: it ends only when the whole crew is dead or the hull is destroyed (`PlayerLifeSystem` →
@@ -113,7 +114,9 @@ The loop runs from start to end, but it does not match the design yet:
 - players can join or come back in the lobby or while the ship stands at a station (`Build`); in flight, in a wreck,
   while the map changes and with a full crew they are turned away with a reason the menu shows (see "Player data and
   rejoin");
-- there is no sound or VFX except the minigun turret (placeholder sounds, see "Weapons" in Key places).
+- there is no sound except the minigun turret's placeholder sounds (see "Weapons" in Key places); the only VFX are
+  the turret's, the rock break and the rock impact effects (the impact effect's `AudioSource` is the hook for a
+  sound, empty for now).
 
 ### Known limits
 - **The minigun hits only the debug dummy so far.** Field rocks are not weapon targets yet (next task: they register
@@ -121,10 +124,14 @@ The loop runs from start to end, but it does not match the design yet:
   sees an installed turret from `ShipSockets` and its gunner from the socket's `OccupantNetId`; the turret shows the
   gunner's last synced aim, and a gunner who leaves frees the seat and stops firing. Remote fire was checked on the
   host with the loop test's bot as the gunner, not yet with a second client process.
-- **The ship flies through the flight field's rocks.** Rocks have no damage, no bounce and no effect on the ship or
-  the players: their colliders are triggers on the `FieldRock` layer (8) (see "Flight field" in Key places).
-  The hull and armor exist (see "Ship hull" above); rock collisions that call `IShipHull` are a separate task, built on
-  the breakable rock base ("Breakable rocks" in Key places).
+- **Rock collisions use spheres.** The server knows a rock only as a sphere from the field data (the turned mesh fits
+  inside it with room to spare), so a large rock stops the hull at `LargeContactRadiusShare` (0.8) of that sphere: the
+  ship may stop a few metres before the visible rock or touch a corner that sticks out. The hull is boxes
+  (`ShipHullVolume`), not the deck colliders. A client sees a hit through the ship's pose (interpolated like any flight
+  motion) and the impact RPC; the two-player test does not check rock hits yet.
+- The autopilot keeps its heading after a large hit, so a crew that does not steer bounces off the same rock again
+  after the cooldown, and in cruise the ship takes hits from the rocks on its way: the tests' short flights stay in the
+  empty station zones.
 - The field has no "left the field" event and the rocks are not on the radar yet.
 - A client that spawns the ship while it flies is not tested: a join in flight is turned away, so no test reaches it;
   it relies on the SyncVar hooks above firing on the first spawn. The server kills a fallen player by its server
@@ -211,11 +218,13 @@ types.
      `Features.WeaponModule.Contracts` (NetworkModel: `IWeaponTarget`, `WeaponHit`; a weapon target such as a field rock
      implements them without referencing the weapon module; separate from `GameCoreModule.Contracts` so that one stays
      free of NetworkModel / Mirror);
+     `Features.EffectPoolModule` (no references: `SelfDisablingEffectPool<TEffect>` over `ISelfDisablingEffect`, the
+     pool of effects that disable themselves when over; the rock break and the rock impact effects use it),
      third-party `QuickOutline` and `MiniMapModular`
      (`Mini Mapa(Radar)`) also have their own asmdef.
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader),
-     `Features.FlightFieldModule` (Matrix, Zenject, Contracts, FlightFieldModule.Contracts, NetworkModel, Mirror,
+     `Features.FlightFieldModule` (Matrix, Zenject, Contracts, FlightFieldModule.Contracts, EffectPool, NetworkModel, Mirror,
      Unity.InputSystem for the debug key: the flight field model and its
      generation in pure C#, the `LiveField` model, the server service and the local building; it does not reference
      the ship module, the run talks to it through the Contracts; its editor tools are
@@ -226,7 +235,7 @@ types.
   3. `Features.CameraModule` (CharacterMovable, Contracts, Input) → `Features.GrabModule` (Camera, CharacterMovable,
      Contracts, NetworkModel).
   4. `Features.ShipModule` (Camera, Grab, CharacterMovable, FloatingController, GameFlow, Stats, Connection, MiniMap,
-     NetworkModel, WeaponModule, WeaponModule.Contracts, Input, TextMeshPro),
+     NetworkModel, WeaponModule, WeaponModule.Contracts, FlightFieldModule.Contracts, EffectPool, Input, TextMeshPro),
      `Features.MenuModule` (GameFlow, Mvp, Connection),
      `Features.PlayerProfileModule` (PlayerProfileModule.Data, Camera, NetworkModel, TextMeshPro).
   5. `Features.PlayerLifeModule` (Ship, Grab, Camera, Mvp, NetworkModel, Connection, PlayerProfileModule.Data),
@@ -279,7 +288,8 @@ types.
 | Weapons | `Assets/Features/WeaponModule/`. A weapon is one `WeaponDefinition` asset (`GameResources/Weapons/`: stable id, name, shots per second, damage per hit, range, the parts, a `WeaponFeelProfile` with the look numbers: muzzle flash, casings, recoil, camera shake, tracer every N, impact) in `WeaponCatalog_Default` (`Configurations` group, `WeaponCatalogValidator` at startup). Parts are `[SerializeReference]` objects inside the definition, picked in the inspector from a type menu (`WeaponPartPickerAttribute`): fire mode (`IWeaponFireModeDefinition` -> runtime `IWeaponFireMode`; `AutoFireMode` with barrel spin-up / spin-down), shot delivery (`IShotDeliveryDefinition` -> `IShotDelivery`, outcome through `IShotOutcomeReceiver`, may come later than the shot; `HitscanDelivery` with a spread cone over an injected `IWeaponRaycast`), hit effects (`IHitEffect` list; `DamageHitEffect`); holder and aim (`IWeaponHolder`, `IWeaponAim`) and the client feel (`IWeaponFeel`) are interfaces only. The server checks a reported hit with `WeaponHitRule` (pure: weapon held, target alive, range + tolerance, fire rate budget `WeaponShotBudget` with tolerance and burst from `WeaponHitRuleConfiguration_Default`); targets implement `IWeaponTarget` from `Features.WeaponModule.Contracts`. A new weapon is a new asset and, if needed, one new part type, never a `switch` on a weapon type (`WeaponCatalogGuardTests`). A delivery definition builds its runtime part from an `IShotDeliveryContext` (`PhysicsShotDeliveryContext`: `PhysicsWeaponRaycast` on the delivery's `_hitLayers`, triggers included; the minigun hits only layer `FieldRock`, never the own ship or players; a collider of a target carries an `IWeaponTargetCollider` with its id); `IWeaponShooterFactory` gives every holder its own `WeaponShooter` (fire mode + delivery), whose outcomes go to `ReportedShotOutcomes` on the holding peer (feel + hit report) or `ShownShotOutcomes` on every other peer (feel only). **Network path, one for every weapon:** `WeaponHolderSync` on the player prefab: the owner sends trigger + aim direction in the holder's own frame (`CmdSetAim`, the holder throttles it; other peers read the SyncVars and replay the fire themselves, no message per bullet) and its target hits through `WeaponHitQueue` in fixed-slot `WeaponHitBatch`es (4 hits, no allocation) at most once per network tick (`CmdReportHits`); the server keeps a `ServerWeaponHolding` (weapon, catalog index, shooter key, server-side aim, fresh `WeaponShotBudget`) set by the holder (`ServerBeginHolding` / `ServerEndHolding`), and `WeaponHitService` checks each hit with `WeaponHitRule` and applies the weapon's hit effects to the target from `IWeaponTargetRegistry` (Contracts; targets register by id on the server, `WeaponTargetRegistry`). **Feel** (`Feel/`, client only, everything pooled at `Bind`, 0 B GC per frame of continuous fire): `MinigunFeel` (the slot view drives it with `Advance`) with `BarrelSpin`, `MuzzleFlash`, `RecoilJitter`, `ViewShake` (the owner's view only), `CasingStream` (casings simulated in the floor's frame, `IWeaponFeelFloor`: they ride with the ship, bounce and pile on the deck and are never physics bodies), `TracerStream`, `ImpactBursts` (flash, sparks, chips, dust in the frame's custom simulation space) and `WeaponFeelAudio` (sound hooks; the minigun's placeholder clips in `GameResources/Audio` are generated, no licence). Every number is in `MinigunFeelProfile`. **Minigun turret on the ship:** `MinigunModule` (slot `Turret`, removable, 600, in the shop, in the station drops, in the `Mid` / `Late` presets) on socket `turret-front` (`ShipPlatform/TurretSocket`, front-left of the deck, mirroring the radar; its child `SeatInteractable` is the seat collider behind the gun). The slot view `MinigunSlotView` (primitives: tripod, yaw pivot, pitch pivot with drum, spinning barrels, ring-and-cross sight, V grips, cyan gloves shown while someone sits; `ShipSeat` role `Turret`) carries `ShipTurretStation`, the turret's `ISeatStation`: the socket tells it on every peer who sits there (`ShipSocket.SyncStationOccupant`, no role branch in `ShipRider` / `ShipSeats`); on the owner's peer the mouse turns it at once (`TurretAim`, limits and sensitivity in `MinigunTurretDefinition`: yaw free, pitch -10..75), the `Fire` input (LMB / right trigger) fires, interact or jump stands up (`TurretOwnerInput`, `ShipRider.OwnerRequestStand`) and the camera rides the gun's camera point (`IGameCameraService.BeginFixedView` / `EndFixedView`: FP camera, mouse look off); other peers smooth the synced aim (`TurretAimSmoothing`) and replay the fire. **Debug:** F8 on the host (editor / development builds, `WeaponDebugTargetSystem` / `IWeaponDebugTargets`, the spawned dummy in `WeaponDebugTargetModel`) puts a `WeaponDebugTarget` dummy in front of the ship (layer `FieldRock`; it sways from side to side, counts and flashes the hits the server accepted). Everything about it is compiled only in editor / development builds: its prefab and ship offset come from `WeaponDebugTargetConfiguration_Default` (`Configurations` group, bound under the same define), and `WeaponDebugTargetPrefabSystem` registers the prefab with the Mirror client on every client start, so it is not in the network manager's spawn prefabs. Who shoots is only the server's `IWeaponShooterIdentity` (`ServerWeaponHolding`); a peer's `IWeaponHolder` gives just the trigger and the aim. The station talks to its weapon model's feel through `IWeaponFeelPresenter` (`MinigunFeel` is one), so another gun model brings its own presenter |
 | Cargo on the deck | `ShipDeckCargo`: items lying on the deck are attached to the ship and travel with it |
 | Radar | `ShipRadarService`, `ShipRadarScreen`, `ShipRadarCatalog` |
-| Deck debugging | `ShipModule/Scripts/Debug/` (editor / development builds only): `DeckFeelHarness` (deck feel measurements), `ShipStatsDebugOverlay` (also the hull), `ShipHullDebugSystem` (F7 / F10), `WeaponDebugTargetSystem` (F8). **All debug keys** (host, editor / development builds): **F6** breaks a rock (see "Breakable rocks"), **F7** hits the hull, **F8** spawns / removes the weapon test dummy, **F9** kills the local player, **F10** takes the hull to 0, **L** opens the shop |
+| Rock collisions | `ShipModule/Scripts/Impacts/`. `ShipHullVolume` on `ShipPlatform` (root): boxes in ship space around the deck and the modules (gizmo when selected; data only, no collider). Server, every physics step of `Takeoff` / `Cruise` / `Landing` (not `Build` / `Wreck`): `ShipRockCollisionSystem` (`IFixedTickable`) sweeps the hull boxes from the last checked pose to the pose now (`ShipHullSweep`; a jump longer than `MaxSweepMeters`, a world shift or a debug move, is not swept) and `ShipHullRockScanner` asks `IFieldRockQuery` once per step with the box around all of them (field data, no allocation once the lists have grown; about 0.3-0.4 ms per step in a field), then tests every box. `ShipRockImpactClassifier`: a rock is a small hit when the field says `Small` and breakable, else large (giants and walls are always large). Small: `IFieldRockBreaker.ServerBreak` (cause `ShipCollision`, no instigator); only when it broke, `ShipRockDamageRule` damage (linear in diameter 10-35 m from 3 to 12 HP at the reference speed 14 m/s, times speed / 14 clamped to 0.25-2) goes through `IShipHull.ServerApplyDamage` (armor there) and a light push. Large: counted from ahead of the hull along its motion (`ShipRockKnockbackRule.CalculateLargeLookAhead`: 0.8 of the braking distance at the acceleration limit, at most 16 m, + 1 m margin) against 0.8 of the rock's data radius; the first contact knocks the ship away from the rock's middle (5 m/s, horizontal) and back against the heading (1.3 x its forward speed), `LargeRockDamage` (0) if set; while the contact lasts the ship keeps moving out at least 3 m/s; the same rock hits again only after the contact ended + `LargeHitCooldownSeconds` (`ShipRockContactCooldowns`). `ShipKnockback` (pure C#, owned by `ShipFlight`, which only adds its step to the path it follows, so the ship stays where it was pushed and the pad does not move): the target velocity fades as 1 - t^2 over `LargeKnockbackSeconds` (1.4 s), the velocity follows it with at most `LargeMaxAcceleration` (22 m/s2; the takeoff already starts at about 27 m/s2: 350 m forward and 100 m up in 9 s, so the deck feels nothing new; riders are bound kinematically to the deck, so the acceleration only shapes the feel, it cannot throw a player off), the cruise speed comes back as it fades. Poses reach clients through `ShipPoseSync` as before. Feedback on every peer: `ShipImpactSync` (on the `PoseSync` object) sends `RpcImpact(kind, point, strength)` -> `IShipImpactEvents.OnImpact` -> `ShipImpactCameraShakeSystem` (shakes the look pivot of a local player who rides the ship, after the look rig and before the camera brain; `ShipCameraShake`) and `ShipImpactEffectSystem` (pooled `ShipImpactEffect`, `GameResources/Effects/ShipImpactEffect.prefab`: dust and chunks, its `AudioSource` plays a clip when one is set). All numbers in `ShipRockImpactConfiguration_Default` (Addressables, `ConfigurationInstaller`, checked by `ShipRockImpactConfigurationValidator`; per kind `ShipRockImpactFeel`: shake and effect size). Debug: **F3** / **F4** on the host in flight put the ship 40 m before the nearest small / large rock at its height and turn it there (`ShipRockImpactDebugSystem`, `IShipRockImpactDebug`, also `DebugMoveShipTo`) |
+| Deck debugging | `ShipModule/Scripts/Debug/` (editor / development builds only): `DeckFeelHarness` (deck feel measurements), `ShipStatsDebugOverlay` (also the hull), `ShipHullDebugSystem` (F7 / F10), `WeaponDebugTargetSystem` (F8), `ShipRockImpactDebugSystem` (F3 / F4, see "Rock collisions"). **All debug keys** (host, editor / development builds): **F3** / **F4** aim the flying ship at the nearest small / large rock, **F6** breaks a rock (see "Breakable rocks"), **F7** hits the hull, **F8** spawns / removes the weapon test dummy, **F9** kills the local player, **F10** takes the hull to 0, **L** opens the shop |
 | Death, damage, spectator | `Assets/Features/PlayerLifeModule/`: `PlayerLifeSystem` (life state machines, all dead → lobby), `PlayerDamageable`, `FallKillSystem`, `SpectatorSystem`, `PlayerLifeConfiguration`, `PlayerDamageConfiguration`; **F9** kills the local player in editor / development builds |
 | Tooltips | `Assets/Features/TooltipModule/`: `InteractionTooltip` on the object, `TooltipContentService`, `Tooltip_*.asset` in `GameResources/Configurations/` |
 | Synced models | `Assets/Features/NetworkModelModule/` (model + bridge + generator), see "Synced models" |
@@ -335,7 +345,11 @@ after landing nothing of it is left (what a player joining at that station gets)
 in cruise keeps the field in place against the ship; the field pool never grows past what the fields needed. In the
 cruise of run 1 loop 1 `LoopSmokeRockBreakCheck` breaks the rock nearest to the ship through `IFieldRockBreakDebug`:
 it is in the live field's `BrokenRocks`, `RockDestroyed` fired once (a second break is `AlreadyBroken`), the rock is
-hidden on the host, and after landing the broken list is empty. Every
+hidden on the host, and after landing the broken list is empty. In the same cruise `LoopSmokeRockImpactCheck` flies
+into rocks through `IShipRockImpactDebug` (the F3 / F4 entry; the hit is the real server check): a small rock breaks
+once (broken list, `RockDestroyed` once), the synced hull drops and a small impact arrives; a large rock gives a large
+impact, stays whole, the ship never gets within the contact radius and moves back out, and the player still rides on the
+deck (in ship space); then the ship goes back and faces the destination. Every
 takeoff logs its longest frame (`[LoopSmoke] loop N takeoff`). The test shortens flight timings with its own copy of
 `ShipRunConfig` and adds the debug networked beacon to its own copy of `FieldStructureCatalog` and, as a rare ridge obstacle, to its own copies of the field configuration's difficulty profiles; assets are not
 changed. After the shop check the crew returns to the lobby and `LoopSmokeStagePresetCheck` plays a third run with the

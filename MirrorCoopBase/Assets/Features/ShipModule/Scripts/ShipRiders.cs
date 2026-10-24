@@ -117,6 +117,11 @@ namespace Features.ShipModule.Scripts {
             }
         }
 
+        public bool IsLocalPlayerRiding() {
+            ShipRider rider = LocalRider();
+            return rider != null && rider.IsRiding;
+        }
+
         internal bool HasOwnedHelmPilot() {
             for (int i = 0; i < _riders.Count; i++) {
                 ShipRider rider = _riders[i];
