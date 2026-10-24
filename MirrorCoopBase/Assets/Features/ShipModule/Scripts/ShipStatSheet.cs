@@ -71,7 +71,8 @@ namespace Features.ShipModule.Scripts {
                 Armor = GetFull(ShipStatType.Armor),
                 FlightSpeed = GetFull(ShipStatType.FlightSpeed),
                 Hull = GetFull(ShipStatType.Hull),
-                HullMax = GetMax(ShipStatType.Hull)
+                HullMax = GetMax(ShipStatType.Hull),
+                SonarRange = GetFull(ShipStatType.SonarRange)
             };
     }
 }

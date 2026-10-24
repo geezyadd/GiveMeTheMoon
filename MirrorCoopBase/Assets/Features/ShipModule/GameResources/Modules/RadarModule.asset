@@ -18,8 +18,11 @@ MonoBehaviour:
   _slotViewPrefab: {fileID: 8501338388048282597, guid: e8f1a2b3c4d5061728394a5b6c7d8e90, type: 3}
   _displayName: Radar
   _icon: {fileID: 0}
-  _description: Shows the route and incoming obstacles.
+  _description: 'A sonar console: in flight, ping for rocks and the station and mark them for the crew.'
   _price: 400
-  _statModifiers: []
+  _statModifiers:
+  - Stat: 7
+    Value: 800
+    Type: 0
   _isRemovable: 1
   _isControlModule: 0

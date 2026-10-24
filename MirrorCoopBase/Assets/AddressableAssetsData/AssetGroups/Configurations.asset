@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Configurations
   m_GUID: ab9a7d689b0bacb49943f2e9296cf1b7
   m_SerializeEntries:
+  - m_GUID: 1031f99418004324d91778747116c3c4
+    m_Address: SonarConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 13e7181a6180417296ab38ece09f8673
     m_Address: ShopKioskConfiguration_Default
     m_ReadOnly: 0
@@ -137,11 +142,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d1e2f3a4b5c64755d6e7f8091a2b3c4d
     m_Address: ShipAccumulativeStatsConfiguration_Default
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e2f3a4b5c6d7890123e4f5a6b7c8d9e0
-    m_Address: ShipRadarCatalog_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

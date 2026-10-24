@@ -14,6 +14,7 @@ namespace Features.ShipModule.Scripts.Generated {
         public float FlightSpeed { get; private set; }
         public float Hull { get; private set; }
         public float HullMax { get; private set; }
+        public float SonarRange { get; private set; }
 
         public event Action OnThrustChanged;
         public event Action OnDodgeRangeChanged;
@@ -22,6 +23,7 @@ namespace Features.ShipModule.Scripts.Generated {
         public event Action OnFlightSpeedChanged;
         public event Action OnHullChanged;
         public event Action OnHullMaxChanged;
+        public event Action OnSonarRangeChanged;
 
         internal void ApplyState(ShipStatsState state) {
             bool thrustChanged = EqualityComparer<float>.Default.Equals(Thrust, state.Thrust) == false;
@@ -31,6 +33,7 @@ namespace Features.ShipModule.Scripts.Generated {
             bool flightSpeedChanged = EqualityComparer<float>.Default.Equals(FlightSpeed, state.FlightSpeed) == false;
             bool hullChanged = EqualityComparer<float>.Default.Equals(Hull, state.Hull) == false;
             bool hullMaxChanged = EqualityComparer<float>.Default.Equals(HullMax, state.HullMax) == false;
+            bool sonarRangeChanged = EqualityComparer<float>.Default.Equals(SonarRange, state.SonarRange) == false;
             Thrust = state.Thrust;
             DodgeRange = state.DodgeRange;
             Handling = state.Handling;
@@ -38,6 +41,7 @@ namespace Features.ShipModule.Scripts.Generated {
             FlightSpeed = state.FlightSpeed;
             Hull = state.Hull;
             HullMax = state.HullMax;
+            SonarRange = state.SonarRange;
             if (thrustChanged)
                 OnThrustChanged?.Invoke();
             if (dodgeRangeChanged)
@@ -52,7 +56,9 @@ namespace Features.ShipModule.Scripts.Generated {
                 OnHullChanged?.Invoke();
             if (hullMaxChanged)
                 OnHullMaxChanged?.Invoke();
-            if (thrustChanged || dodgeRangeChanged || handlingChanged || armorChanged || flightSpeedChanged || hullChanged || hullMaxChanged)
+            if (sonarRangeChanged)
+                OnSonarRangeChanged?.Invoke();
+            if (thrustChanged || dodgeRangeChanged || handlingChanged || armorChanged || flightSpeedChanged || hullChanged || hullMaxChanged || sonarRangeChanged)
                 RaiseChanged();
         }
     }

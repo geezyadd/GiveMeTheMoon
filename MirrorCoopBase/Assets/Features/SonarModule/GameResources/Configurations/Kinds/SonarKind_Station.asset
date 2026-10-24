@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a03689f2f9aed014884954347e9b876e, type: 3}
+  m_Name: SonarKind_Station
+  m_EditorClassIdentifier: 
+  _id: station
+  _displayName: Station
+  _color: {r: 0.25, g: 0.6, b: 1, a: 1}
+  _icon: {fileID: 21300000, guid: 7764ab6327eb0004787bd4be0769c5e9, type: 3}
+  _iconPixels: 30
+  _markSeconds: 30
+  _isMarkable: 1
+  _isShownBeyondRange: 1

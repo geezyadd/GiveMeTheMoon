@@ -58,6 +58,13 @@ namespace Features.ShipModule.Scripts.Generated {
             AssignState(state);
         }
 
+        [Server]
+        public void ServerSetSonarRange(float value) {
+            ShipStatsState state = _state;
+            state.SonarRange = value;
+            AssignState(state);
+        }
+
         public ShipStatsState State => _state;
 
         [Server]
@@ -75,7 +82,7 @@ namespace Features.ShipModule.Scripts.Generated {
         }
 
         protected override void ClearLocal() {
-            Model.ApplyState(new ShipStatsState { Thrust = default, DodgeRange = default, Handling = default, Armor = default, FlightSpeed = default, Hull = default, HullMax = default });
+            Model.ApplyState(new ShipStatsState { Thrust = default, DodgeRange = default, Handling = default, Armor = default, FlightSpeed = default, Hull = default, HullMax = default, SonarRange = default });
         }
 
         private void OnStateSynced(ShipStatsState previous, ShipStatsState current) =>

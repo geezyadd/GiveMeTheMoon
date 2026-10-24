@@ -1,0 +1,14 @@
+{
+    "name": "Features.SonarModule.Contracts",
+    "rootNamespace": "Features.SonarModule.Contracts",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

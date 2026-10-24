@@ -18,6 +18,8 @@ using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Data;
 using Features.ShipModule.Scripts.Generated;
 using Features.ShopModule.Scripts.Generated;
+using Features.SonarModule.Data;
+using Features.SonarModule.Data.Generated;
 using Features.StagePresetModule.Data;
 using Features.StagePresetModule.Data.Generated;
 using Game.Connection;
@@ -61,6 +63,10 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindInterfacesAndSelfTo<FlightFieldSceneModel>().AsSingle();
             Container.Bind<FieldRockDamageModel>().AsSingle();
             Container.Bind<FieldDecorSceneModel>().AsSingle();
+            SonarConsoleModelInstaller.Install(Container);
+            Container.Bind<SonarConsoleBindingModel>().AsSingle();
+            Container.Bind<SonarScopeModel>().AsSingle();
+            Container.Bind<SonarMarkerScreenModel>().AsSingle();
         }
     }
 }

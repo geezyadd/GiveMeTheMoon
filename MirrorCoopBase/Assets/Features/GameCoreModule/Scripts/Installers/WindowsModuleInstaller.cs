@@ -2,6 +2,7 @@ using Features.LobbyModule.Scripts;
 using Features.MenuModule.Scripts;
 using Features.MvpModule;
 using Features.ShopModule.Scripts.UI;
+using Features.SonarModule.Scripts.UI;
 using Zenject;
 
 namespace Features.GameCoreModule.Scripts.Installers {
@@ -13,6 +14,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindInterfacesAndSelfTo<MenuWindow>().AsSingle();
             Container.BindInterfacesAndSelfTo<GameHudWindow>().AsSingle();
             Container.BindInterfacesAndSelfTo<ShopWindow>().AsSingle();
+            Container.BindInterfacesAndSelfTo<SonarWindow>().AsSingle();
             Container.BindInterfacesTo<GameFlowWindowsSystem>().AsSingle();
         }
     }

@@ -19,7 +19,6 @@ namespace Features.ShipModule.Scripts {
         private readonly IShipFlightStatService _flightStats;
         private readonly IShipRoute _route;
         private readonly IShipWorldShiftService _worldShift;
-        private readonly IShipRadarBinding _radar;
         private readonly ConnectionSpawnModel _spawn;
         private readonly IFlightRouteListener _flightRouteListener;
         private readonly IShipRunStage _runStage;
@@ -34,7 +33,6 @@ namespace Features.ShipModule.Scripts {
         public ShipRunService(
             IReadOnlyShipRunModel model,
             ShipRunConfig config,
-            IShipRadarBinding radar,
             ConnectionSpawnModel spawn,
             IShipRunBindingModel binding,
             IShipStationPads pads,
@@ -47,7 +45,6 @@ namespace Features.ShipModule.Scripts {
             IShipHullRepair shipHullRepair) {
             _model = model;
             _config = config;
-            _radar = radar;
             _spawn = spawn;
             _binding = binding;
             _pads = pads;
@@ -77,7 +74,6 @@ namespace Features.ShipModule.Scripts {
                 _runStage.ServerPrepareShip(ship);
             }
 
-            _radar.BindShip(ship);
             PublishPreview();
         }
 
@@ -101,7 +97,6 @@ namespace Features.ShipModule.Scripts {
             _pads.Reset(null);
             _wreckUntil = 0f;
             _route.Reset();
-            _radar.UnbindShip();
         }
 
         private ShipRunState StartState(int loopIndex) =>

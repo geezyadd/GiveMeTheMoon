@@ -6,6 +6,7 @@ namespace Features.ShipModule.Scripts {
         Handling = 3,
         Armor = 4,
         FlightSpeed = 5,
-        Hull = 6
+        Hull = 6,
+        SonarRange = 7
     }
 }

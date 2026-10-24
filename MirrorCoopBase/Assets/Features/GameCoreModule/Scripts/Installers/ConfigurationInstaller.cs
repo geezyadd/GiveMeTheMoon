@@ -11,6 +11,7 @@ using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Hull;
 using Features.ShipModule.Scripts.Impacts;
 using Features.ShopModule.Scripts.Configurations;
+using Features.SonarModule.Scripts.Configurations;
 using Features.StagePresetModule.Scripts.Configurations;
 using Features.WeaponModule.Scripts.Definitions;
 using Features.Zenject.Zenject.Addons.AddressablesConfigurationsLoader;
@@ -43,7 +44,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<PlayerNameplateConfiguration>(Address.Configurations.PlayerNameplateConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ModuleCatalog>(Address.Configurations.ModuleCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShipStationCatalog>(Address.Configurations.ShipStationCatalog_Default).AsSingle();
-            Container.BindConfigurationFromAddressables<ShipRadarCatalog>(Address.Configurations.ShipRadarCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<SonarConfiguration>(Address.Configurations.SonarConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<CameraCatalog>(Address.Configurations.CameraCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FieldStructureCatalog>(Address.Configurations.FieldStructureCatalog_Default).AsSingle();
