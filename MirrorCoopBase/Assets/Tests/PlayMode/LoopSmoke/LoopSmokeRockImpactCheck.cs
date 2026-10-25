@@ -59,10 +59,7 @@ namespace Tests.PlayMode.LoopSmoke {
                 _fieldRockEvents.RockDestroyed -= _destroyed.Add;
             }
 
-            _shipRockImpactDebug.DebugMoveShipTo(start);
-            // The flight applies the move in its next step; the pilot faces the destination from there.
-            yield return null;
-            _context.Flight.FaceDestination();
+            yield return _context.Flight.PutShipBackCoroutine(start);
         }
 
         private IEnumerator HitSmallRockCoroutine() {

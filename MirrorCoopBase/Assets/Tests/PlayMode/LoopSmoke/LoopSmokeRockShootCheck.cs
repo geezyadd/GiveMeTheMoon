@@ -75,7 +75,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return PutShipBesideSmallRockCoroutine(ship, station);
             Assert.IsTrue(_hasTarget, $"Rock shot: none of the {CANDIDATES_TRIED} nearest small breakable rocks came into sight of the turret with the ship beside it.");
             yield return ShootUntilBrokenCoroutine(station, _target);
-            yield return PutShipBackCoroutine(ship, start);
+            yield return _flight.PutShipBackCoroutine(start);
         }
 
         private IEnumerator ShootUntilBrokenCoroutine(ShipTurretStation station, FieldRockDescription rock) {
@@ -96,27 +96,24 @@ namespace Tests.PlayMode.LoopSmoke {
             Debug.Log($"[LoopSmoke] the minigun broke rock {rock.Id}: {rock.SourceId}, {rock.Diameter:0.0} m, {_destroyed.Count} rocks broken while firing");
         }
 
-        // Sets _target and _hasTarget once a rock is in sight.
         private IEnumerator PutShipBesideSmallRockCoroutine(ShipBase ship, ShipTurretStation station) {
             foreach (FieldRockDescription candidate in FindSmallRockCandidates(ship.transform.position)) {
-                PutShipBeside(ship, candidate);
-                for (float waited = 0f; waited < SIGHT_WAIT_SECONDS; waited += Time.deltaTime) {
-                    yield return null;
-                    if (IsInSight(station.transform, candidate) == false)
-                        continue;
-
-                    _target = candidate;
-                    _hasTarget = true;
+                _flight.PutShipBeside(candidate.Center, SHOT_DISTANCE, SHOT_HEIGHT_BELOW);
+                yield return WaitUntilInSightCoroutine(station.transform, candidate);
+                if (_hasTarget)
                     yield break;
-                }
             }
         }
 
-        private IEnumerator PutShipBackCoroutine(ShipBase ship, Vector3 start) {
-            ship.FlightControlDebug.DebugMove(start - ship.transform.position);
-            // The flight applies the move in its next step; the pilot faces the destination from there.
-            yield return null;
-            _flight.FaceDestination();
+        // Sets _target and _hasTarget once the rock is in sight within the wait.
+        private IEnumerator WaitUntilInSightCoroutine(Transform turret, FieldRockDescription rock) {
+            for (float waited = 0f; waited < SIGHT_WAIT_SECONDS && _hasTarget == false; waited += Time.deltaTime) {
+                yield return null;
+                _hasTarget = IsInSight(turret, rock);
+            }
+
+            if (_hasTarget)
+                _target = rock;
         }
 
         private List<FieldRockDescription> FindSmallRockCandidates(Vector3 from) {
@@ -129,16 +126,6 @@ namespace Tests.PlayMode.LoopSmoke {
 
         private bool IsUnbrokenSmallRock(FieldRockDescription rock) =>
             rock.IsBreakable && rock.Size == FieldRockSize.Small && _liveFieldModel.BrokenRocks.Contains(rock.Id) == false;
-
-        // Beside the rock and heading across the line to it, a little lower, so the turret looks up at it.
-        private static void PutShipBeside(ShipBase ship, FieldRockDescription rock) {
-            Vector3 toRock = rock.Center - ship.transform.position;
-            toRock.y = 0f;
-            Vector3 direction = toRock.sqrMagnitude > 0f ? toRock.normalized : Vector3.forward;
-            Vector3 position = rock.Center - direction * SHOT_DISTANCE + Vector3.down * SHOT_HEIGHT_BELOW;
-            ship.FlightControlDebug.DebugMove(position - ship.transform.position);
-            ship.FlightControlDebug.DebugFace(Vector3.Cross(Vector3.up, direction));
-        }
 
         private bool AimAndCheckBroken(ShipTurretStation station, FieldRockDescription rock) {
             station.DebugAimAt(rock.Center);

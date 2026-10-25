@@ -46,9 +46,12 @@ namespace Tests.PlayMode.LoopSmoke {
             AssertLabelShowsLate("lobby");
         }
 
+        [LoopSmokeStep(LoopSmokePhase.BeforeTakeoff, 3, 1, 0)]
+        private void CountStartStationItems() =>
+            _stationItems = LoopSmokeSpawnCounts.CountSceneObjects<ShipItem>();
+
         [LoopSmokeStep(LoopSmokePhase.BeforeTakeoff, 3, 1, 10)]
         private void AssertRunStartsAsLate() {
-            _stationItems = LoopSmokeSpawnCounts.CountSceneObjects<ShipItem>();
             Assert.AreEqual(_late.StartLoopIndex, _session.Model.LoopIndex, "Late: start loop.");
             Assert.AreEqual(_late.StartingBalance, SessionQueries.Resolve<IReadOnlyWalletModel>().Balance, "Late: starting balance.");
             Assert.IsTrue(_session.Ship.CanLaunch, "Late: the ship cannot launch with the preset's engines.");

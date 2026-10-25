@@ -70,7 +70,7 @@ namespace Tests.PlayMode.LoopSmoke {
             FieldTargetDescription target = default;
             bool isInSight = false;
             foreach (FieldTargetDescription candidate in FindCandidates(ship.transform.position)) {
-                PutShipBeside(ship, candidate);
+                _flight.PutShipBeside(candidate.Center, SHOT_DISTANCE, SHOT_HEIGHT_BELOW);
                 yield return null;
                 yield return null;
                 if (!IsBuiltAndFirstStruck(station.transform.position, candidate))
@@ -112,9 +112,7 @@ namespace Tests.PlayMode.LoopSmoke {
 
             AssertPoppedOnce(target, FieldTargetPopCause.ShipCollision, balanceBefore, "Balloon fly-in");
             Debug.Log($"[LoopSmoke] the ship flew into balloon {target.Id} ({target.KindId}, +{target.Reward}), balance {balanceBefore} -> {_walletModel.Balance}");
-            ship.FlightControlDebug.DebugMove(start - ship.transform.position);
-            yield return null;
-            _flight.FaceDestination();
+            yield return _flight.PutShipBackCoroutine(start);
         }
 
         [LoopSmokeStep(LoopSmokePhase.AfterLanding, 2, 2, 10)]
@@ -140,27 +138,13 @@ namespace Tests.PlayMode.LoopSmoke {
             return _targets.OrderBy(target => (target.Center - from).sqrMagnitude).Take(CANDIDATES_TRIED).ToList();
         }
 
-        // Beside the balloon and heading across the line to it, so the ship passes it by while the gunner shoots.
-        private static void PutShipBeside(ShipBase ship, FieldTargetDescription target) {
-            Vector3 toTarget = HorizontalDirection(ship.transform.position, target.Center);
-            Vector3 position = target.Center - toTarget * SHOT_DISTANCE + Vector3.down * SHOT_HEIGHT_BELOW;
-            ship.FlightControlDebug.DebugMove(position - ship.transform.position);
-            ship.FlightControlDebug.DebugFace(Vector3.Cross(Vector3.up, toTarget));
-        }
-
         // Before the balloon at the height of the hull's middle, heading at it.
         private void PutShipBefore(ShipBase ship, FieldTargetDescription target) {
-            Vector3 toTarget = HorizontalDirection(ship.transform.position, target.Center);
+            Vector3 toTarget = LoopSmokeFlight.HorizontalDirection(ship.transform.position, target.Center);
             float hullMiddle = _shipRockImpactDebug.DebugGetHullMiddleHeight();
             Vector3 position = target.Center - toTarget * (target.Radius + FLY_IN_DISTANCE) + Vector3.down * hullMiddle;
             ship.FlightControlDebug.DebugMove(position - ship.transform.position);
             ship.FlightControlDebug.DebugFace(toTarget);
-        }
-
-        private static Vector3 HorizontalDirection(Vector3 from, Vector3 to) {
-            Vector3 direction = to - from;
-            direction.y = 0f;
-            return direction.sqrMagnitude > 0f ? direction.normalized : Vector3.forward;
         }
 
         private bool AimAndCheckPopped(ShipTurretStation station, FieldTargetDescription target) {
