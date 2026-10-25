@@ -65,9 +65,7 @@ namespace Tests.Coop.Shared {
         }
 
         private static void CaptureStats(IReadOnlyShipStatsModel stats, CoopObservation observation) {
-            observation.Thrust = stats.Thrust;
             observation.DodgeRange = stats.DodgeRange;
-            observation.Handling = stats.Handling;
             observation.Armor = stats.Armor;
             observation.FlightSpeed = stats.FlightSpeed;
         }

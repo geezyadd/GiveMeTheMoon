@@ -94,9 +94,7 @@ namespace Features.ShipModule.Scripts {
 
         public ShipStatsState CreateState() =>
             new ShipStatsState {
-                Thrust = GetFull(ShipStatType.Thrust),
                 DodgeRange = GetFull(ShipStatType.DodgeRange),
-                Handling = GetFull(ShipStatType.Handling),
                 Armor = GetFull(ShipStatType.Armor),
                 FlightSpeed = GetFull(ShipStatType.FlightSpeed),
                 Hull = GetFull(ShipStatType.Hull),

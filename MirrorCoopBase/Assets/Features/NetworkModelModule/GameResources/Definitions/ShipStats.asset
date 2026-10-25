@@ -18,13 +18,7 @@ MonoBehaviour:
   _atomic: 1
   _scope: 0
   _fields:
-  - _name: Thrust
-    _typeName: float
-    _defaultValue: 
   - _name: DodgeRange
-    _typeName: float
-    _defaultValue: 
-  - _name: Handling
     _typeName: float
     _defaultValue: 
   - _name: Armor

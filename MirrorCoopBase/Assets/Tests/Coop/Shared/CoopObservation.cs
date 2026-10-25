@@ -14,9 +14,7 @@ namespace Tests.Coop.Shared {
         public string Phase;
         public int LoopIndex;
         public string[] Sockets;
-        public float Thrust;
         public float DodgeRange;
-        public float Handling;
         public float Armor;
         public float FlightSpeed;
         public long Balance;
@@ -40,7 +38,7 @@ namespace Tests.Coop.Shared {
             + $"helm pilot {IsHelmPilot}, "
             + $"field #{FieldNumber} seed {FieldSeed} placements {FieldPlacements}, nameplate '{OtherNameplate}', "
             + $"sockets [{string.Join(LIST_SEPARATOR, Sockets ?? Array.Empty<string>())}], "
-            + $"stats thrust {Thrust} dodge {DodgeRange} handling {Handling} armor {Armor} speed {FlightSpeed}, balance {Balance}, "
+            + $"stats dodge {DodgeRange} armor {Armor} speed {FlightSpeed}, balance {Balance}, "
             + $"sonar marks [{string.Join(LIST_SEPARATOR, SonarMarks ?? Array.Empty<string>())}]"
             + (string.IsNullOrEmpty(Message) ? string.Empty : $", message: {Message}");
     }

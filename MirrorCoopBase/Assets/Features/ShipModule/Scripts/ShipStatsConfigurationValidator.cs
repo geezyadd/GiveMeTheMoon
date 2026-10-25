@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Zenject;
 
 namespace Features.ShipModule.Scripts {
-    // The one check of the ship stat defaults: every stat exactly once, None never. Runs once at startup.
+    // The one check of the ship stat defaults: every stat exactly once, None and removed stats never. Runs once at startup.
     public sealed class ShipStatsConfigurationValidator : IInitializable {
         private readonly ShipAccumulativeStatsConfiguration _shipAccumulativeStatsConfiguration;
 
@@ -14,6 +14,16 @@ namespace Features.ShipModule.Scripts {
             ShipStatType[] statTypes = (ShipStatType[])Enum.GetValues(typeof(ShipStatType));
             for (int i = 0; i < statTypes.Length; i++)
                 ValidateStat(statTypes[i]);
+
+            IReadOnlyList<ShipAccumulativeStatsConfiguration.ShipStatDefault> defaults = _shipAccumulativeStatsConfiguration.Defaults;
+            for (int i = 0; i < defaults.Count; i++)
+                ValidateKnown(defaults[i].Type);
+        }
+
+        private void ValidateKnown(ShipStatType type) {
+            if (Enum.IsDefined(typeof(ShipStatType), type) == false)
+                throw new InvalidOperationException(
+                    $"{_shipAccumulativeStatsConfiguration.name}: {nameof(ShipAccumulativeStatsConfiguration.Defaults)} lists the unknown stat {(int)type}.");
         }
 
         private void ValidateStat(ShipStatType type) {

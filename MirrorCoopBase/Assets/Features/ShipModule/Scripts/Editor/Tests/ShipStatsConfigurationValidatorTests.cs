@@ -9,11 +9,14 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
         private const string STATS_CONFIGURATION_PATH =
             "Assets/Features/ShipModule/GameResources/Configurations/ShipAccumulativeStatsConfiguration_Default.asset";
         private const string DUPLICATE_FLIGHT_SPEED_JSON =
-            "{\"_defaults\":[{\"Type\":1},{\"Type\":2},{\"Type\":3},{\"Type\":4},{\"Type\":5},{\"Type\":5}]}";
+            "{\"_defaults\":[{\"Type\":2},{\"Type\":4},{\"Type\":5},{\"Type\":5},{\"Type\":6},{\"Type\":7}]}";
         private const string MISSING_ARMOR_JSON =
-            "{\"_defaults\":[{\"Type\":1},{\"Type\":2},{\"Type\":3},{\"Type\":5}]}";
+            "{\"_defaults\":[{\"Type\":2},{\"Type\":5},{\"Type\":6},{\"Type\":7}]}";
         private const string NONE_LISTED_JSON =
-            "{\"_defaults\":[{\"Type\":0},{\"Type\":1},{\"Type\":2},{\"Type\":3},{\"Type\":4},{\"Type\":5}]}";
+            "{\"_defaults\":[{\"Type\":0},{\"Type\":2},{\"Type\":4},{\"Type\":5},{\"Type\":6},{\"Type\":7}]}";
+        // 1 was Thrust and 3 was Handling: removed stats an old asset could still store.
+        private const string REMOVED_STAT_LISTED_JSON =
+            "{\"_defaults\":[{\"Type\":1},{\"Type\":2},{\"Type\":4},{\"Type\":5},{\"Type\":6},{\"Type\":7}]}";
 
         [Test]
         public void WhenDefaultAssetValidated_ThenItPasses() =>
@@ -24,6 +27,7 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
         [TestCase(DUPLICATE_FLIGHT_SPEED_JSON)]
         [TestCase(MISSING_ARMOR_JSON)]
         [TestCase(NONE_LISTED_JSON)]
+        [TestCase(REMOVED_STAT_LISTED_JSON)]
         public void WhenDefaultsAreBroken_ThenValidationThrows(string defaultsJson) {
             ShipAccumulativeStatsConfiguration configuration = ScriptableObject.CreateInstance<ShipAccumulativeStatsConfiguration>();
             try {
