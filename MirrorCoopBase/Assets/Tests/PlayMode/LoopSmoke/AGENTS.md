@@ -1,0 +1,124 @@
+# PlayMode loop tests
+
+`LoopSmokeTest` and its checks, the ride test and the soak test. Read the [root AGENTS.md](../../../../../AGENTS.md) first. The two-player test is in [Tests/Coop](../../Coop/AGENTS.md).
+
+## Loop autotest
+The PlayMode test `LoopSmokeTest` (`Assets/Tests/PlayMode/LoopSmoke/`) plays the M1 loop on a host by itself:
+menu → Host → lobby → Start → `GameScene`, installs 2 engines, takes the radar off, drops, picks up and reinstalls it by hand through the real third-person
+aim (`LoopSmokeHandCheck`), then plays the mechanic by hand (`LoopSmokeRepairCheck`: the debug break entry (`IShipDamageDebug`) breaks the left engine, the
+synced speed drops and the condition shows it; the wrench from the deck rack is grabbed through the real aim, a hold on
+the engine released early repairs nothing, a full hold repairs it and the speed is back; after a small hull hit the
+hammer patches a breach and the hull is full again; in the first cruise a random module breaks and a breach opens, and
+the landing repairs both), takes off and lands twice (in the first cruise `LoopSmokeHullCheck` hits the hull through
+the debug window as a player does: it clicks the corner button (the panel opens, the cursor is freed), types the damage
+into "Hit the hull" and clicks it, clicks the corner button again (closed, cursor released), and checks the armor-reduced drop in the synced model, after the landing that the hull is full again), and checks the phases,
+`LoopIndex`, engines after landing, the ship on the new pad, one shop kiosk per pad, the player on deck, no wreckage.
+At the first station it reaches it buys back a dead crewmate with a second player, a bot on the host (`LoopSmokeReviveCheck`:
+the price is taken once for a double click, no buy-back without money, the revived player stands at a deck spawn
+point; then the host dies and the bot buys them back). The bot joins through the server's real receive path
+(`LoopSmokeBot`, `LoopSmokeTransportInput`). `LoopSmokeRejoinCheck`: a new player joins at that station on a deck spawn
+point, dies, leaves in flight, a join in flight is turned away with `InFlight`, and after landing it comes back dead, in
+the Crew list, under its new name. After the second landing everyone dies, the crew returns to
+the lobby and `LoopSmokeRunLeakCheck` checks that no object of the first run is left (and that run 2 starts with the same
+station items and spawns the same pad and drops on its first landing). Then it starts a second run, flies five loops (after the first one it checks the station's crew terminal and puts the
+player back on the deck)
+in a row and at the last station buys 5 items at the kiosk through the real aim and the window (`LoopSmokeShopCheck`: delivery
+point, window closes when walking away, the bought items come to rest within a timeout, a far purchase is refused), destroys the hull
+(`LoopSmokeSession.ReturnToLobbyByHullLossCoroutine`: hull 0 -> the crew in the lobby), returns to the menu and checks that there are no
+errors in the log. Before that check `LoopSmokeRejectCheck` joins a silent loopback "host", hands the client an
+`InFlight` answer and checks the reason text in the menu. `LoopSmokeCrewInviteCheck`: one "Hire crew" terminal in the
+lobby and one per pad, inactive with "Steam is not running." under the real aim (no Steam in the test; E on it asks
+`LoopSmokeSteamLobbySpy`, which stands in for `ISteamLobbyService`, for no overlay), the
+`CrewRoster` counts filler bots up to the slot limit (crew full) and back, and closes the join window in flight. Every
+flight runs `LoopSmokeFieldCheck`: in cruise a new
+flight field stands with an active local object for every local placement within the build radius of the camera (none beyond the release radius) and one Mirror object per networked placement;
+after landing nothing of it is left (what a player joining at that station gets); in run 2 loop 3 a forced world shift
+in cruise keeps the field in place against the ship (`LoopSmokeFieldRunCheck`, which also asserts at the last station of
+run 2 that a networked placement was checked); the field pool never grows past what the fields needed. Before
+the first launch `LoopSmokeSonarCheck` stands the host behind the reinstalled radar (its console is inactive at the
+station); first in the cruise of run 1 loop 1 it takes the console through its use command (what E sends): the
+`SonarWindow` opens, the synced model names a navigator and walking / aim are blocked; the window's Ping button
+lights the station's echo at the radar's 800 m range, a click on that echo puts a station mark into the synced
+`Marks` and a marker on the HUD, the Leave button closes the window, frees the console and the controls, and the mark
+runs out (`LoopSmokeSonarConfigOverride` binds a copy of `SonarConfiguration` whose station marks last 2 s). In the
+cruise of run 1 loop 1 `LoopSmokeRockBreakCheck` breaks the rock nearest to the ship through `IFieldRockBreakDebug`:
+it is in the live field's `BrokenRocks`, `RockDestroyed` fired once (a second break is `AlreadyBroken`), the rock is
+hidden on the host, and after landing the broken list is empty. In the same cruise `LoopSmokeRockImpactCheck` flies
+into rocks through `IShipRockImpactDebug` (the debug window's rock aim entry; the hit is the real server check): a small rock breaks
+once (broken list, `RockDestroyed` once), the synced hull drops and a small impact arrives; a large rock gives a large
+impact, stays whole, the ship never gets within the contact radius and moves back out, and the player still rides on the
+deck (in ship space); then the ship goes back and faces the destination. Every
+takeoff logs its longest frame (`[LoopSmoke] loop N takeoff`). The test shortens flight timings with its own copy of
+`ShipRunConfig` and adds the debug networked beacon to its own copy of `FieldStructureCatalog` and, as a giant class of its own, to its own copies of the field configuration's difficulty profiles (weight 2 against about 1 of the game's classes, so nearly every short test field has a networked
+placement); assets are not changed. After the shop check the crew returns to the lobby and `LoopSmokeStagePresetCheck` plays a third run with the
+`Late` stage preset: the host clicks Late in the lobby picker, the run starts on loop 9 with the preset's modules,
+balance and "Preset: Late" label, the first flight's field comes from loop 9's table entry, the first station drops
+nothing, and back in the lobby the preset is gone. In run 2 the minigun goes into `turret-front` at the station after loop 1 and the
+host stands by it; in the cruise of loop 2 `LoopSmokeTurretCheck` spawns the debug dummy, sits the host at the turret
+through the seat's use command, aims it with the station's test hook (`ShipTurretStation.DebugAimAt` /
+`DebugHoldTrigger`, editor / development only) until the server has accepted 5 hits on the dummy, then
+`LoopSmokeRockShootCheck` brings its own target (the ship is put beside the nearest small breakable rocks in turn
+until one is in reach and clear sight of the turret, and put back afterwards) and fires until it breaks (in the broken list,
+hidden on the host, `RockDestroyed` once with cause `Weapon`, the host's key and `minigun`), then `LoopSmokeTargetCheck`
+puts the ship beside the nearest target balloon in clear sight and fires until it pops, and stands up again; then the
+ship is put before another balloon and flies into it (the real hull check). Each balloon is in the synced popped list,
+hidden on the host, `TargetPopped` fired once (Weapon by the host with `minigun` / `ShipCollision`) and the synced crew
+balance grew by the rewards; after that landing the popped list and the balloons are gone.
+The test timeout is 180 s (a run takes about 150 s). The shared steps live in helpers both loop tests use:
+`LoopSmokeSession` (menu, Host, lobby, Start, all dead -> lobby, Leave; waits record the run phases),
+`LoopSmokeFlight` (engines, boarding, the lever, the phases of a loop with the field checks and the checks after
+landing, messages start with "Loop N:"; at the cruise start its pilot faces the ship to the destination once through
+`ShipBase.FlightControlDebug`, because the autopilot keeps the takeoff heading), `LoopSmokeShipRunConfigOverride` and `LoopSmokeFieldCatalogOverride` (the
+config copies) and `LoopSmokeSpawnCounts`.
+
+**Adding a check to the loop test.** `LoopSmokeTest.cs` only plays the runs (its `_runs` list: flights per run, the
+test's rocket engines or a preset's modules, how the run ends) and does not change per feature. The checks register
+themselves: `LoopSmokeCheckRegistry` reads every method with `[LoopSmokeStep(phase, run, flight, order)]` in the
+assembly and runs it at its slot. A new check is a new class in `Assets/Tests/PlayMode/LoopSmoke/` with one attribute
+line per step, nothing else:
+- Phases (`LoopSmokePhase`): `InLobby` (before the run's Start), `BeforeTakeoff` (at the station before the flight's
+  launch, after the engines and the boarding), `InCruise`, `AfterLanding` (after the flight's landing checks),
+  `AfterRun` (back in the lobby) take a run from 1; the flight phases also take the flight of the run from 1 (the n-th
+  flight: `LoopIndex` for runs 1 and 2, loop 10 is flight 1 of the Late run 3); `InMenu` (after Leave) takes neither.
+- `order`: the steps of one slot run one after the other, lower first; two steps with the same order in a slot fail
+  the test at its start, so pick a free number (the existing steps use multiples of 10; the first cruise of run 1:
+  sonar 10, hull 20, rock break 30, rock impacts 40, repair 50; the turret cruise of run 2: dummy 10, rock shot 20,
+  balloon shot 30, stand up 40, fly-in 50).
+- A step takes no arguments and returns `IEnumerator` or `void`. Its class has a public constructor taking
+  `LoopSmokeContext` (session, flight helper, field check, Steam lobby spy) or an empty one; it is made at its first
+  step and kept for the whole test, so its steps share state (resolve scene services at a step if they cross runs).
+- At the end the test fails if a registered step never ran (a slot the runs never reach).
+Why attributes and not one list file: a list is the same shared file every feature edits; a check that registers in
+its own file merges without conflicts. To change the scenario itself (one more run or flight) edit `_runs`.
+
+## Ride test
+The ride test `ShipRideTest` (`Assets/Tests/PlayMode/ShipRide/`, about 75 s, `-Filter ShipRide`) flies six loops on a host on the
+same fast timings, one per spot of the deck found from its geometry (`ShipRideDeckSpots`): the nose, the stern, both
+side edges, the centre and the stern in a jump at the lever (the lever is pulled at the top of a real jump through
+`CharacterInputBuffer`). After takeoff and in cruise the player must ride, be alive and stay on the deck; in cruise it
+jumps (from the centre with a sideways hop) and must land back on the deck still riding.
+
+## Soak test
+The soak test `LoopSoakTest` (`Assets/Tests/PlayMode/LoopSoak/`, `[Category("Soak")]`, about 3 minutes) flies 15
+loops in a row on the same fast timings and catches what only shows up over time. It does not repeat the station
+checks of `LoopSmokeTest`. Every loop: the smoke test's flight, field and landing checks; at most 2 landing pads, no
+wreckage, and runtime network objects other than items and pads exactly as after loop 1 (`LoopSoakAccumulationCheck`);
+the landed ship closer to the origin than `OriginRecenterDistance` and, after a world shift, the player on the deck
+(`LoopSoakWorldShiftCheck`). At least one world shift must happen (the default 800 m gives one every second loop) and
+at least one networked field placement. It logs a table per loop (`LoopSoakReport`: time, managed and allocated
+memory, spawned objects, items and their growth, pads, shifts, the ship's distance from the origin, field placements,
+field objects in cruise and pooled field objects) and fails when memory at the last loop is more than 1.5 times that
+of loop 2. Station drops are never removed, so items grow by about 10 per loop: reported, not failed.
+
+## Running
+Run from the workspace root:
+`Invoke-AgentEditor.ps1 -AgentDir . -Command run-tests -Mode PlayMode -Filter LoopSmoke`
+(or Test Runner → PlayMode → `LoopSmokeTest`); the soak test with `-Filter LoopSoak` (or `LoopSoakTest`), its table
+is in the editor log under `[LoopSoak]`.
+
+The test lives in Assembly-CSharp
+under `#if UNITY_INCLUDE_TESTS`, so `playModeTestRunnerEnabled` is on in `ProjectSettings`. New allowed log errors go
+only into the `LoopSmokeErrorLog` allow-list, with a reason.
+
+`LoopSmokeTest` stays in `Assembly-CSharp`: every assembly is visible from there. Whatever the test touches in a
+  module must be `public` (not `InternalsVisibleTo`).

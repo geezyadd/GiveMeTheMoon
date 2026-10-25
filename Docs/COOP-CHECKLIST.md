@@ -11,7 +11,7 @@ console of both sides; any `Error` / `Exception` goes into the result with its s
 
 **Auto** says what the automated tests already cover, so the manual pass can focus on the rest:
 - `2P` - covered by the two-process test `CoopTwoProcessTest` (editor host + development-build client, see
-  `AGENTS.md` → "Two-player test"); host and client views are compared;
+  [`MirrorCoopBase/Assets/Tests/Coop/AGENTS.md`](../MirrorCoopBase/Assets/Tests/Coop/AGENTS.md)); host and client views are compared;
 - `2P part` - partly covered, the column says what is left;
 - `LS` - covered only on the host by `LoopSmokeTest` (an in-process bot, not a real second client);
 - `-` - not automated.
