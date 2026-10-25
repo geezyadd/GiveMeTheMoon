@@ -56,13 +56,10 @@ namespace Features.WeaponModule.Scripts.Definitions {
         [SerializeField] private CameraShakeProfile _nearImpactShake;
         [Tooltip("Impacts closer than this shake the view, stronger the closer they are.")]
         [SerializeField, Min(0f)] private float _nearImpactDistanceMeters;
-        [Tooltip("View turn noise in degrees when a target is destroyed.")]
-        [SerializeField, Min(0f)] private float _targetDestroyedShakeAmplitude;
 
         [Header("Tracers")]
         [Tooltip("Every Nth shot draws a tracer (3 = every third shot).")]
         [SerializeField, Min(1)] private int _tracerEveryNthShot = 1;
-        [SerializeField] private Color _tracerColor = Color.white;
         [SerializeField, Min(0f)] private float _tracerSpeedMetersPerSecond;
         [SerializeField, Min(0f)] private float _tracerWidthMeters;
         [SerializeField, Min(0f)] private float _tracerLengthMeters;
@@ -126,9 +123,7 @@ namespace Features.WeaponModule.Scripts.Definitions {
         public CameraShakeProfile FireShake => _fireShake;
         public CameraShakeProfile NearImpactShake => _nearImpactShake;
         public float NearImpactDistanceMeters => _nearImpactDistanceMeters;
-        public float TargetDestroyedShakeAmplitude => _targetDestroyedShakeAmplitude;
         public int TracerEveryNthShot => _tracerEveryNthShot;
-        public Color TracerColor => _tracerColor;
         public float TracerSpeedMetersPerSecond => _tracerSpeedMetersPerSecond;
         public float TracerWidthMeters => _tracerWidthMeters;
         public float TracerLengthMeters => _tracerLengthMeters;

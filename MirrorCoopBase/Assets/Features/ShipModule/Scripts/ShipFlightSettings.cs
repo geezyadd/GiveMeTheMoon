@@ -6,7 +6,6 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private ShipFlightMode _flightMode = ShipFlightMode.TravelInSpace;
         [SerializeField] private float _travelAccelSeconds = 1.5f;
         [SerializeField] private float _dodgeRange = 4f;
-        [SerializeField] private float _turnDegrees = 22f;
         [SerializeField] private float _turnRate = 80f;
         [SerializeField] private float _cruiseSpeed = 14f;
         [SerializeField] private float _bankDegrees = 22f;
@@ -33,7 +32,6 @@ namespace Features.ShipModule.Scripts {
 
         public float TravelAccelSeconds => Mathf.Max(0f, _travelAccelSeconds);
         public float DodgeRange => Mathf.Max(0f, _dodgeRange);
-        public float TurnDegrees => _turnDegrees;
         public float TurnRate => Mathf.Max(10f, _turnRate);
         public float CruiseSpeed => Mathf.Max(0f, _cruiseSpeed);
         public float BankDegrees => _bankDegrees;

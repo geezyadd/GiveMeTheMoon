@@ -89,16 +89,6 @@ namespace Features.ShipModule.Scripts {
             _inHand.Clear();
         }
 
-        internal void ShiftDetached(Vector3 delta) {
-            for (int i = 0; i < _attached.Count; i++) {
-                Attached item = _attached[i];
-                if (item.Body == null)
-                    continue;
-
-                item.Body.position += delta;
-            }
-        }
-
         public void ClientAttach(uint netId, Vector3 localPosition, Quaternion localRotation) {
             _pending.Add(new Pending(netId, localPosition, localRotation));
             ResolvePending();

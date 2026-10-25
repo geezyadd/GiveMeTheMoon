@@ -58,7 +58,6 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldRockReader>().To<FieldRockReader>().AsSingle();
             Container.Bind<IFieldRockFieldSource>().To<ServerFieldRockFieldSource>().AsSingle();
             Container.Bind<IFieldRockQuery>().To<FieldRockQuery>().AsSingle();
-            Container.Bind<PublishedFieldRockReader>().AsSingle();
             Container.Bind<IPeerFieldRockQuery>().To<PeerFieldRockQuery>().AsSingle();
             Container.BindInterfacesTo<FieldRockBreaker>().AsSingle();
             Container.Bind<IFieldRockTargetIds>().To<FieldRockTargetIds>().AsSingle();
@@ -118,7 +117,6 @@ namespace Features.FlightFieldModule.Scripts {
         private void InstallLiveField() {
             Container.Bind<IFieldStructureSpawnRule>().To<FieldStructureSpawnRule>().AsSingle();
             Container.Bind<IFieldStructureLayout>().To<FieldStructureLayout>().AsSingle();
-            Container.Bind<IFieldPlaneCoverLayout>().To<FieldPlaneCoverLayout>().AsSingle();
             Container.Bind<IFieldClusterLayout>().To<FieldClusterLayout>().AsSingle();
             Container.Bind<IFieldPlacementRockLayout>().To<FieldPlacementRockLayout>().AsSingle();
             Container.BindInterfacesTo<FlightFieldPublisher>().AsSingle();

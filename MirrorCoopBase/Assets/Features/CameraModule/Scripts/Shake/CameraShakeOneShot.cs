@@ -7,11 +7,6 @@ namespace Features.CameraModule.Scripts.Shake {
         private float _length;
         private float _age;
 
-        public CameraShakeOneShot(CameraShakeProfile profile, float strength) {
-            Profile = profile;
-            Restart(strength);
-        }
-
         public CameraShakeProfile Profile { get; }
         public float Strength { get; private set; }
         public float NoiseTime { get; private set; }
@@ -19,6 +14,11 @@ namespace Features.CameraModule.Scripts.Shake {
 
         public float CurrentStrength =>
             IsOver ? 0f : Strength * Mathf.Pow(1f - _age / _length, Profile.FadePower);
+
+        public CameraShakeOneShot(CameraShakeProfile profile, float strength) {
+            Profile = profile;
+            Restart(strength);
+        }
 
         public void Restart(float strength) {
             Strength = strength;

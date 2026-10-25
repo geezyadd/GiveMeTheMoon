@@ -7,19 +7,16 @@ namespace Features.ShipModule.Scripts.Damage {
         private readonly IShipRunBindingModel _shipRunBindingModel;
         private readonly IShipModuleCondition _shipModuleCondition;
         private readonly IShipHullRepair _shipHullRepair;
-        private readonly IShipDamageEventPublisher _shipDamageEventPublisher;
         private readonly ShipDamageConfiguration _shipDamageConfiguration;
 
         public ShipConditionService(
             IShipRunBindingModel shipRunBindingModel,
             IShipModuleCondition shipModuleCondition,
             IShipHullRepair shipHullRepair,
-            IShipDamageEventPublisher shipDamageEventPublisher,
             ShipDamageConfiguration shipDamageConfiguration) {
             _shipRunBindingModel = shipRunBindingModel;
             _shipModuleCondition = shipModuleCondition;
             _shipHullRepair = shipHullRepair;
-            _shipDamageEventPublisher = shipDamageEventPublisher;
             _shipDamageConfiguration = shipDamageConfiguration;
         }
 
@@ -30,7 +27,6 @@ namespace Features.ShipModule.Scripts.Damage {
 
             ship.ConditionSync.ServerAddBrokenSockets(socketId);
             ship.Modules.ServerSetModuleWorking(socketId, false);
-            _shipDamageEventPublisher.PublishModuleBroken(socketId);
             return true;
         }
 
@@ -40,7 +36,6 @@ namespace Features.ShipModule.Scripts.Damage {
                 return false;
 
             ship.Modules.ServerSetModuleWorking(socketId, true);
-            _shipDamageEventPublisher.PublishRepaired(ShipRepairKind.Module, socketId);
             return true;
         }
 
@@ -49,7 +44,6 @@ namespace Features.ShipModule.Scripts.Damage {
             if (ship == null || HasDamagePoint(ship, pointId) == false || ship.ConditionSync.ServerAddOpenBreaches(pointId) == false)
                 return false;
 
-            _shipDamageEventPublisher.PublishHullBreached(pointId);
             return true;
         }
 
@@ -59,7 +53,6 @@ namespace Features.ShipModule.Scripts.Damage {
                 return false;
 
             _shipHullRepair.ServerHeal(_shipDamageConfiguration.HullPerRepairedBreach);
-            _shipDamageEventPublisher.PublishRepaired(ShipRepairKind.Breach, pointId);
             return true;
         }
 
