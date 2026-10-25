@@ -4,11 +4,13 @@ using System.Collections;
 using Features.CameraModule.Scripts;
 using Features.GrabModule.Scripts;
 using Features.GrabModule.Scripts.Hold;
+using Features.ShipDamageModule.Scripts.Damage;
+using Features.ShipDamageModule.Scripts.Debug;
+using Features.ShipDamageModule.Scripts.Repair;
 using Features.ShipModule.Scripts;
-using Features.ShipModule.Scripts.Damage;
+using Features.ShipModule.Scripts.Contracts;
 using Features.ShipModule.Scripts.Debug;
 using Features.ShipModule.Scripts.Generated;
-using Features.ShipModule.Scripts.Repair;
 using Mirror;
 using NUnit.Framework;
 using Tests.Shared;
@@ -151,7 +153,7 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         private ShipHullDamagePoint FindDamagePoint(string pointId) {
-            foreach (ShipHullDamagePoint point in _ship.DamagePoints) {
+            foreach (ShipHullDamagePoint point in SessionQueries.Resolve<IReadOnlyComponentRegistry<ShipHullDamagePoint>>().Items) {
                 if (point.PointId == pointId)
                     return point;
             }

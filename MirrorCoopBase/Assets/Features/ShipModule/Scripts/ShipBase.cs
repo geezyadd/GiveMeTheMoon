@@ -1,11 +1,7 @@
-using System.Collections.Generic;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.GameCoreModule.Contracts;
-using Features.ShipModule.Scripts.Damage;
 using Features.ShipModule.Scripts.Generated;
 using Features.ShipModule.Scripts.Hull;
-using Features.ShipModule.Scripts.Impacts;
-using Features.ShipModule.Scripts.Repair;
 using Mirror;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -25,10 +21,7 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private ShipSocketsSync _socketStates;
         [SerializeField] private ShipStatsSync _statsSync;
         [SerializeField] private ShipHullVolume _hullVolume;
-        [SerializeField] private ShipImpactSync _impactSync;
         [SerializeField] private ShipConditionSync _conditionSync;
-        [SerializeField] private ShipHullDamagePoint[] _damagePoints;
-        [SerializeField] private ShipToolRack _toolRack;
 
         private ShipFlightSettings _flightSettings;
         private ShipAccumulativeStatsConfiguration _statsConfiguration;
@@ -61,18 +54,15 @@ namespace Features.ShipModule.Scripts {
         public IShipDeckGeometry DeckGeometry => _deckGeometry;
         internal IShipModules Modules => _modules;
         internal IShipHullStat Hull => _hull;
-        internal IShipRiders Riders => _riders;
+        public IShipRiders Riders => _riders;
         internal IShipDeckRideRule RideRule => _rideRule;
         internal IShipSeats Seats => _seats;
         internal IShipFlightControl FlightControl => _flightControl;
         internal IShipDeckCargo Cargo => _cargo;
         internal ShipPoseSync PoseSync => _poseSync;
-        internal ShipHullVolume HullVolume => _hullVolume;
-        internal ShipImpactSync ImpactSync => _impactSync;
+        public ShipHullVolume HullVolume => _hullVolume;
         internal ShipConditionSync ConditionSync => _conditionSync;
-        public IReadOnlyList<ShipHullDamagePoint> DamagePoints => _damagePoints;
-        internal ShipToolRack ToolRack => _toolRack;
-        internal IShipKnockback Knockback => _flightControl;
+        public IShipKnockback Knockback => _flightControl;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         internal IShipRidersDebug RidersDebug => _riders;
         // Public for the loop tests: their pilot faces the ship to the destination, as a crew does by radar.
@@ -122,9 +112,9 @@ namespace Features.ShipModule.Scripts {
 
         private void Awake() {
             Assert.IsTrue(
-                _sockets != null && _stats != null && _socketStates != null && _statsSync != null && _hullVolume != null && _impactSync != null
-                && _conditionSync != null && _damagePoints != null && _toolRack != null,
-                name + " needs its sockets, socket states, stat entity, stats sync, hull volume, impact sync, condition sync, damage points and tool rack wired.");
+                _sockets != null && _stats != null && _socketStates != null && _statsSync != null && _hullVolume != null
+                && _conditionSync != null,
+                name + " needs its sockets, socket states, stat entity, stats sync, hull volume and condition sync wired.");
             _deckGeometry = new ShipDeckGeometry(transform, _deck, _deckColliders);
             ShipStatSheet statSheet = new ShipStatSheet(_stats);
             _modules = new ShipModules(_sockets, statSheet, _statsSync, _conditionSync, ReadStatsConfiguration);

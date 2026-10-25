@@ -1,5 +1,5 @@
 using System;
-using Features.ShipModule.Scripts.Damage;
+using Features.ShipModule.Scripts.Contracts;
 using Features.SonarModule.Contracts;
 using Features.SonarModule.Data;
 using Zenject;

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Features.ShipDamageModule.Scripts.Repair;
 using Features.ShipModule.Scripts;
-using Features.ShipModule.Scripts.Repair;
 using UnityEngine;
 
 namespace Features.ShopModule.Scripts.Configurations {

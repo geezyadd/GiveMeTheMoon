@@ -10,6 +10,8 @@ using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts;
 using Features.PlayerLifeModule.Scripts.Installers;
 using Features.PlayerProfileModule.Scripts;
+using Features.ShipDamageModule.Scripts;
+using Features.ShipImpactModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Installers;
 using Features.SonarModule.Scripts.Installers;
@@ -28,6 +30,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             CameraModuleInstaller.Install(Container);
             GrabModuleInstaller.Install(Container);
             ShipModuleInstaller.Install(Container);
+            ShipImpactModuleInstaller.Install(Container);
+            ShipDamageModuleInstaller.Install(Container);
             FlightFieldModuleInstaller.Install(Container);
             WeaponModuleInstaller.Install(Container);
             PlayerLifeModuleInstaller.Install(Container);

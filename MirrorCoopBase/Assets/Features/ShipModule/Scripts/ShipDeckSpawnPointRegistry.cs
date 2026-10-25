@@ -1,32 +1,31 @@
 using System;
 using System.Collections.Generic;
+using Features.ShipModule.Scripts.Contracts;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
     // The deck spawn points of the ship in the loaded map, handed out in turn.
-    public sealed class ShipDeckSpawnPointRegistry : IShipDeckSpawnPointRegistry, IShipDeckSpawnPoints {
+    public sealed class ShipDeckSpawnPointRegistry : IShipDeckSpawnPoints {
         private const string NO_POINT_ERROR = "The ship has no " + nameof(ShipDeckSpawnPoint) + ".";
 
-        private readonly List<ShipDeckSpawnPoint> _points = new();
+        private readonly IReadOnlyComponentRegistry<ShipDeckSpawnPoint> _shipDeckSpawnPointRegistry;
         private int _nextIndex;
 
         public bool HasSpawnPoint =>
-            _points.Count > 0;
+            Points.Count > 0;
 
-        public void Add(ShipDeckSpawnPoint point) {
-            if (_points.Contains(point) == false)
-                _points.Add(point);
-        }
+        private IReadOnlyList<ShipDeckSpawnPoint> Points =>
+            _shipDeckSpawnPointRegistry.Items;
 
-        public void Remove(ShipDeckSpawnPoint point) =>
-            _points.Remove(point);
+        public ShipDeckSpawnPointRegistry(IReadOnlyComponentRegistry<ShipDeckSpawnPoint> shipDeckSpawnPointRegistry) =>
+            _shipDeckSpawnPointRegistry = shipDeckSpawnPointRegistry;
 
         public Pose TakeSpawnPose() {
             if (HasSpawnPoint == false)
                 throw new InvalidOperationException(NO_POINT_ERROR);
 
-            Transform point = _points[_nextIndex % _points.Count].transform;
-            _nextIndex = (_nextIndex + 1) % _points.Count;
+            Transform point = Points[_nextIndex % Points.Count].transform;
+            _nextIndex = (_nextIndex + 1) % Points.Count;
             return new Pose(point.position, point.rotation);
         }
     }

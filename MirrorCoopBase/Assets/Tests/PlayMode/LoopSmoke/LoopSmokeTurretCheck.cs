@@ -4,7 +4,7 @@ using Features.CharacterMovableModule.Scripts;
 using Features.GrabModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Debug;
-using Features.ShipModule.Scripts.Turret;
+using Features.TurretModule.Scripts;
 using Mirror;
 using NUnit.Framework;
 using Tests.Shared;

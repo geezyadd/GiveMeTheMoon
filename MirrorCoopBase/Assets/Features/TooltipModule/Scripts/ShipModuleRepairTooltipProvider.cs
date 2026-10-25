@@ -1,7 +1,7 @@
 using System;
 using Features.GrabModule.Scripts;
-using Features.ShipModule.Scripts.Damage;
-using Features.ShipModule.Scripts.Repair;
+using Features.ShipDamageModule.Scripts.Repair;
+using Features.ShipModule.Scripts.Contracts;
 using UnityEngine;
 
 namespace Features.TooltipModule.Scripts {

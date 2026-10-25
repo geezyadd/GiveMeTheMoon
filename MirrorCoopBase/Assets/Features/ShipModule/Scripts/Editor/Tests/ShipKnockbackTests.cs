@@ -1,4 +1,3 @@
-using Features.ShipModule.Scripts.Impacts;
 using NUnit.Framework;
 using UnityEngine;
 
