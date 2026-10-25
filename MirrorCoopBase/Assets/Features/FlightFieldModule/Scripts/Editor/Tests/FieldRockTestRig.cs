@@ -23,11 +23,11 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         public FieldRockTestRig(FlightFieldEditorComposition composition, FieldRockDurabilityConfiguration durabilityConfiguration, FlightField field) {
             FieldRandomFactory randomFactory = new();
             FieldFootprintReader footprintReader = new();
-            FieldPlacementRockLayout placementRockLayout = new(new FieldClusterLayout(new FieldPlaneCoverLayout()), randomFactory);
+            FieldPlacementRockLayout placementRockLayout = new(new FieldClusterLayout(), randomFactory);
             FieldDebrisLayout debrisLayout = new(composition.Configuration);
             Reader = new FieldRockReader(composition.Catalog, new FieldStructureSpawnRule(), footprintReader, new FieldStructureLayout(footprintReader), placementRockLayout,
                 debrisLayout, new FieldRockClassifier(durabilityConfiguration));
-            Query = new FieldRockQuery(new ServerFieldRockFieldSource(ServerModel, composition.Catalog, composition.ProfileLookup), composition.Catalog, composition.Configuration, Reader, BrokenRocks,
+            Query = new FieldRockQuery(new ServerFieldRockFieldSource(ServerModel, composition.Catalog, composition.ProfileLookup), composition.Configuration, Reader, BrokenRocks,
                 randomFactory);
             Breaker = new FieldRockBreaker(ServerModel, Query, BrokenRocks, BrokenRocks);
             HitPoints = new FieldRockHitPoints(durabilityConfiguration);

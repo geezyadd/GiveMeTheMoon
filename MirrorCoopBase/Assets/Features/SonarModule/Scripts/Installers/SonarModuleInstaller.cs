@@ -31,7 +31,7 @@ namespace Features.SonarModule.Scripts.Installers {
             Container.Bind<ISonarContactSource>().To<RockSonarContactSource>().AsSingle();
             Container.Bind<ISonarContactSource>().To<StationSonarContactSource>().AsSingle();
             Container.Bind<ISonarContactSource>().To<TargetSonarContactSource>().AsSingle();
-            Container.Bind<ISonarCondition>().To<RadarSonarCondition>().AsSingle();
+            Container.BindInterfacesTo<RadarSonarCondition>().AsSingle();
             Container.Bind<ISonarContactService>().To<SonarContactService>().AsSingle();
         }
     }

@@ -6,25 +6,14 @@ using UnityEngine;
 namespace Features.FlightFieldModule.Scripts.Scene {
     // Where the rocks of one cluster stand. Everything comes from the given random sequence, so the same seed gives
     // the same rocks on every peer. Offsets are in field space from the middle of the footprint box: x across the
-    // field (box height), z along it (box width), y up from the flight plane. A recipe with dense rocks gets the dense
-    // rock field that closes the plane (IFieldPlaneCoverLayout); a recipe without them gets one main rock across the
+    // field (box height), z along it (box width), y up from the flight plane. A cluster is one main rock across the
     // plane, satellites spread up and down and sometimes debris.
     public sealed class FieldClusterLayout : IFieldClusterLayout {
         private const float HALF = 0.5f;
         private const float FULL_TURN_RADIANS = 2f * Mathf.PI;
 
-        private readonly IFieldPlaneCoverLayout _fieldPlaneCoverLayout;
-
-        public FieldClusterLayout(IFieldPlaneCoverLayout fieldPlaneCoverLayout) =>
-            _fieldPlaneCoverLayout = fieldPlaneCoverLayout;
-
         public void Fill(FieldClusterRecipe recipe, FieldFootprint footprint, float cellSize, IFieldRandom random, List<FieldClusterRockPose> rocks) {
             rocks.Clear();
-            if (recipe.HasPlaneCover) {
-                _fieldPlaneCoverLayout.Add(recipe, footprint, cellSize, random, rocks);
-                return;
-            }
-
             AddMainRock(recipe, footprint, cellSize, random, rocks);
             int satellites = random.Range(recipe.SatelliteCount.x, recipe.SatelliteCount.y + 1);
             for (int i = 0; i < satellites; i++)

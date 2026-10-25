@@ -64,7 +64,6 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipDamageConfigurationValidator>().AsSingle();
             Container.BindInterfacesTo<ShipModuleCondition>().AsSingle();
             Container.BindInterfacesTo<ShipBreachCondition>().AsSingle();
-            Container.BindInterfacesTo<ShipDamageEventBus>().AsSingle();
             Container.BindInterfacesTo<ShipDamageRule>().AsSingle();
             Container.BindInterfacesTo<ShipDamageRandom>().AsSingle();
             Container.BindInterfacesTo<ShipConditionService>().AsSingle();

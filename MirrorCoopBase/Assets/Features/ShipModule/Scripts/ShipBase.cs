@@ -50,7 +50,6 @@ namespace Features.ShipModule.Scripts {
         private CharacterMovableModel _characterMovableModel;
         private ShipRiderKeyModel _shipRiderKeyModel;
 
-        public ShipLaunchLever Lever => _lever;
         public Transform Destination => _destination;
         public bool IsFlying => _flying;
         internal BoxCollider RideVolume => _rideVolume;

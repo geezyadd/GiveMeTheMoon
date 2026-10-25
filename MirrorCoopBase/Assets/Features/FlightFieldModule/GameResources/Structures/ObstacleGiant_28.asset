@@ -45,7 +45,6 @@ MonoBehaviour:
   - ........XXXXXXXXXXXX........
   _prefab: {fileID: 7657093393603738572, guid: 84a8d2520c1d47bc88266a515b2e53cd, type: 3}
   _isNetworked: 0
-  _isRotatable: 0
   _visualYawJitterDegrees: 180
   _visualScaleJitter: 0
   _clusterRecipe: {fileID: 11400000, guid: 1024426aa9b94cc2a271e310e4b875a9, type: 2}

@@ -10,7 +10,7 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
         private readonly IFieldRockQuery _fieldRockQuery;
 
         public PeerFieldRockQuery(IInstantiator instantiator) =>
-            _fieldRockQuery = instantiator.Instantiate<FieldRockQuery>(new object[] { instantiator.Instantiate<LiveFieldRockFieldSource>() });
+            _fieldRockQuery = instantiator.Instantiate<FieldRockQuery>(new object[] { instantiator.Instantiate<LiveFieldRockFieldSource>(new object[] { instantiator.Instantiate<PublishedFieldRockReader>() }) });
 
         public void FindInSphere(Vector3 center, float radius, List<FieldRockDescription> results) =>
             _fieldRockQuery.FindInSphere(center, radius, results);

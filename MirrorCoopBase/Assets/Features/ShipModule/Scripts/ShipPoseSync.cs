@@ -26,17 +26,10 @@ namespace Features.ShipModule.Scripts {
         private readonly List<PoseSample> _samples = new List<PoseSample>(16);
         private float _nextPublish;
         private ShipBase _shipBase;
-        private double _clientDisplayTime;
 
         internal bool IsFlying => _flying;
         internal ShipBase Ship => _shipBase;
         internal WorldShift WorldShift => _worldShift;
-
-        // The time the ship is shown at on this peer this frame: server time on the server, on a client the sample
-        // time ApplyInterpolated posed the ship at. World objects posed by time read it after the ship's LateUpdate.
-        // A client only interpolates in flight; after any end of a flight its clock must keep running, or objects posed
-        // after the end would stay shown at the frozen time.
-        internal double DisplayTime => isServer || _flying == false ? NetworkTime.time : _clientDisplayTime;
 
         internal void BindShip(ShipBase ship, Transform root) {
             _shipBase = ship;
@@ -93,7 +86,6 @@ namespace Features.ShipModule.Scripts {
 
             double delay = lowLatency ? 0d : _interpolationDelay;
             double renderTime = NetworkTime.time - delay;
-            _clientDisplayTime = renderTime;
             if (_samples.Count == 0) {
                 if (_lateRot.x != 0f || _lateRot.y != 0f || _lateRot.z != 0f || _lateRot.w != 0f)
                     _shipBase.ApplyDisplayPose(_latePos, _lateRot);
@@ -103,7 +95,6 @@ namespace Features.ShipModule.Scripts {
             PoseSample last = _samples[_samples.Count - 1];
             if (renderTime >= last.Time) {
                 float extra = Mathf.Min((float)(renderTime - last.Time), MAX_EXTRAPOLATION);
-                _clientDisplayTime = last.Time + extra;
                 _shipBase.ApplyDisplayPose(last.Position + last.Velocity * extra, ExtrapolateRotation(last, extra));
                 return;
             }

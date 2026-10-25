@@ -6,8 +6,6 @@ namespace Game.Connection
     public sealed class ConnectionRejectMessages : IConnectionRejectMessages
     {
         private const string VERSION_MISMATCH = "Your game version does not match the host's. Update the game and try again.";
-        private const string MAP_ALREADY_STARTED = "The game has already started.";
-        private const string UNKNOWN = "The host refused the connection.";
         private const string INVALID_STEAM_ID = "Steam is not signed in. Start Steam and try again.";
         private const string IN_FLIGHT = "The ship is in flight. You can join when it lands at a station.";
         private const string SERVER_FULL = "The crew is full. You can join when a player leaves.";
@@ -17,8 +15,6 @@ namespace Game.Connection
             reason switch
             {
                 ConnectionRejectReason.VersionMismatch => VERSION_MISMATCH,
-                ConnectionRejectReason.MapAlreadyStarted => MAP_ALREADY_STARTED,
-                ConnectionRejectReason.Unknown => UNKNOWN,
                 ConnectionRejectReason.InvalidSteamId => INVALID_STEAM_ID,
                 ConnectionRejectReason.InFlight => IN_FLIGHT,
                 ConnectionRejectReason.ServerFull => SERVER_FULL,
