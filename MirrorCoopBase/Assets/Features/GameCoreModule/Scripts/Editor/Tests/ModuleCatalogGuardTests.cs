@@ -49,6 +49,10 @@ namespace Features.GameCoreModule.Editor.Tests {
         }
 
         [Test]
+        public void WhenModuleCatalogIsValidated_ThenEveryModifierNamesAKnownStat() =>
+            Assert.DoesNotThrow(new ModuleCatalogValidator(_moduleCatalog).Initialize);
+
+        [Test]
         public void WhenModuleCatalogIsRead_ThenEveryModuleHasAnItemThatPointsBackToIt() {
             foreach (ModuleDefinition module in _moduleCatalog.Modules) {
                 ShipItem item = module.ItemPrefab;
