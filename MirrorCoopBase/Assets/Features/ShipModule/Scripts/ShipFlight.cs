@@ -13,6 +13,7 @@ namespace Features.ShipModule.Scripts {
         private const float ARRIVE_SPEED_SQR = 0.25f;
 
         private readonly ShipKnockback _knockback = new ShipKnockback();
+        private readonly ShipCruiseSpeed _cruiseSpeed = new ShipCruiseSpeed();
 
         private ShipFlightSettings _settings;
         private ShipFlightMode _mode = ShipFlightMode.TravelInSpace;
@@ -35,7 +36,6 @@ namespace Features.ShipModule.Scripts {
         private float _dodgeVel;
         private float _dodgeRangeScale = 1f;
         private float _travelSpeed;
-        private float _cruiseAge;
         private float _takeoffAge;
         private float _takeoffSeconds = 9f;
         private float _landAge;
@@ -80,7 +80,7 @@ namespace Features.ShipModule.Scripts {
             _bank = 0f;
             _bankVel = 0f;
             _travelSpeed = 0f;
-            _cruiseAge = 0f;
+            _cruiseSpeed.Reset();
             _takeoffAge = 0f;
             _takeoffSeconds = Mathf.Max(0.2f, takeoffSeconds);
             _landAge = 0f;
@@ -93,7 +93,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         public void BeginCruise() {
-            _cruiseAge = 0f;
+            _cruiseSpeed.Reset();
             _routeAnchor = _hover;
             _phase = Phase.Cruise;
         }
@@ -126,6 +126,7 @@ namespace Features.ShipModule.Scripts {
             _manualHeading = manual;
         }
 
+        // The cruise speed the throttle asks for; the ship eases to it within the acceleration limit.
         public void SetTravelSpeed(float metersPerSecond) {
             _travelSpeed = Mathf.Max(0f, metersPerSecond);
         }
@@ -202,15 +203,14 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void AdvanceRoute(float dt) {
-            _cruiseAge += dt;
-            float accelSeconds = _settings != null ? _settings.TravelAccelSeconds : 0f;
-            float ramp = accelSeconds <= 0.01f ? 1f : Mathf.Clamp01(_cruiseAge / accelSeconds);
+            float maxAcceleration = _settings != null ? _settings.CruiseAcceleration : 0f;
+            float speed = _cruiseSpeed.Step(_travelSpeed, maxAcceleration, dt);
             Vector3 forward = _restHeading * Vector3.forward;
             forward.y = 0f;
             if (forward.sqrMagnitude < 0.0001f)
                 return;
 
-            _routeAnchor += forward.normalized * (_travelSpeed * ramp) * dt;
+            _routeAnchor += forward.normalized * speed * dt;
         }
 
         // The knockback moves the path the ship follows, so it stays where it was pushed to; the pad it lands on stays.

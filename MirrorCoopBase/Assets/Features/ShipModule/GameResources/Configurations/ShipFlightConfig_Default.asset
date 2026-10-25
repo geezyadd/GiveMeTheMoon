@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ShipFlightConfig_Default
   m_EditorClassIdentifier: 
   _flightMode: 2
-  _travelAccelSeconds: 1.5
+  _cruiseAcceleration: 8
   _dodgeRange: 4
   _turnRate: 80
   _cruiseSpeed: 14

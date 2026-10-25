@@ -19,8 +19,10 @@ the editor is the host, a Windows development build of the game is the client. O
   a free port the test picks, not Steam), boards at the stern (`ShipDeckBoarding.PutAboveStern`), rides the loops the host flies, takes the helm after the first landing (put
   beside the seat, the seat's use command, then D held through the scripted move stick, `seated-at-helm`), steers the
   next cruise for 0.5 s and leaves in flight from the helm, is turned away in
-  flight, rejoins at the next station on the deck, dies (the dev kill command, like the debug window's "Kill me"), waits to be bought back, rides
-  one more loop and quits.
+  flight, rejoins at the next station on the deck, dies (the dev kill command, like the debug window's "Kill me"), waits to be bought back, on the
+  host's `push-throttle` command launches the last loop by pushing the throttle handle (`Tests.Shared.ShipThrottleHandling`:
+  behind the handle, the real aim, E held, the mouse forward until takeoff at Full, release; reports `throttle-pushed`),
+  rides that loop and quits.
 - **No Steam identity.** Both processes run on one Steam account, so `CoopSessionActions.PrepareDirect` sets
   `ConnectionAuthenticator.UsesSteamIdentity = false` (editor / development builds only): they authenticate as
   `CoopHost` / `CoopClient` with no Steam id (a `client:` player key), as without Steam, instead of the persona name.
@@ -38,7 +40,10 @@ the editor is the host, a Windows development build of the game is the client. O
   the host checks the seat held by the client's key on the server, the client's rider seated, its own helm station
   with a remote pilot and the client's body at the sit point; in the next cruise the client still steers on its peer
   and the ship turned right; after the client left in flight the helm and its station are free (the host faces the
-  ship to the destination again), and the rejoined client is not seated and the helm is free.
+  ship to the destination again), and the rejoined client is not seated and the helm is free. For the last loop the host
+  sees the throttle held by the client's key on the server, the takeoff, the throttle at Full where the client left it
+  (the client reports its own synced value too, `ThrottlePosition`), no holder after the release, and the ship flying at
+  least 5 m/s in that cruise.
 - The test always kills the client process (also on failure or timeout). A passed run deletes its folder
   `Builds/CoopRuns/<time>/`; a failed one keeps the client's log and the exchange files there, and the failure message
   ends with the tail of the client's log.

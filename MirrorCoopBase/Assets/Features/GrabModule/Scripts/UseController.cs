@@ -1,4 +1,5 @@
 using System;
+using Features.GrabModule.Scripts.Held;
 using Features.GrabModule.Scripts.Hold;
 using Mirror;
 using UnityEngine;
@@ -6,7 +7,8 @@ using Zenject;
 
 namespace Features.GrabModule.Scripts {
     // Server side of using an interactable: checks reach and that the use is still allowed, then performs it.
-    // A hold target is used only after the server has seen the button held for its whole hold time.
+    // A hold target is used only after the server has seen the button held for its whole hold time. A held control
+    // (IHeldControl) is held while the button is down and lets go when the player leaves reach or may no longer use it.
     public sealed class UseController : NetworkBehaviour {
         [SerializeField] private GrabController _grab;
 
@@ -15,6 +17,8 @@ namespace Features.GrabModule.Scripts {
         private InteractionReach _reach;
         private InteractableBase _serverHoldTarget;
         private InteractableBase _requestedHoldTarget;
+        private InteractableBase _serverHeldControlTarget;
+        private InteractableBase _requestedHeldControl;
 
         [SyncVar(hook = nameof(OnHoldProgressSynced))]
         private float _holdProgress;
@@ -28,12 +32,17 @@ namespace Features.GrabModule.Scripts {
         private void InjectDependencies(InteractionReach reach) =>
             _reach = reach;
 
-        public override void OnStopServer() =>
+        public override void OnStopServer() {
             ServerEndHold();
+            ServerLetGoHeldControl();
+        }
 
         private void Update() {
-            if (isServer)
-                ServerAdvanceHold(Time.deltaTime);
+            if (isServer == false)
+                return;
+
+            ServerAdvanceHold(Time.deltaTime);
+            ServerCheckHeldControl();
         }
 
         public bool CanUse(InteractableBase target) =>
@@ -42,6 +51,12 @@ namespace Features.GrabModule.Scripts {
         public void RequestUse(InteractableBase target) {
             if (CanUse(target) == false)
                 return;
+
+            if (target is IHeldControl) {
+                _requestedHeldControl = target;
+                CmdTakeHeldControl(target);
+                return;
+            }
 
             if (target.TryGetHoldSeconds(_grab, out _)) {
                 _requestedHoldTarget = target;
@@ -58,6 +73,19 @@ namespace Features.GrabModule.Scripts {
 
             _requestedHoldTarget = null;
             CmdEndHold();
+        }
+
+        public void RequestLetGoHeldControl() {
+            if (_requestedHeldControl == null)
+                return;
+
+            _requestedHeldControl = null;
+            CmdLetGoHeldControl();
+        }
+
+        public void SendHeldControlPosition(float position) {
+            if (_requestedHeldControl != null)
+                CmdMoveHeldControl(position);
         }
 
         private void ServerAdvanceHold(float deltaTime) {
@@ -81,6 +109,23 @@ namespace Features.GrabModule.Scripts {
                 return new HoldUseCheck(false, false, 0);
 
             return new HoldUseCheck(target.CanUse(netIdentity, _grab), IsInReach(target), ReadHeldItemNetId());
+        }
+
+        // The control can be destroyed, given away or out of reach under a running hold: any of these lets it go.
+        private void ServerCheckHeldControl() {
+            InteractableBase target = _serverHeldControlTarget;
+            if (ReferenceEquals(target, null))
+                return;
+
+            if (target == null || target.CanUse(netIdentity, _grab) == false || IsInReach(target) == false)
+                ServerLetGoHeldControl();
+        }
+
+        private void ServerLetGoHeldControl() {
+            InteractableBase target = _serverHeldControlTarget;
+            _serverHeldControlTarget = null;
+            if (target != null && target is IHeldControl control)
+                control.ServerLetGo(netIdentity);
         }
 
         private void ServerEndHold() {
@@ -122,6 +167,35 @@ namespace Features.GrabModule.Scripts {
         [Command]
         private void CmdEndHold() =>
             ServerEndHold();
+
+        [Command]
+        private void CmdTakeHeldControl(InteractableBase target) {
+            if (target == null || IsInReach(target) == false || target.CanUse(netIdentity, _grab) == false)
+                return;
+
+            if (target is not IHeldControl control)
+                return;
+
+            if (_serverHeldControlTarget != target)
+                ServerLetGoHeldControl();
+
+            if (control.ServerTryTakeHold(netIdentity))
+                _serverHeldControlTarget = target;
+        }
+
+        [Command]
+        private void CmdLetGoHeldControl() =>
+            ServerLetGoHeldControl();
+
+        [Command]
+        private void CmdMoveHeldControl(float position) {
+            InteractableBase target = _serverHeldControlTarget;
+            if (target == null || IsInReach(target) == false)
+                return;
+
+            if (target is IHeldControl control)
+                control.ServerReceivePosition(netIdentity, position);
+        }
 
         private void OnHoldProgressSynced(float previous, float current) =>
             OnHoldProgressChanged?.Invoke();

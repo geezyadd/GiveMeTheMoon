@@ -3,7 +3,7 @@
 Hull, flight, slots, seats, riders, stats and the run. Read the [root AGENTS.md](../../../../AGENTS.md) first (game, rules, module map). Change this module's description here, not in the root file.
 
 ## Assembly
-`Features.ShipModule` (layer 4; references: Camera, Grab, CharacterMovable, FloatingController, GameFlow, Stats, Connection, NetworkModel, WeaponModule.Contracts, DebugModule.Contracts, QuickOutline, TextMeshPro): the ship core: hull, flight, slots, seats, riders, stats, the run; what the feature modules of layer 5 and the ship core need from each other is in `ShipModule/Scripts/Contracts/`: `IShipModuleCondition`, `IShipBreachCondition`, `IShipLandingRepair`, `IShipRunStartListener`, `IShipServerImpactEvents` + `ShipRockImpact` / `ShipRockImpactKind`, the server writers `IShipConditionWriter` (the synced condition, core adapter `ShipConditionWriter` over the bridge) and `IShipModuleWorkingState` (suspend / resume a socket's modifiers, adapter `ShipModuleWorkingState`), and the registry of enabled components `IComponentRegistry<T>` / `IReadOnlyComponentRegistry<T>` (one generic `ComponentRegistry<T>`, bound once per type by the module that owns the component: deck spawn points, hull damage points, tool racks, impact syncs; a scene component adds itself in `OnEnable`); the hull volume (`ShipHullVolume`, `ShipHullBox`) is in `Hull/` and the knockback the flight owns (`ShipKnockback`, `IShipKnockback`) in the core; the core references none of the ship feature modules.
+`Features.ShipModule` (layer 4; references: Camera, CameraModule.Contracts (the throttle's detent shake), Grab, CharacterMovable, FloatingController, GameFlow, Stats, Connection, NetworkModel, WeaponModule.Contracts, DebugModule.Contracts, QuickOutline, TextMeshPro): the ship core: hull, flight, slots, seats, riders, stats, the run; what the feature modules of layer 5 and the ship core need from each other is in `ShipModule/Scripts/Contracts/`: `IShipModuleCondition`, `IShipBreachCondition`, `IShipLandingRepair`, `IShipRunStartListener`, `IShipServerImpactEvents` + `ShipRockImpact` / `ShipRockImpactKind`, the server writers `IShipConditionWriter` (the synced condition, core adapter `ShipConditionWriter` over the bridge) and `IShipModuleWorkingState` (suspend / resume a socket's modifiers, adapter `ShipModuleWorkingState`), and the registry of enabled components `IComponentRegistry<T>` / `IReadOnlyComponentRegistry<T>` (one generic `ComponentRegistry<T>`, bound once per type by the module that owns the component: deck spawn points, hull damage points, tool racks, impact syncs; a scene component adds itself in `OnEnable`); the hull volume (`ShipHullVolume`, `ShipHullBox`) is in `Hull/` and the knockback the flight owns (`ShipKnockback`, `IShipKnockback`) in the core; the core references none of the ship feature modules.
 
 The ship's assemblies (an arrow = references; split on 2026-10-25 so features do not meet in one installer, asmdef and
 folder):
@@ -33,7 +33,11 @@ Module pages: [ShipImpactModule](../ShipImpactModule/AGENTS.md), [ShipDamageModu
   `IShipFlightLengthDebug.DebugUseFlightSeconds` (`DeckFeelHarness`);
 - on takeoff the ship moves over 9 s to a hover point (+350 m forward, +100 m up) and **keeps the heading it had at
   the station**: the autopilot does not turn to the destination (`ShipFlight`);
-- in cruise it flies along its heading at `CruiseSpeed` (14 m/s) × the `FlightSpeed` stat. The pilot in the helm
+- in cruise it flies along its heading at `CruiseSpeed` (14 m/s) × the `FlightSpeed` stat × the **throttle** (0..1,
+  see "Throttle lever" below), eased to that target with `ShipFlightSettings.CruiseAcceleration` (8 m/s²,
+  `ShipCruiseSpeed`; it also starts every cruise from 0, which replaced the old `TravelAccelSeconds` ramp: was 0 → full
+  in 1.5 s, now at most 8 m/s², about 1.75 s to 14 m/s, 3.5 s to the rocket engines' 28 m/s). Throttle 0 holds the
+  ship still in the field; a knockback still moves it. The HUD's time estimate still assumes full throttle. The pilot in the helm
   seat turns the heading and sways the ship sideways. The destination lies up to 85° off the takeoff heading, so the
   crew finds it **by the navigator's sonar**: the station is a contact on the radar module's sonar console (see
   [SonarModule](../SonarModule/AGENTS.md)); without a navigator the crew finds it by eye (there is no minimap any more);
@@ -56,6 +60,41 @@ Module pages: [ShipImpactModule](../ShipImpactModule/AGENTS.md), [ShipDamageModu
 - the old mode `HoverInPlace` is still in the code: the ship hangs at the hover point, progress is the `ShipTransit`
   timer and the next pad spawns at landing. It is chosen in the config asset or, in editor / development builds,
   through `IShipRouteDebug.DebugUseFlightMode`.
+
+## Throttle lever
+One lever on the deck (`ShipPlatform/Throttle`, ship-local (-1.75, 0.3, -1.3), behind the helm on the left: about
+5 m from the helm socket, out of the pilot's 4 m aim range; moved from beside the helm so the pilot cannot reach it,
+and `CanUse` refuses a seated player anyway) is both the launch lever
+and the throttle; it replaced `ShipLaunchLever` / `ShipLaunchInteractable` (the old lever's NetworkIdentity was kept, so
+the scene's sceneId still matches). Code in `ShipModule/Scripts/Throttle/`, numbers in `ShipThrottleConfiguration_Default`
+(Addressables `Configurations`, checked by `ShipThrottleConfigurationValidator`):
+- **Holding it** goes through the Grab module's held-control contract (`IHeldControl` / `IHeldControlDriver`, see
+  [GrabModule](../GrabModule/AGENTS.md)): aim at the grip, hold E: `ShipThrottleInteractable` (on `Throttle/HandlePivot/Handle`)
+  asks the server to take it; while E is held the mouse's forward / back look moves it and the view is locked; release
+  E and it stays. One holder by `PlayerKey` (`HolderKey` in the synced Shared `ShipThrottle` model, bridge
+  `ShipThrottleLever` on the lever's identity); a seated player cannot use it. It lets go on release, out of reach or
+  usable no more (UseController's server check), on disconnect (`UseController.OnStopServer`), on death
+  (`ShipRunRiderService.ServerReleaseRider`) and on every landing / reset (`ShipBase` → `ShipThrottleLever.ServerReset`:
+  the handle back at Stop, no holder).
+- **The handle** (`ShipThrottleHandle`, holder's peer): the mouse moves the hand target (`ThrottlePerLookUnit`), the
+  heavy handle follows with `SmoothDamp` (`HandleSmoothSeconds`, top speed `HandleMaxSpeed`), soft detents
+  Stop 0 / Slow 0.3 / Half 0.6 / Full 1 pull it in within `DetentPullRadius` (`IShipThrottleDetentRule` / `ShipThrottleDetentRule`), a click on
+  entering one (`DetentClickRadius`) plays the handle's `AudioSource` hook (no clip yet) and a light `ICameraShakeService`
+  shake (`CameraShake_ThrottleDetent`) for the holder, and a handle let go within a detent's pull radius drops into it.
+  The holder sends the position at most every `SendIntervalSeconds` (0.05 s) and the last one on release
+  (`ShipThrottleLocalHold`; a take the server does not confirm within `TakeTimeoutSeconds` ends the local hold).
+- **The server** (`ShipThrottleServerControl`) accepts a position only from the holder (key) in reach (UseController)
+  and runs it through `IShipThrottleLaunchRule` (`ShipThrottleLaunchRule`): at a station that cannot launch (`ShipBase.LaunchReadiness`: not in
+  Build, the route ended, a required module missing) the handle stays at Stop; at one that can, reaching `LaunchMark`
+  (0.15) takes off through the run service as the old lever did; in flight any 0..1. The flight reads the synced
+  position (`ShipFlightControl`).
+- **Look:** a dark base, two quadrant plates with a tick scale (minor every 0.1, detents coloured, the orange launch
+  mark) and STOP / SLOW / HALF / FULL labels, the arm and the grip (`ShipModule/GameResources/Throttle/` marks);
+  `ShipThrottleDisplay` tilts the handle from `StopAngle` to `FullAngle`: the holder's own hand at once, others the
+  synced value eased over `RemoteSmoothSeconds`. The hover tooltip (`ShipThrottleTooltipProvider` in TooltipModule)
+  names the mode and percent and, at a station, how to take off or why the ship cannot.
+- **Debug:** the debug window's Ship → "Throttle = N" (`ShipThrottleDebugSystem` / `IShipThrottleDebug`, host) moves it
+  as a push would; the loop tests launch through it.
 
 ## Riding the ship
 **Riding the ship.** In flight a player on the deck is not moved by physics: `ShipRider` binds it to the ship
@@ -144,4 +183,9 @@ for a confined deck and walk the player off the narrow nose of the deck, which d
 ## Tests
 - `Features.ShipModule.Editor.Tests`
 - EditMode guard: `ShipSocketIdTests` (every ship socket has a unique id).
+- The throttle's `ShipThrottleLaunchRuleTests` (a station that cannot launch keeps Stop, the launch mark takes off, any
+  share in flight without a launch), `ShipThrottleHandleTests` (inertia and top speed, soft detents, one click per
+  detent, a max position at Stop, the drop into a detent on release, mode names), `ShipThrottleLocalHoldTests` (send
+  rate and the last position on release, lost to another holder, to the server's let go, to an unconfirmed take) and
+  `ShipCruiseSpeedTests` (the acceleration limit down to 0, no limit, the ship standing still at throttle 0).
 - The helm's and the seats' `HelmSteerTests` (the host pilot's stick, a client pilot's sent steer and its send cadence, no steer left from a pilot who stood up) and `ShipSeatRuleTests` (one occupant by key, only the key holds the seat, a rejoined player's key, a freed seat equals a never-seated one).

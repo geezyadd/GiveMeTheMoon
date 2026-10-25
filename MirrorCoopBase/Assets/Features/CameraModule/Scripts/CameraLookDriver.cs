@@ -11,6 +11,7 @@ namespace Features.CameraModule.Scripts {
         private readonly GameCameraModel _model;
         private readonly CameraCatalog _catalog;
         private readonly CursorModel _cursorModel;
+        private readonly CameraLookLockModel _cameraLookLockModel;
 
         public static bool DebugPitchOverride;
         public static float DebugPitch;
@@ -24,11 +25,17 @@ namespace Features.CameraModule.Scripts {
         private bool _cursorLocked;
         private bool _cursorWantedLocked = true;
 
-        public CameraLookDriver(IInputService input, GameCameraModel model, CameraCatalog catalog, CursorModel cursorModel) {
+        public CameraLookDriver(
+            IInputService input,
+            GameCameraModel model,
+            CameraCatalog catalog,
+            CursorModel cursorModel,
+            CameraLookLockModel cameraLookLockModel) {
             _input = input;
             _model = model;
             _catalog = catalog;
             _cursorModel = cursorModel;
+            _cameraLookLockModel = cameraLookLockModel;
         }
 
         public void Initialize() {
@@ -89,7 +96,7 @@ namespace Features.CameraModule.Scripts {
                 return;
             }
 
-            Vector2 look = _pendingLook;
+            Vector2 look = _cameraLookLockModel.IsLocked ? Vector2.zero : _pendingLook;
             _pendingLook = Vector2.zero;
             if (look.sqrMagnitude > 0.000001f) {
                 float sensitivity = _catalog != null ? _catalog.LookSensitivity : 0.18f;

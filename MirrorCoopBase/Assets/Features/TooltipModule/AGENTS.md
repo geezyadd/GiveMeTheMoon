@@ -8,4 +8,4 @@ Interaction tooltips. Read the [root AGENTS.md](../../../../AGENTS.md) first (ga
 ## Key places
 | What | Where |
 |---|---|
-| Tooltips | `Assets/Features/TooltipModule/`: `InteractionTooltip` on the object, `TooltipContentService`, `Tooltip_*.asset` in `GameResources/Configurations/` |
+| Tooltips | `Assets/Features/TooltipModule/`: `InteractionTooltip` on the object, `TooltipContentService`, `Tooltip_*.asset` in `GameResources/Configurations/`; live texts through `ITooltipStateProvider`: `ShipModuleRepairTooltipProvider` (a broken module), `ShipThrottleTooltipProvider` (the throttle's mode and percent, and at a station how to take off or why not; texts in `ShipThrottleConfiguration`, title and hint in `Tooltip_Throttle`, the former `Tooltip_LaunchLever`) |

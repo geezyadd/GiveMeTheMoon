@@ -48,6 +48,7 @@ namespace Features.ShipModule.Scripts {
 
             ship.Seats.ServerStand(rider);
             ship.Riders.UnregisterRider(rider);
+            ship.Throttle.ServerLetGo(rider.Key.Id);
         }
 
         private static bool TryGetDeckSurfaceWorldY(ShipBase ship, out float worldY) {

@@ -4,7 +4,8 @@ namespace Features.ShipModule.Scripts {
     [CreateAssetMenu(fileName = "ShipFlightConfig_Default", menuName = "Game/Ship Flight Config")]
     public sealed class ShipFlightSettings : ScriptableObject {
         [SerializeField] private ShipFlightMode _flightMode = ShipFlightMode.TravelInSpace;
-        [SerializeField] private float _travelAccelSeconds = 1.5f;
+        [Tooltip("The cruise speed changes by at most this much per second when the throttle moves or the cruise starts (m/s²).")]
+        [SerializeField] private float _cruiseAcceleration = 8f;
         [SerializeField] private float _dodgeRange = 4f;
         [SerializeField] private float _turnRate = 80f;
         [SerializeField] private float _cruiseSpeed = 14f;
@@ -30,7 +31,7 @@ namespace Features.ShipModule.Scripts {
         public ShipFlightMode FlightMode =>
             _flightMode == ShipFlightMode.None ? ShipFlightMode.TravelInSpace : _flightMode;
 
-        public float TravelAccelSeconds => Mathf.Max(0f, _travelAccelSeconds);
+        public float CruiseAcceleration => Mathf.Max(0f, _cruiseAcceleration);
         public float DodgeRange => Mathf.Max(0f, _dodgeRange);
         public float TurnRate => Mathf.Max(10f, _turnRate);
         public float CruiseSpeed => Mathf.Max(0f, _cruiseSpeed);
