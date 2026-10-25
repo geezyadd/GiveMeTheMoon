@@ -1,35 +1,52 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+using System;
+using System.Collections.Generic;
+using Features.DebugModule.Contracts;
 using Mirror;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using Zenject;
+using Object = UnityEngine.Object;
 
 namespace Features.ShipModule.Scripts.Debug {
-    // Debug only, on the host: F8 puts a weapon test dummy in front of the ship (or takes it away again), so a turret
-    // has something to hit before the field rocks take weapon hits.
-    public sealed class WeaponDebugTargetSystem : ITickable, IWeaponDebugTargets {
+    // Debug only, on the host: the debug window's weapon actions put a weapon test dummy in front of the ship or take
+    // it away again, so a turret has something to hit that counts the hits.
+    public sealed class WeaponDebugTargetSystem : IInitializable, IDisposable, IWeaponDebugTargets {
+        private const string SPAWN_LABEL = "Spawn the weapon test dummy";
+        private const string SPAWN_DESCRIPTION = "Puts a swaying dummy in front of the ship that counts and flashes the hits the server accepted (a new one replaces the old one).";
+        private const string DESPAWN_LABEL = "Remove the weapon test dummy";
+        private const string DESPAWN_DESCRIPTION = "Takes the weapon test dummy away.";
+        private const string NO_TARGET_REASON = "No test dummy spawned.";
+
         private readonly IShipRunBindingModel _shipRunBindingModel;
         private readonly WeaponDebugTargetConfiguration _weaponDebugTargetConfiguration;
         private readonly WeaponDebugTargetModel _weaponDebugTargetModel;
+        private readonly IDebugActionRegistry _debugActionRegistry;
+        private readonly IShipDebugActionConditions _shipDebugActionConditions;
+        private readonly List<IDisposable> _registrations = new();
 
         public WeaponDebugTargetSystem(
             IShipRunBindingModel shipRunBindingModel,
             WeaponDebugTargetConfiguration weaponDebugTargetConfiguration,
-            WeaponDebugTargetModel weaponDebugTargetModel) {
+            WeaponDebugTargetModel weaponDebugTargetModel,
+            IDebugActionRegistry debugActionRegistry,
+            IShipDebugActionConditions shipDebugActionConditions) {
             _shipRunBindingModel = shipRunBindingModel;
             _weaponDebugTargetConfiguration = weaponDebugTargetConfiguration;
             _weaponDebugTargetModel = weaponDebugTargetModel;
+            _debugActionRegistry = debugActionRegistry;
+            _shipDebugActionConditions = shipDebugActionConditions;
         }
 
-        public void Tick() {
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard == null || NetworkServer.active == false || keyboard.f8Key.wasPressedThisFrame == false)
-                return;
+        public void Initialize() {
+            _registrations.Add(_debugActionRegistry.Register(new DebugActionDefinition(DebugSections.WEAPONS, SPAWN_LABEL, SPAWN_DESCRIPTION, _shipDebugActionConditions.ReadHostWithShipReason, SpawnTarget)));
+            _registrations.Add(_debugActionRegistry.Register(new DebugActionDefinition(DebugSections.WEAPONS, DESPAWN_LABEL, DESPAWN_DESCRIPTION, ReadDespawnUnavailableReason, DebugDespawnTarget)));
+        }
 
-            if (_weaponDebugTargetModel.Target != null)
-                DebugDespawnTarget();
-            else
-                DebugSpawnTarget();
+        public void Dispose() {
+            foreach (IDisposable registration in _registrations)
+                registration.Dispose();
+
+            _registrations.Clear();
         }
 
         public WeaponDebugTarget DebugSpawnTarget() {
@@ -52,6 +69,17 @@ namespace Features.ShipModule.Scripts.Debug {
                 NetworkServer.Destroy(target.gameObject);
 
             _weaponDebugTargetModel.ClearTarget();
+        }
+
+        private void SpawnTarget() =>
+            DebugSpawnTarget();
+
+        private string ReadDespawnUnavailableReason() {
+            string reason = _shipDebugActionConditions.ReadHostReason();
+            if (reason != null)
+                return reason;
+
+            return _weaponDebugTargetModel.Target == null ? NO_TARGET_REASON : null;
         }
     }
 }

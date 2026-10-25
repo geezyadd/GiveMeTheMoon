@@ -17,7 +17,7 @@ using Tests.Shared;
 using UnityEngine;
 
 namespace Tests.PlayMode.LoopSmoke {
-    // Target balloons in cruise on the host. The ship is put beside a balloon (the debug move the F3 / F4 keys use) and
+    // Target balloons in cruise on the host. The ship is put beside a balloon (the debug move of the debug window's rock aim) and
     // the seated host shoots it with the minigun through the station's test hook; then the ship is put before another
     // balloon and flies into it (the real hull check). Each pops once (in the synced popped list, TargetPopped once,
     // Weapon by the host with the minigun / ShipCollision), is hidden on the host, and the synced crew balance grows by

@@ -72,7 +72,7 @@ namespace Features.FlightFieldModule.Scripts {
             Container.BindInterfacesTo<FieldRockBreakViewSystem>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.Bind<IFieldRockBreakDebug>().To<FieldRockBreakDebug>().AsSingle();
-            Container.BindInterfacesTo<FieldRockBreakDebugKeySystem>().AsSingle();
+            Container.BindInterfacesTo<FieldRockBreakDebugSystem>().AsSingle();
             Container.BindInterfacesTo<FieldRockDestroyedLogSystem>().AsSingle();
 #endif
         }

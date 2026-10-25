@@ -33,6 +33,7 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipPositionSource>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.BindInterfacesTo<Debug.DeckFeelHarness>().AsSingle();
+            Container.Bind<Debug.IShipDebugActionConditions>().To<Debug.ShipDebugActionConditions>().AsSingle();
             Container.BindInterfacesTo<Debug.ShipHullDebugSystem>().AsSingle();
             Container.BindInterfacesTo<Debug.ShipRockImpactDebugSystem>().AsSingle();
             Container.BindInterfacesTo<Debug.ShipDamageDebugSystem>().AsSingle();

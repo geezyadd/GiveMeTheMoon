@@ -6,7 +6,7 @@ using UnityEngine;
 using Zenject;
 
 namespace Features.ShipModule.Scripts.Debug {
-    // A floating test dummy for weapons, spawned by the debug key in editor / development builds (WeaponDebugTargetSystem).
+    // A floating test dummy for weapons, spawned from the debug window in editor / development builds (WeaponDebugTargetSystem).
     // It keeps its place in front of the ship and sways from side to side, counts the hits the server accepted and
     // flashes on each one on every peer. Its prefab is registered with Mirror at runtime (WeaponDebugTargetPrefabSystem).
     public sealed class WeaponDebugTarget : NetworkBehaviour, IWeaponTarget, IWeaponTargetCollider {

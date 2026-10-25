@@ -21,6 +21,9 @@ namespace Features.ShopModule.Scripts.Installers {
             Container.Bind<IDeadCrewService>().To<DeadCrewService>().AsSingle();
             Container.Bind<IReviveShopSystem>().To<ReviveShopSystem>().AsSingle();
             Container.BindInterfacesTo<ShopWindowSystem>().AsSingle();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Container.BindInterfacesTo<ShopDebugOpenSystem>().AsSingle();
+#endif
             Container.BindInterfacesTo<ShopKioskRangeSystem>().AsSingle();
             Container.BindInterfacesTo<DeadCrewSystem>().AsSingle();
             Container.BindInterfacesTo<FieldTargetRewardSystem>().AsSingle();

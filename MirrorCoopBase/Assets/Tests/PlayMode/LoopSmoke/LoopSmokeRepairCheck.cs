@@ -15,7 +15,7 @@ using Tests.Shared;
 using UnityEngine;
 
 namespace Tests.PlayMode.LoopSmoke {
-    // The mechanic's job through the real hand: the debug entry F5 uses breaks an engine at the start station, the
+    // The mechanic's job through the real hand: the debug window's break entry breaks an engine at the start station, the
     // synced speed and condition show it; the wrench from the deck rack repairs it by holding interact on the socket
     // (an early release resets the hold); the hammer patches a breach and gives hull HP back. In the first cruise a
     // module breaks and a breach opens again, and the landing repairs both.
@@ -52,7 +52,7 @@ namespace Tests.PlayMode.LoopSmoke {
             }
         }
 
-        // A rock hit of the cruise may already have broken something, so the random entry F5 uses is taken.
+        // A rock hit of the cruise may already have broken something, so the random entry of the debug window is taken.
         public IEnumerator BreakInCruiseCoroutine() {
             SessionQueries.Resolve<IShipDamageDebug>().DebugBreakRandom();
             yield return null;

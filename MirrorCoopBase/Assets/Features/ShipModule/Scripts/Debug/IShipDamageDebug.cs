@@ -4,7 +4,7 @@ namespace Features.ShipModule.Scripts.Debug {
     public interface IShipDamageDebug {
         public bool DebugBreakModule(string socketId);
         public bool DebugOpenBreach(string pointId);
-        // A random working breakable module and a random free damage point, as F5 does.
+        // A random working breakable module and a random free damage point, as the debug window's break does.
         public void DebugBreakRandom();
     }
 }
