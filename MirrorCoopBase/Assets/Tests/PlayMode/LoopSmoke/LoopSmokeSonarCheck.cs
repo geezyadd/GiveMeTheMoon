@@ -39,6 +39,8 @@ namespace Tests.PlayMode.LoopSmoke {
         public LoopSmokeSonarCheck(LoopSmokeSession session) =>
             _session = session;
 
+        public LoopSmokeSonarCheck(LoopSmokeContext context) : this(context.Session) { }
+
         // A run that did not reinstall the radar by hand puts it in at the station.
         public void InstallRadarAtStation() {
             foreach (ShipSocket socket in _session.Ship.Sockets) {
@@ -47,6 +49,7 @@ namespace Tests.PlayMode.LoopSmoke {
             }
         }
 
+        [LoopSmokeStep(LoopSmokePhase.BeforeTakeoff, 1, 1, 30)]
         public IEnumerator StandByConsoleCoroutine() {
             SonarConsoleInteractable console = FindConsole();
             Assert.IsFalse(console.IsConsoleActive, "Sonar: the console is active at the station, where E takes the radar off.");
@@ -54,6 +57,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return new WaitForSeconds(BOARD_SETTLE_SECONDS);
         }
 
+        [LoopSmokeStep(LoopSmokePhase.InCruise, 1, 1, 10)]
         public IEnumerator UseConsoleInCruiseCoroutine() {
             yield return MarkStationInCruiseCoroutine();
             IReadOnlySonarConsoleModel synced = SessionQueries.Resolve<IReadOnlySonarConsoleModel>();

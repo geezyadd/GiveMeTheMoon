@@ -24,6 +24,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float MIN_PUSH_BACK_METERS = 0.5f;
         private const float BELOW_DECK_TOLERANCE = 0.25f;
 
+        private readonly LoopSmokeContext _context;
         private readonly IShipRockImpactDebug _shipRockImpactDebug;
         private readonly IShipImpactEvents _shipImpactEvents;
         private readonly IFieldRockEvents _fieldRockEvents;
@@ -33,7 +34,8 @@ namespace Tests.PlayMode.LoopSmoke {
         private readonly List<ShipRockImpact> _impacts = new List<ShipRockImpact>();
         private readonly List<FieldRockDestroyed> _destroyed = new List<FieldRockDestroyed>();
 
-        public LoopSmokeRockImpactCheck() {
+        public LoopSmokeRockImpactCheck(LoopSmokeContext context) {
+            _context = context;
             _shipRockImpactDebug = SessionQueries.Resolve<IShipRockImpactDebug>();
             _shipImpactEvents = SessionQueries.Resolve<IShipImpactEvents>();
             _fieldRockEvents = SessionQueries.Resolve<IFieldRockEvents>();
@@ -42,7 +44,9 @@ namespace Tests.PlayMode.LoopSmoke {
             _shipStatsModel = SessionQueries.Resolve<IReadOnlyShipStatsModel>();
         }
 
-        public IEnumerator HitSmallAndLargeRockInCruiseCoroutine(ShipBase ship, LoopSmokeFlight flight) {
+        [LoopSmokeStep(LoopSmokePhase.InCruise, 1, 1, 40)]
+        public IEnumerator HitSmallAndLargeRockInCruiseCoroutine() {
+            ShipBase ship = _context.Session.Ship;
             Vector3 start = ship.transform.position;
             _shipImpactEvents.OnImpact += _impacts.Add;
             _fieldRockEvents.RockDestroyed += _destroyed.Add;
@@ -58,7 +62,7 @@ namespace Tests.PlayMode.LoopSmoke {
             _shipRockImpactDebug.DebugMoveShipTo(start);
             // The flight applies the move in its next step; the pilot faces the destination from there.
             yield return null;
-            flight.FaceDestination();
+            _context.Flight.FaceDestination();
         }
 
         private IEnumerator HitSmallRockCoroutine() {

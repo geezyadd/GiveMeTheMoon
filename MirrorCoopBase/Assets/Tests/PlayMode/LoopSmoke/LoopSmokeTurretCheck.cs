@@ -13,8 +13,8 @@ using UnityEngine;
 namespace Tests.PlayMode.LoopSmoke {
     // The minigun turret: installed at a station, then in cruise the host sits down through the seat's use command,
     // aims the turret at the debug dummy (the station's test hook stands in for the mouse) and holds the trigger
-    // until the server has accepted hits on the dummy, then shoots a field rock until it breaks
-    // (LoopSmokeRockShootCheck) and a target balloon until it pops (LoopSmokeTargetCheck), and stands up again.
+    // until the server has accepted hits on the dummy. The seated host then shoots a field rock
+    // (LoopSmokeRockShootCheck) and a target balloon (LoopSmokeTargetCheck), and stands up again.
     public sealed class LoopSmokeTurretCheck {
         private const string MINIGUN_MODULE_ID = "minigun";
         private const string TURRET_SOCKET_ID = "turret-front";
@@ -28,17 +28,23 @@ namespace Tests.PlayMode.LoopSmoke {
         private static readonly Vector3 _gunnerSpot = new Vector3(-2.6f, 0.3f, 1.3f);
 
         private readonly LoopSmokeSession _session;
-        private readonly LoopSmokeTargetCheck _targetCheck;
 
         private ShipSocket Socket => FindSocket(_session.Ship);
         private static NetworkIdentity Player => SessionQueries.LocalPlayer;
 
-        public LoopSmokeTurretCheck(LoopSmokeSession session, LoopSmokeTargetCheck targetCheck) {
-            _session = session;
-            _targetCheck = targetCheck;
+        public LoopSmokeTurretCheck(LoopSmokeContext context) =>
+            _session = context.Session;
+
+        // The turret station the host sits at, for the checks that shoot from it between sitting down and standing up.
+        public static ShipTurretStation FindSeatedStation(ShipBase ship) {
+            ShipTurretStation station = FindSocket(ship).GetComponentInChildren<ShipTurretStation>();
+            Assert.IsNotNull(station, "Turret: the ship has no minigun station.");
+            Assert.IsTrue(station.IsOccupiedByLocalPlayer, "Turret: the host does not sit at the minigun.");
+            return station;
         }
 
         // The minigun goes in at the station and the host walks over to it before the launch.
+        [LoopSmokeStep(LoopSmokePhase.BeforeTakeoff, 2, 2, 10)]
         public IEnumerator InstallMinigunAndStandByItCoroutine() {
             Assert.IsTrue(Socket.ServerTryInstall(MINIGUN_MODULE_ID), "Turret: the minigun was not installed at the station.");
             Assert.IsNotNull(Socket.GetComponentInChildren<ShipTurretStation>(), "Turret: the installed minigun shows no turret station.");
@@ -48,15 +54,14 @@ namespace Tests.PlayMode.LoopSmoke {
             AssertPlayerStandsOnDeck(_session.Ship);
         }
 
-        public IEnumerator FireAtDebugTargetInCruiseCoroutine() {
+        [LoopSmokeStep(LoopSmokePhase.InCruise, 2, 2, 10)]
+        public IEnumerator SitAndFireAtDebugTargetCoroutine() {
             IWeaponDebugTargets targets = SessionQueries.Resolve<IWeaponDebugTargets>();
             WeaponDebugTarget target = targets.DebugSpawnTarget();
             Assert.IsNotNull(target, "Turret: the debug target did not spawn in cruise.");
             ShipTurretStation station = Socket.GetComponentInChildren<ShipTurretStation>();
-            ShipSitInteractable seat = Socket.GetComponentInChildren<ShipSitInteractable>();
-            UseController use = Player.GetComponent<UseController>();
 
-            use.RequestUse(seat);
+            Player.GetComponent<UseController>().RequestUse(Socket.GetComponentInChildren<ShipSitInteractable>());
             yield return _session.WaitForCoroutine(() => station.IsOccupiedByLocalPlayer, SEAT_TIMEOUT_SECONDS, "Turret: the host seated at the minigun");
             Assert.IsTrue(Socket.IsHeldBy(Player.GetComponent<ShipRider>().Key), "Turret: the socket does not hold the host's key as its occupant.");
 
@@ -64,10 +69,13 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return _session.WaitForCoroutine(() => AimAndCountHits(station, target), FIRE_TIMEOUT_SECONDS, $"Turret: {MIN_ACCEPTED_HITS} hits the server accepted on the debug target");
             station.DebugHoldTrigger(false);
             targets.DebugDespawnTarget();
-            yield return new LoopSmokeRockShootCheck(_session).ShootNearestSmallRockCoroutine(station);
-            yield return _targetCheck.ShootBalloonCoroutine(station);
+        }
 
-            use.RequestUse(seat);
+        // After the rock and the balloon shot.
+        [LoopSmokeStep(LoopSmokePhase.InCruise, 2, 2, 40)]
+        public IEnumerator StandUpCoroutine() {
+            ShipTurretStation station = FindSeatedStation(_session.Ship);
+            Player.GetComponent<UseController>().RequestUse(Socket.GetComponentInChildren<ShipSitInteractable>());
             yield return _session.WaitForCoroutine(() => Socket.HasOccupant == false && station.IsOccupiedByLocalPlayer == false, SEAT_TIMEOUT_SECONDS, "Turret: the host stood up from the minigun");
             Assert.IsTrue(Player.GetComponent<ShipRider>().IsRiding, "Turret: the host does not ride the ship after standing up in cruise.");
         }

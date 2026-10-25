@@ -23,6 +23,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private const string SCREENSHOT_FOLDER = "Temp/LoopSmoke";
         private const string REJECT_SCREENSHOT = "join-rejected-in-flight.png";
 
+        [LoopSmokeStep(LoopSmokePhase.InMenu, 10)]
         public IEnumerator JoinRejectedInFlightCoroutine() {
             TelepathyTransport telepathy = Object.FindAnyObjectByType<TelepathyTransport>(FindObjectsInactive.Include);
             ushort shippedPort = telepathy.port;

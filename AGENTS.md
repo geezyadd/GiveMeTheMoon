@@ -398,7 +398,8 @@ point; then the host dies and the bot buys them back). The bot joins through the
 (`LoopSmokeBot`, `LoopSmokeTransportInput`). `LoopSmokeRejoinCheck`: a new player joins at that station on a deck spawn
 point, dies, leaves in flight, a join in flight is turned away with `InFlight`, and after landing it comes back dead, in
 the Crew list, under its new name. After the second landing everyone dies, the crew returns to
-the lobby and the test checks that no object of the first run is left. Then it starts a second run, flies five loops (after the first one it checks the station's crew terminal and puts the
+the lobby and `LoopSmokeRunLeakCheck` checks that no object of the first run is left (and that run 2 starts with the same
+station items and spawns the same pad and drops on its first landing). Then it starts a second run, flies five loops (after the first one it checks the station's crew terminal and puts the
 player back on the deck)
 in a row and at the last station buys 5 items at the kiosk through the real aim and the window (`LoopSmokeShopCheck`: delivery
 point, window closes when walking away, the bought items come to rest within a timeout, a far purchase is refused), destroys the hull
@@ -411,7 +412,8 @@ lobby and one per pad, inactive with "Steam is not running." under the real aim 
 flight runs `LoopSmokeFieldCheck`: in cruise a new
 flight field stands with an active local object for every local placement within the build radius of the camera (none beyond the release radius) and one Mirror object per networked placement;
 after landing nothing of it is left (what a player joining at that station gets); in run 2 loop 3 a forced world shift
-in cruise keeps the field in place against the ship; the field pool never grows past what the fields needed. Before
+in cruise keeps the field in place against the ship (`LoopSmokeFieldRunCheck`, which also asserts at the last station of
+run 2 that a networked placement was checked); the field pool never grows past what the fields needed. Before
 the first launch `LoopSmokeSonarCheck` stands the host behind the reinstalled radar (its console is inactive at the
 station); first in the cruise of run 1 loop 1 it takes the console through its use command (what E sends): the
 `SonarWindow` opens, the synced model names a navigator and walking / aim are blocked; the window's Ping button
@@ -434,7 +436,8 @@ nothing, and back in the lobby the preset is gone. In run 2 the minigun goes int
 host stands by it; in the cruise of loop 2 `LoopSmokeTurretCheck` spawns the debug dummy, sits the host at the turret
 through the seat's use command, aims it with the station's test hook (`ShipTurretStation.DebugAimAt` /
 `DebugHoldTrigger`, editor / development only) until the server has accepted 5 hits on the dummy, then
-`LoopSmokeRockShootCheck` aims at the nearest small rock in clear sight and fires until it breaks (in the broken list,
+`LoopSmokeRockShootCheck` brings its own target (the ship is put beside the nearest small breakable rocks in turn
+until one is in reach and clear sight of the turret, and put back afterwards) and fires until it breaks (in the broken list,
 hidden on the host, `RockDestroyed` once with cause `Weapon`, the host's key and `minigun`), then `LoopSmokeTargetCheck`
 puts the ship beside the nearest target balloon in clear sight and fires until it pops, and stands up again; then the
 ship is put before another balloon and flies into it (the real hull check). Each balloon is in the synced popped list,
@@ -446,6 +449,26 @@ The test timeout is 180 s (a run takes about 150 s). The shared steps live in he
 landing, messages start with "Loop N:"; at the cruise start its pilot faces the ship to the destination once through
 `ShipBase.FlightControlDebug`, because the autopilot keeps the takeoff heading), `LoopSmokeShipRunConfigOverride` and `LoopSmokeFieldCatalogOverride` (the
 config copies) and `LoopSmokeSpawnCounts`.
+
+**Adding a check to the loop test.** `LoopSmokeTest.cs` only plays the runs (its `_runs` list: flights per run, the
+test's rocket engines or a preset's modules, how the run ends) and does not change per feature. The checks register
+themselves: `LoopSmokeCheckRegistry` reads every method with `[LoopSmokeStep(phase, run, flight, order)]` in the
+assembly and runs it at its slot. A new check is a new class in `Assets/Tests/PlayMode/LoopSmoke/` with one attribute
+line per step, nothing else:
+- Phases (`LoopSmokePhase`): `InLobby` (before the run's Start), `BeforeTakeoff` (at the station before the flight's
+  launch, after the engines and the boarding), `InCruise`, `AfterLanding` (after the flight's landing checks),
+  `AfterRun` (back in the lobby) take a run from 1; the flight phases also take the flight of the run from 1 (the n-th
+  flight: `LoopIndex` for runs 1 and 2, loop 10 is flight 1 of the Late run 3); `InMenu` (after Leave) takes neither.
+- `order`: the steps of one slot run one after the other, lower first; two steps with the same order in a slot fail
+  the test at its start, so pick a free number (the existing steps use multiples of 10; the first cruise of run 1:
+  sonar 10, hull 20, rock break 30, rock impacts 40, repair 50; the turret cruise of run 2: dummy 10, rock shot 20,
+  balloon shot 30, stand up 40, fly-in 50).
+- A step takes no arguments and returns `IEnumerator` or `void`. Its class has a public constructor taking
+  `LoopSmokeContext` (session, flight helper, field check, Steam lobby spy) or an empty one; it is made at its first
+  step and kept for the whole test, so its steps share state (resolve scene services at a step if they cross runs).
+- At the end the test fails if a registered step never ran (a slot the runs never reach).
+Why attributes and not one list file: a list is the same shared file every feature edits; a check that registers in
+its own file merges without conflicts. To change the scenario itself (one more run or flight) edit `_runs`.
 
 The ride test `ShipRideTest` (`Assets/Tests/PlayMode/ShipRide/`, about 75 s, `-Filter ShipRide`) flies six loops on a host on the
 same fast timings, one per spot of the deck found from its geometry (`ShipRideDeckSpots`): the nose, the stern, both

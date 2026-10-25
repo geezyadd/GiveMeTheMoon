@@ -34,6 +34,7 @@ namespace Tests.PlayMode.LoopSmoke {
             _fieldDebrisSceneBuilder = SessionQueries.Resolve<IFieldDebrisSceneBuilder>();
         }
 
+        [LoopSmokeStep(LoopSmokePhase.InCruise, 1, 1, 30)]
         public IEnumerator BreakNearestRockInCruiseCoroutine() {
             _fieldRockEvents.RockDestroyed += _destroyed.Add;
             FieldRockBreakResult result = _fieldRockBreakDebug.DebugBreakNearestRock(out FieldRockId id);
@@ -51,6 +52,7 @@ namespace Tests.PlayMode.LoopSmoke {
             Debug.Log($"[LoopSmoke] broke rock {id}: {_destroyed[0].SourceId}, {_destroyed[0].Size}, {_destroyed[0].Diameter:0.0} m");
         }
 
+        [LoopSmokeStep(LoopSmokePhase.AfterLanding, 1, 1, 10)]
         public void AssertBrokenListClearedAfterLanding() =>
             Assert.AreEqual(0, _liveFieldModel.BrokenRocks.Count, "The broken rocks of the field are still listed after landing.");
 

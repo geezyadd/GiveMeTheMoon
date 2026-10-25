@@ -20,6 +20,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float TOLERANCE = 0.01f;
         private const string HIT_LABEL = "Hit the hull";
 
+        [LoopSmokeStep(LoopSmokePhase.InCruise, 1, 1, 20)]
         public IEnumerator HitInCruiseCoroutine() {
             IReadOnlyShipStatsModel stats = SessionQueries.Resolve<IReadOnlyShipStatsModel>();
             Assert.Greater(stats.HullMax, 0f, "Hull: the synced hull max is 0 in cruise.");
@@ -32,9 +33,10 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.AreEqual(expected, stats.Hull, TOLERANCE, "Hull: the synced hull after the hit is not the armor-reduced damage.");
         }
 
-        public void AssertRepairedAfterLanding(int loop) {
+        [LoopSmokeStep(LoopSmokePhase.AfterLanding, 1, 1, 20)]
+        public void AssertRepairedAfterLanding() {
             IReadOnlyShipStatsModel stats = SessionQueries.Resolve<IReadOnlyShipStatsModel>();
-            Assert.AreEqual(stats.HullMax, stats.Hull, TOLERANCE, $"Loop {loop}: the hull was not repaired on landing.");
+            Assert.AreEqual(stats.HullMax, stats.Hull, TOLERANCE, "Hull: the hull was not repaired on landing.");
         }
 
         private static IEnumerator HitThroughDebugWindowCoroutine() {

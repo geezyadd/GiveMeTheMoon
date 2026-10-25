@@ -34,14 +34,18 @@ namespace Tests.PlayMode.LoopSmoke {
         private readonly IReadOnlyCrewRosterModel _crewRosterModel = SessionQueries.Resolve<IReadOnlyCrewRosterModel>();
         private readonly ICrewInviteStatusService _crewInviteStatusService = SessionQueries.Resolve<ICrewInviteStatusService>();
         private readonly int _playerSlots = SessionQueries.Resolve<ConnectionConfig>().MaxConnections;
-        private readonly LoopSmokeSteamLobbySpy _steamLobby;
+        private readonly LoopSmokeContext _context;
 
-        public LoopSmokeCrewInviteCheck(LoopSmokeSteamLobbySpy steamLobby) =>
-            _steamLobby = steamLobby;
+        private LoopSmokeSteamLobbySpy SteamLobby =>
+            _context.SteamLobby;
+
+        public LoopSmokeCrewInviteCheck(LoopSmokeContext context) =>
+            _context = context;
 
         private static NetworkIdentity Player => NetworkClient.localPlayer;
         private static LocalPlayerInteraction Interaction => Player.GetComponent<LocalPlayerInteraction>();
 
+        [LoopSmokeStep(LoopSmokePhase.InLobby, 1, 10)]
         public IEnumerator CheckInLobbyCoroutine() {
             CrewInviteInteractable[] terminals = Object.FindObjectsByType<CrewInviteInteractable>(FindObjectsSortMode.None);
             Assert.AreEqual(1, terminals.Length, "The lobby does not have exactly one crew invite terminal.");
@@ -54,19 +58,24 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return FillCrewAndLetOneLeaveCoroutine();
         }
 
+        [LoopSmokeStep(LoopSmokePhase.InCruise, 2, 1, 10)]
         public IEnumerator CheckClosedInFlightCoroutine() {
             yield return LoopSmokeShopCheck.WaitForCoroutine(() => _crewRosterModel.IsJoinWindowOpen == false, "the crew roster closed in flight");
             Assert.AreEqual(CrewInviteStatus.NotAtStation, _crewInviteStatusService.EvaluateForRemotePlayer(), "A player can invite in flight.");
             AssertOneTerminalPerPad();
         }
 
-        public IEnumerator CheckAtStationCoroutine(ShipLandingPad pad) {
+        // Then the player goes back on the deck from the pad's terminal.
+        [LoopSmokeStep(LoopSmokePhase.AfterLanding, 2, 1, 10)]
+        public IEnumerator CheckAtStationCoroutine() {
             AssertOneTerminalPerPad();
+            ShipLandingPad pad = _context.Flight.FindPadUnderShip();
             CrewInviteInteractable terminal = pad.GetComponentInChildren<CrewInviteInteractable>();
             Assert.IsNotNull(terminal, $"The pad {pad.name} has no crew invite terminal.");
             yield return LoopSmokeShopCheck.WaitForCoroutine(() => _crewRosterModel.IsJoinWindowOpen, "the crew roster open at a station");
             Assert.AreEqual(CrewInviteStatus.Available, _crewInviteStatusService.EvaluateForRemotePlayer(), "A player with Steam cannot invite at a station.");
             yield return AssertInactiveWithoutSteamCoroutine(terminal);
+            yield return _context.Flight.BoardPlayerCoroutine();
         }
 
         public static void AssertOneTerminalPerPad() =>
@@ -76,9 +85,9 @@ namespace Tests.PlayMode.LoopSmoke {
                 "Crew invite terminals do not match the pads one to one.");
 
         private IEnumerator AssertInactiveWithoutSteamCoroutine(CrewInviteInteractable terminal) {
-            Assert.IsTrue(_steamLobby.IsBound, "The Steam lobby spy did not replace the scene binding.");
+            Assert.IsTrue(SteamLobby.IsBound, "The Steam lobby spy did not replace the scene binding.");
             Assert.AreEqual(CrewInviteStatus.NoSteam, _crewInviteStatusService.EvaluateForLocalPlayer(), "The test session unexpectedly has a Steam lobby.");
-            int overlayRequests = _steamLobby.InviteOverlayRequests;
+            int overlayRequests = SteamLobby.InviteOverlayRequests;
             try {
                 CameraLookDriver.DebugPitchOverride = true;
                 Vector3 front = terminal.transform.position - terminal.transform.forward * APPROACH_DISTANCE;
@@ -91,7 +100,7 @@ namespace Tests.PlayMode.LoopSmoke {
                 for (int i = 0; i < FRAMES_FOR_INTERACT_ROUND_TRIP; i++)
                     yield return null;
 
-                Assert.AreEqual(overlayRequests, _steamLobby.InviteOverlayRequests, "Interact on the inactive terminal asked for the invite overlay.");
+                Assert.AreEqual(overlayRequests, SteamLobby.InviteOverlayRequests, "Interact on the inactive terminal asked for the invite overlay.");
             } finally {
                 CameraLookDriver.DebugPitchOverride = false;
                 CameraLookDriver.DebugPitch = 0f;

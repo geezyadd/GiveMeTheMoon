@@ -33,14 +33,15 @@ namespace Tests.PlayMode.LoopSmoke {
 
         private readonly ShipBase _ship;
 
-        public LoopSmokeRepairCheck(ShipBase ship) =>
-            _ship = ship;
+        public LoopSmokeRepairCheck(LoopSmokeContext context) =>
+            _ship = context.Session.Ship;
 
         private static NetworkIdentity Player => NetworkClient.localPlayer;
         private static LocalPlayerInteraction Interaction => Player.GetComponent<LocalPlayerInteraction>();
         private static UseController Use => Player.GetComponent<UseController>();
         private static GrabController Hand => Player.GetComponent<GrabController>();
 
+        [LoopSmokeStep(LoopSmokePhase.BeforeTakeoff, 1, 1, 20)]
         public IEnumerator RepairEngineAndBreachAtStationCoroutine() {
             try {
                 CameraLookDriver.DebugPitchOverride = true;
@@ -53,6 +54,7 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         // A rock hit of the cruise may already have broken something, so the random entry of the debug window is taken.
+        [LoopSmokeStep(LoopSmokePhase.InCruise, 1, 1, 50)]
         public IEnumerator BreakInCruiseCoroutine() {
             SessionQueries.Resolve<IShipDamageDebug>().DebugBreakRandom();
             yield return null;
@@ -61,10 +63,11 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.IsNotEmpty(condition.OpenBreaches, "Repair: no breach is open in cruise.");
         }
 
-        public void AssertRepairedAfterLanding(int loop) {
+        [LoopSmokeStep(LoopSmokePhase.AfterLanding, 1, 1, 30)]
+        public void AssertRepairedAfterLanding() {
             IReadOnlyShipConditionModel condition = SessionQueries.Resolve<IReadOnlyShipConditionModel>();
-            Assert.IsEmpty(condition.BrokenSockets, $"Loop {loop}: broken modules were not repaired on landing.");
-            Assert.IsEmpty(condition.OpenBreaches, $"Loop {loop}: breaches were not repaired on landing.");
+            Assert.IsEmpty(condition.BrokenSockets, "Repair: broken modules were not repaired on landing.");
+            Assert.IsEmpty(condition.OpenBreaches, "Repair: breaches were not repaired on landing.");
         }
 
         private IEnumerator RepairEngineWithWrenchCoroutine() {
