@@ -29,7 +29,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [OneTimeSetUp]
         public void OneTimeSetUp() {
             _composition = new FlightFieldEditorCompositionFactory().Create();
-            _layout = new FieldClusterLayout(new FieldPlaneCoverLayout());
+            _layout = new FieldClusterLayout();
         }
 
         [Test]
@@ -55,8 +55,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             foreach (FieldStructureDefinition structure in GetClusterStructures()) {
                 for (int seed = FIRST_SEED; seed <= SEEDS; seed++) {
                     FieldClusterRockPose first = Lay(structure, seed)[0];
-                    float crossing = first.IsPlaneCover ? first.Scale.y * structure.ClusterRecipe.PlaneHalfExtentShare
-                        : Mathf.Min(first.Scale.x, Mathf.Min(first.Scale.y, first.Scale.z)) * MAIN_CROSSING_SHARE;
+                    float crossing = Mathf.Min(first.Scale.x, Mathf.Min(first.Scale.y, first.Scale.z)) * MAIN_CROSSING_SHARE;
 
                     Assert.Less(Mathf.Abs(first.Offset.y), crossing, $"{structure.name} seed {seed}: the first rock may miss the flight plane.");
                 }
@@ -131,22 +130,19 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 AssertSameRock(first[i], second[i], $"{structure.name} seed {seed} rock {i}");
         }
 
-        // A dense-field recipe's rocks may reach past the footprint by its spill (extra rocks by their own radius,
-        // which stays within the spill); other recipes keep every rock inside.
+        // Every rock of a recipe stays inside the footprint.
         private void AssertRocksStayInside(FieldStructureDefinition structure, int seed, float acrossLimit, float alongLimit) {
             FieldClusterRecipe recipe = structure.ClusterRecipe;
             List<FieldClusterRockPose> rocks = Lay(structure, seed);
-            float spill = recipe.HasPlaneCover ? recipe.PlaneMaxSpillMeters : 0f;
-            float highest = recipe.HasPlaneCover ? recipe.ExtraHeightMeters.y : recipe.HeightSpreadCells * CELL_SIZE;
+            float highest = recipe.HeightSpreadCells * CELL_SIZE;
             Assert.IsNotEmpty(rocks, $"{structure.name} seed {seed}: no rock.");
             foreach (FieldClusterRockPose rock in rocks) {
                 Bounds bounds = _meshBounds.Get(rock.Prefab, rock.Rotation, rock.Scale);
-                Assert.LessOrEqual(Mathf.Abs(rock.Offset.x) + bounds.extents.x + Mathf.Abs(bounds.center.x), acrossLimit + spill,
+                Assert.LessOrEqual(Mathf.Abs(rock.Offset.x) + bounds.extents.x + Mathf.Abs(bounds.center.x), acrossLimit,
                     $"{structure.name} seed {seed}: a rock reaches too far across the field.");
-                Assert.LessOrEqual(Mathf.Abs(rock.Offset.z) + bounds.extents.z + Mathf.Abs(bounds.center.z), alongLimit + spill,
+                Assert.LessOrEqual(Mathf.Abs(rock.Offset.z) + bounds.extents.z + Mathf.Abs(bounds.center.z), alongLimit,
                     $"{structure.name} seed {seed}: a rock reaches too far along the field.");
-                float heightLimit = rock.IsPlaneCover ? recipe.PlaneHeightJitterMeters : highest;
-                Assert.LessOrEqual(Mathf.Abs(rock.Offset.y), heightLimit + TOLERANCE, $"{structure.name} seed {seed}: a rock is too far from the plane.");
+                Assert.LessOrEqual(Mathf.Abs(rock.Offset.y), highest + TOLERANCE, $"{structure.name} seed {seed}: a rock is too far from the plane.");
             }
         }
 

@@ -380,15 +380,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             ""id"": ""5e1c7a2b-3d4f-4a60-9b8c-7d6e5f4a3b21"",
             ""actions"": [
                 {
-                    ""name"": ""Shop"",
-                    ""type"": ""Button"",
-                    ""id"": ""6f2d8b3c-4e5a-4b71-8c9d-8e7f6a5b4c32"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
                     ""name"": ""CloseWindow"",
                     ""type"": ""Button"",
                     ""id"": ""7a3e9c4d-5f6b-4c82-9dae-9f8a7b6c5d43"",
@@ -399,17 +390,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                 }
             ],
             ""bindings"": [
-                {
-                    ""name"": """",
-                    ""id"": ""8b4fad5e-6a7c-4d93-aebf-a09b8c7d6e54"",
-                    ""path"": ""<Keyboard>/l"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Keyboard and Mouse"",
-                    ""action"": ""Shop"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
                 {
                     ""name"": """",
                     ""id"": ""9c5abe6f-7b8d-4ea4-bfc0-b1ac9d8e7f65"",
@@ -498,7 +478,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         m_MovementMap_ToggleCursor = m_MovementMap.FindAction("ToggleCursor", throwIfNotFound: true);
         // UiMap
         m_UiMap = asset.FindActionMap("UiMap", throwIfNotFound: true);
-        m_UiMap_Shop = m_UiMap.FindAction("Shop", throwIfNotFound: true);
         m_UiMap_CloseWindow = m_UiMap.FindAction("CloseWindow", throwIfNotFound: true);
         // SpectatorMap
         m_SpectatorMap = asset.FindActionMap("SpectatorMap", throwIfNotFound: true);
@@ -770,7 +749,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     // UiMap
     private readonly InputActionMap m_UiMap;
     private List<IUiMapActions> m_UiMapActionsCallbackInterfaces = new List<IUiMapActions>();
-    private readonly InputAction m_UiMap_Shop;
     private readonly InputAction m_UiMap_CloseWindow;
     /// <summary>
     /// Provides access to input actions defined in input action map "UiMap".
@@ -783,10 +761,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// Construct a new instance of the input action map wrapper class.
         /// </summary>
         public UiMapActions(@InputActions wrapper) { m_Wrapper = wrapper; }
-        /// <summary>
-        /// Provides access to the underlying input action "UiMap/Shop".
-        /// </summary>
-        public InputAction @Shop => m_Wrapper.m_UiMap_Shop;
         /// <summary>
         /// Provides access to the underlying input action "UiMap/CloseWindow".
         /// </summary>
@@ -817,9 +791,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         {
             if (instance == null || m_Wrapper.m_UiMapActionsCallbackInterfaces.Contains(instance)) return;
             m_Wrapper.m_UiMapActionsCallbackInterfaces.Add(instance);
-            @Shop.started += instance.OnShop;
-            @Shop.performed += instance.OnShop;
-            @Shop.canceled += instance.OnShop;
             @CloseWindow.started += instance.OnCloseWindow;
             @CloseWindow.performed += instance.OnCloseWindow;
             @CloseWindow.canceled += instance.OnCloseWindow;
@@ -834,9 +805,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UiMapActions" />
         private void UnregisterCallbacks(IUiMapActions instance)
         {
-            @Shop.started -= instance.OnShop;
-            @Shop.performed -= instance.OnShop;
-            @Shop.canceled -= instance.OnShop;
             @CloseWindow.started -= instance.OnCloseWindow;
             @CloseWindow.performed -= instance.OnCloseWindow;
             @CloseWindow.canceled -= instance.OnCloseWindow;
@@ -1084,13 +1052,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     /// <seealso cref="UiMapActions.RemoveCallbacks(IUiMapActions)" />
     public interface IUiMapActions
     {
-        /// <summary>
-        /// Method invoked when associated input action "Shop" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnShop(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "CloseWindow" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>

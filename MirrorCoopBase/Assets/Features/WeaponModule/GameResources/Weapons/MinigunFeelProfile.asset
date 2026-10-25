@@ -41,9 +41,7 @@ MonoBehaviour:
   _fireShake: {fileID: 11400000, guid: 41d10079caafb204d96df56c76656133, type: 2}
   _nearImpactShake: {fileID: 11400000, guid: 8e2e2948c5694d84ba42a9dad7b1f7d3, type: 2}
   _nearImpactDistanceMeters: 30
-  _targetDestroyedShakeAmplitude: 0.8
   _tracerEveryNthShot: 3
-  _tracerColor: {r: 1, g: 0.62, b: 0.2, a: 1}
   _tracerSpeedMetersPerSecond: 380
   _tracerWidthMeters: 0.22
   _tracerLengthMeters: 6

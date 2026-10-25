@@ -15,7 +15,6 @@ MonoBehaviour:
   _flightMode: 2
   _travelAccelSeconds: 1.5
   _dodgeRange: 4
-  _turnDegrees: 22
   _turnRate: 80
   _cruiseSpeed: 14
   _bankDegrees: 22

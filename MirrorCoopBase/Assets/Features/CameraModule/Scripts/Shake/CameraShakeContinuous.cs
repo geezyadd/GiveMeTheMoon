@@ -6,13 +6,13 @@ namespace Features.CameraModule.Scripts.Shake {
     public sealed class CameraShakeContinuous : ICameraShakeHandle {
         private float _targetIntensity;
 
-        public CameraShakeContinuous(CameraShakeProfile profile) =>
-            Profile = profile;
-
         public CameraShakeProfile Profile { get; }
         public float Intensity { get; private set; }
         public float NoiseTime { get; private set; }
         public bool IsStopped { get; private set; }
+
+        public CameraShakeContinuous(CameraShakeProfile profile) =>
+            Profile = profile;
 
         public void SetIntensity(float intensity) =>
             _targetIntensity = Mathf.Max(0f, intensity);

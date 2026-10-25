@@ -145,18 +145,6 @@ namespace Features.ShipModule.Scripts {
             return true;
         }
 
-        public void ServerAbort(ShipRunAbortReason reason) {
-            if (NetworkServer.active == false || Ship == null || Director == null)
-                return;
-
-            if (_model.Phase != ShipRunPhase.Takeoff
-                && _model.Phase != ShipRunPhase.Cruise
-                && _model.Phase != ShipRunPhase.Landing)
-                return;
-
-            FinishAtCurrentPose(reason);
-        }
-
         public void ServerTick() {
             if (NetworkServer.active == false || Ship == null || Director == null)
                 return;

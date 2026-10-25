@@ -9,8 +9,6 @@ namespace Features.WeaponModule.Scripts.Parts.Delivery {
         [Tooltip("What the ray can strike. Leave out the own ship and the players: a weapon never hits them.")]
         [SerializeField] private LayerMask _hitLayers;
 
-        public float SpreadDegrees => _spreadDegrees;
-        public LayerMask HitLayers => _hitLayers;
         public int MaxHitsPerShot => 1;
 
         public IShotDelivery CreateDelivery(IShotDeliveryContext context) =>

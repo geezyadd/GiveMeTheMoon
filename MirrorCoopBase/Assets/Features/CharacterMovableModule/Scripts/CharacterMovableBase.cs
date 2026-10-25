@@ -22,7 +22,6 @@ namespace Features.CharacterMovableModule.Scripts {
         [SyncVar] private float _pushStrength;
         [SyncVar] private Vector3 _pushHeading;
         [SyncVar] private float _pushSpeed;
-        [SyncVar] private bool _locomoting;
         [SyncVar] private float _facingYaw;
 
         private static readonly Collider[] OverlapScratch = new Collider[32];
@@ -35,9 +34,6 @@ namespace Features.CharacterMovableModule.Scripts {
         private int _shoveMask;
 
         public Rigidbody Body => _rb;
-        public float PushStrength => _pushStrength;
-        public Vector3 PushHeading => _pushHeading;
-        public bool Locomoting => _locomoting;
 
         private bool ControlsSelf => isOwned;
 
@@ -89,7 +85,6 @@ namespace Features.CharacterMovableModule.Scripts {
         // A kinematic owner (bound to the ship) does not simulate: the last walk would stay in the synced push and the
         // server would keep shoving bodies next to a player who stands still.
         private void StopPushing() {
-            _locomoting = false;
             _pushStrength = 0f;
             _pushSpeed = 0f;
         }
@@ -99,7 +94,6 @@ namespace Features.CharacterMovableModule.Scripts {
                 return;
 
             Vector3 planar = Flatten(_rb.linearVelocity);
-            _locomoting = planar.magnitude > 0.1f;
             _moveSpeed = _input.SprintHeld ? ReadStat(PlayerStatType.SprintSpeed) : ReadStat(PlayerStatType.WalkSpeed);
 
             Vector3 wish = ReadWishDirection();

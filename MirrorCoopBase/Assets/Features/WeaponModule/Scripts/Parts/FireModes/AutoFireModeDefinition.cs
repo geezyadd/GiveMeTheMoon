@@ -9,9 +9,6 @@ namespace Features.WeaponModule.Scripts.Parts.FireModes {
         [Tooltip("Seconds from full spin to still barrels after the trigger is released.")]
         [SerializeField, Min(0f)] private float _spinDownSeconds;
 
-        public float SpinUpSeconds => _spinUpSeconds;
-        public float SpinDownSeconds => _spinDownSeconds;
-
         public IWeaponFireMode CreateFireMode(float shotsPerSecond) =>
             new AutoFireMode(_spinUpSeconds, _spinDownSeconds, shotsPerSecond);
     }

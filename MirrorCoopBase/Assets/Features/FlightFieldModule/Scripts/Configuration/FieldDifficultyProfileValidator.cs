@@ -74,9 +74,9 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
                 return;
 
             FieldClusterRecipe recipe = option.Structure.ClusterRecipe;
-            bool isSingleRock = !recipe.HasPlaneCover && recipe.SatelliteCount.y == 0 && recipe.DebrisChance <= 0f;
+            bool isSingleRock = recipe.SatelliteCount.y == 0 && recipe.DebrisChance <= 0f;
             if (!isSingleRock)
-                throw new InvalidOperationException($"{option.Structure.name}: a giant of an obstacle field must be one main rock (no dense rocks, satellites or debris).");
+                throw new InvalidOperationException($"{option.Structure.name}: a giant of an obstacle field must be one main rock (no satellites or debris).");
         }
 
         private void ValidateDebris(FieldDifficultyProfile profile) {

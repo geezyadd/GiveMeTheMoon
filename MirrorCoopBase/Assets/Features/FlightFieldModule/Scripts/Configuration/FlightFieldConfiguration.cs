@@ -103,7 +103,6 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public IReadOnlyList<FieldDifficultyProfile> DifficultyProfiles => _difficultyProfiles;
         public FieldVolumeConfiguration Volume => _volume;
         public float ShipWidthMeters => _shipWidthMeters;
-        public float DebrisGapMarginMeters => _debrisGapMarginMeters;
         public float DebrisMinGapMeters => _shipWidthMeters + _debrisGapMarginMeters;
         public float DebrisGridSpacingMeters => _debrisGridSpacingMeters;
         public float MetricCruiseSpeed => _metricCruiseSpeed;

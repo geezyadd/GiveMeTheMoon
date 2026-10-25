@@ -115,7 +115,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             FlightField field = GetField(profileId);
             FieldRockTestRig rig = new(_composition, _durability, field);
             PublishedFieldRockReader publishedReader = new(_composition.Catalog, _composition.FootprintReader, _composition.ProfileLookup);
-            FieldRockQuery peerQuery = new(new RecordedFieldRockFieldSource(Publish(field), publishedReader), _composition.Catalog, _composition.Configuration, rig.Reader,
+            FieldRockQuery peerQuery = new(new RecordedFieldRockFieldSource(Publish(field), publishedReader), _composition.Configuration, rig.Reader,
                 rig.BrokenRocks, new FieldRandomFactory());
             List<FieldRockDescription> serverFound = new();
             List<FieldRockDescription> peerFound = new();

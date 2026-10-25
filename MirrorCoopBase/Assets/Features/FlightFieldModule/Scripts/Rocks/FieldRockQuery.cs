@@ -6,7 +6,6 @@ using Features.FlightFieldModule.Scripts.Debris;
 using Features.FlightFieldModule.Scripts.Generation;
 using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Network;
-using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Rocks {
@@ -22,18 +21,18 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
         private readonly IFieldRockReader _fieldRockReader;
         private readonly IFieldBrokenRocks _fieldBrokenRocks;
         private readonly FieldRockFieldData _fieldData;
-        // The catalog does not change while the game runs, so the widest reach is read once.
+        // The configuration does not change while the game runs, so the widest reach is read once.
         private readonly float _reachPastCell;
         private readonly List<FieldRockDescription> _cellRocks = new();
         private readonly HashSet<int> _visitedPlacements = new();
 
-        public FieldRockQuery(IFieldRockFieldSource fieldRockFieldSource, FieldStructureCatalog fieldStructureCatalog, FlightFieldConfiguration flightFieldConfiguration,
-                              IFieldRockReader fieldRockReader, IFieldBrokenRocks fieldBrokenRocks, IFieldRandomFactory fieldRandomFactory) {
+        public FieldRockQuery(IFieldRockFieldSource fieldRockFieldSource, FlightFieldConfiguration flightFieldConfiguration, IFieldRockReader fieldRockReader,
+                              IFieldBrokenRocks fieldBrokenRocks, IFieldRandomFactory fieldRandomFactory) {
             _fieldRockFieldSource = fieldRockFieldSource;
             _fieldRockReader = fieldRockReader;
             _fieldBrokenRocks = fieldBrokenRocks;
             _fieldData = new FieldRockFieldData(new FieldDebrisWorkspace(fieldRandomFactory.Create(0)));
-            _reachPastCell = ReadReachPastCell(fieldStructureCatalog, flightFieldConfiguration);
+            _reachPastCell = ReadReachPastCell(flightFieldConfiguration);
         }
 
         public void FindInSphere(Vector3 center, float radius, List<FieldRockDescription> results) =>
@@ -136,18 +135,10 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
         private static Vector2Int ClampToField(FieldFrame frame, Vector2Int cell) =>
             new(Mathf.Clamp(cell.x, 0, frame.LengthCells - 1), Mathf.Clamp(cell.y, 0, frame.WidthCells - 1));
 
-        // A debris rock's middle stands in its cell, so it reaches past it by its radius; a dense-field rock reaches
-        // past its footprint by the spill (its middle moved by the jitter), an extra rock by its radius.
-        private static float ReadReachPastCell(FieldStructureCatalog catalog, FlightFieldConfiguration configuration) {
+        // A debris rock's middle stands in its cell, so it reaches past it by its radius; a cluster rock stays inside
+        // its footprint.
+        private static float ReadReachPastCell(FlightFieldConfiguration configuration) {
             float reach = 0f;
-            foreach (FieldStructureDefinition structure in catalog.Structures) {
-                if (!structure.HasClusterRecipe || !structure.ClusterRecipe.HasPlaneCover)
-                    continue;
-
-                FieldClusterRecipe recipe = structure.ClusterRecipe;
-                reach = Mathf.Max(reach, Mathf.Max(recipe.PlaneMaxSpillMeters + recipe.PlaneJitterMeters, recipe.ExtraDiameterMeters.y * HALF));
-            }
-
             foreach (FieldDifficultyProfile profile in configuration.DifficultyProfiles) {
                 foreach (FieldRockSizeClass sizeClass in profile.DebrisSizeClasses)
                     reach = Mathf.Max(reach, sizeClass.DiameterMeters.y * HALF);

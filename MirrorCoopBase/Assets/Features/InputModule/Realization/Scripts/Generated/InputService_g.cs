@@ -18,7 +18,6 @@ namespace Features.InputModule.Realization.Scripts.Generated {
         public InputDefaultActions Fire { get; set; } = new();
         public InputDefaultActions Release { get; set; } = new();
         public InputDefaultActions ToggleCursor { get; set; } = new();
-        public InputDefaultActions Shop { get; set; } = new();
         public InputDefaultActions CloseWindow { get; set; } = new();
         public InputDefaultActions SpectatePrev { get; set; } = new();
         public InputDefaultActions SpectateNext { get; set; } = new();
@@ -140,12 +139,6 @@ namespace Features.InputModule.Realization.Scripts.Generated {
             if(context.started)ToggleCursor.Started?.Invoke();
             if(context.performed)ToggleCursor.Performed?.Invoke();
             if(context.canceled)ToggleCursor.Canceled?.Invoke();
-        }
-        public void OnShop(InputAction.CallbackContext context)
-         {
-            if(context.started)Shop.Started?.Invoke();
-            if(context.performed)Shop.Performed?.Invoke();
-            if(context.canceled)Shop.Canceled?.Invoke();
         }
         public void OnCloseWindow(InputAction.CallbackContext context)
          {
