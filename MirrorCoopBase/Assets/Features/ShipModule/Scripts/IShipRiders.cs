@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Features.NetworkModelModule.Scripts;
 
 namespace Features.ShipModule.Scripts {
-    internal interface IShipRiders {
+    public interface IShipRiders {
         public IReadOnlyList<ShipRider> All { get; }
         public void SetVolumeOverlap(ShipRider rider, bool inside);
         public void UnregisterRider(ShipRider rider);

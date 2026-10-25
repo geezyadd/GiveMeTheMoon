@@ -9,7 +9,7 @@ using Features.FlightFieldModule.Scripts.Scene;
 using Features.FlightFieldModule.Scripts.Structures;
 using Features.NetworkModelModule.Scripts;
 using Features.ShipModule.Scripts;
-using Features.ShipModule.Scripts.Turret;
+using Features.TurretModule.Scripts;
 using Features.WeaponModule.Contracts;
 using Mirror;
 using NUnit.Framework;

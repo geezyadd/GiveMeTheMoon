@@ -266,7 +266,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         // A seat station's own stand-up button (a turret's interact key) goes the same way as the jump.
-        internal void OwnerRequestStand() {
+        public void OwnerRequestStand() {
             if (isOwned && _seated)
                 CmdStand();
         }
@@ -286,10 +286,10 @@ namespace Features.ShipModule.Scripts {
 
         // A seat station whose seat point moves with it (a turret's yaw) has the seated rider follow that point on
         // every peer, from the aim that peer shows; no offset is sent while seated.
-        internal void FollowSeatPoint(Transform seatPoint) =>
+        public void FollowSeatPoint(Transform seatPoint) =>
             _seatPoint = seatPoint;
 
-        internal void StopFollowingSeatPoint(Transform seatPoint) {
+        public void StopFollowingSeatPoint(Transform seatPoint) {
             if (ReferenceEquals(_seatPoint, seatPoint))
                 _seatPoint = null;
         }

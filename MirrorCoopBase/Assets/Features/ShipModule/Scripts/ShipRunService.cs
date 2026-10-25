@@ -1,6 +1,6 @@
 using Features.GameCoreModule.Contracts;
+using Features.ShipModule.Scripts.Contracts;
 using Features.ShipModule.Scripts.Generated;
-using Features.ShipModule.Scripts.Damage;
 using Game.Connection;
 using Mirror;
 using UnityEngine;
@@ -23,6 +23,7 @@ namespace Features.ShipModule.Scripts {
         private readonly IFlightRouteListener _flightRouteListener;
         private readonly IShipRunStage _runStage;
         private readonly IShipLandingRepair _shipLandingRepair;
+        private readonly IShipRunStartListener _shipRunStartListener;
 
         private float _wreckUntil;
 
@@ -42,7 +43,8 @@ namespace Features.ShipModule.Scripts {
             IShipWorldShiftService worldShift,
             IFlightRouteListener flightRouteListener,
             IShipRunStage runStage,
-            IShipLandingRepair shipLandingRepair) {
+            IShipLandingRepair shipLandingRepair,
+            IShipRunStartListener shipRunStartListener) {
             _model = model;
             _config = config;
             _spawn = spawn;
@@ -55,6 +57,7 @@ namespace Features.ShipModule.Scripts {
             _flightRouteListener = flightRouteListener;
             _runStage = runStage;
             _shipLandingRepair = shipLandingRepair;
+            _shipRunStartListener = shipRunStartListener;
         }
 
         public void CleanupGameplay() {
@@ -72,7 +75,7 @@ namespace Features.ShipModule.Scripts {
             if (ship != null && startPad != null) {
                 ship.ServerResetForBuild(startPad.BuildBerth.position, startPad.BuildBerth.rotation);
                 _runStage.ServerPrepareShip(ship);
-                ship.ToolRack.ServerStock();
+                _shipRunStartListener.ServerOnRunStarted();
             }
 
             PublishPreview();

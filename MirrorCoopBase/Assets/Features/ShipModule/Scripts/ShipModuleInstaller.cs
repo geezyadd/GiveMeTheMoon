@@ -1,6 +1,4 @@
-using Features.ShipModule.Scripts.Damage;
 using Features.ShipModule.Scripts.Hull;
-using Features.ShipModule.Scripts.Impacts;
 using Features.StatsModule.EntityStatsModule.Scripts.StatsEntity.Factories;
 using Zenject;
 
@@ -9,6 +7,7 @@ namespace Features.ShipModule.Scripts {
         public override void InstallBindings() {
             Container.Bind<IStatFactory<ShipStatType>>().To<ShipStatFactory>().AsSingle();
             Container.Bind<IStatEntityFactory<ShipStatType>>().To<ShipStatEntityFactory>().AsSingle();
+            Container.BindInterfacesTo<ComponentRegistry<ShipDeckSpawnPoint>>().AsSingle();
             Container.BindInterfacesTo<ShipDeckSpawnPointRegistry>().AsSingle();
             Container.BindInterfacesTo<ShipStatsConfigurationValidator>().AsSingle();
             Container.BindInterfacesTo<ModuleCatalogValidator>().AsSingle();
@@ -24,8 +23,8 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipHullDamageRule>().AsSingle();
             Container.BindInterfacesTo<ShipHullEventBus>().AsSingle();
             Container.BindInterfacesTo<ShipHullService>().AsSingle();
-            InstallRockImpacts();
-            InstallDamage();
+            Container.BindInterfacesTo<ShipConditionWriter>().AsSingle();
+            Container.BindInterfacesTo<ShipModuleWorkingState>().AsSingle();
             Container.BindInterfacesTo<ShipRunRiderService>().AsSingle();
             Container.BindInterfacesTo<ShipRunService>().AsSingle();
             Container.BindInterfacesTo<ShipRunJoinGate>().AsSingle();
@@ -35,43 +34,10 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<Debug.DeckFeelHarness>().AsSingle();
             Container.Bind<Debug.IShipDebugActionConditions>().To<Debug.ShipDebugActionConditions>().AsSingle();
             Container.BindInterfacesTo<Debug.ShipHullDebugSystem>().AsSingle();
-            Container.BindInterfacesTo<Debug.ShipRockImpactDebugSystem>().AsSingle();
-            Container.BindInterfacesTo<Debug.ShipDamageDebugSystem>().AsSingle();
             Container.BindInterfacesTo<Debug.WeaponDebugTargetSystem>().AsSingle();
             Container.BindInterfacesTo<Debug.WeaponDebugTargetPrefabSystem>().AsSingle();
             Container.Bind<Debug.ShipStatsDebugOverlay>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
 #endif
-        }
-
-        private void InstallRockImpacts() {
-            Container.BindInterfacesTo<ShipRockImpactConfigurationValidator>().AsSingle();
-            Container.BindInterfacesTo<ShipRockImpactClassifier>().AsSingle();
-            Container.BindInterfacesTo<ShipRockDamageRule>().AsSingle();
-            Container.BindInterfacesTo<ShipRockKnockbackRule>().AsSingle();
-            Container.BindInterfacesTo<ShipHullRockScanner>().AsSingle();
-            Container.BindInterfacesTo<ShipHullStepTracker>().AsSingle();
-            Container.BindInterfacesTo<ShipRockCollisionSystem>().AsSingle();
-            Container.BindInterfacesTo<ShipFieldTargetCollisionSystem>().AsSingle();
-            Container.BindInterfacesTo<ShipImpactEventBus>().AsSingle();
-            Container.BindInterfacesTo<ShipServerImpactEventBus>().AsSingle();
-            Container.BindInterfacesTo<ShipRockImpactFeelSource>().AsSingle();
-            Container.BindInterfacesTo<ShipImpactEffectPool>().AsSingle();
-            Container.BindInterfacesTo<ShipImpactEffectSystem>().AsSingle();
-            Container.BindInterfacesTo<ShipImpactCameraShakeSystem>().AsSingle();
-        }
-
-        private void InstallDamage() {
-            Container.BindInterfacesTo<ShipDamageConfigurationValidator>().AsSingle();
-            Container.BindInterfacesTo<ShipModuleCondition>().AsSingle();
-            Container.BindInterfacesTo<ShipBreachCondition>().AsSingle();
-            Container.BindInterfacesTo<ShipDamageRule>().AsSingle();
-            Container.BindInterfacesTo<ShipDamageRandom>().AsSingle();
-            Container.BindInterfacesTo<ShipConditionService>().AsSingle();
-            Container.BindInterfacesTo<ShipImpactDamageService>().AsSingle();
-            Container.BindInterfacesTo<ShipLandingRepair>().AsSingle();
-            Container.BindInterfacesTo<ShipImpactDamageSystem>().AsSingle();
-            Container.BindInterfacesTo<ShipHullLeakRule>().AsSingle();
-            Container.BindInterfacesTo<ShipHullLeakSystem>().AsSingle();
         }
 
         // Editor / development builds decorate the config's flight length with the debug length the harness sets.
