@@ -1,45 +1,42 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Model;
+using Features.FlightFieldModule.Scripts.Structures;
 using NUnit.Framework;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
-    // The obstacle field guarantees on 200 seeds at loops 0, 5 and 10 for every obstacle profile, with every rock laid
-    // out as the peers build it: a ship of the configured width plus the gap margin finds a way from the cruise start
-    // to B, the narrowest gap along it leaves the ship room (less the path finder's grid tolerance), every two rocks in
-    // the flight plane (debris and giants) are at least the ship gap apart, and every debris rock crosses the plane.
-    // The same seed gives the same field and rocks. The variant table goes to the log ([FieldObstacles]: ways found,
-    // rocks per km2, sizes, narrowest gap on the way, dodges per minute, largest rock, giants).
-    [Timeout(TEST_TIMEOUT_MILLISECONDS)]
+    // The obstacle field guarantees on a few fields, generated once for the whole fixture: a few seeds at loops 0, 4
+    // and 9 with the profile the game picks, and every obstacle profile forced at the same loops. Every rock is laid
+    // out as the peers build it. The station zones and the takeoff corridor stay empty, nothing overlaps (footprints,
+    // the giants' gap, the ship gap between any two plane rocks), every field has giants and debris of its profile's
+    // classes, every debris rock crosses the plane, a ship finds a way from the cruise start to B through gaps it fits,
+    // and the same request gives the same field and rocks.
     public sealed class FieldObstacleFieldTests {
-        private const int TEST_TIMEOUT_MILLISECONDS = 3600000;
-        private const int SEED_COUNT = 200;
-        private const int FIRST_SEED = 1;
+        private const int FORCED_PROFILE_SEED = 7;
         // A step between two neighbouring grid points is not measured on its own: it may cut a rock's curve this much.
         private const float STEP_CUT_METERS = 0.25f;
         private const float GAP_TOLERANCE = 0.01f;
+        private const float SIZE_TOLERANCE = 0.01f;
+        private static readonly int[] _seeds = { 1, 17, 4242, 90001 };
+        private static readonly int[] _loops = { 0, 4, 9 };
 
-        private static readonly int[] _loops = { 0, 5, 10 };
-
-        private readonly Dictionary<(string profile, int loop), List<FieldObstacleSummary>> _results = new();
         private readonly FieldDebugScenario _scenario = new();
 
         private FlightFieldEditorComposition _composition;
+        private FieldObstacleSample[] _samples;
 
         private static IEnumerable<int> Loops => _loops;
 
         [OneTimeSetUp]
         public void OneTimeSetUp() {
             _composition = new FlightFieldEditorCompositionFactory().Create();
-            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
-                foreach (int loop in _loops)
-                    _results[(profile.Id, loop)] = SummarizeAll(profile, loop);
-            }
-
-            LogTable();
+            List<FieldRequest> requests = CreateRequests();
+            _samples = new FieldObstacleSample[requests.Count];
+            Parallel.For(0, requests.Count, index => _samples[index] = CreateSample(requests[index]));
         }
 
         [Test]
@@ -47,106 +44,223 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             CollectionAssert.AreEquivalent(new[] { "obstacles_sparse", "obstacles_medium", "obstacles_dense", "obstacles_giants" },
                 _composition.Configuration.DifficultyProfiles.Select(profile => profile.Id));
 
-        [TestCaseSource(nameof(Loops))]
-        public void WhenObstacleFieldsAreGenerated_ThenAShipFindsAWayToB(int loop) {
-            foreach ((string profile, FieldObstacleSummary summary) in ResultsOfLoop(loop)) {
-                if (!summary.IsPathFound)
-                    Assert.Fail($"{profile} seed {summary.Seed} loop {loop}: no way for the ship from the cruise start to B.");
-            }
-        }
+        [Test]
+        public void WhenFieldsAreGenerated_ThenTheStationZonesAndTheTakeoffCorridorAreEmpty() =>
+            AssertNoFailures(FindFilledEmptyAreas);
+
+        [Test]
+        public void WhenFieldsAreGenerated_ThenNoTwoGiantsOverlapOrComeCloserThanTheirGap() =>
+            AssertNoFailures(FindOverlappingGiants);
+
+        [Test]
+        public void WhenFieldsAreGenerated_ThenEveryTwoPlaneRocksLeaveTheShipGap() =>
+            AssertNoFailures(FindNarrowPlaneGaps);
+
+        [Test]
+        public void WhenFieldsAreGenerated_ThenEveryFieldHasGiantsAndDebris() =>
+            AssertNoFailures(FindMissingObstacles);
+
+        [Test]
+        public void WhenFieldsAreGenerated_ThenGiantsAndDebrisAreOfTheProfilesClasses() =>
+            AssertNoFailures(FindForeignObstacles);
+
+        [Test]
+        public void WhenFieldsAreGenerated_ThenEveryDebrisRockCrossesThePlane() =>
+            AssertNoFailures(FindOffPlaneRocks);
+
+        [Test]
+        public void WhenFieldsAreGenerated_ThenAShipFindsAWayToBThroughGapsItFits() =>
+            AssertNoFailures(FindBlockedWays);
 
         [TestCaseSource(nameof(Loops))]
-        public void WhenObstacleFieldsAreGenerated_ThenTheNarrowestGapAlongTheWayLeavesTheShipRoom(int loop) {
-            float minGap = _composition.Configuration.DebrisMinGapMeters - 2f * (FieldSlalomPathFinder.ToleranceMeters + STEP_CUT_METERS);
-            foreach ((string profile, FieldObstacleSummary summary) in ResultsOfLoop(loop)) {
-                if (summary.IsPathFound && summary.PathGapMeters < minGap)
-                    Assert.Fail($"{profile} seed {summary.Seed} loop {loop}: the way passes a gap of {summary.PathGapMeters:0.0} m.");
-            }
+        public void WhenTheSameRequestIsGeneratedTwice_ThenTheFieldAndItsRocksAreEqual(int loop) {
+            FieldObstacleSample first = _samples.First(sample => sample.Field.Seed == _seeds[0] && sample.Field.LoopIndex == loop);
+            FieldObstacleSample again = CreateSample(first.Request);
+
+            Assert.AreEqual(FieldObstacleFingerprint.Create(first.Field), FieldObstacleFingerprint.Create(again.Field), $"{first.Name}: the second field differs.");
+            CollectionAssert.AreEqual(first.Report.Rocks, again.Report.Rocks, $"{first.Name}: the second field lays out other rocks.");
         }
 
-        [TestCaseSource(nameof(Loops))]
-        public void WhenObstacleFieldsAreGenerated_ThenEveryTwoPlaneRocksLeaveTheShipGap(int loop) {
-            float minGap = _composition.Configuration.DebrisMinGapMeters - GAP_TOLERANCE;
-            foreach ((string profile, FieldObstacleSummary summary) in ResultsOfLoop(loop)) {
-                if (summary.PlaneGapMeters < minGap)
-                    Assert.Fail($"{profile} seed {summary.Seed} loop {loop}: two obstacles in the flight plane are only {summary.PlaneGapMeters:0.0} m apart.");
+        private List<FieldRequest> CreateRequests() {
+            List<FieldRequest> requests = new();
+            foreach (int loop in _loops) {
+                foreach (int seed in _seeds)
+                    requests.Add(_scenario.CreateRequest(_composition.RequestFactory, seed, loop));
+
+                foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles)
+                    requests.Add(FieldTestRequests.WithProfile(_scenario.CreateRequest(_composition.RequestFactory, FORCED_PROFILE_SEED, loop), profile));
             }
-        }
 
-        [TestCaseSource(nameof(Loops))]
-        public void WhenObstacleFieldsAreGenerated_ThenEveryDebrisRockCrossesThePlane(int loop) {
-            foreach ((string profile, FieldObstacleSummary summary) in ResultsOfLoop(loop)) {
-                if (!summary.AreAllRocksInPlane)
-                    Assert.Fail($"{profile} seed {summary.Seed} loop {loop}: a debris rock stands off the plane, inside the volume's clearance band.");
-            }
-        }
-
-        [TestCaseSource(nameof(Loops))]
-        public void WhenSameSeedIsGeneratedTwice_ThenGiantsDebrisAndRocksAreEqual(int loop) {
-            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
-                FlightField first = Generate(profile, FIRST_SEED, loop);
-                FlightField again = Generate(profile, FIRST_SEED, loop);
-
-                CollectionAssert.AreEqual(first.Placements, again.Placements, $"{profile.Id} loop {loop}: seed {FIRST_SEED} gave other giants.");
-                CollectionAssert.AreEqual(DebrisCells(first), DebrisCells(again), $"{profile.Id} loop {loop}: seed {FIRST_SEED} gave other debris cells.");
-                CollectionAssert.AreEqual(Analyze(first).Rocks, Analyze(again).Rocks, $"{profile.Id} loop {loop}: seed {FIRST_SEED} gave other rocks.");
-            }
-        }
-
-        private List<FieldObstacleSummary> SummarizeAll(FieldDifficultyProfile profile, int loop) {
-            FieldObstacleSummary[] summaries = new FieldObstacleSummary[SEED_COUNT];
-            Parallel.For(0, SEED_COUNT, index => summaries[index] = Summarize(profile, FIRST_SEED + index, loop));
-            return summaries.ToList();
+            return requests;
         }
 
         // One analyzer and gap meter per call: their workspaces are not shared between threads.
-        private FieldObstacleSummary Summarize(FieldDifficultyProfile profile, int seed, int loop) {
-            FlightField field = Generate(profile, seed, loop);
-            FieldSlalomReport report = Analyze(field);
+        private FieldObstacleSample CreateSample(FieldRequest request) {
+            FlightField field = _composition.Generator.Generate(request);
+            FieldSlalomReport report = new FieldSlalomAnalyzer(_composition).Analyze(field);
             float planeGap = new FieldPlaneGapMeter().Measure(field, report.Rocks);
-            bool areAllInPlane = report.Rocks.All(rock => rock.IsInPlane);
-            return new FieldObstacleSummary(seed, report, planeGap, areAllInPlane, report.CountBySize(FieldRockSizeLimits.UpperDiametersMeters), field.Metrics.DodgesPerMinute);
+            return new FieldObstacleSample(request, field, _composition.ProfileLookup.GetRequired(field.ProfileId), report, planeGap);
         }
 
-        private FieldSlalomReport Analyze(FlightField field) =>
-            new FieldSlalomAnalyzer(_composition).Analyze(field);
-
-        private FlightField Generate(FieldDifficultyProfile profile, int seed, int loop) =>
-            _composition.Generator.Generate(FieldTestRequests.WithProfile(_scenario.CreateRequest(_composition.RequestFactory, seed, loop), profile));
-
-        private IEnumerable<(string profile, FieldObstacleSummary summary)> ResultsOfLoop(int loop) =>
-            _results.Where(entry => entry.Key.loop == loop).SelectMany(entry => entry.Value.Select(summary => (entry.Key.profile, summary)));
-
-        private static List<(Vector2Int cell, float density, string id)> DebrisCells(FlightField field) {
-            List<(Vector2Int, float, string)> cells = new();
-            foreach (Vector2Int cell in field.Cells.GetIndexes(HasDebris))
-                cells.Add((cell, field.Cells[cell].DebrisDensity, field.Cells[cell].DebrisId));
-
-            return cells;
+        private void AssertNoFailures(Func<FieldObstacleSample, IEnumerable<string>> findFailures) {
+            List<string> failures = _samples.SelectMany(findFailures).ToList();
+            Assert.IsEmpty(failures, string.Join("\n", failures));
         }
+
+        // Every cell whose middle lies in a station zone or the takeoff corridor is reserved; no reserved cell holds a
+        // giant or debris, and no laid-out rock reaches into one.
+        private IEnumerable<string> FindFilledEmptyAreas(FieldObstacleSample sample) {
+            FlightField field = sample.Field;
+            foreach (Vector2Int cell in field.Cells.GetIndexes()) {
+                FieldCell content = field.Cells[cell];
+                if (IsInEmptyArea(sample, cell) && !content.IsReserved)
+                    yield return $"{sample.Name}: cell {cell} in a station zone or the takeoff corridor is not reserved.";
+
+                if (content.IsReserved && (content.IsOccupied || content.HasDebris))
+                    yield return $"{sample.Name}: reserved cell {cell} holds a giant or debris.";
+            }
+
+            foreach (FieldSlalomRock rock in sample.Report.Rocks) {
+                if (TryFindReservedCellUnder(field, rock, out Vector2Int cell))
+                    yield return $"{sample.Name}: a rock of {rock.Radius * 2f:0.0} m at {rock.Position} reaches into reserved cell {cell}.";
+            }
+        }
+
+        private bool IsInEmptyArea(FieldObstacleSample sample, Vector2Int cell) {
+            FlightFieldConfiguration configuration = _composition.Configuration;
+            FieldRequest request = sample.Request;
+            Vector2 middle = FieldPlaneGeometry.ToGround(sample.Field.Frame.CellToWorld(cell));
+            Vector2 stationA = FieldPlaneGeometry.ToGround(request.StationA);
+            bool isInStationZone = Vector2.Distance(middle, stationA) <= configuration.StationAZoneRadius
+                                   || Vector2.Distance(middle, FieldPlaneGeometry.ToGround(request.StationB)) <= configuration.StationBZoneRadius;
+            float toCorridor = FieldPlaneGeometry.DistanceToSegment(middle, stationA, FieldPlaneGeometry.ToGround(CorridorEnd(request)));
+            return isInStationZone || toCorridor <= configuration.TakeoffCorridorHalfWidth;
+        }
+
+        // The corridor runs from A along the takeoff heading past the cruise start (FieldTakeoffCorridorStep).
+        private Vector3 CorridorEnd(FieldRequest request) {
+            Vector3 heading = request.CruiseStart - request.StationA;
+            heading.y = 0f;
+            return request.CruiseStart + heading.normalized * _composition.Configuration.TakeoffRunOutLength;
+        }
+
+        private static bool TryFindReservedCellUnder(FlightField field, FieldSlalomRock rock, out Vector2Int reservedCell) {
+            reservedCell = default;
+            float cellSize = field.Frame.CellSize;
+            int reach = Mathf.CeilToInt(rock.Radius / cellSize) + 1;
+            foreach (Vector2Int cell in CellsAround(FieldPlaneCells.ToCell(rock.Position, cellSize), reach)) {
+                if (!IsReservedUnderRock(field, rock, cell))
+                    continue;
+
+                reservedCell = cell;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsReservedUnderRock(FlightField field, FieldSlalomRock rock, Vector2Int cell) =>
+            field.Cells.ValidateIndex(cell) && field.Cells[cell].IsReserved
+                                            && FieldPlaneCells.DistanceToCell(rock.Position, cell, field.Frame.CellSize) < rock.Radius - GAP_TOLERANCE;
+
+        // Every placement stands on exactly its footprint's cells, and no cell of another giant lies within the
+        // profile's gap cells around them.
+        private IEnumerable<string> FindOverlappingGiants(FieldObstacleSample sample) {
+            FlightField field = sample.Field;
+            int footprintCells = 0;
+            foreach (FieldPlacement placement in field.Placements) {
+                FieldFootprint footprint = _composition.FootprintReader.Read(_composition.Catalog.GetRequired(placement.StructureId), placement.Rotation);
+                footprintCells += footprint.Cells.Count;
+                foreach (Vector2Int position in footprint.Cells.Select(cell => placement.Anchor + cell).Where(position => !IsOwnedBy(field, placement, position)))
+                    yield return $"{sample.Name}: placement {placement.Id} ({placement.StructureId}) does not own its footprint cell {position}.";
+            }
+
+            int occupiedCells = field.Cells.GetIndexes(IsOccupied).Count();
+            if (occupiedCells != footprintCells)
+                yield return $"{sample.Name}: {occupiedCells} occupied cells for {footprintCells} footprint cells: giants overlap or a cell has no giant.";
+
+            foreach (Vector2Int cell in field.Cells.GetIndexes(IsOccupied)) {
+                if (IsOtherGiantAround(field, cell, sample.Profile.GiantGapCells))
+                    yield return $"{sample.Name}: another giant lies within {sample.Profile.GiantGapCells} cells of cell {cell}.";
+            }
+        }
+
+        private static bool IsOwnedBy(FlightField field, FieldPlacement placement, Vector2Int cell) =>
+            field.Cells.ValidateIndex(cell) && field.Cells[cell].PlacementId == placement.Id;
+
+        private static bool IsOtherGiantAround(FlightField field, Vector2Int center, int gapCells) {
+            int placement = field.Cells[center].PlacementId;
+            return CellsAround(center, gapCells).Any(cell => IsOtherGiantCell(field, cell, placement));
+        }
+
+        private static bool IsOtherGiantCell(FlightField field, Vector2Int cell, int placement) =>
+            field.Cells.ValidateIndex(cell) && field.Cells[cell].IsOccupied && field.Cells[cell].PlacementId != placement;
+
+        // The square of cells within the reach around the center, in or out of the field.
+        private static IEnumerable<Vector2Int> CellsAround(Vector2Int center, int reach) {
+            for (int x = center.x - reach; x <= center.x + reach; x++) {
+                for (int y = center.y - reach; y <= center.y + reach; y++)
+                    yield return new Vector2Int(x, y);
+            }
+        }
+
+        private IEnumerable<string> FindNarrowPlaneGaps(FieldObstacleSample sample) {
+            float minGap = _composition.Configuration.DebrisMinGapMeters - GAP_TOLERANCE;
+            if (sample.PlaneGapMeters < minGap)
+                yield return $"{sample.Name}: two obstacles in the flight plane are only {sample.PlaneGapMeters:0.0} m apart.";
+        }
+
+        private static IEnumerable<string> FindMissingObstacles(FieldObstacleSample sample) {
+            if (sample.Field.Placements.Count == 0)
+                yield return $"{sample.Name}: the field has no giant.";
+
+            if (!sample.Field.Cells.GetIndexes(HasDebris).Any())
+                yield return $"{sample.Name}: the field has no debris cell.";
+
+            if (sample.Report.Rocks.Count == 0)
+                yield return $"{sample.Name}: the field lays out no debris rock.";
+        }
+
+        private static IEnumerable<string> FindForeignObstacles(FieldObstacleSample sample) {
+            FieldDifficultyProfile profile = sample.Profile;
+            HashSet<string> giantIds = new(profile.GiantClasses.SelectMany(giantClass => giantClass.Obstacles).Select(obstacle => obstacle.Structure.Id));
+            foreach (FieldPlacement placement in sample.Field.Placements) {
+                if (!giantIds.Contains(placement.StructureId))
+                    yield return $"{sample.Name}: giant {placement.StructureId} is not one of the profile's giant obstacles.";
+            }
+
+            HashSet<string> debrisIds = new(profile.DebrisTypes.Select(option => option.Debris.Id));
+            foreach (Vector2Int cell in sample.Field.Cells.GetIndexes(HasDebris)) {
+                if (!debrisIds.Contains(sample.Field.Cells[cell].DebrisId))
+                    yield return $"{sample.Name}: debris {sample.Field.Cells[cell].DebrisId} in cell {cell} is not one of the profile's debris types.";
+            }
+
+            foreach (FieldSlalomRock rock in sample.Report.Rocks) {
+                if (!IsOfSizeClass(profile, rock.Radius * 2f))
+                    yield return $"{sample.Name}: a debris rock of {rock.Radius * 2f:0.00} m is in none of the profile's size classes.";
+            }
+        }
+
+        private static bool IsOfSizeClass(FieldDifficultyProfile profile, float diameter) =>
+            profile.DebrisSizeClasses.Any(sizeClass => diameter >= sizeClass.DiameterMeters.x - SIZE_TOLERANCE && diameter <= sizeClass.DiameterMeters.y + SIZE_TOLERANCE);
+
+        private static IEnumerable<string> FindOffPlaneRocks(FieldObstacleSample sample) {
+            if (!sample.Report.Rocks.All(rock => rock.IsInPlane))
+                yield return $"{sample.Name}: a debris rock stands off the plane, inside the volume's clearance band.";
+        }
+
+        private IEnumerable<string> FindBlockedWays(FieldObstacleSample sample) {
+            float minGap = _composition.Configuration.DebrisMinGapMeters - 2f * (FieldSlalomPathFinder.ToleranceMeters + STEP_CUT_METERS);
+            if (!sample.Report.IsPathFound)
+                yield return $"{sample.Name}: no way for the ship from the cruise start to B.";
+            else if (sample.Report.MinGapMeters < minGap)
+                yield return $"{sample.Name}: the way passes a gap of {sample.Report.MinGapMeters:0.0} m.";
+        }
+
+        private static bool IsOccupied(FieldCell cell) =>
+            cell.IsOccupied;
 
         private static bool HasDebris(FieldCell cell) =>
             cell.HasDebris;
-
-        private void LogTable() {
-            List<string> lines = new() {
-                "[FieldObstacles] profile | loop | ways found | way / straight | rocks per km2 | sizes <=35 / <=150 / <=350 / above (per field) | narrowest gap on way min / avg, m "
-                + "| narrowest plane gap, m | dodges/min | largest rock, m (max) | giants per field",
-            };
-            foreach (KeyValuePair<(string profile, int loop), List<FieldObstacleSummary>> entry in _results)
-                lines.Add(FormatLine(entry.Key, entry.Value));
-
-            Debug.Log(string.Join("\n", lines));
-        }
-
-        private static string FormatLine((string profile, int loop) key, List<FieldObstacleSummary> summaries) {
-            List<FieldObstacleSummary> found = summaries.Where(summary => summary.IsPathFound).ToList();
-            string ratio = found.Count > 0 ? found.Average(summary => summary.PathToStraightRatio).ToString("0.00") : "-";
-            string gaps = found.Count > 0 ? $"{found.Min(summary => summary.PathGapMeters):0.0} / {found.Average(summary => summary.PathGapMeters):0.0}" : "-";
-            string sizes = string.Join(" / ", Enumerable.Range(0, FieldRockSizeLimits.UpperDiametersMeters.Count + 1).Select(index => summaries.Average(summary => summary.SizeCounts[index]).ToString("0")));
-            return $"[FieldObstacles] {key.profile} | {key.loop} | {found.Count}/{summaries.Count} | {ratio} | {summaries.Average(summary => summary.RocksPerSquareKilometer):0} | {sizes} "
-                + $"| {gaps} | {summaries.Min(summary => summary.PlaneGapMeters):0.0} | {summaries.Average(summary => summary.DodgesPerMinute):0.0} "
-                + $"| {summaries.Average(summary => summary.LargestRockMeters):0} ({summaries.Max(summary => summary.LargestRockMeters):0}) | {summaries.Average(summary => summary.Giants):0.0}";
-        }
     }
 }

@@ -16,14 +16,10 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
 
         // The values ShipModules.ApplyDefaultStats had in code before they moved to the configuration; Armor is a
         // damage reduction since the hull got its own Hull stat, so it starts at 0.
-        private const float THRUST_MAX = 999f;
-        private const float THRUST = 0f;
         private const float FLIGHT_SPEED_MAX = 99f;
         private const float FLIGHT_SPEED = 1f;
         private const float DODGE_RANGE_MAX = 20f;
         private const float DODGE_RANGE = 1f;
-        private const float HANDLING_MAX = 20f;
-        private const float HANDLING = 1f;
         private const float ARMOR_MAX = 100f;
         private const float ARMOR = 0f;
         private const float HULL_MAX = 100f;
@@ -31,7 +27,7 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
 
         private const float ENGINE_FLIGHT_SPEED = 1f;
         private const float SMALL_ENGINE_FLIGHT_SPEED = 0.5f;
-        private const float HANDLING_PERCENT = 0.1f;
+        private const float DODGE_RANGE_PERCENT = 0.1f;
         private const float HULL_BONUS = 50f;
         private const float HIT = 30f;
         private const float LETHAL_HIT = 1000f;
@@ -62,10 +58,8 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenDefaultsApplied_ThenStatsMatchTheFormerCodeValues() {
-            AssertStat(ShipStatType.Thrust, THRUST_MAX, THRUST);
             AssertStat(ShipStatType.FlightSpeed, FLIGHT_SPEED_MAX, FLIGHT_SPEED);
             AssertStat(ShipStatType.DodgeRange, DODGE_RANGE_MAX, DODGE_RANGE);
-            AssertStat(ShipStatType.Handling, HANDLING_MAX, HANDLING);
             AssertStat(ShipStatType.Armor, ARMOR_MAX, ARMOR);
             AssertStat(ShipStatType.Hull, HULL_MAX, HULL);
         }
@@ -133,9 +127,7 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
             Assert.AreEqual(FLIGHT_SPEED + ENGINE_FLIGHT_SPEED, _sheet.GetFull(ShipStatType.FlightSpeed), TOLERANCE);
             ShipStatsState state = _sheet.CreateState();
             Assert.AreEqual(FLIGHT_SPEED + ENGINE_FLIGHT_SPEED, state.FlightSpeed, TOLERANCE);
-            Assert.AreEqual(THRUST, state.Thrust, TOLERANCE);
             Assert.AreEqual(DODGE_RANGE, state.DodgeRange, TOLERANCE);
-            Assert.AreEqual(HANDLING, state.Handling, TOLERANCE);
             Assert.AreEqual(ARMOR, state.Armor, TOLERANCE);
         }
 
@@ -172,15 +164,15 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
         public void WhenModuleWithSeveralModifiersUninstalled_ThenEveryStatIsBackToBase() {
             _sheet.AddModule(LEFT_ENGINE_SOCKET, new[] {
                 Modifier(ShipStatType.FlightSpeed, ENGINE_FLIGHT_SPEED, ModifierType.Flat),
-                Modifier(ShipStatType.Handling, HANDLING_PERCENT, ModifierType.PercentAdd)
+                Modifier(ShipStatType.DodgeRange, DODGE_RANGE_PERCENT, ModifierType.PercentAdd)
             });
             Assert.AreEqual(FLIGHT_SPEED + ENGINE_FLIGHT_SPEED, _sheet.GetFull(ShipStatType.FlightSpeed), TOLERANCE);
-            Assert.AreEqual(HANDLING * (1f + HANDLING_PERCENT), _sheet.GetFull(ShipStatType.Handling), TOLERANCE);
+            Assert.AreEqual(DODGE_RANGE * (1f + DODGE_RANGE_PERCENT), _sheet.GetFull(ShipStatType.DodgeRange), TOLERANCE);
 
             Assert.IsTrue(_sheet.RemoveModule(LEFT_ENGINE_SOCKET));
 
             Assert.AreEqual(FLIGHT_SPEED, _sheet.GetFull(ShipStatType.FlightSpeed), TOLERANCE);
-            Assert.AreEqual(HANDLING, _sheet.GetFull(ShipStatType.Handling), TOLERANCE);
+            Assert.AreEqual(DODGE_RANGE, _sheet.GetFull(ShipStatType.DodgeRange), TOLERANCE);
         }
 
         [Test]

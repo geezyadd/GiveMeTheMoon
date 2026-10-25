@@ -34,6 +34,9 @@ namespace Features.ShipModule.Scripts {
         private void ValidateModifier(ModuleDefinition module, ModuleDefinition.StatModifierEntry modifier) {
             if (modifier.Stat == ShipStatType.None)
                 throw new InvalidOperationException($"{_moduleCatalog.name}: module {module.Id} has a stat modifier without a stat.");
+
+            if (Enum.IsDefined(typeof(ShipStatType), modifier.Stat) == false)
+                throw new InvalidOperationException($"{_moduleCatalog.name}: module {module.Id} has a modifier on the unknown stat {(int)modifier.Stat}.");
         }
     }
 }

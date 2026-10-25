@@ -17,7 +17,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 if (!rock.IsInPlane)
                     continue;
 
-                Vector2Int cell = ToCell(rock.Position, cellSize);
+                Vector2Int cell = FieldPlaneCells.ToCell(rock.Position, cellSize);
                 if (!_rocksByCell.TryGetValue(cell, out List<FieldSlalomRock> inCell)) {
                     inCell = new List<FieldSlalomRock>();
                     _rocksByCell.Add(cell, inCell);
@@ -37,7 +37,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         }
 
         private float MinRockGap(FieldSlalomRock rock, float cellSize, float largestRadius) {
-            Vector2Int center = ToCell(rock.Position, cellSize);
+            Vector2Int center = FieldPlaneCells.ToCell(rock.Position, cellSize);
             int reach = Mathf.CeilToInt((rock.Radius + largestRadius + cellSize) / cellSize);
             float gap = float.PositiveInfinity;
             for (int x = center.x - reach; x <= center.x + reach; x++) {
@@ -64,14 +64,14 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
         private static float MinGiantClearance(FlightField field, FieldSlalomRock rock) {
             float cellSize = field.Frame.CellSize;
-            Vector2Int center = ToCell(rock.Position, cellSize);
+            Vector2Int center = FieldPlaneCells.ToCell(rock.Position, cellSize);
             int reach = Mathf.CeilToInt(rock.Radius / cellSize) + 1;
             float gap = float.PositiveInfinity;
             for (int x = center.x - reach; x <= center.x + reach; x++) {
                 for (int y = center.y - reach; y <= center.y + reach; y++) {
                     Vector2Int cell = new(x, y);
                     if (field.Cells.ValidateIndex(cell) && field.Cells[cell].IsOccupied)
-                        gap = Mathf.Min(gap, DistanceToCell(rock.Position, cell, cellSize) - rock.Radius);
+                        gap = Mathf.Min(gap, FieldPlaneCells.DistanceToCell(rock.Position, cell, cellSize) - rock.Radius);
                 }
             }
 
@@ -99,16 +99,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
 
             return false;
         }
-
-        // Field plane: x across, y along; the cell is the matrix one (x along, y across).
-        private static float DistanceToCell(Vector2 point, Vector2Int cell, float cellSize) {
-            Vector2 min = new(cell.y * cellSize, cell.x * cellSize);
-            Vector2 nearest = new(Mathf.Clamp(point.x, min.x, min.x + cellSize), Mathf.Clamp(point.y, min.y, min.y + cellSize));
-            return Vector2.Distance(point, nearest);
-        }
-
-        private static Vector2Int ToCell(Vector2 point, float cellSize) =>
-            new(Mathf.FloorToInt(point.y / cellSize), Mathf.FloorToInt(point.x / cellSize));
 
         private static bool IsOccupied(FieldCell cell) =>
             cell.IsOccupied;
