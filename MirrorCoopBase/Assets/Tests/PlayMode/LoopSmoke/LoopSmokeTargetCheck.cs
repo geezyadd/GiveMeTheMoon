@@ -34,6 +34,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private const int CANDIDATES_TRIED = 12;
 
         private readonly LoopSmokeSession _session;
+        private readonly LoopSmokeFlight _flight;
         private readonly IFieldTargetQuery _fieldTargetQuery;
         private readonly IFieldTargetEvents _fieldTargetEvents;
         private readonly IFieldTargetWeaponIds _fieldTargetWeaponIds;
@@ -45,8 +46,9 @@ namespace Tests.PlayMode.LoopSmoke {
         private readonly List<FieldTargetPopped> _popped = new List<FieldTargetPopped>();
         private readonly List<FieldTargetDescription> _targets = new List<FieldTargetDescription>();
 
-        public LoopSmokeTargetCheck(LoopSmokeSession session) {
-            _session = session;
+        public LoopSmokeTargetCheck(LoopSmokeContext context) {
+            _session = context.Session;
+            _flight = context.Flight;
             _fieldTargetQuery = SessionQueries.Resolve<IFieldTargetQuery>();
             _fieldTargetEvents = SessionQueries.Resolve<IFieldTargetEvents>();
             _fieldTargetWeaponIds = SessionQueries.Resolve<IFieldTargetWeaponIds>();
@@ -58,15 +60,17 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         // The host sits at the turret.
-        public IEnumerator ShootBalloonCoroutine(ShipTurretStation station) {
+        [LoopSmokeStep(LoopSmokePhase.InCruise, 2, 2, 30)]
+        public IEnumerator ShootBalloonCoroutine() {
             ShipBase ship = _session.Ship;
+            ShipTurretStation station = LoopSmokeTurretCheck.FindSeatedStation(ship);
             long balanceBefore = _walletModel.Balance;
             _popped.Clear();
             _fieldTargetEvents.TargetPopped += _popped.Add;
             FieldTargetDescription target = default;
             bool isInSight = false;
             foreach (FieldTargetDescription candidate in FindCandidates(ship.transform.position)) {
-                PutShipBeside(ship, candidate);
+                _flight.PutShipBeside(candidate.Center, SHOT_DISTANCE, SHOT_HEIGHT_BELOW);
                 yield return null;
                 yield return null;
                 if (!IsBuiltAndFirstStruck(station.transform.position, candidate))
@@ -90,8 +94,9 @@ namespace Tests.PlayMode.LoopSmoke {
             Debug.Log($"[LoopSmoke] the minigun popped balloon {target.Id} ({target.KindId}, +{target.Reward}), balance {balanceBefore} -> {_walletModel.Balance}");
         }
 
-        // Then the ship goes back to where it was and faces the destination.
-        public IEnumerator FlyIntoBalloonCoroutine(LoopSmokeFlight flight) {
+        // After the host stood up from the turret. Then the ship goes back to where it was and faces the destination.
+        [LoopSmokeStep(LoopSmokePhase.InCruise, 2, 2, 50)]
+        public IEnumerator FlyIntoBalloonCoroutine() {
             ShipBase ship = _session.Ship;
             Vector3 start = ship.transform.position;
             long balanceBefore = _walletModel.Balance;
@@ -107,11 +112,10 @@ namespace Tests.PlayMode.LoopSmoke {
 
             AssertPoppedOnce(target, FieldTargetPopCause.ShipCollision, balanceBefore, "Balloon fly-in");
             Debug.Log($"[LoopSmoke] the ship flew into balloon {target.Id} ({target.KindId}, +{target.Reward}), balance {balanceBefore} -> {_walletModel.Balance}");
-            ship.FlightControlDebug.DebugMove(start - ship.transform.position);
-            yield return null;
-            flight.FaceDestination();
+            yield return _flight.PutShipBackCoroutine(start);
         }
 
+        [LoopSmokeStep(LoopSmokePhase.AfterLanding, 2, 2, 10)]
         public void AssertPoppedListClearedAfterLanding() {
             Assert.IsEmpty(_liveFieldModel.PoppedTargets, "The popped balloons survived the landing.");
             Assert.IsEmpty(_liveFieldModel.Targets, "The field's balloons survived the landing.");
@@ -134,27 +138,13 @@ namespace Tests.PlayMode.LoopSmoke {
             return _targets.OrderBy(target => (target.Center - from).sqrMagnitude).Take(CANDIDATES_TRIED).ToList();
         }
 
-        // Beside the balloon and heading across the line to it, so the ship passes it by while the gunner shoots.
-        private static void PutShipBeside(ShipBase ship, FieldTargetDescription target) {
-            Vector3 toTarget = HorizontalDirection(ship.transform.position, target.Center);
-            Vector3 position = target.Center - toTarget * SHOT_DISTANCE + Vector3.down * SHOT_HEIGHT_BELOW;
-            ship.FlightControlDebug.DebugMove(position - ship.transform.position);
-            ship.FlightControlDebug.DebugFace(Vector3.Cross(Vector3.up, toTarget));
-        }
-
         // Before the balloon at the height of the hull's middle, heading at it.
         private void PutShipBefore(ShipBase ship, FieldTargetDescription target) {
-            Vector3 toTarget = HorizontalDirection(ship.transform.position, target.Center);
+            Vector3 toTarget = LoopSmokeFlight.HorizontalDirection(ship.transform.position, target.Center);
             float hullMiddle = _shipRockImpactDebug.DebugGetHullMiddleHeight();
             Vector3 position = target.Center - toTarget * (target.Radius + FLY_IN_DISTANCE) + Vector3.down * hullMiddle;
             ship.FlightControlDebug.DebugMove(position - ship.transform.position);
             ship.FlightControlDebug.DebugFace(toTarget);
-        }
-
-        private static Vector3 HorizontalDirection(Vector3 from, Vector3 to) {
-            Vector3 direction = to - from;
-            direction.y = 0f;
-            return direction.sqrMagnitude > 0f ? direction.normalized : Vector3.forward;
         }
 
         private bool AimAndCheckPopped(ShipTurretStation station, FieldTargetDescription target) {

@@ -37,10 +37,17 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float BELOW_DELIVERY_TOLERANCE = 1.2f;
         private const float SETTLED_SPEED = 0.3f;
 
+        private readonly LoopSmokeFlight _flight;
+
         private static NetworkIdentity Player => NetworkClient.localPlayer;
         private static LocalPlayerInteraction Interaction => Player.GetComponent<LocalPlayerInteraction>();
 
-        public IEnumerator BuyAtKioskAndWalkAwayCoroutine(ShipLandingPad pad) {
+        public LoopSmokeShopCheck(LoopSmokeContext context) =>
+            _flight = context.Flight;
+
+        [LoopSmokeStep(LoopSmokePhase.AfterLanding, 2, 5, 20)]
+        public IEnumerator BuyAtKioskAndWalkAwayCoroutine() {
+            ShipLandingPad pad = _flight.FindPadUnderShip();
             ShopKioskInteractable kiosk = pad.GetComponentInChildren<ShopKioskInteractable>();
             Assert.IsNotNull(kiosk, $"The pad {pad.name} has no shop kiosk.");
             ShopModel shop = SessionQueries.Resolve<ShopModel>();

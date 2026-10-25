@@ -8,6 +8,7 @@ using Features.FlightFieldModule.Scripts.Rocks;
 using Features.FlightFieldModule.Scripts.Scene;
 using Features.FlightFieldModule.Scripts.Structures;
 using Features.NetworkModelModule.Scripts;
+using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Turret;
 using Features.WeaponModule.Contracts;
 using Mirror;
@@ -16,21 +17,30 @@ using Tests.Shared;
 using UnityEngine;
 
 namespace Tests.PlayMode.LoopSmoke {
-    // Weapon damage on the field: the seated host aims the minigun at the nearest small rock it can see (the station's
-    // test hook stands in for the mouse) and holds the trigger until the server breaks the rock. The rock is in the
-    // synced broken list, hidden on the host, and RockDestroyed fired once for it as a Weapon break by the host with
-    // the minigun.
+    // Weapon damage on the field: the seated host aims the minigun at a small rock (the station's test hook stands in
+    // for the mouse) and holds the trigger until the server breaks the rock. The rock is in the synced broken list,
+    // hidden on the host, and RockDestroyed fired once for it as a Weapon break by the host with the minigun.
+    // The check brings its own target instead of hoping the field has one in sight: it puts the ship beside the nearest
+    // small rocks of the field in turn (the debug move of the balloon shot) until one is in reach and clear sight of
+    // the turret, and puts the ship back afterwards.
     public sealed class LoopSmokeRockShootCheck {
         private const string MINIGUN_ID = "minigun";
         private const int FIELD_ROCK_LAYER_MASK = 1 << 8;
-        private const float SEARCH_RADIUS = 260f;
         private const float MIN_DISTANCE = 25f;
         private const float MAX_DISTANCE = 250f;
         // Within the turret's pitch limits (-10 degrees) with a margin.
         private const float MIN_ELEVATION_DEGREES = -6f;
         private const float BREAK_TIMEOUT_SECONDS = 5f;
+        private const float CANDIDATE_SEARCH_RADIUS = 3000f;
+        private const int CANDIDATES_TRIED = 12;
+        private const float SHOT_DISTANCE = 45f;
+        // The turret on the deck looks a little up at the rock: the ship stands this much lower.
+        private const float SHOT_HEIGHT_BELOW = 4f;
+        // The local field builds the rocks around the moved ship over a few frames.
+        private const float SIGHT_WAIT_SECONDS = 0.5f;
 
         private readonly LoopSmokeSession _session;
+        private readonly LoopSmokeFlight _flight;
         private readonly IFieldRockQuery _fieldRockQuery;
         private readonly IFieldRockEvents _fieldRockEvents;
         private readonly IFieldRockTargetIds _fieldRockTargetIds;
@@ -40,9 +50,12 @@ namespace Tests.PlayMode.LoopSmoke {
         private readonly IPlayerIdentityService _playerIdentityService;
         private readonly List<FieldRockDestroyed> _destroyed = new List<FieldRockDestroyed>();
         private readonly List<FieldRockDescription> _rocks = new List<FieldRockDescription>();
+        private FieldRockDescription _target;
+        private bool _hasTarget;
 
-        public LoopSmokeRockShootCheck(LoopSmokeSession session) {
-            _session = session;
+        public LoopSmokeRockShootCheck(LoopSmokeContext context) {
+            _session = context.Session;
+            _flight = context.Flight;
             _fieldRockQuery = SessionQueries.Resolve<IFieldRockQuery>();
             _fieldRockEvents = SessionQueries.Resolve<IFieldRockEvents>();
             _fieldRockTargetIds = SessionQueries.Resolve<IFieldRockTargetIds>();
@@ -52,8 +65,21 @@ namespace Tests.PlayMode.LoopSmoke {
             _playerIdentityService = SessionQueries.Resolve<IPlayerIdentityService>();
         }
 
-        public IEnumerator ShootNearestSmallRockCoroutine(ShipTurretStation station) {
-            Assert.IsTrue(TryFindVisibleSmallRock(station.transform, out FieldRockDescription rock), "Rock shot: no small breakable rock in sight of the turret in cruise.");
+        // After the turret check sat the host down; before the balloon shot.
+        [LoopSmokeStep(LoopSmokePhase.InCruise, 2, 2, 20)]
+        public IEnumerator ShootNearestSmallRockCoroutine() {
+            ShipBase ship = _session.Ship;
+            ShipTurretStation station = LoopSmokeTurretCheck.FindSeatedStation(ship);
+            Vector3 start = ship.transform.position;
+            _hasTarget = false;
+            yield return PutShipBesideSmallRockCoroutine(ship, station);
+            Assert.IsTrue(_hasTarget, $"Rock shot: none of the {CANDIDATES_TRIED} nearest small breakable rocks came into sight of the turret with the ship beside it.");
+            yield return ShootUntilBrokenCoroutine(station, _target);
+            yield return _flight.PutShipBackCoroutine(start);
+        }
+
+        private IEnumerator ShootUntilBrokenCoroutine(ShipTurretStation station, FieldRockDescription rock) {
+            _destroyed.Clear();
             _fieldRockEvents.RockDestroyed += _destroyed.Add;
             station.DebugHoldTrigger(true);
             yield return _session.WaitForCoroutine(() => AimAndCheckBroken(station, rock), BREAK_TIMEOUT_SECONDS, $"Rock shot: the minigun broke rock {rock.Id}");
@@ -70,25 +96,45 @@ namespace Tests.PlayMode.LoopSmoke {
             Debug.Log($"[LoopSmoke] the minigun broke rock {rock.Id}: {rock.SourceId}, {rock.Diameter:0.0} m, {_destroyed.Count} rocks broken while firing");
         }
 
+        private IEnumerator PutShipBesideSmallRockCoroutine(ShipBase ship, ShipTurretStation station) {
+            foreach (FieldRockDescription candidate in FindSmallRockCandidates(ship.transform.position)) {
+                _flight.PutShipBeside(candidate.Center, SHOT_DISTANCE, SHOT_HEIGHT_BELOW);
+                yield return WaitUntilInSightCoroutine(station.transform, candidate);
+                if (_hasTarget)
+                    yield break;
+            }
+        }
+
+        // Sets _target and _hasTarget once the rock is in sight within the wait.
+        private IEnumerator WaitUntilInSightCoroutine(Transform turret, FieldRockDescription rock) {
+            for (float waited = 0f; waited < SIGHT_WAIT_SECONDS && _hasTarget == false; waited += Time.deltaTime) {
+                yield return null;
+                _hasTarget = IsInSight(turret, rock);
+            }
+
+            if (_hasTarget)
+                _target = rock;
+        }
+
+        private List<FieldRockDescription> FindSmallRockCandidates(Vector3 from) {
+            _fieldRockQuery.FindInSphere(from, CANDIDATE_SEARCH_RADIUS, _rocks);
+            return _rocks.Where(IsUnbrokenSmallRock)
+                .OrderBy(rock => (rock.Center - from).sqrMagnitude)
+                .Take(CANDIDATES_TRIED)
+                .ToList();
+        }
+
+        private bool IsUnbrokenSmallRock(FieldRockDescription rock) =>
+            rock.IsBreakable && rock.Size == FieldRockSize.Small && _liveFieldModel.BrokenRocks.Contains(rock.Id) == false;
+
         private bool AimAndCheckBroken(ShipTurretStation station, FieldRockDescription rock) {
             station.DebugAimAt(rock.Center);
             return _liveFieldModel.BrokenRocks.Contains(rock.Id);
         }
 
-        // The nearest small rock above the turret's lowest pitch whose own trigger is the first thing a ray meets.
-        private bool TryFindVisibleSmallRock(Transform turret, out FieldRockDescription found) {
-            found = default;
-            _fieldRockQuery.FindInSphere(turret.position, SEARCH_RADIUS, _rocks);
-            foreach (FieldRockDescription rock in _rocks.OrderBy(rock => (rock.Center - turret.position).sqrMagnitude)) {
-                if (!IsSmallTargetInReach(turret, rock) || !IsFirstStruck(turret.position, rock))
-                    continue;
-
-                found = rock;
-                return true;
-            }
-
-            return false;
-        }
+        // Above the turret's lowest pitch, and its own trigger is the first thing a ray meets.
+        private bool IsInSight(Transform turret, FieldRockDescription rock) =>
+            IsSmallTargetInReach(turret, rock) && IsFirstStruck(turret.position, rock);
 
         private bool IsSmallTargetInReach(Transform turret, FieldRockDescription rock) {
             Vector3 toRock = rock.Center - turret.position;

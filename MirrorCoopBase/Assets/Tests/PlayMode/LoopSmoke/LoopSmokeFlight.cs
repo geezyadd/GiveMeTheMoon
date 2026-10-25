@@ -145,6 +145,29 @@ namespace Tests.PlayMode.LoopSmoke {
         public void FaceDestination() =>
             Ship.FlightControlDebug.DebugFace(Model.TransitDestination - Ship.transform.position);
 
+        // Beside the point and heading across the line to it, this much lower, so the ship passes it by while the gunner
+        // shoots at it (a debug move in cruise).
+        public void PutShipBeside(Vector3 center, float distance, float heightBelow) {
+            Vector3 direction = HorizontalDirection(Ship.transform.position, center);
+            Vector3 position = center - direction * distance + Vector3.down * heightBelow;
+            Ship.FlightControlDebug.DebugMove(position - Ship.transform.position);
+            Ship.FlightControlDebug.DebugFace(Vector3.Cross(Vector3.up, direction));
+        }
+
+        // Back where a check found the ship before its debug moves: the flight applies the move in its next step, and the
+        // pilot faces the destination from there.
+        public IEnumerator PutShipBackCoroutine(Vector3 start) {
+            Ship.FlightControlDebug.DebugMove(start - Ship.transform.position);
+            yield return null;
+            FaceDestination();
+        }
+
+        public static Vector3 HorizontalDirection(Vector3 from, Vector3 to) {
+            Vector3 direction = to - from;
+            direction.y = 0f;
+            return direction.sqrMagnitude > 0f ? direction.normalized : Vector3.forward;
+        }
+
         public void PullLaunchLever(int loop) {
             ShipLaunchInteractable lever = Object.FindAnyObjectByType<ShipLaunchInteractable>();
             GrabController grab = LocalPlayer.GetComponentInChildren<GrabController>();

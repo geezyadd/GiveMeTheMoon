@@ -1,5 +1,4 @@
 #if UNITY_INCLUDE_TESTS
-using System.Collections;
 using System.Linq;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Model;
@@ -27,35 +26,16 @@ namespace Tests.PlayMode.LoopSmoke {
         private const string LATE_LABEL = "Preset: Late";
 
         private readonly LoopSmokeSession _session;
-        private readonly LoopSmokeFlight _flight;
         private readonly StagePreset _late;
+        private int _stationItems;
 
-        public LoopSmokeStagePresetCheck(LoopSmokeSession session, LoopSmokeFlight flight) {
-            _session = session;
-            _flight = flight;
+        public LoopSmokeStagePresetCheck(LoopSmokeContext context) {
+            _session = context.Session;
             Assert.IsTrue(SessionQueries.Resolve<IStagePresetSelectionService>().TryGetPreset(LATE_PRESET_ID, out _late), $"No stage preset '{LATE_PRESET_ID}'.");
         }
 
-        public IEnumerator PlayLateRunAndReturnToLobbyCoroutine() {
-            PickLateInLobby();
-            yield return _session.StartGameCoroutine();
-            AssertRunStartsAsLate();
-            yield return _flight.BoardPlayerCoroutine();
-
-            int stationItems = LoopSmokeSpawnCounts.CountSceneObjects<ShipItem>();
-            int firstLoop = _late.StartLoopIndex + 1;
-            yield return _flight.FlyLoopCoroutine(firstLoop, AssertFieldOfStartLoop);
-            Assert.AreEqual(ShipRunAbortReason.None, _session.Model.LastAbortReason, "Late: the first flight ended as a wreck.");
-            Assert.AreEqual(stationItems, LoopSmokeSpawnCounts.CountSceneObjects<ShipItem>(), "Late: the first station dropped free modules.");
-            AssertModulesInstalled();
-
-            yield return _session.ReturnToLobbyByAllDeadCoroutine();
-            Assert.AreEqual(string.Empty, SessionQueries.Resolve<IReadOnlyStagePresetSelectionModel>().SelectedPresetId, "Back in the lobby the preset is still selected.");
-            Assert.IsTrue(string.IsNullOrEmpty(SessionQueries.Resolve<IReadOnlyRunStagePresetModel>().PresetId), "Back in the lobby clients still see the preset.");
-            Assert.IsFalse(FindLabel().gameObject.activeInHierarchy, "Back in the lobby the preset label is still shown.");
-        }
-
         // The host's click on the Late option of the lobby picker.
+        [LoopSmokeStep(LoopSmokePhase.InLobby, 3, 10)]
         private void PickLateInLobby() {
             StagePresetOptionButton late = Object.FindObjectsByType<StagePresetOptionButton>(FindObjectsSortMode.None)
                 .FirstOrDefault(option => option.GetComponentInChildren<Text>().text == _late.DisplayName);
@@ -66,6 +46,11 @@ namespace Tests.PlayMode.LoopSmoke {
             AssertLabelShowsLate("lobby");
         }
 
+        [LoopSmokeStep(LoopSmokePhase.BeforeTakeoff, 3, 1, 0)]
+        private void CountStartStationItems() =>
+            _stationItems = LoopSmokeSpawnCounts.CountSceneObjects<ShipItem>();
+
+        [LoopSmokeStep(LoopSmokePhase.BeforeTakeoff, 3, 1, 10)]
         private void AssertRunStartsAsLate() {
             Assert.AreEqual(_late.StartLoopIndex, _session.Model.LoopIndex, "Late: start loop.");
             Assert.AreEqual(_late.StartingBalance, SessionQueries.Resolve<IReadOnlyWalletModel>().Balance, "Late: starting balance.");
@@ -82,7 +67,8 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         // The field of the first flight comes from the loop table entry of the preset's start loop.
-        private IEnumerator AssertFieldOfStartLoop() {
+        [LoopSmokeStep(LoopSmokePhase.InCruise, 3, 1, 10)]
+        private void AssertFieldOfStartLoop() {
             FlightField field = SessionQueries.Resolve<IReadOnlyFlightFieldServerModel>().Field;
             FlightFieldConfiguration.LoopRoutes loop = SessionQueries.Resolve<FlightFieldConfiguration>().RoutesByLoop
                 .Where(entry => entry.FromLoop <= _late.StartLoopIndex)
@@ -90,7 +76,20 @@ namespace Tests.PlayMode.LoopSmoke {
                 .Last();
             Assert.IsTrue(loop.Profiles.Any(option => option.Profile.Id == field.ProfileId), $"Late: field profile {field.ProfileId} is not offered on loop {_late.StartLoopIndex}.");
             Assert.AreEqual(loop.RouteDifficulties.Max(), field.Difficulty, 0.0001f, $"Late: field difficulty is not the one of loop {_late.StartLoopIndex}.");
-            yield break;
+        }
+
+        [LoopSmokeStep(LoopSmokePhase.AfterLanding, 3, 1, 10)]
+        private void AssertFirstStationDroppedNothing() {
+            Assert.AreEqual(ShipRunAbortReason.None, _session.Model.LastAbortReason, "Late: the first flight ended as a wreck.");
+            Assert.AreEqual(_stationItems, LoopSmokeSpawnCounts.CountSceneObjects<ShipItem>(), "Late: the first station dropped free modules.");
+            AssertModulesInstalled();
+        }
+
+        [LoopSmokeStep(LoopSmokePhase.AfterRun, 3, 10)]
+        private void AssertPresetGoneInLobby() {
+            Assert.AreEqual(string.Empty, SessionQueries.Resolve<IReadOnlyStagePresetSelectionModel>().SelectedPresetId, "Back in the lobby the preset is still selected.");
+            Assert.IsTrue(string.IsNullOrEmpty(SessionQueries.Resolve<IReadOnlyRunStagePresetModel>().PresetId), "Back in the lobby clients still see the preset.");
+            Assert.IsFalse(FindLabel().gameObject.activeInHierarchy, "Back in the lobby the preset label is still shown.");
         }
 
         private void AssertLabelShowsLate(string where) {

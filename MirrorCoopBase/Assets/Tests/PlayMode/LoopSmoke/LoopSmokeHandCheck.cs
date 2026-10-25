@@ -25,13 +25,14 @@ namespace Tests.PlayMode.LoopSmoke {
 
         private readonly ShipBase _ship;
 
-        public LoopSmokeHandCheck(ShipBase ship) =>
-            _ship = ship;
+        public LoopSmokeHandCheck(LoopSmokeContext context) =>
+            _ship = context.Session.Ship;
 
         private static NetworkIdentity Player => NetworkClient.localPlayer;
         private static LocalPlayerInteraction Interaction => Player.GetComponent<LocalPlayerInteraction>();
         private static GrabController Hand => Player.GetComponent<GrabController>();
 
+        [LoopSmokeStep(LoopSmokePhase.BeforeTakeoff, 1, 1, 10)]
         public IEnumerator ReinstallRadarByHandCoroutine() {
             ShipSocket socket = FindRadarSocket();
             Assert.IsTrue(socket.ServerTryInstall(RADAR_MODULE_ID), "Radar install failed.");

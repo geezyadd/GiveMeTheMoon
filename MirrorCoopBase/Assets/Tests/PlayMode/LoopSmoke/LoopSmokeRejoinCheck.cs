@@ -30,9 +30,10 @@ namespace Tests.PlayMode.LoopSmoke {
         private readonly IConnectionJoinPolicy _joinPolicy = SessionQueries.Resolve<IConnectionJoinPolicy>();
         private LoopSmokeBot _bot;
 
-        public LoopSmokeRejoinCheck(IReadOnlyShipRunModel shipRunModel) =>
-            _shipRunModel = shipRunModel;
+        public LoopSmokeRejoinCheck(LoopSmokeContext context) =>
+            _shipRunModel = context.Session.Model;
 
+        [LoopSmokeStep(LoopSmokePhase.BeforeTakeoff, 1, 2, 10)]
         public IEnumerator JoinAtStationAndDieCoroutine() {
             Assert.AreEqual(ShipRunPhase.Build, _shipRunModel.Phase, "The join check must start at a station.");
             Assert.IsTrue(_joinPolicy.IsOpenForNewPlayers, "The session is closed to new players at a station.");
@@ -45,6 +46,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return LoopSmokeShopCheck.WaitForCoroutine(() => _bot.Life.LifeState == PlayerLifeState.Dead, "the joined player dead");
         }
 
+        [LoopSmokeStep(LoopSmokePhase.InCruise, 1, 2, 10)]
         public IEnumerator LeaveAndKnockInFlightCoroutine() {
             Assert.AreEqual(ShipRunPhase.Cruise, _shipRunModel.Phase, "The in-flight check did not run in flight.");
             _bot.Leave();
@@ -62,6 +64,7 @@ namespace Tests.PlayMode.LoopSmoke {
             }
         }
 
+        [LoopSmokeStep(LoopSmokePhase.AfterLanding, 1, 2, 10)]
         public IEnumerator ComeBackAtStationCoroutine() {
             Assert.AreEqual(ShipRunPhase.Build, _shipRunModel.Phase, "The return check must run at a station.");
             Assert.IsTrue(_joinPolicy.IsOpenForNewPlayers, "The session stays closed after landing.");
