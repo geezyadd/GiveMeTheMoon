@@ -14,6 +14,8 @@ namespace Features.ShipModule.Scripts {
         private readonly System.Func<ShipFlightSettings> _flightSettings;
         private readonly IShipModules _modules;
         private readonly IShipSteering _steering;
+        // The throttle's share of the max cruise speed, read on use from the synced throttle.
+        private readonly System.Func<float> _throttle;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private bool _debugSteerActive;
@@ -29,10 +31,15 @@ namespace Features.ShipModule.Scripts {
         internal Quaternion Rotation => _flight.Rotation;
         public Vector3 Velocity => _flight.Velocity;
 
-        internal ShipFlightControl(System.Func<ShipFlightSettings> flightSettings, IShipModules modules, IShipSteering steering) {
+        internal ShipFlightControl(
+            System.Func<ShipFlightSettings> flightSettings,
+            IShipModules modules,
+            IShipSteering steering,
+            System.Func<float> throttle) {
             _flightSettings = flightSettings;
             _modules = modules;
             _steering = steering;
+            _throttle = throttle;
         }
 
         internal void BeginTakeoff(
@@ -131,7 +138,7 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             float stat = Mathf.Max(ShipTransit.MinSpeed, _modules.GetStatFull(ShipStatType.FlightSpeed));
-            _flight.SetTravelSpeed(_flightSettings().CruiseSpeed * stat);
+            _flight.SetTravelSpeed(_flightSettings().CruiseSpeed * stat * Mathf.Clamp01(_throttle()));
         }
 
         private void SimulateFlight(float dt) {

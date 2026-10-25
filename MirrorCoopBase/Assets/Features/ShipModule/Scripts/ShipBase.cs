@@ -2,6 +2,7 @@ using Features.CharacterMovableModule.Scripts.Models;
 using Features.GameCoreModule.Contracts;
 using Features.ShipModule.Scripts.Generated;
 using Features.ShipModule.Scripts.Hull;
+using Features.ShipModule.Scripts.Throttle;
 using Mirror;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -10,7 +11,7 @@ using Zenject;
 namespace Features.ShipModule.Scripts {
     public sealed class ShipBase : MonoBehaviour {
         [SerializeField] private ShipSocket[] _sockets;
-        [SerializeField] private ShipLaunchLever _lever;
+        [SerializeField] private ShipThrottleLever _throttle;
         [SerializeField] private Transform _destination;
         [SerializeField] private Rigidbody _body;
         [SerializeField] private BoxCollider _rideVolume;
@@ -42,6 +43,7 @@ namespace Features.ShipModule.Scripts {
         private IShipRunService _runService;
         private CharacterMovableModel _characterMovableModel;
         private ShipRiderKeyModel _shipRiderKeyModel;
+        private IReadOnlyShipThrottleModel _shipThrottleModel;
 
         public Transform Destination => _destination;
         public bool IsFlying => _flying;
@@ -63,6 +65,7 @@ namespace Features.ShipModule.Scripts {
         public ShipHullVolume HullVolume => _hullVolume;
         internal ShipConditionSync ConditionSync => _conditionSync;
         public IShipKnockback Knockback => _flightControl;
+        internal ShipThrottleLever Throttle => _throttle;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         internal IShipRidersDebug RidersDebug => _riders;
         // Public for the loop tests: their pilot faces the ship to the destination, as a crew does by radar.
@@ -70,26 +73,18 @@ namespace Features.ShipModule.Scripts {
         internal IShipDeckCargoDebug CargoDebug => _cargo;
 #endif
 
-        public bool CanLaunch {
+        public bool CanLaunch =>
+            LaunchReadiness == ShipLaunchReadiness.Ready;
+
+        public ShipLaunchReadiness LaunchReadiness {
             get {
-                if (_flying || _sockets == null)
-                    return false;
+                if (_flying || _run.Phase != ShipRunPhase.Build)
+                    return ShipLaunchReadiness.NotAtStation;
 
-                if (_run != null && (_run.Phase != ShipRunPhase.Build || _run.LaunchLocked))
-                    return false;
+                if (_run.LaunchLocked)
+                    return ShipLaunchReadiness.RouteEnded;
 
-                bool anyRequired = false;
-                for (int i = 0; i < _sockets.Length; i++) {
-                    ShipSocket socket = _sockets[i];
-                    if (socket == null || socket.RequiredForLaunch == false)
-                        continue;
-
-                    anyRequired = true;
-                    if (socket.IsOccupied == false)
-                        return false;
-                }
-
-                return anyRequired;
+                return HasRequiredModules() ? ShipLaunchReadiness.Ready : ShipLaunchReadiness.MissingRequiredModule;
             }
         }
 
@@ -100,7 +95,8 @@ namespace Features.ShipModule.Scripts {
             IReadOnlyShipRunModel run,
             IShipRunService runService,
             CharacterMovableModel characterMovableModel,
-            ShipRiderKeyModel shipRiderKeyModel) {
+            ShipRiderKeyModel shipRiderKeyModel,
+            IReadOnlyShipThrottleModel shipThrottleModel) {
             _flightSettings = settings;
             _statsConfiguration = statsConfiguration;
 
@@ -108,13 +104,14 @@ namespace Features.ShipModule.Scripts {
             _runService = runService;
             _characterMovableModel = characterMovableModel;
             _shipRiderKeyModel = shipRiderKeyModel;
+            _shipThrottleModel = shipThrottleModel;
         }
 
         private void Awake() {
             Assert.IsTrue(
                 _sockets != null && _stats != null && _socketStates != null && _statsSync != null && _hullVolume != null
-                && _conditionSync != null,
-                name + " needs its sockets, socket states, stat entity, stats sync, hull volume and condition sync wired.");
+                && _conditionSync != null && _throttle != null,
+                name + " needs its sockets, socket states, stat entity, stats sync, hull volume, condition sync and throttle wired.");
             _deckGeometry = new ShipDeckGeometry(transform, _deck, _deckColliders);
             ShipStatSheet statSheet = new ShipStatSheet(_stats);
             _modules = new ShipModules(_sockets, statSheet, _statsSync, _conditionSync, ReadStatsConfiguration);
@@ -123,7 +120,7 @@ namespace Features.ShipModule.Scripts {
             _riders = new ShipRiders(this, _rideRule, ReadCharacterMovables, ReadRiderKeys);
             _seats = new ShipSeats(this, _sockets, _riders);
             _steering = new ShipSteering(_sockets);
-            _flightControl = new ShipFlightControl(ReadFlightSettings, _modules, _steering);
+            _flightControl = new ShipFlightControl(ReadFlightSettings, _modules, _steering, ReadThrottle);
             _cargo = new ShipDeckCargo(transform, this, _poseSync);
             if (_poseSync != null)
                 _poseSync.BindShip(this, transform);
@@ -208,8 +205,7 @@ namespace Features.ShipModule.Scripts {
             // nothing on uninstall, so the repair's publish covers that too.
             _hull.ServerRepair();
             _flightControl.UnlockControls();
-            if (_lever != null)
-                _lever.ServerReset();
+            _throttle.ServerReset();
 
             ApplyDisplayPose(berth, rotation);
             SleepBody();
@@ -229,9 +225,7 @@ namespace Features.ShipModule.Scripts {
                 _poseSync.ServerSetFlying(false);
 
             _seats.ServerUnseatRiders();
-
-            if (_lever != null)
-                _lever.ServerReset();
+            _throttle.ServerReset();
 
             SleepBody();
             if (_poseSync != null)
@@ -335,6 +329,24 @@ namespace Features.ShipModule.Scripts {
 
         private ShipRiderKeyModel ReadRiderKeys() =>
             _shipRiderKeyModel;
+
+        private float ReadThrottle() =>
+            _shipThrottleModel.Position;
+
+        private bool HasRequiredModules() {
+            bool anyRequired = false;
+            for (int i = 0; i < _sockets.Length; i++) {
+                ShipSocket socket = _sockets[i];
+                if (socket == null || socket.RequiredForLaunch == false)
+                    continue;
+
+                anyRequired = true;
+                if (socket.IsOccupied == false)
+                    return false;
+            }
+
+            return anyRequired;
+        }
 
         private void SleepBody() {
             if (_body == null)

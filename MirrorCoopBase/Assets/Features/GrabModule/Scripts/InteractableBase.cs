@@ -7,7 +7,9 @@ namespace Features.GrabModule.Scripts {
 
         public abstract bool CanUse(NetworkIdentity user, GrabController grab);
 
-        public abstract void ServerUse(NetworkIdentity user, GrabController grab);
+        // A target used some other way (a held control) keeps this empty default.
+        public virtual void ServerUse(NetworkIdentity user, GrabController grab) {
+        }
 
         // A target that is used by holding the interact button: how long the hold lasts. ServerUse runs when it ends.
         public virtual bool TryGetHoldSeconds(GrabController grab, out float seconds) {

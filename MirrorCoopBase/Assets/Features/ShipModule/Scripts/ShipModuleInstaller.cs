@@ -1,4 +1,5 @@
 using Features.ShipModule.Scripts.Hull;
+using Features.ShipModule.Scripts.Throttle;
 using Features.StatsModule.EntityStatsModule.Scripts.StatsEntity.Factories;
 using Zenject;
 
@@ -13,6 +14,7 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ModuleCatalogValidator>().AsSingle();
             Container.BindInterfacesTo<ShipRunConfigValidator>().AsSingle();
             Container.BindInterfacesTo<ShipHullConfigurationValidator>().AsSingle();
+            Container.BindInterfacesTo<ShipThrottleConfigurationValidator>().AsSingle();
             Container.BindInterfacesTo<ShipStationPads>().AsSingle();
             Container.BindInterfacesTo<ShipStationDropService>().AsSingle();
             InstallFlightLength();
@@ -30,10 +32,13 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipRunJoinGate>().AsSingle();
             Container.BindInterfacesTo<ShipDeckJoinSpawn>().AsSingle();
             Container.BindInterfacesTo<ShipPositionSource>().AsSingle();
+            Container.Bind<IShipThrottleDetentRule>().To<ShipThrottleDetentRule>().AsSingle();
+            Container.Bind<IShipThrottleLaunchRule>().To<ShipThrottleLaunchRule>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.BindInterfacesTo<Debug.DeckFeelHarness>().AsSingle();
             Container.Bind<Debug.IShipDebugActionConditions>().To<Debug.ShipDebugActionConditions>().AsSingle();
             Container.BindInterfacesTo<Debug.ShipHullDebugSystem>().AsSingle();
+            Container.BindInterfacesTo<Debug.ShipThrottleDebugSystem>().AsSingle();
             Container.BindInterfacesTo<Debug.WeaponDebugTargetSystem>().AsSingle();
             Container.BindInterfacesTo<Debug.WeaponDebugTargetPrefabSystem>().AsSingle();
             Container.Bind<Debug.ShipStatsDebugOverlay>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();

@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 33578d5ba1a8825418825dba0f7bda97, type: 3}
-  m_Name: Tooltip_LaunchLever
+  m_Name: Tooltip_Throttle
   m_EditorClassIdentifier: 
-  _title: 'Launch lever'
-  _description: 'Starts the flight when the ship is ready to leave.'
-  _actionHint: 'Launch'
+  _title: Throttle
+  _description: Sets the cruise speed; at a station it is the launch lever.
+  _actionHint: Hold, move the mouse forward / back

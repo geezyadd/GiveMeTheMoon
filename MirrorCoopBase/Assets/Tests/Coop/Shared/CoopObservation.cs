@@ -31,6 +31,7 @@ namespace Tests.Coop.Shared {
         public bool IsRejectTextShown;
         public string Message;
         public string[] SonarMarks;
+        public float ThrottlePosition;
         public string[] Errors;
 
         public string Describe() =>
@@ -39,7 +40,7 @@ namespace Tests.Coop.Shared {
             + $"field #{FieldNumber} seed {FieldSeed} placements {FieldPlacements}, nameplate '{OtherNameplate}', "
             + $"sockets [{string.Join(LIST_SEPARATOR, Sockets ?? Array.Empty<string>())}], "
             + $"stats dodge {DodgeRange} armor {Armor} speed {FlightSpeed}, balance {Balance}, "
-            + $"sonar marks [{string.Join(LIST_SEPARATOR, SonarMarks ?? Array.Empty<string>())}]"
+            + $"sonar marks [{string.Join(LIST_SEPARATOR, SonarMarks ?? Array.Empty<string>())}], throttle {ThrottlePosition:0.00}"
             + (string.IsNullOrEmpty(Message) ? string.Empty : $", message: {Message}");
     }
 }

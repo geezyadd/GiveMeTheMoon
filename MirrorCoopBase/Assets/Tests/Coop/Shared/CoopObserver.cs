@@ -18,7 +18,8 @@ using Object = UnityEngine.Object;
 
 namespace Tests.Coop.Shared {
     // Reads what this process sees of the shared game: the run, the ship's sockets and stats, the crew balance, the
-    // flight field, the other player's nameplate, where the local player stands, whether it is alive and at the helm.
+    // flight field, the other player's nameplate, where the local player stands, whether it is alive and at the helm,
+    // and the throttle.
     // The host and the client capture the same fields.
     public static class CoopObserver {
         private const string SOCKET_FORMAT = "{0}={1}";
@@ -40,6 +41,7 @@ namespace Tests.Coop.Shared {
             observation.LifeState = SessionQueries.Resolve<IPlayerLifeQuery>().LocalState.ToString();
             observation.IsSpectating = SessionQueries.Resolve<SpectatorModel>().IsSpectating;
             observation.SonarMarks = CaptureSonarMarks(SessionQueries.Resolve<IReadOnlySonarConsoleModel>());
+            observation.ThrottlePosition = SessionQueries.Resolve<IReadOnlyShipThrottleModel>().Position;
             return observation;
         }
 

@@ -60,6 +60,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             ShipSocketsModelInstaller.Install(Container);
             ShipConditionModelInstaller.Install(Container);
             ShipStatsModelInstaller.Install(Container);
+            ShipThrottleModelInstaller.Install(Container);
             CrewRosterModelInstaller.Install(Container);
             RunStagePresetModelInstaller.Install(Container);
             Container.BindInterfacesAndSelfTo<StagePresetSelectionModel>().AsSingle();

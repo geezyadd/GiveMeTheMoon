@@ -19,13 +19,16 @@ namespace Tests.Coop.Client {
     // The second player of the coop test, in a development build: joins the host by direct IP through the menu,
     // boards, rides the loops the host flies, takes the helm at a station and steers the next flight, leaves in flight
     // from the helm, is turned away in flight, comes back at the next station, dies there and waits to be bought back,
-    // and reports what it sees at every step into the exchange folder. The host test decides pass or fail.
+    // launches the last loop by pushing the throttle handle, and reports what it sees at every step into the exchange
+    // folder. The host test decides pass or fail.
     public sealed class CoopTestClient : MonoBehaviour {
         private const float STEP_TIMEOUT_SECONDS = 120f;
         private const float SETTLE_SECONDS = 1.5f;
         private const int LEAVE_LOOP = 2;
         private const int LAST_LOOP = 3;
         private const int FAILURE_EXIT_CODE = 1;
+        private const float FULL_THROTTLE = 1f;
+        private const float FULL_THROTTLE_TOLERANCE = 0.02f;
         private const float HELM_DROP_HEIGHT = 0.5f;
         // The pilot steers this long into the cruise before it leaves, so the host sees the ship turn.
         private const float STEER_BEFORE_LEAVING_SECONDS = 0.5f;
@@ -73,6 +76,7 @@ namespace Tests.Coop.Client {
             yield return RejoinAtStationCoroutine();
             yield return DieCoroutine();
             yield return WaitForBuyBackCoroutine();
+            yield return PushThrottleCoroutine();
             yield return RideLoopCoroutine(LAST_LOOP);
             yield return FinishCoroutine();
         }
@@ -164,6 +168,18 @@ namespace Tests.Coop.Client {
             Report(CoopObserver.CaptureGame(CoopTestSteps.REVIVED));
         }
 
+        // On the host's command: behind the throttle handle, hold E on it and push the mouse forward until the ship
+        // takes off and the handle is at Full, then let go.
+        private IEnumerator PushThrottleCoroutine() {
+            yield return WaitForCoroutine(() => _exchange.HasCommand(CoopTestSteps.COMMAND_PUSH_THROTTLE), "the host's push-throttle command", _exchangePoll);
+            ShipThrottleHandling handling = new ShipThrottleHandling(Object.FindAnyObjectByType<ShipBase>());
+            yield return handling.PushHandleCoroutine(IsTakenOffAtFullThrottle);
+            if (handling.Failure != null)
+                yield return FailCoroutine($"Pushing the throttle handle failed: {handling.Failure}.");
+
+            Report(CoopObserver.CaptureGame(CoopTestSteps.THROTTLE_PUSHED));
+        }
+
         private IEnumerator FinishCoroutine() {
             yield return WaitForCoroutine(() => _exchange.HasCommand(CoopTestSteps.COMMAND_FINISH), "the host's finish command", _exchangePoll);
             CoopSessionActions.LeaveThroughHud();
@@ -193,6 +209,10 @@ namespace Tests.Coop.Client {
 
         private static PlayerLifeState LocalLifeState() =>
             SessionQueries.Resolve<IPlayerLifeQuery>().LocalState;
+
+        private static bool IsTakenOffAtFullThrottle() =>
+            RunModel().Phase != ShipRunPhase.Build
+            && SessionQueries.Resolve<IReadOnlyShipThrottleModel>().Position >= FULL_THROTTLE - FULL_THROTTLE_TOLERANCE;
 
         private static IReadOnlyShipRunModel RunModel() =>
             SessionQueries.Resolve<IReadOnlyShipRunModel>();

@@ -64,9 +64,16 @@ puts the ship beside the nearest target balloon in clear sight and fires until i
 ship is put before another balloon and flies into it (the real hull check). Each balloon is in the synced popped list,
 hidden on the host, `TargetPopped` fired once (Weapon by the host with `minigun` / `ShipCollision`) and the synced crew
 balance grew by the rewards; after that landing the popped list and the balloons are gone.
-The test timeout is 180 s (a run takes about 150 s). The shared steps live in helpers both loop tests use:
+`LoopSmokeThrottleCheck` (run 2 flight 4): before the takeoff the host stands behind the throttle handle, aims at it
+through the real camera, holds E (`LocalPlayerInteraction.Interact`) and moves the mouse forward through the
+interaction's look input (`MoveHeldControl`) until the ship takes off and the handle is at Full (the server gave it to the
+host's key, the view was locked while held, it let go and stayed at Full on release; the steps are the shared
+`Tests.Shared.ShipThrottleHandling`, also used by the coop client); in that cruise "Throttle = N" puts it at 0 (the ship
+comes to a stop) and back at 1 (it flies again), both with the player riding on the deck; after the landing the handle is
+back at Stop and free. The test timeout is 180 s (a run takes about 150 s). The shared steps live in helpers both loop tests use:
 `LoopSmokeSession` (menu, Host, lobby, Start, all dead -> lobby, Leave; waits record the run phases),
-`LoopSmokeFlight` (engines, boarding, the lever, the phases of a loop with the field checks and the checks after
+`LoopSmokeFlight` (engines, boarding, the launch (the throttle lever at Full through the debug window's "Throttle = N",
+`IShipThrottleDebug`; a check can launch the next flight its own way with `LaunchNextFlightBy`), the phases of a loop with the field checks and the checks after
 landing, messages start with "Loop N:"; at the cruise start its pilot faces the ship to the destination once through
 `ShipBase.FlightControlDebug`, because the autopilot keeps the takeoff heading), `LoopSmokeShipRunConfigOverride` and `LoopSmokeFieldCatalogOverride` (the
 config copies) and `LoopSmokeSpawnCounts`.

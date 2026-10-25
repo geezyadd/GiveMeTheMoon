@@ -17,6 +17,9 @@ namespace Tests.Coop.Shared {
         public const string DIED = "died";
         public const string REVIVED = "revived";
         public const string SONAR_MARK_SEEN = "sonar-mark-seen";
+        // The loop the client launches by pushing the throttle handle (at the station after its buy-back).
+        public const int THROTTLE_LOOP = 3;
+        public const string THROTTLE_PUSHED = "throttle-pushed";
         // The loop whose cruise the host navigator marks a contact in.
         public const int SONAR_MARK_LOOP = 1;
         public const string FINISHED = "finished";
@@ -24,6 +27,7 @@ namespace Tests.Coop.Shared {
 
         public const string COMMAND_REJOIN = "rejoin";
         public const string COMMAND_FINISH = "finish";
+        public const string COMMAND_PUSH_THROTTLE = "push-throttle";
     }
 }
 #endif

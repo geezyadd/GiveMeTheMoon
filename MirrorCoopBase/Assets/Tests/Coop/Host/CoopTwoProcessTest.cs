@@ -32,8 +32,9 @@ namespace Tests.Coop.Host {
     // IP, both ride one loop (the host navigates at the radar's sonar console and marks the station, the client must see
     // the mark in its synced model), the client takes the helm at the station and steers the next cruise, leaves in flight
     // from the helm (the seat is free again) and is turned away in flight, comes back at the next station on the deck and
-    // not at the helm, dies there and is bought back by the host at the kiosk, and both ride one more loop. At every step
-    // the host compares its own view with the client's report.
+    // not at the helm, dies there and is bought back by the host at the kiosk, then launches the last loop by pushing the
+    // throttle handle (the host sees it held by the client's key, at Full and the ship flying), and both ride it. At
+    // every step the host compares its own view with the client's report.
     [PrebuildSetup("Tests.Coop.Editor.CoopClientBuild")]
     public sealed class CoopTwoProcessTest {
         private const int TEST_TIMEOUT_MS = 420000;
@@ -47,6 +48,11 @@ namespace Tests.Coop.Host {
         private const float SIT_POINT_TOLERANCE = 0.3f;
         // The client holds D from the helm into the cruise: the ship turns right at the flight's turn rate.
         private const float MIN_STEERED_DEGREES = 1f;
+        private const float FULL_THROTTLE = 1f;
+        private const float THROTTLE_TOLERANCE = 0.02f;
+        // The client's throttle at Full flies the ship at least this fast in the short test cruise (m/s).
+        private const float MIN_CRUISE_SPEED = 5f;
+        private const float SPEED_SAMPLE_SECONDS = 0.25f;
 
         private readonly WaitForSeconds _exchangePoll = new WaitForSeconds(CoopTestExchange.POLL_SECONDS);
 
@@ -63,6 +69,8 @@ namespace Tests.Coop.Host {
         private float _testStarted;
         private float _stepStarted;
         private float _cruiseStartYaw;
+        private Vector3 _speedSampleStart;
+        private float _speedSampleStartTime;
 
         private ShipBase Ship =>
             _session.Ship;
@@ -257,7 +265,11 @@ namespace Tests.Coop.Host {
         private IEnumerator LaunchAndCompareCruiseCoroutine(int loopIndex) {
             BeginStep($"loop {loopIndex} takeoff");
             Assert.AreEqual(loopIndex - 1, Model.LoopIndex, "LoopIndex before launch.");
-            _flight.PullLaunchLever(loopIndex);
+            if (loopIndex == CoopTestSteps.THROTTLE_LOOP)
+                yield return WatchClientPushThrottleCoroutine();
+            else
+                _flight.PullLaunchLever(loopIndex);
+
             yield return WaitForCoroutine(() => Model.Phase == ShipRunPhase.Cruise, $"Cruise of loop {loopIndex}");
             _flight.FaceDestination();
             // The ship takes the faced heading in its LateUpdate.
@@ -267,6 +279,23 @@ namespace Tests.Coop.Host {
             yield return WaitForReportCoroutine(CoopTestSteps.IN_CRUISE);
             Assert.AreEqual(ShipRunPhase.Cruise, Model.Phase, $"The client's cruise report of loop {loopIndex} came after the cruise.");
             AssertSameView(true, loopIndex != LEAVE_LOOP);
+            if (loopIndex == CoopTestSteps.THROTTLE_LOOP)
+                yield return WaitForCoroutine(IsShipCruising, "the ship flying at the client's throttle");
+        }
+
+        // The client takes the handle by its player key on the server and pushes it past the launch mark to Full.
+        private IEnumerator WatchClientPushThrottleCoroutine() {
+            BeginStep("client pushes the throttle handle to take off");
+            _exchange.AppendCommand(CoopTestSteps.COMMAND_PUSH_THROTTLE);
+            IReadOnlyShipThrottleModel throttle = SessionQueries.Resolve<IReadOnlyShipThrottleModel>();
+            yield return WaitForCoroutine(() => throttle.HolderKey == ClientRider().Key.Id, "the throttle handle held by the client's key on the server");
+            yield return WaitForReportCoroutine(CoopTestSteps.THROTTLE_PUSHED);
+            Assert.AreNotEqual(ShipRunPhase.Build, Model.Phase, "The client's push on the throttle handle did not take off on the host.");
+            Assert.AreEqual(FULL_THROTTLE, throttle.Position, THROTTLE_TOLERANCE, "The host does not see the throttle at Full where the client left it.");
+            Assert.AreEqual(_lastReport.ThrottlePosition, throttle.Position, THROTTLE_TOLERANCE, "Host and client see the throttle at different positions.");
+            Assert.IsTrue(string.IsNullOrEmpty(throttle.HolderKey), "The handle is still held on the server after the client let go.");
+            _speedSampleStart = Ship.transform.position;
+            _speedSampleStartTime = Time.time;
         }
 
         // The host is the navigator: its station mark must reach the client's synced sonar model.
@@ -345,6 +374,19 @@ namespace Tests.Coop.Host {
         private static PlayerLifeState ClientLifeState() {
             Assert.IsTrue(TryGetClientConnection(out NetworkConnectionToClient connection) && connection.identity != null, "The client has no player on the server.");
             return connection.identity.GetComponent<PlayerLifeBody>().LifeState;
+        }
+
+        // The ship's horizontal speed over the last sample on the host, restarted every sample.
+        private bool IsShipCruising() {
+            float elapsed = Time.time - _speedSampleStartTime;
+            if (elapsed < SPEED_SAMPLE_SECONDS)
+                return false;
+
+            Vector3 moved = Ship.transform.position - _speedSampleStart;
+            moved.y = 0f;
+            _speedSampleStart = Ship.transform.position;
+            _speedSampleStartTime = Time.time;
+            return moved.magnitude / elapsed >= MIN_CRUISE_SPEED;
         }
 
         private bool IsShipSteeredRight() =>

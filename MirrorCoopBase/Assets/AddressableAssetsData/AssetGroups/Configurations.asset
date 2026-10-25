@@ -160,6 +160,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d9cf553d4704c9c4f9707f99192c2f9e
+    m_Address: ShipThrottleConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: eac8d9a925f44c6b8f948964453b8e9e
     m_Address: StagePresetCatalog_Default
     m_ReadOnly: 0
