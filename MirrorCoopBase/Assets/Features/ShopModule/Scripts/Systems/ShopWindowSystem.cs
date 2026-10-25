@@ -38,9 +38,6 @@ namespace Features.ShopModule.Scripts.Systems {
         }
 
         public void Initialize() {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            _inputService.Shop.Performed += OnShopPressed;
-#endif
             _inputService.CloseWindow.Performed += OnCloseWindowPressed;
             _gameFlowStateMachineService.StateExited += OnGameFlowStateExited;
             _walletModel.OnBalanceChanged += OnWalletChanged;
@@ -50,9 +47,6 @@ namespace Features.ShopModule.Scripts.Systems {
         }
 
         public void Dispose() {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            _inputService.Shop.Performed -= OnShopPressed;
-#endif
             _inputService.CloseWindow.Performed -= OnCloseWindowPressed;
             _gameFlowStateMachineService.StateExited -= OnGameFlowStateExited;
             _walletModel.OnBalanceChanged -= OnWalletChanged;
@@ -61,25 +55,6 @@ namespace Features.ShopModule.Scripts.Systems {
             _playerLifeQuery.OnLocalStateChanged -= OnLocalLifeStateChanged;
             _shopModel.Close();
         }
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        // Debug cheat: in a release build the shop opens only at a station's kiosk (ShopKioskInteractable).
-        private bool CanOpenShop() =>
-            _gameFlowStateMachineService.CurrentStateType == typeof(SessionGameFlowState)
-            && _gameFlowStateMachineService.IsTransitioning == false
-            && _walletModel.IsAvailable
-            && _playerLifeQuery.LocalState == PlayerLifeState.Alive;
-
-        private void OnShopPressed() {
-            if (_shopModel.IsOpen) {
-                _shopModel.Close();
-                return;
-            }
-
-            if (CanOpenShop())
-                _shopModel.Open(null);
-        }
-#endif
 
         private void OpenWindow() {
             _windowsService.OpenWindow<ShopWindow>();

@@ -11,7 +11,7 @@ namespace Features.ShipModule.Scripts.Hull {
         [SerializeField] private float _maxArmorReduction = 0.75f;
         [Tooltip("Repair the hull to full on every landing at a station.")]
         [SerializeField] private bool _repairOnLanding = true;
-        [Tooltip("Editor / development builds: the damage of one debug hit (F7).")]
+        [Tooltip("Editor / development builds: the default damage of the debug window's 'Hit the hull'.")]
         [SerializeField] private float _debugDamage = 10f;
 
         public float DamageReductionPerArmor => _damageReductionPerArmor;

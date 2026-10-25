@@ -13,7 +13,7 @@ using Tests.Shared;
 using UnityEngine;
 
 namespace Tests.PlayMode.LoopSmoke {
-    // Rock collisions on the host in cruise, through the debug entry the F3 / F4 keys use (it puts the ship before a
+    // Rock collisions on the host in cruise, through the debug window's rock aim entry (it puts the ship before a
     // rock and turns it there; the hit itself is the real server check). A small rock: it breaks once (broken list,
     // RockDestroyed once), the synced hull drops, every peer gets a small impact. A large rock: a large impact, the
     // rock stays, the ship is pushed back out and never gets inside it, and the player still rides on the deck.

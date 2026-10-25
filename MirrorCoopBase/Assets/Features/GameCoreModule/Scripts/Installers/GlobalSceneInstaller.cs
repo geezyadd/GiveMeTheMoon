@@ -1,6 +1,9 @@
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts;
 using Features.CrewInviteModule.Scripts.Installers;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using Features.DebugModule.Scripts.Installers;
+#endif
 using Features.FlightFieldModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.Installers;
 using Features.GrabModule.Scripts;
@@ -36,6 +39,9 @@ namespace Features.GameCoreModule.Scripts.Installers {
             CrewInviteModuleInstaller.Install(Container);
             ConnectionModuleInstaller.Install(Container);
             WindowsModuleInstaller.Install(Container);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            DebugModuleInstaller.Install(Container);
+#endif
             Container.BindInterfacesTo<GameplaySessionLifecycle>().AsSingle();
             Container.BindInterfacesTo<RejectedJoinMenuSystem>().AsSingle();
             Container.BindInterfacesTo<FieldNetworkedPrefabSystem>().AsSingle();

@@ -151,7 +151,7 @@ namespace Tests.Coop.Client {
             Report(CoopObserver.CaptureGame(CoopTestSteps.REJOINED));
         }
 
-        // The development-build kill, the same command as F9: the death itself is the server's.
+        // The development-build kill, the same command as the debug window's "Kill me": the death itself is the server's.
         private IEnumerator DieCoroutine() {
             SessionQueries.LocalPlayer.GetComponent<PlayerLifeBody>().CmdDebugKill();
             yield return WaitForCoroutine(IsDeadAndSpectating, "the local player dead and spectating");
