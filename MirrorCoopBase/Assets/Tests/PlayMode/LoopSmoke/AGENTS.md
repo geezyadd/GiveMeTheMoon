@@ -22,9 +22,14 @@ the Crew list, under its new name. After the second landing everyone dies, the c
 the lobby and `LoopSmokeRunLeakCheck` checks that no object of the first run is left (and that run 2 starts with the same
 station items and spawns the same pad and drops on its first landing). Then it starts a second run, flies five loops (after the first one it checks the station's crew terminal and puts the
 player back on the deck)
-in a row and at the last station buys 5 items at the kiosk through the real aim and the window (`LoopSmokeShopCheck`: delivery
-point, window closes when walking away, the bought items come to rest within a timeout, a far purchase is refused), destroys the hull
-(`LoopSmokeSession.ReturnToLobbyByHullLossCoroutine`: hull 0 -> the crew in the lobby), returns to the menu and checks that there are no
+in a row and at the fifth station buys 5 items at the kiosk through the real aim and the window (`LoopSmokeShopCheck`: delivery
+point, window closes when walking away, the bought items come to rest within a timeout, a far purchase is refused), takes off a sixth time
+and destroys the hull in that cruise (`LoopSmokeRunEnd.HullLossInCruise`, `LoopSmokeSession.ReturnToLobbyByHullLossCoroutine`:
+hull 0 -> the crew in the lobby; `LoopSmokeHullLossCheck`: the host stands by the minigun before the takeoff and sits at it
+in the cruise through the seat's use command, so the hull is lost with the host seated and riding; back in the lobby
+it is not riding, not seated, not kinematic, has collisions, hover and its network body back, is alive with unblocked
+controls, stands still on the lobby scene's ground and walks under the scripted move input; at the first station of
+run 3 it walks on the deck under that input and stays on it), returns to the menu and checks that there are no
 errors in the log. Before that check `LoopSmokeRejectCheck` joins a silent loopback "host", hands the client an
 `InFlight` answer and checks the reason text in the menu. `LoopSmokeCrewInviteCheck`: one "Hire crew" terminal in the
 lobby and one per pad, inactive with "Steam is not running." under the real aim (no Steam in the test; E on it asks
@@ -33,7 +38,7 @@ lobby and one per pad, inactive with "Steam is not running." under the real aim 
 flight runs `LoopSmokeFieldCheck`: in cruise a new
 flight field stands with an active local object for every local placement within the build radius of the camera (none beyond the release radius) and one Mirror object per networked placement;
 after landing nothing of it is left (what a player joining at that station gets); in run 2 loop 3 a forced world shift
-in cruise keeps the field in place against the ship (`LoopSmokeFieldRunCheck`, which also asserts at the last station of
+in cruise keeps the field in place against the ship (`LoopSmokeFieldRunCheck`, which also asserts at the fifth station of
 run 2 that a networked placement was checked); the field pool never grows past what the fields needed. Before
 the first launch `LoopSmokeSonarCheck` stands the host behind the reinstalled radar (its console is inactive at the
 station); first in the cruise of run 1 loop 1 it takes the console through its use command (what E sends): the
@@ -70,7 +75,7 @@ interaction's look input (`MoveHeldControl`) until the ship takes off and the ha
 host's key, the view was locked while held, it let go and stayed at Full on release; the steps are the shared
 `Tests.Shared.ShipThrottleHandling`, also used by the coop client); in that cruise "Throttle = N" puts it at 0 (the ship
 comes to a stop) and back at 1 (it flies again), both with the player riding on the deck; after the landing the handle is
-back at Stop and free. The test timeout is 180 s (a run takes about 150 s). The shared steps live in helpers both loop tests use:
+back at Stop and free. The test timeout is 240 s (a run takes about 170 s). The shared steps live in helpers both loop tests use:
 `LoopSmokeSession` (menu, Host, lobby, Start, all dead -> lobby, Leave; waits record the run phases),
 `LoopSmokeFlight` (engines, boarding, the launch (the throttle lever at Full through the debug window's "Throttle = N",
 `IShipThrottleDebug`; a check can launch the next flight its own way with `LaunchNextFlightBy`), the phases of a loop with the field checks and the checks after

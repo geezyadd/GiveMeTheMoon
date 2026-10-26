@@ -9,12 +9,13 @@ namespace Tests.PlayMode.LoopSmoke {
     // Plays the runs below on a host and runs the registered checks (LoopSmokeCheckRegistry) at every slot on the way:
     // a new check registers its own [LoopSmokeStep] methods and does not edit this file.
     public sealed class LoopSmokeTest {
-        private const int TEST_TIMEOUT_MS = 180000;
+        private const int TEST_TIMEOUT_MS = 240000;
 
         private static readonly LoopSmokeRun[] _runs = {
             new LoopSmokeRun(2, true, LoopSmokeRunEnd.AllDead),
-            // Five flights in a row: the field pool and the Mirror field objects must not grow.
-            new LoopSmokeRun(5, true, LoopSmokeRunEnd.HullLoss),
+            // Five flights in a row: the field pool and the Mirror field objects must not grow. The sixth is lost in
+            // its cruise (LoopSmokeHullLossCheck).
+            new LoopSmokeRun(6, true, LoopSmokeRunEnd.HullLossInCruise),
             // The Late stage preset (LoopSmokeStagePresetCheck) brings its own engines.
             new LoopSmokeRun(1, false, LoopSmokeRunEnd.AllDead)
         };
@@ -92,8 +93,14 @@ namespace Tests.PlayMode.LoopSmoke {
 
         private IEnumerator PlayFlightCoroutine(int run, int flight, int loopIndex, LoopSmokeRun plan) {
             yield return _checks.RunSlotCoroutine(LoopSmokeSlot.OfFlight(LoopSmokePhase.BeforeTakeoff, run, flight));
+            Func<IEnumerator> inCruise = () => _checks.RunSlotCoroutine(LoopSmokeSlot.OfFlight(LoopSmokePhase.InCruise, run, flight));
+            if (plan.End == LoopSmokeRunEnd.HullLossInCruise && flight == plan.Flights) {
+                yield return Flight.FlyToCruiseCoroutine(loopIndex, inCruise);
+                yield break;
+            }
+
             ShipLandingPad launchPad = Flight.FindPadUnderShip();
-            yield return Flight.FlyLoopCoroutine(loopIndex, () => _checks.RunSlotCoroutine(LoopSmokeSlot.OfFlight(LoopSmokePhase.InCruise, run, flight)));
+            yield return Flight.FlyLoopCoroutine(loopIndex, inCruise);
             if (plan.HasTestEngines)
                 yield return Flight.AssertLandedSafelyCoroutine(loopIndex, launchPad, Flight.FindPadUnderShip());
 
@@ -106,6 +113,7 @@ namespace Tests.PlayMode.LoopSmoke {
                     yield return _session.ReturnToLobbyByAllDeadCoroutine();
                     yield break;
                 case LoopSmokeRunEnd.HullLoss:
+                case LoopSmokeRunEnd.HullLossInCruise:
                     yield return _session.ReturnToLobbyByHullLossCoroutine();
                     yield break;
                 default:

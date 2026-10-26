@@ -25,7 +25,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float DROP_HEIGHT = 0.5f;
         private const float BELOW_DECK_TOLERANCE = 0.25f;
         // Behind the turret socket on the deck, within reach of its seat.
-        private static readonly Vector3 _gunnerSpot = new Vector3(-2.6f, 0.3f, 1.3f);
+        public static readonly Vector3 GunnerSpot = new Vector3(-2.6f, 0.3f, 1.3f);
 
         private readonly LoopSmokeSession _session;
 
@@ -48,7 +48,7 @@ namespace Tests.PlayMode.LoopSmoke {
         public IEnumerator InstallMinigunAndStandByItCoroutine() {
             Assert.IsTrue(Socket.ServerTryInstall(MINIGUN_MODULE_ID), "Turret: the minigun was not installed at the station.");
             Assert.IsNotNull(Socket.GetComponentInChildren<ShipTurretStation>(), "Turret: the installed minigun shows no turret station.");
-            ShipDeckBoarding.PutAbove(Player.GetComponent<CharacterMovableBase>(), _session.Ship, _gunnerSpot, DROP_HEIGHT);
+            ShipDeckBoarding.PutAbove(Player.GetComponent<CharacterMovableBase>(), _session.Ship, GunnerSpot, DROP_HEIGHT);
 
             yield return new WaitForSeconds(BOARD_SETTLE_SECONDS);
             AssertPlayerStandsOnDeck(_session.Ship);
@@ -94,7 +94,7 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.Greater(local.y, surfaceY - BELOW_DECK_TOLERANCE, $"Turret: the host at ship-local {local} is below the deck ({surfaceY:0.00}).");
         }
 
-        private static ShipSocket FindSocket(ShipBase ship) {
+        public static ShipSocket FindSocket(ShipBase ship) {
             foreach (ShipSocket socket in ship.Sockets) {
                 if (socket.SocketId == TURRET_SOCKET_ID)
                     return socket;

@@ -109,6 +109,13 @@ its own player; the others follow the owner's synced offset. When and how a play
   stands or comes down over the walk boxes, `CatchMinHeight`..`CatchMaxHeight` (-0.5..1.5 m) above the deck surface under
   it and not rising faster than `CatchMaxRiseSpeed` (0.15 m/s). A standing player's position is 1 m above the deck surface;
 - all heights come from `ShipDeckRideRule`, measured from the deck surface under the player, not from the ship's pivot;
+- **the ship going away releases its riders** on every peer (`ShipBase` → `ShipRiders.ReleaseAllOnLeave` →
+  `ShipRider.ReleaseFromLeavingShip`): when its map starts to unload (`ConnectionNetworkEvents.MapUnloading`, before the
+  players are teleported to the next map; a hull loss, the whole crew dead or Start) and again in `OnDestroy`. Every
+  rider bound to it there, riding or seated, gets its body back (not kinematic, collisions, hover, network body) where it
+  stands, without the ride's velocity, and none is caught or boarded again; the server also clears the rider's ride and
+  seat SyncVars, every seat and the throttle. Before 2026-10-26 a hull loss in flight left the crew bound to a ship the
+  next map no longer had: frozen in the void of the lobby and unable to walk in the next run;
 - a client that spawns the ship while it flies gets the flight state through the `ShipPoseSync._flying` hook: Mirror's
   generated SyncVar deserialization calls the hook on the first spawn too, whenever the value differs from the default;
   the same holds for `ShipRider._syncedRideShip` of a player already riding;

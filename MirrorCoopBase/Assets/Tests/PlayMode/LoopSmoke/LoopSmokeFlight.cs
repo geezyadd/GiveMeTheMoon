@@ -79,6 +79,16 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         public IEnumerator FlyLoopCoroutine(int expectedLoopIndex, Func<IEnumerator> inCruise = null) {
+            yield return FlyToCruiseCoroutine(expectedLoopIndex, inCruise);
+
+            yield return _session.WaitForCoroutine(IsBackInBuild, FLIGHT_TIMEOUT_SECONDS, $"Build after landing of loop {expectedLoopIndex}");
+            CollectionAssert.AreEqual(_expectedLoopPhases, _session.Phases, $"Loop {expectedLoopIndex}: phase sequence {string.Join(" -> ", _session.Phases)}");
+            Assert.AreEqual(expectedLoopIndex, Model.LoopIndex, $"Loop {expectedLoopIndex}: LoopIndex after landing.");
+            yield return _fieldCheck.AssertFieldClearedCoroutine(expectedLoopIndex);
+        }
+
+        // A flight that never lands: its run ends in this cruise (LoopSmokeRunEnd.HullLossInCruise).
+        public IEnumerator FlyToCruiseCoroutine(int expectedLoopIndex, Func<IEnumerator> inCruise) {
             Assert.AreEqual(expectedLoopIndex - 1, Model.LoopIndex, $"Loop {expectedLoopIndex}: LoopIndex before launch.");
             _session.StartPhaseRecord();
             _longestTakeoffFrame = 0f;
@@ -91,11 +101,6 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return _fieldCheck.AssertNewFieldStandsCoroutine(expectedLoopIndex);
             if (inCruise != null)
                 yield return inCruise();
-
-            yield return _session.WaitForCoroutine(IsBackInBuild, FLIGHT_TIMEOUT_SECONDS, $"Build after landing of loop {expectedLoopIndex}");
-            CollectionAssert.AreEqual(_expectedLoopPhases, _session.Phases, $"Loop {expectedLoopIndex}: phase sequence {string.Join(" -> ", _session.Phases)}");
-            Assert.AreEqual(expectedLoopIndex, Model.LoopIndex, $"Loop {expectedLoopIndex}: LoopIndex after landing.");
-            yield return _fieldCheck.AssertFieldClearedCoroutine(expectedLoopIndex);
         }
 
         public IEnumerator AssertLandedSafelyCoroutine(int loop, ShipLandingPad launchPad, ShipLandingPad landingPad) {

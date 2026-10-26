@@ -22,6 +22,7 @@ namespace Features.ShipModule.Scripts {
 
         private CharacterMovableBase _cachedLocalPlayer;
         private ShipRider _localRider;
+        private bool _hasLeft;
 
         public IReadOnlyList<ShipRider> All => _riders;
 
@@ -86,6 +87,9 @@ namespace Features.ShipModule.Scripts {
         // Every player over the deck rides from the takeoff, wherever on the deck it stands. Each peer binds only its own
         // player; the others follow their owner's synced ride (ShipRider hooks).
         internal void BoardRidersOverDeck() {
+            if (_hasLeft)
+                return;
+
             foreach (CharacterMovableBase movable in _characterMovables().Movables.Values) {
                 if (movable == null || movable.TryGetComponent(out ShipRider rider) == false)
                     continue;
@@ -117,6 +121,18 @@ namespace Features.ShipModule.Scripts {
             }
         }
 
+        // The ship goes away with its map or is destroyed: every rider bound to it on this peer goes free, riding or
+        // seated, and none is bound to it again.
+        internal void ReleaseAllOnLeave() {
+            _hasLeft = true;
+            for (int i = _riders.Count - 1; i >= 0; i--) {
+                if (_riders[i] != null)
+                    _riders[i].ReleaseFromLeavingShip();
+            }
+
+            _riders.Clear();
+        }
+
         public void ServerReleaseRiders() {
             for (int i = 0; i < _riders.Count; i++) {
                 if (_riders[i] != null)
@@ -134,7 +150,7 @@ namespace Features.ShipModule.Scripts {
             _riderKeys().TryGet(key, out rider);
 
         private void TryCatchRider(ShipRider rider) {
-            if (rider == null || rider.isOwned == false || rider.IsRiding)
+            if (_hasLeft || rider == null || rider.isOwned == false || rider.IsRiding)
                 return;
 
             ShipRideRefusal refusal = rider.CheckLanding(_ship);

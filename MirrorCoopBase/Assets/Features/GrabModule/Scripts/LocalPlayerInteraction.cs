@@ -124,7 +124,7 @@ namespace Features.GrabModule.Scripts {
             if (_heldControl == null)
                 return;
 
-            if (_controlBlock.IsBlocked) {
+            if (_controlBlock.IsBlocked || IsHeldControlGone()) {
                 EndHeldControl();
                 return;
             }
@@ -140,13 +140,18 @@ namespace Features.GrabModule.Scripts {
             if (_heldControl == null)
                 return;
 
-            HeldControlFrame frame = _heldControl.LocalEndHold();
-            SendHeldControlPosition(frame);
+            // A control destroyed with its map (the ship's throttle) has no last position to send.
+            if (IsHeldControlGone() == false)
+                SendHeldControlPosition(_heldControl.LocalEndHold());
+
             _heldControl = null;
             _heldControlLook = Vector2.zero;
             _cameraLookLockModel.Release(this);
             _use.RequestLetGoHeldControl();
         }
+
+        private bool IsHeldControlGone() =>
+            _heldControl is Object control && control == null;
 
         private void SendHeldControlPosition(HeldControlFrame frame) {
             if (frame.HasPositionToSend && frame.IsLost == false)

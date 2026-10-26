@@ -222,13 +222,26 @@ namespace Features.ShipModule.Scripts {
             RpcRelease();
         }
 
-        internal void ReleaseFromPlatform() {
+        internal void ReleaseFromPlatform() =>
+            Unbind(isOwned && _ship.IsFlying);
+
+        // The ship goes away (its map unloads or it is destroyed): the rider is freed where it is, without the ride's
+        // velocity; the server also clears the ride and the seat the other peers read.
+        internal void ReleaseFromLeavingShip() {
+            if (isServer) {
+                _seated = false;
+                _syncedRideShip = null;
+            }
+
+            Unbind(false);
+        }
+
+        private void Unbind(bool carryVelocity) {
             if (_bound == false)
                 return;
 
             // The ship may have been snapped (origin shift at the station) since the last Follow.
             ApplyWorldPose();
-            bool carryVelocity = isOwned && _ship.IsFlying;
             if (carryVelocity)
                 _reboardAt = Time.time + _ship.ReboardDelaySeconds;
             _bound = false;
