@@ -22,14 +22,18 @@ namespace Features.SonarModule.Scripts.Installers {
             Container.BindInterfacesTo<SonarWindowSystem>().AsSingle();
             Container.BindInterfacesTo<SonarConsoleReachSystem>().AsSingle();
             Container.BindInterfacesTo<SonarScopeSystem>().AsSingle();
+            Container.Bind<ISonarStationMarkerSource>().To<SonarStationMarkerSource>().AsSingle();
             Container.BindInterfacesTo<SonarMarkerSystem>().AsSingle();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Container.BindInterfacesTo<SonarStationMarkerDebugSystem>().AsSingle();
+#endif
         }
 
         // A new family of contacts (targets, enemies) is one more ISonarContactSource binding here.
         private void InstallContacts() {
             Container.Bind<IRockSonarContactIds>().To<RockSonarContactIds>().AsSingle();
             Container.Bind<ISonarContactSource>().To<RockSonarContactSource>().AsSingle();
-            Container.Bind<ISonarContactSource>().To<StationSonarContactSource>().AsSingle();
+            Container.BindInterfacesTo<StationSonarContactSource>().AsSingle();
             Container.Bind<ISonarContactSource>().To<TargetSonarContactSource>().AsSingle();
             Container.BindInterfacesTo<RadarSonarCondition>().AsSingle();
             Container.Bind<ISonarContactService>().To<SonarContactService>().AsSingle();
