@@ -6,6 +6,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using Features.CameraModule.Scripts;
+using Features.GrabModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Generated;
@@ -34,7 +35,8 @@ namespace Tests.Coop.Host {
     // from the helm (the seat is free again) and is turned away in flight, comes back at the next station on the deck and
     // not at the helm, dies there and is bought back by the host at the kiosk, then launches the last loop by pushing the
     // throttle handle (the host sees it held by the client's key, at Full and the ship flying), and both ride it. At
-    // every step the host compares its own view with the client's report.
+    // every step the host compares its own view with the client's report. An item the host drops on the deck at the
+    // first station lies on the deck in every cruise, the same on both peers.
     [PrebuildSetup("Tests.Coop.Editor.CoopClientBuild")]
     public sealed class CoopTwoProcessTest {
         private const int TEST_TIMEOUT_MS = 420000;
@@ -65,6 +67,7 @@ namespace Tests.Coop.Host {
         private CoopTestExchange _exchange;
         private CoopClientProcess _client;
         private CoopObservation _lastReport;
+        private Grabbable _deckItem;
         private int _readReports;
         private float _testStarted;
         private float _stepStarted;
@@ -132,6 +135,7 @@ namespace Tests.Coop.Host {
             _flight.InstallRequiredEngines();
             _sonar = new LoopSmokeSonarCheck(_session);
             _sonar.InstallRadarAtStation();
+            yield return DropItemOnDeckCoroutine();
             yield return _flight.BoardPlayerCoroutine();
             yield return _sonar.StandByConsoleCoroutine();
             yield return WaitForReportCoroutine(CoopTestSteps.BOARDED);
@@ -279,6 +283,7 @@ namespace Tests.Coop.Host {
             yield return WaitForReportCoroutine(CoopTestSteps.IN_CRUISE);
             Assert.AreEqual(ShipRunPhase.Cruise, Model.Phase, $"The client's cruise report of loop {loopIndex} came after the cruise.");
             AssertSameView(true, loopIndex != LEAVE_LOOP);
+            AssertDeckItemLiesOnDeck(loopIndex);
             if (loopIndex == CoopTestSteps.THROTTLE_LOOP)
                 yield return WaitForCoroutine(IsShipCruising, "the ship flying at the client's throttle");
         }
@@ -318,6 +323,24 @@ namespace Tests.Coop.Host {
             List<string> mismatches = CoopObservationComparison.FindMismatches(host, _lastReport, isInFlight, isClientStaying);
             Assert.IsEmpty(mismatches, $"Host and client differ at {_lastReport.Step}:\n{string.Join("\n", mismatches)}\n"
                                        + $"host: {host.Describe()}\nclient: {_lastReport.Describe()}");
+        }
+
+        private IEnumerator DropItemOnDeckCoroutine() {
+            BeginStep("host drops an item on the deck");
+            Grabbable[] items = LoopSmokeDeckItemCheck.FindLooseBoxItems(Ship);
+            Assert.IsNotEmpty(items, "No loose item at the first station to drop on the deck.");
+            yield return LoopSmokeDeckItemCheck.DropOnDeckByHandCoroutine(Ship, items, OnDeckItemDropped);
+        }
+
+        private void OnDeckItemDropped(Grabbable item) =>
+            _deckItem = item;
+
+        // The cruise comparison holds the client's gap to the host's; here the host's own one is on the deck surface.
+        private void AssertDeckItemLiesOnDeck(int loopIndex) {
+            Assert.IsTrue(SessionQueries.IsOnDeck(Ship, _deckItem.transform.position), $"Loop {loopIndex}: the dropped {_deckItem.name} is off the deck.");
+            CollectionAssert.Contains(_lastReport.DeckItemIds, _deckItem.netId, $"Loop {loopIndex}: the client does not see the dropped {_deckItem.name} on the deck.");
+            float gap = ShipDeckItemRest.MeasureGapAboveDeck(Ship, _deckItem.GetComponentInChildren<BoxCollider>());
+            Assert.Less(Mathf.Abs(gap), CoopObservationComparison.DECK_ITEM_GAP_TOLERANCE, $"Loop {loopIndex}: the dropped {_deckItem.name} does not lie on the deck: {gap:0.000} m above it.");
         }
 
         private void BeginStep(string step) {

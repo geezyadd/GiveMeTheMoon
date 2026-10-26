@@ -1,5 +1,6 @@
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.GameCoreModule.Contracts;
+using Features.GrabModule.Scripts;
 using Features.ShipModule.Scripts.Generated;
 using Features.ShipModule.Scripts.Hull;
 using Features.ShipModule.Scripts.Throttle;
@@ -46,6 +47,7 @@ namespace Features.ShipModule.Scripts {
         private ShipRiderKeyModel _shipRiderKeyModel;
         private IReadOnlyShipThrottleModel _shipThrottleModel;
         private ConnectionNetworkEvents _connectionNetworkEvents;
+        private HeldItemRegistry _heldItemRegistry;
 
         public Transform Destination => _destination;
         public bool IsFlying => _flying;
@@ -72,7 +74,6 @@ namespace Features.ShipModule.Scripts {
         internal IShipRidersDebug RidersDebug => _riders;
         // Public for the loop tests: their pilot faces the ship to the destination, as a crew does by radar.
         public IShipFlightControlDebug FlightControlDebug => _flightControl;
-        internal IShipDeckCargoDebug CargoDebug => _cargo;
 #endif
 
         public bool CanLaunch =>
@@ -99,7 +100,8 @@ namespace Features.ShipModule.Scripts {
             CharacterMovableModel characterMovableModel,
             ShipRiderKeyModel shipRiderKeyModel,
             IReadOnlyShipThrottleModel shipThrottleModel,
-            ConnectionNetworkEvents connectionNetworkEvents) {
+            ConnectionNetworkEvents connectionNetworkEvents,
+            HeldItemRegistry heldItemRegistry) {
             _flightSettings = settings;
             _statsConfiguration = statsConfiguration;
 
@@ -109,6 +111,7 @@ namespace Features.ShipModule.Scripts {
             _shipRiderKeyModel = shipRiderKeyModel;
             _shipThrottleModel = shipThrottleModel;
             _connectionNetworkEvents = connectionNetworkEvents;
+            _heldItemRegistry = heldItemRegistry;
         }
 
         private void Awake() {
@@ -125,18 +128,21 @@ namespace Features.ShipModule.Scripts {
             _seats = new ShipSeats(this, _sockets, _riders);
             _steering = new ShipSteering(_sockets);
             _flightControl = new ShipFlightControl(ReadFlightSettings, _modules, _steering, ReadThrottle);
-            _cargo = new ShipDeckCargo(transform, this, _poseSync);
+            _cargo = new ShipDeckCargo(transform, this, _poseSync, ReadFlightSettings);
             if (_poseSync != null)
                 _poseSync.BindShip(this, transform);
 
             _modules.ApplyDefaultStats();
         }
 
-        private void Start() =>
+        private void Start() {
             _connectionNetworkEvents.MapUnloading += OnMapUnloading;
+            _heldItemRegistry.OnItemReleased += _cargo.OnItemReleased;
+        }
 
         private void OnDestroy() {
             _connectionNetworkEvents.MapUnloading -= OnMapUnloading;
+            _heldItemRegistry.OnItemReleased -= _cargo.OnItemReleased;
             _riders.ReleaseAllOnLeave();
         }
 
@@ -178,6 +184,7 @@ namespace Features.ShipModule.Scripts {
                 _poseSync.ServerSetFlying(true);
 
             _riders.BoardRidersOverDeck();
+            _cargo.ServerBoardDeckItems();
         }
 
         internal void BeginCruise() {

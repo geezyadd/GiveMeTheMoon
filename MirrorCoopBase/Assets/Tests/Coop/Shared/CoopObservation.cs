@@ -32,6 +32,9 @@ namespace Tests.Coop.Shared {
         public string Message;
         public string[] SonarMarks;
         public float ThrottlePosition;
+        // The loose box items lying over the deck, by net id, and each one's gap above the deck surface in ship space.
+        public uint[] DeckItemIds;
+        public float[] DeckItemGaps;
         public string[] Errors;
 
         public string Describe() =>
@@ -40,8 +43,20 @@ namespace Tests.Coop.Shared {
             + $"field #{FieldNumber} seed {FieldSeed} placements {FieldPlacements}, nameplate '{OtherNameplate}', "
             + $"sockets [{string.Join(LIST_SEPARATOR, Sockets ?? Array.Empty<string>())}], "
             + $"stats dodge {DodgeRange} armor {Armor} speed {FlightSpeed}, balance {Balance}, "
-            + $"sonar marks [{string.Join(LIST_SEPARATOR, SonarMarks ?? Array.Empty<string>())}], throttle {ThrottlePosition:0.00}"
+            + $"sonar marks [{string.Join(LIST_SEPARATOR, SonarMarks ?? Array.Empty<string>())}], throttle {ThrottlePosition:0.00}, "
+            + $"deck items [{DescribeDeckItems()}]"
             + (string.IsNullOrEmpty(Message) ? string.Empty : $", message: {Message}");
+
+        public string DescribeDeckItems() {
+            if (DeckItemIds == null || DeckItemGaps == null)
+                return string.Empty;
+
+            string[] items = new string[DeckItemIds.Length];
+            for (int i = 0; i < items.Length; i++)
+                items[i] = $"#{DeckItemIds[i]} {DeckItemGaps[i]:0.000} m";
+
+            return string.Join(LIST_SEPARATOR, items);
+        }
     }
 }
 #endif

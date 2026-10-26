@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Features.GameCoreModule.Contracts;
 using Mirror;
@@ -7,6 +8,9 @@ namespace Features.GrabModule.Scripts {
     // An item that is not spawned here yet stays pending and is picked up as soon as it appears.
     public sealed class HeldItemRegistry : IGameplaySession {
         private readonly List<HeldItem> _held = new List<HeldItem>(8);
+
+        // An item left a hand on this peer and is loose again (the ship's deck catches one let go in flight).
+        public event Action<Grabbable> OnItemReleased;
 
         public void Hold(GrabController holder, uint itemNetId) {
             int index = IndexOf(holder);
@@ -79,6 +83,7 @@ namespace Features.GrabModule.Scripts {
 
             held.Item.Stopped -= OnItemStopped;
             held.Item.ApplyRelease();
+            OnItemReleased?.Invoke(held.Item);
         }
 
         private void Detach(HeldItem held) {

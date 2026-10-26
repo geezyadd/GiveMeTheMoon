@@ -129,6 +129,7 @@ namespace Features.ShipModule.Scripts {
             _shipBase.ApplyDisplayPose(_latePos, _lateRot);
             // A full spawn does not call the list callbacks: the cargo already on the deck is attached here.
             _deckCargo.OnAdd += OnDeckCargoAdded;
+            _deckCargo.OnSet += OnDeckCargoSet;
             _deckCargo.OnRemove += OnDeckCargoRemoved;
             for (int i = 0; i < _deckCargo.Count; i++)
                 AttachDeckItem(_deckCargo[i]);
@@ -139,6 +140,7 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             _deckCargo.OnAdd -= OnDeckCargoAdded;
+            _deckCargo.OnSet -= OnDeckCargoSet;
             _deckCargo.OnRemove -= OnDeckCargoRemoved;
             _shipBase.Cargo.DetachAll(false);
         }
@@ -179,12 +181,16 @@ namespace Features.ShipModule.Scripts {
         }
 
         [Server]
-        internal void ServerAttachDeckItem(uint netId, Vector3 localPosition, Quaternion localRotation) =>
-            _deckCargo.Add(new DeckCargoEntry {
-                NetId = netId,
-                LocalPosition = localPosition,
-                LocalRotation = localRotation
-            });
+        internal void ServerAttachDeckItem(DeckCargoEntry entry) =>
+            _deckCargo.Add(entry);
+
+        [Server]
+        internal void ServerSettleDeckItem(DeckCargoEntry entry) {
+            for (int i = 0; i < _deckCargo.Count; i++) {
+                if (_deckCargo[i].NetId == entry.NetId)
+                    _deckCargo[i] = entry;
+            }
+        }
 
         [Server]
         internal void ServerDetachDeckItem(uint netId) {
@@ -197,11 +203,14 @@ namespace Features.ShipModule.Scripts {
         private void OnDeckCargoAdded(int index) =>
             AttachDeckItem(_deckCargo[index]);
 
+        private void OnDeckCargoSet(int index, DeckCargoEntry previous) =>
+            AttachDeckItem(_deckCargo[index]);
+
         private void OnDeckCargoRemoved(int index, DeckCargoEntry removed) =>
             _shipBase.Cargo.ClientDetach(removed.NetId);
 
         private void AttachDeckItem(DeckCargoEntry entry) =>
-            _shipBase.Cargo.ClientAttach(entry.NetId, entry.LocalPosition, entry.LocalRotation);
+            _shipBase.Cargo.ClientAttach(entry);
 
         [ClientRpc]
         private void RpcSnap(Vector3 position, Quaternion rotation) {

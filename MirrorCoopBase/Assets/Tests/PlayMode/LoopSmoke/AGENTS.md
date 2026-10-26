@@ -77,7 +77,15 @@ interaction's look input (`MoveHeldControl`) until the ship takes off and the ha
 host's key, the view was locked while held, it let go and stayed at Full on release; the steps are the shared
 `Tests.Shared.ShipThrottleHandling`, also used by the coop client); in that cruise "Throttle = N" puts it at 0 (the ship
 comes to a stop) and back at 1 (it flies again), both with the player riding on the deck; after the landing the handle is
-back at Stop and free. `LoopSmokeStationMarkerCheck` (run 2 cruise 5): the debug window's "Show station: off" clicked as a
+back at Stop and free. `LoopSmokeDeckItemCheck` (run 2 flight 3): before the takeoff the host grabs two free items with a box
+collider nearest to the deck's middle (in practice the wrench and the hammer of the tool rack; some station drops lie
+under the deck, out of reach, so an item the aim cannot take is skipped and the list is tried up to 3 times) through
+the real aim, drops the first on the deck (it comes to rest as a physics body) and
+carries the second aboard; in that cruise (after the forced world shift) the first lies on the deck, the second, let
+go from the hand, falls onto it, and after a hard turn (`SetDebugSteer`) both still lie on it where they were; after the
+landing both are physics bodies again (not kinematic), at rest on the deck and can be picked up. "Lies on the deck" is
+the gap between the item box's lowest corner and the deck surface under it in ship space (`Tests.Shared.ShipDeckItemRest`),
+within 5 cm. `LoopSmokeStationMarkerCheck` (run 2 cruise 5): the debug window's "Show station: off" clicked as a
 player does turns the own station marker on, the level camera turned toward the station through the look input shows
 it over the station with its distance, turned away on the screen's edge, and "Show station: on" takes it off again. The test timeout is 240 s (a run takes about 170 s). The shared steps live in helpers both loop tests use:
 `LoopSmokeSession` (menu, Host, lobby, Start, all dead -> lobby, Leave; waits record the run phases),

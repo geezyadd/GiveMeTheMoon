@@ -24,6 +24,24 @@ namespace Features.GrabModule.Scripts {
         public override void OnStopClient() =>
             Stopped?.Invoke(this);
 
+        // The physics of an item nobody holds, also for one the flying deck has carried and lets go of at a station: what
+        // the item had before it was held or carried would be the hold's or the deck's kinematic pin.
+        public void ApplyLoosePhysics() {
+            if (_rb != null) {
+                _rb.detectCollisions = true;
+                // Only the server simulates a loose item: on a client the network body keeps it kinematic and moves it,
+                // so a client-side gravity step would only make it twitch before the first snapshot.
+                if (isServer) {
+                    _rb.isKinematic = false;
+                    _rb.linearVelocity = Vector3.zero;
+                    _rb.angularVelocity = Vector3.zero;
+                }
+            }
+
+            if (_networkBody != null)
+                _networkBody.enabled = true;
+        }
+
         internal void SetHovered(bool hovered) {
             if (_outline == null)
                 return;
@@ -50,19 +68,7 @@ namespace Features.GrabModule.Scripts {
         internal void ApplyRelease() {
             _isHeld = false;
             _holdPoint = null;
-            if (_rb != null) {
-                _rb.detectCollisions = true;
-                // Only the server simulates a loose item: on a client the network body keeps it kinematic and moves it,
-                // so a client-side gravity step would only make it twitch before the first snapshot.
-                if (isServer) {
-                    _rb.isKinematic = false;
-                    _rb.linearVelocity = Vector3.zero;
-                    _rb.angularVelocity = Vector3.zero;
-                }
-            }
-
-            if (_networkBody != null)
-                _networkBody.enabled = true;
+            ApplyLoosePhysics();
         }
 
         internal void FollowHolder() {
