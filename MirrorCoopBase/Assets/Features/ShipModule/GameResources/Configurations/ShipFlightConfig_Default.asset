@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: ShipFlightConfig_Default
   m_EditorClassIdentifier: 
   _flightMode: 2
-  _cruiseAcceleration: 8
+  _cruiseAcceleration: 4.5
   _dodgeRange: 4
-  _turnRate: 80
-  _cruiseSpeed: 14
+  _turnRate: 55
+  _cruiseSpeed: 8
   _bankDegrees: 22
-  _swayStiffness: 10
+  _swayStiffness: 7
   _swayDamping: 0.32
   _boardingEdgeTolerance: 0.5
   _boardingMinHeight: -0.5

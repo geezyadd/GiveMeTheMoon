@@ -18,11 +18,11 @@ MonoBehaviour:
   _slotViewPrefab: {fileID: 6301338388048282597, guid: 6c9e13a4d5f26812c3e4f50617283a4b, type: 3}
   _displayName: Propeller
   _icon: {fileID: 0}
-  _description: Cheap propeller. Adds a very small flight speed bonus.
+  _description: Cheap propeller. Adds a small flight speed bonus (+10 %).
   _price: 150
   _statModifiers:
   - Stat: 5
-    Value: 0.08
+    Value: 0.1
     Type: 0
   _isRemovable: 1
   _isControlModule: 0

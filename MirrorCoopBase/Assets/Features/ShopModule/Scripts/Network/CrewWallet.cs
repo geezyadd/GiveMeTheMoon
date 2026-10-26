@@ -1,5 +1,8 @@
 using System;
 using Features.NetworkModelModule.Scripts;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using Features.ShopModule.Scripts.Configurations;
+#endif
 using Features.ShopModule.Scripts.Core;
 using Features.ShopModule.Scripts.Data;
 using Features.ShopModule.Scripts.Generated;
@@ -14,6 +17,10 @@ namespace Features.ShopModule.Scripts.Network {
         private ShopReviveRequestEventClass _shopReviveRequestEventClass;
         private IReviveShopSystem _reviveShopSystem;
         private ICrewWalletBindingModel _crewWalletBindingModel;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private WalletConfiguration _walletConfiguration;
+        private ShopDebugMoneyRequestEventClass _shopDebugMoneyRequestEventClass;
+#endif
 
         public long Balance =>
             Model.Balance;
@@ -25,6 +32,10 @@ namespace Features.ShopModule.Scripts.Network {
             IShopPurchaseSystem shopPurchaseSystem,
             ShopReviveRequestEventClass shopReviveRequestEventClass,
             IReviveShopSystem reviveShopSystem,
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            WalletConfiguration walletConfiguration,
+            ShopDebugMoneyRequestEventClass shopDebugMoneyRequestEventClass,
+#endif
             ICrewWalletBindingModel crewWalletBindingModel) {
             _walletStartingBalanceSource = walletStartingBalanceSource;
             _shopPurchaseRequestEventClass = shopPurchaseRequestEventClass;
@@ -32,6 +43,10 @@ namespace Features.ShopModule.Scripts.Network {
             _shopReviveRequestEventClass = shopReviveRequestEventClass;
             _reviveShopSystem = reviveShopSystem;
             _crewWalletBindingModel = crewWalletBindingModel;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            _walletConfiguration = walletConfiguration;
+            _shopDebugMoneyRequestEventClass = shopDebugMoneyRequestEventClass;
+#endif
         }
 
         public override void OnStartServer() {
@@ -49,11 +64,17 @@ namespace Features.ShopModule.Scripts.Network {
             base.OnStartClient();
             _shopPurchaseRequestEventClass.OnPurchaseRequested += OnPurchaseRequested;
             _shopReviveRequestEventClass.OnReviveRequested += OnReviveRequested;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            _shopDebugMoneyRequestEventClass.OnMoneyRequested += OnDebugMoneyRequested;
+#endif
         }
 
         public override void OnStopClient() {
             _shopPurchaseRequestEventClass.OnPurchaseRequested -= OnPurchaseRequested;
             _shopReviveRequestEventClass.OnReviveRequested -= OnReviveRequested;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            _shopDebugMoneyRequestEventClass.OnMoneyRequested -= OnDebugMoneyRequested;
+#endif
             base.OnStopClient();
         }
 
@@ -99,5 +120,14 @@ namespace Features.ShopModule.Scripts.Network {
 
         private void OnReviveRequested(PlayerKey target) =>
             CmdRevive(target.Id);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        [Command(requiresAuthority = false)]
+        private void CmdDebugGrantMoney() =>
+            ServerEarn(_walletConfiguration.DebugGrantAmount);
+
+        private void OnDebugMoneyRequested() =>
+            CmdDebugGrantMoney();
+#endif
     }
 }

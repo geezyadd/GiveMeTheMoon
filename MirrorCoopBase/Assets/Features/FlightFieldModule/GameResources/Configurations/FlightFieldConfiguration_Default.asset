@@ -69,7 +69,7 @@ MonoBehaviour:
   _shipWidthMeters: 10
   _debrisGapMarginMeters: 6
   _debrisGridSpacingMeters: 25
-  _metricCruiseSpeed: 14
+  _metricCruiseSpeed: 8
   _publishEntriesPerBatch: 300
   _publishBatchIntervalSeconds: 0.1
   _structuresBuiltPerFrame: 16
