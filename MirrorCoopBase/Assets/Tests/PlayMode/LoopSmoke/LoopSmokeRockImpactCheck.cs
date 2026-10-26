@@ -98,7 +98,7 @@ namespace Tests.PlayMode.LoopSmoke {
                 backOut = Mathf.Max(backOut, distance);
             }
 
-            float contactRadius = rock.Radius * SessionQueries.Resolve<ShipRockImpactConfiguration>().LargeContactRadiusShare;
+            float contactRadius = SessionQueries.Resolve<IShipRockContactRule>().CalculateContactRadius(ShipRockImpactKind.Large, rock.Radius);
             Assert.Greater(nearest, contactRadius, $"Rock impact: the ship got inside the large rock {rock.Id} (contact radius {contactRadius:0.0} m, nearest {nearest:0.0} m).");
             Assert.Greater(backOut, nearest + MIN_PUSH_BACK_METERS, $"Rock impact: the large rock {rock.Id} did not push the ship back out (hit at {atHit:0.0} m, nearest {nearest:0.0} m, back to {backOut:0.0} m).");
             Assert.IsTrue(_fieldRockQuery.TryGetRock(rock.Id, out _), $"Rock impact: the large rock {rock.Id} is gone.");

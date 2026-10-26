@@ -21,6 +21,7 @@ namespace Features.StagePresetModule.Scripts.Systems {
 
         private readonly IStagePresetSelectionService _stagePresetSelectionService;
         private readonly IStagePresetSocketResolver _stagePresetSocketResolver;
+        private readonly StagePresetCatalog _stagePresetCatalog;
         private readonly WalletConfiguration _walletConfiguration;
         private readonly IFieldTargetCountScaleWriter _fieldTargetCountScaleWriter;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -31,7 +32,7 @@ namespace Features.StagePresetModule.Scripts.Systems {
             _stagePresetSelectionService.TryGetSelectedPreset(out StagePreset preset) ? preset.StartLoopIndex : NORMAL_START_LOOP_INDEX;
 
         public bool AreStationDropsEnabled =>
-            _stagePresetSelectionService.TryGetSelectedPreset(out StagePreset preset) == false || preset.AreStationDropsEnabled;
+            _stagePresetSelectionService.TryGetSelectedPreset(out StagePreset preset) ? preset.AreStationDropsEnabled : _stagePresetCatalog.AreNormalRunStationDropsEnabled;
 
         public long StartingBalance =>
             _stagePresetSelectionService.TryGetSelectedPreset(out StagePreset preset) ? preset.StartingBalance : _walletConfiguration.StartingBalance;
@@ -42,10 +43,12 @@ namespace Features.StagePresetModule.Scripts.Systems {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             IFieldProfileDebug fieldProfileDebug,
 #endif
+            StagePresetCatalog stagePresetCatalog,
             WalletConfiguration walletConfiguration,
             IFieldTargetCountScaleWriter fieldTargetCountScaleWriter) {
             _stagePresetSelectionService = stagePresetSelectionService;
             _stagePresetSocketResolver = stagePresetSocketResolver;
+            _stagePresetCatalog = stagePresetCatalog;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             _fieldProfileDebug = fieldProfileDebug;
 #endif

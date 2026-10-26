@@ -14,9 +14,9 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace Tests.Shared {
-    // Plays the throttle handle as a player does: stands behind it on the deck facing the nose, tilts the real camera
-    // onto the grip, holds interact on it, moves the mouse forward through the interaction's look input until the push
-    // is done, then lets go. Used by the loop test and the coop client bot (no NUnit there): a failure is a message.
+    // Plays the throttle handle as a player does: stands behind it on the deck facing the nose (a player riding the
+    // flying ship already stands where it boarded), tilts the real camera onto the grip, holds interact on it, moves
+    // the mouse forward (push) or back (pull) through the interaction's look input until the move is done, then lets go. Used by the loop test and the coop client bot (no NUnit there): a failure is a message.
     public sealed class ShipThrottleHandling {
         private const float BEHIND_HANDLE_METERS = 1.1f;
         private const float AIM_TOLERANCE_DEGREES = 0.5f;
@@ -40,7 +40,13 @@ namespace Tests.Shared {
         public ShipThrottleHandling(ShipBase ship) =>
             _ship = ship;
 
-        public IEnumerator PushHandleCoroutine(Func<bool> isPushedFarEnough) {
+        public IEnumerator PushHandleCoroutine(Func<bool> isPushedFarEnough) =>
+            MoveHandleCoroutine(PUSH_LOOK, isPushedFarEnough);
+
+        public IEnumerator PullHandleCoroutine(Func<bool> isPulledFarEnough) =>
+            MoveHandleCoroutine(-PUSH_LOOK, isPulledFarEnough);
+
+        private IEnumerator MoveHandleCoroutine(float lookPerFrame, Func<bool> isMovedFarEnough) {
             Failure = null;
             ShipThrottleInteractable handle = Object.FindAnyObjectByType<ShipThrottleInteractable>();
             try {
@@ -58,7 +64,10 @@ namespace Tests.Shared {
                 string playerKey = Player.GetComponent<ShipRider>().Key.Id;
                 yield return WaitForCoroutine(() => Throttle.HolderKey == playerKey, COMMAND_TIMEOUT_SECONDS, "the server to give the handle to this player");
                 WasViewLockedWhileHeld = SessionQueries.Resolve<CameraLookLockModel>().IsLocked;
-                yield return WaitForCoroutine(() => Push(isPushedFarEnough), PUSH_TIMEOUT_SECONDS, "the push to be done");
+                yield return WaitForCoroutine(() => Move(lookPerFrame, isMovedFarEnough), PUSH_TIMEOUT_SECONDS, "the move to be done");
+                if (Failure != null)
+                    Failure += $" (the hand at {ReadLocalPosition(handle):0.000}, the synced handle at {Throttle.Position:0.000}, holder '{Throttle.HolderKey}')";
+
                 Interaction.EndInteract();
                 yield return WaitForCoroutine(() => string.IsNullOrEmpty(Throttle.HolderKey), COMMAND_TIMEOUT_SECONDS, "the handle let go on release");
                 ReleasedPosition = Throttle.Position;
@@ -68,22 +77,18 @@ namespace Tests.Shared {
             }
         }
 
-        private static bool Push(Func<bool> isPushedFarEnough) {
-            Interaction.MoveHeldControl(Vector2.up * PUSH_LOOK);
-            return isPushedFarEnough();
+        private static bool Move(float lookPerFrame, Func<bool> isMovedFarEnough) {
+            Interaction.MoveHeldControl(Vector2.up * lookPerFrame);
+            return isMovedFarEnough();
         }
+
+        private static float ReadLocalPosition(ShipThrottleInteractable handle) =>
+            handle.TryGetLocalPosition(out float position) ? position : float.NaN;
 
         private IEnumerator AimAtHandleCoroutine(ShipThrottleInteractable handle) {
             Vector3 target = handle.GetComponent<Collider>().bounds.center;
-            Rigidbody body = Player.GetComponent<CharacterMovableBase>().Body;
-            Vector3 forward = Vector3.ProjectOnPlane(_ship.transform.forward, Vector3.up).normalized;
-            Vector3 stand = target - forward * BEHIND_HANDLE_METERS;
-            stand.y = body.position.y;
-            Quaternion facing = Quaternion.LookRotation(forward, Vector3.up);
-            body.position = stand;
-            body.rotation = facing;
-            body.transform.SetPositionAndRotation(stand, facing);
-            body.linearVelocity = Vector3.zero;
+            if (Player.GetComponent<ShipRider>().IsRiding == false)
+                StandBehindHandle(target);
 
             Camera camera = SessionQueries.Resolve<IGameCameraService>().OutputCamera;
             float deadline = Time.realtimeSinceStartup + AIM_TIMEOUT_SECONDS;
@@ -104,6 +109,18 @@ namespace Tests.Shared {
 
             // LocalPlayerInteraction aims in Update, before this frame's camera pose: let it see the settled view.
             yield return null;
+        }
+
+        private void StandBehindHandle(Vector3 target) {
+            Rigidbody body = Player.GetComponent<CharacterMovableBase>().Body;
+            Vector3 forward = Vector3.ProjectOnPlane(_ship.transform.forward, Vector3.up).normalized;
+            Vector3 stand = target - forward * BEHIND_HANDLE_METERS;
+            stand.y = body.position.y;
+            Quaternion facing = Quaternion.LookRotation(forward, Vector3.up);
+            body.position = stand;
+            body.rotation = facing;
+            body.transform.SetPositionAndRotation(stand, facing);
+            body.linearVelocity = Vector3.zero;
         }
 
         private IEnumerator WaitForCoroutine(Func<bool> condition, float timeoutSeconds, string target) {

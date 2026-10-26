@@ -33,8 +33,9 @@ namespace Tests.Coop.Host {
     // the mark in its synced model), the client takes the helm at the station and steers the next cruise, leaves in flight
     // from the helm (the seat is free again) and is turned away in flight, comes back at the next station on the deck and
     // not at the helm, dies there and is bought back by the host at the kiosk, then launches the last loop by pushing the
-    // throttle handle (the host sees it held by the client's key, at Full and the ship flying), and both ride it. At
-    // every step the host compares its own view with the client's report.
+    // throttle handle (the host sees it held by the client's key, at Full and the ship flying); in that cruise the
+    // client pulls the handle back to Stop (the ship stops and stays still) and pushes it to Full again (it flies
+    // again), and both ride it. At every step the host compares its own view with the client's report.
     [PrebuildSetup("Tests.Coop.Editor.CoopClientBuild")]
     public sealed class CoopTwoProcessTest {
         private const int TEST_TIMEOUT_MS = 420000;
@@ -53,8 +54,14 @@ namespace Tests.Coop.Host {
         // The client's throttle at Full flies the ship at least this fast in the short test cruise (m/s).
         private const float MIN_CRUISE_SPEED = 5f;
         private const float SPEED_SAMPLE_SECONDS = 0.25f;
+        // The client's pull to Stop brings the ship to rest within this long at the acceleration limit (s).
+        private const float STOP_TIMEOUT_SECONDS = 6f;
+        private const float STAY_STOPPED_SECONDS = 2f;
+        private const float STOPPED_SPEED = 0.2f;
 
         private readonly WaitForSeconds _exchangePoll = new WaitForSeconds(CoopTestExchange.POLL_SECONDS);
+        private readonly WaitForSeconds _speedSample = new WaitForSeconds(SPEED_SAMPLE_SECONDS);
+        private readonly WaitForSeconds _stayStopped = new WaitForSeconds(STAY_STOPPED_SECONDS);
 
         private LoopSmokeErrorLog _errorLog;
         private LoopSmokeShipRunConfigOverride _configOverride;
@@ -271,7 +278,7 @@ namespace Tests.Coop.Host {
                 _flight.PullLaunchLever(loopIndex);
 
             yield return WaitForCoroutine(() => Model.Phase == ShipRunPhase.Cruise, $"Cruise of loop {loopIndex}");
-            _flight.FaceDestination();
+            FaceForCruise(loopIndex);
             // The ship takes the faced heading in its LateUpdate.
             yield return null;
             _cruiseStartYaw = Ship.transform.eulerAngles.y;
@@ -279,8 +286,65 @@ namespace Tests.Coop.Host {
             yield return WaitForReportCoroutine(CoopTestSteps.IN_CRUISE);
             Assert.AreEqual(ShipRunPhase.Cruise, Model.Phase, $"The client's cruise report of loop {loopIndex} came after the cruise.");
             AssertSameView(true, loopIndex != LEAVE_LOOP);
+            if (loopIndex != CoopTestSteps.THROTTLE_LOOP)
+                yield break;
+
+            yield return WaitForCoroutine(IsShipCruising, "the ship flying at the client's throttle");
+            yield return WatchClientStopAndGoCoroutine();
+        }
+
+        // The client holds the handle in cruise: its pull to Stop stops the ship on the server, its push flies it again.
+        private IEnumerator WatchClientStopAndGoCoroutine() {
+            BeginStep("client pulls the throttle handle to Stop in cruise");
+            IReadOnlyShipThrottleModel throttle = SessionQueries.Resolve<IReadOnlyShipThrottleModel>();
+            _exchange.AppendCommand(CoopTestSteps.COMMAND_PULL_THROTTLE);
+            yield return WaitForReportCoroutine(CoopTestSteps.THROTTLE_PULLED);
+            Assert.AreEqual(0f, throttle.Position, THROTTLE_TOLERANCE, "The host does not see the throttle at Stop where the client pulled it in cruise.");
+            Assert.AreEqual(_lastReport.ThrottlePosition, throttle.Position, THROTTLE_TOLERANCE, "Host and client see the throttle at different positions in cruise.");
+            yield return WaitForShipStoppedCoroutine();
+            Vector3 stoppedAt = Ship.transform.position;
+            yield return _stayStopped;
+            Assert.Less(HorizontalDistance(stoppedAt, Ship.transform.position) / STAY_STOPPED_SECONDS, STOPPED_SPEED, "The ship did not stay still at the client's Stop.");
+            Assert.AreEqual(ShipRunPhase.Cruise, Model.Phase, "The stopped ship left the cruise.");
+
+            BeginStep("client pushes the throttle handle to Full in cruise");
+            _exchange.AppendCommand(CoopTestSteps.COMMAND_PUSH_THROTTLE_IN_CRUISE);
+            yield return WaitForReportCoroutine(CoopTestSteps.THROTTLE_PUSHED_IN_CRUISE);
+            Assert.AreEqual(FULL_THROTTLE, throttle.Position, THROTTLE_TOLERANCE, "The host does not see the throttle at Full where the client pushed it in cruise.");
+            _speedSampleStart = Ship.transform.position;
+            _speedSampleStartTime = Time.time;
+            yield return WaitForCoroutine(IsShipCruising, "the ship flying again at the client's Full");
+            _flight.FaceDestination();
+        }
+
+        // The short test cruise would reach the station while the client works the throttle: that cruise first heads
+        // away from it and turns to it once the client is done.
+        private void FaceForCruise(int loopIndex) {
             if (loopIndex == CoopTestSteps.THROTTLE_LOOP)
-                yield return WaitForCoroutine(IsShipCruising, "the ship flying at the client's throttle");
+                Ship.FlightControlDebug.DebugFace(Ship.transform.position - Model.TransitDestination);
+            else
+                _flight.FaceDestination();
+        }
+
+        private IEnumerator WaitForShipStoppedCoroutine() {
+            float deadline = Time.time + STOP_TIMEOUT_SECONDS;
+            while (true) {
+                Vector3 start = Ship.transform.position;
+                float startTime = Time.time;
+                yield return _speedSample;
+                float speed = HorizontalDistance(start, Ship.transform.position) / (Time.time - startTime);
+                if (speed < STOPPED_SPEED)
+                    yield break;
+
+                if (Time.time > deadline)
+                    Assert.Fail($"The ship did not stop within {STOP_TIMEOUT_SECONDS} s of the client's pull to Stop: it moves at {speed:0.00} m/s, the server's throttle at {SessionQueries.Resolve<IReadOnlyShipThrottleModel>().Position:0.000}.");
+            }
+        }
+
+        private static float HorizontalDistance(Vector3 from, Vector3 to) {
+            Vector3 moved = to - from;
+            moved.y = 0f;
+            return moved.magnitude;
         }
 
         // The client takes the handle by its player key on the server and pushes it past the launch mark to Full.

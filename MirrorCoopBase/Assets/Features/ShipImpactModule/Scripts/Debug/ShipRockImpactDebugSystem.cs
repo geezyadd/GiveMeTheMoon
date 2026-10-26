@@ -16,7 +16,7 @@ namespace Features.ShipImpactModule.Scripts.Debug {
     // shift of the flight path, like a world shift, so it is not swept and gives no velocity.
     public sealed class ShipRockImpactDebugSystem : IInitializable, IDisposable, IShipRockImpactDebug {
         private const string LOG_PREFIX = "[ShipRockImpact] ";
-        // From the rock's surface to the ship: about three seconds of cruise.
+        // From the rock's contact sphere (about its visible surface) to the ship: a few seconds of cruise.
         private const float APPROACH_METERS = 40f;
         // A rock counts as in the ship's way when its middle is this share of its radius above or below the ship.
         private const float VERTICAL_REACH_SHARE = 0.3f;
@@ -31,6 +31,7 @@ namespace Features.ShipImpactModule.Scripts.Debug {
         private readonly IShipRunBindingModel _shipRunBindingModel;
         private readonly IFieldRockQuery _fieldRockQuery;
         private readonly IShipRockImpactClassifier _shipRockImpactClassifier;
+        private readonly IShipRockContactRule _shipRockContactRule;
         private readonly IDebugActionRegistry _debugActionRegistry;
         private readonly IShipDebugActionConditions _shipDebugActionConditions;
         private readonly List<FieldRockDescription> _rocks = new();
@@ -40,11 +41,13 @@ namespace Features.ShipImpactModule.Scripts.Debug {
             IShipRunBindingModel shipRunBindingModel,
             IFieldRockQuery fieldRockQuery,
             IShipRockImpactClassifier shipRockImpactClassifier,
+            IShipRockContactRule shipRockContactRule,
             IDebugActionRegistry debugActionRegistry,
             IShipDebugActionConditions shipDebugActionConditions) {
             _shipRunBindingModel = shipRunBindingModel;
             _fieldRockQuery = fieldRockQuery;
             _shipRockImpactClassifier = shipRockImpactClassifier;
+            _shipRockContactRule = shipRockContactRule;
             _debugActionRegistry = debugActionRegistry;
             _shipDebugActionConditions = shipDebugActionConditions;
         }
@@ -71,7 +74,8 @@ namespace Features.ShipImpactModule.Scripts.Debug {
             Vector3 direction = rock.Center - shipPosition;
             direction.y = 0f;
             direction = direction.sqrMagnitude > MIN_HORIZONTAL_SQR ? direction.normalized : ship.transform.forward;
-            Vector3 target = rock.Center - direction * (rock.Radius + APPROACH_METERS);
+            float contactRadius = _shipRockContactRule.CalculateContactRadius(kind, rock.Radius);
+            Vector3 target = rock.Center - direction * (contactRadius + APPROACH_METERS);
             target.y = shipPosition.y;
             ship.FlightControlDebug.DebugMove(target - shipPosition);
             ship.FlightControlDebug.DebugFace(direction);

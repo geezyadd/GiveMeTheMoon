@@ -8,6 +8,7 @@ namespace Features.ShipImpactModule.Scripts {
             Container.BindInterfacesTo<ShipRockImpactClassifier>().AsSingle();
             Container.BindInterfacesTo<ShipRockDamageRule>().AsSingle();
             Container.BindInterfacesTo<ShipRockKnockbackRule>().AsSingle();
+            Container.BindInterfacesTo<ShipRockContactRule>().AsSingle();
             Container.BindInterfacesTo<ShipHullRockScanner>().AsSingle();
             Container.BindInterfacesTo<ShipHullStepTracker>().AsSingle();
             Container.BindInterfacesTo<ComponentRegistry<ShipImpactSync>>().AsSingle();
@@ -21,6 +22,8 @@ namespace Features.ShipImpactModule.Scripts {
             Container.BindInterfacesTo<ShipImpactCameraShakeSystem>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.BindInterfacesTo<Debug.ShipRockImpactDebugSystem>().AsSingle();
+            Container.BindInterfacesTo<Debug.ShipImpactVolumeDebugDrawer>().AsSingle();
+            Container.BindInterfacesTo<Debug.ShipImpactVolumeDebugSystem>().AsSingle();
 #endif
         }
     }

@@ -23,6 +23,8 @@ namespace Features.ShopModule.Scripts.Installers {
             Container.BindInterfacesTo<ShopWindowSystem>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.BindInterfacesTo<ShopDebugOpenSystem>().AsSingle();
+            Container.Bind<ShopDebugMoneyRequestEventClass>().AsSingle();
+            Container.BindInterfacesTo<ShopDebugMoneySystem>().AsSingle();
 #endif
             Container.BindInterfacesTo<ShopKioskRangeSystem>().AsSingle();
             Container.BindInterfacesTo<DeadCrewSystem>().AsSingle();

@@ -34,6 +34,7 @@ namespace Features.ShipImpactModule.Scripts {
             RequireAboveZero(configuration.LargeKnockbackSeconds, nameof(ShipRockImpactConfiguration.LargeKnockbackSeconds));
             RequireAboveZero(configuration.LargeMaxAcceleration, nameof(ShipRockImpactConfiguration.LargeMaxAcceleration));
             RequireAboveZero(configuration.ContactPushOutSpeed, nameof(ShipRockImpactConfiguration.ContactPushOutSpeed));
+            RequireAboveZero(configuration.SmallContactRadiusShare, nameof(ShipRockImpactConfiguration.SmallContactRadiusShare));
             RequireAboveZero(configuration.LargeContactRadiusShare, nameof(ShipRockImpactConfiguration.LargeContactRadiusShare));
             RequireAboveZero(configuration.MaxSweepMeters, nameof(ShipRockImpactConfiguration.MaxSweepMeters));
             RequireShake(configuration.SmallFeel, nameof(ShipRockImpactConfiguration.SmallFeel));

@@ -21,18 +21,19 @@ namespace Features.StagePresetModule.Editor.Tests {
         private StagePresetSelectionModel _stagePresetSelectionModel;
         private StagePresetSelectionService _stagePresetSelectionService;
         private RecordingFieldProfileDebug _fieldProfileDebug;
+        private StagePresetCatalog _stagePresetCatalog;
         private WalletConfiguration _walletConfiguration;
         private StagePresetApplier _stagePresetApplier;
         private readonly List<Object> _created = new List<Object>();
 
         [SetUp]
         public void SetUp() {
-            StagePresetCatalog catalog = AddressableConfigurationLoader.Load<StagePresetCatalog>(Address.Configurations.StagePresetCatalog_Default);
+            _stagePresetCatalog = AddressableConfigurationLoader.Load<StagePresetCatalog>(Address.Configurations.StagePresetCatalog_Default);
             _walletConfiguration = AddressableConfigurationLoader.Load<WalletConfiguration>(Address.Configurations.WalletConfiguration_Default);
             _stagePresetSelectionModel = new StagePresetSelectionModel();
-            _stagePresetSelectionService = new StagePresetSelectionService(catalog, _stagePresetSelectionModel);
+            _stagePresetSelectionService = new StagePresetSelectionService(_stagePresetCatalog, _stagePresetSelectionModel);
             _fieldProfileDebug = new RecordingFieldProfileDebug();
-            _stagePresetApplier = new StagePresetApplier(_stagePresetSelectionService, new StagePresetSocketResolver(), _fieldProfileDebug, _walletConfiguration, new FieldTargetCountScaleModel());
+            _stagePresetApplier = new StagePresetApplier(_stagePresetSelectionService, new StagePresetSocketResolver(), _fieldProfileDebug, _stagePresetCatalog, _walletConfiguration, new FieldTargetCountScaleModel());
         }
 
         [TearDown]
@@ -46,7 +47,7 @@ namespace Features.StagePresetModule.Editor.Tests {
         [Test]
         public void WhenNoPresetIsSelected_ThenRunStartsAsNormalGame() {
             Assert.AreEqual(0, _stagePresetApplier.StartLoopIndex, "Start loop of a normal run.");
-            Assert.IsTrue(_stagePresetApplier.AreStationDropsEnabled, "A normal run keeps the station drops.");
+            Assert.IsFalse(_stagePresetApplier.AreStationDropsEnabled, "A normal run drops free modules: the crew should buy them in the shop.");
             Assert.AreEqual(_walletConfiguration.StartingBalance, _stagePresetApplier.StartingBalance, "A normal run starts with the wallet configuration's money.");
         }
 
@@ -110,7 +111,7 @@ namespace Features.StagePresetModule.Editor.Tests {
             StagePresetTestAssets.SetFieldProfile(preset, PROFILE_ID);
             StagePresetSelectionService service = new StagePresetSelectionService(Remember(StagePresetTestAssets.CreateCatalog(preset)), _stagePresetSelectionModel);
             service.Select(preset.Id);
-            return new StagePresetApplier(service, new StagePresetSocketResolver(), _fieldProfileDebug, _walletConfiguration, new FieldTargetCountScaleModel());
+            return new StagePresetApplier(service, new StagePresetSocketResolver(), _fieldProfileDebug, _stagePresetCatalog, _walletConfiguration, new FieldTargetCountScaleModel());
         }
 
         private T Remember<T>(T created) where T : Object {

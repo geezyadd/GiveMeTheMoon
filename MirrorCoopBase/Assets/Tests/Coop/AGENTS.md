@@ -43,7 +43,11 @@ the editor is the host, a Windows development build of the game is the client. O
   ship to the destination again), and the rejoined client is not seated and the helm is free. For the last loop the host
   sees the throttle held by the client's key on the server, the takeoff, the throttle at Full where the client left it
   (the client reports its own synced value too, `ThrottlePosition`), no holder after the release, and the ship flying at
-  least 5 m/s in that cruise.
+  least 5 m/s in that cruise (heading away from the station so the short test cruise does not land meanwhile). Then on
+  the host's `pull-throttle` the client pulls the held handle back to Stop and waits until it sees the ship at rest itself
+  (`throttle-pulled`); the host sees the throttle at Stop, the ship stopped within 6 s and still for 2 s; on
+  `push-throttle-in-cruise` the client pushes it to Full (`throttle-pushed-in-cruise`), the ship flies again and the host
+  faces it to the station.
 - The test always kills the client process (also on failure or timeout). A passed run deletes its folder
   `Builds/CoopRuns/<time>/`; a failed one keeps the client's log and the exchange files there, and the failure message
   ends with the tail of the client's log.

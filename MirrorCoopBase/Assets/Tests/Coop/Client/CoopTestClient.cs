@@ -30,6 +30,10 @@ namespace Tests.Coop.Client {
         private const float FULL_THROTTLE = 1f;
         private const float FULL_THROTTLE_TOLERANCE = 0.02f;
         private const float HELM_DROP_HEIGHT = 0.5f;
+        // After its pull to Stop this client must see the ship at rest within the stop timeout (m/s, s).
+        private const float STOPPED_SPEED = 0.2f;
+        private const float STOP_TIMEOUT_SECONDS = 6f;
+        private const float SPEED_SAMPLE_SECONDS = 0.5f;
         // The pilot steers this long into the cruise before it leaves, so the host sees the ship turn.
         private const float STEER_BEFORE_LEAVING_SECONDS = 0.5f;
         // Held on the move stick from the helm: D, a turn to the right.
@@ -37,6 +41,7 @@ namespace Tests.Coop.Client {
 
         private readonly WaitForSeconds _settle = new WaitForSeconds(SETTLE_SECONDS);
         private readonly WaitForSeconds _exchangePoll = new WaitForSeconds(CoopTestExchange.POLL_SECONDS);
+        private readonly WaitForSeconds _speedSample = new WaitForSeconds(SPEED_SAMPLE_SECONDS);
         private readonly WaitForSeconds _steerBeforeLeaving = new WaitForSeconds(STEER_BEFORE_LEAVING_SECONDS);
 
         private CoopTestArguments _arguments;
@@ -100,6 +105,9 @@ namespace Tests.Coop.Client {
             yield return WaitForCruiseCoroutine(loopIndex);
             if (loopIndex == CoopTestSteps.SONAR_MARK_LOOP)
                 yield return WaitForSonarMarkCoroutine();
+
+            if (loopIndex == CoopTestSteps.THROTTLE_LOOP)
+                yield return StopAndGoThrottleInCruiseCoroutine();
 
             yield return WaitForCoroutine(() => SessionQueries.IsAtStationAfterLoop(loopIndex), $"Build after loop {loopIndex}");
             yield return _settle;
@@ -180,6 +188,42 @@ namespace Tests.Coop.Client {
             Report(CoopObserver.CaptureGame(CoopTestSteps.THROTTLE_PUSHED));
         }
 
+        // On the host's commands in the last cruise: pull the held handle back to Stop, then push it to Full again.
+        private IEnumerator StopAndGoThrottleInCruiseCoroutine() {
+            yield return WaitForCoroutine(() => _exchange.HasCommand(CoopTestSteps.COMMAND_PULL_THROTTLE), "the host's pull-throttle command", _exchangePoll);
+            ShipThrottleHandling handling = new ShipThrottleHandling(Object.FindAnyObjectByType<ShipBase>());
+            yield return handling.PullHandleCoroutine(() => ReadThrottlePosition() <= FULL_THROTTLE_TOLERANCE);
+            if (handling.Failure != null)
+                yield return FailCoroutine($"Pulling the throttle handle to Stop in cruise failed: {handling.Failure}.");
+
+            yield return WaitForShipSeenStoppedCoroutine();
+            Report(CoopObserver.CaptureGame(CoopTestSteps.THROTTLE_PULLED));
+            yield return WaitForCoroutine(() => _exchange.HasCommand(CoopTestSteps.COMMAND_PUSH_THROTTLE_IN_CRUISE), "the host's push-throttle-in-cruise command", _exchangePoll);
+            yield return handling.PushHandleCoroutine(() => ReadThrottlePosition() >= FULL_THROTTLE - FULL_THROTTLE_TOLERANCE);
+            if (handling.Failure != null)
+                yield return FailCoroutine($"Pushing the throttle handle to Full in cruise failed: {handling.Failure}.");
+
+            Report(CoopObserver.CaptureGame(CoopTestSteps.THROTTLE_PUSHED_IN_CRUISE));
+        }
+
+        // The ship as this client sees it (its interpolated pose), not the server's.
+        private IEnumerator WaitForShipSeenStoppedCoroutine() {
+            Transform ship = Object.FindAnyObjectByType<ShipBase>().transform;
+            float deadline = Time.realtimeSinceStartup + STOP_TIMEOUT_SECONDS;
+            while (true) {
+                Vector3 start = ship.position;
+                yield return _speedSample;
+                Vector3 moved = ship.position - start;
+                moved.y = 0f;
+                float speed = moved.magnitude / SPEED_SAMPLE_SECONDS;
+                if (speed < STOPPED_SPEED)
+                    yield break;
+
+                if (Time.realtimeSinceStartup > deadline)
+                    yield return FailCoroutine($"This client still sees the ship move at {speed:0.00} m/s {STOP_TIMEOUT_SECONDS} s after its pull to Stop (synced throttle {ReadThrottlePosition():0.000}).");
+            }
+        }
+
         private IEnumerator FinishCoroutine() {
             yield return WaitForCoroutine(() => _exchange.HasCommand(CoopTestSteps.COMMAND_FINISH), "the host's finish command", _exchangePoll);
             CoopSessionActions.LeaveThroughHud();
@@ -211,8 +255,10 @@ namespace Tests.Coop.Client {
             SessionQueries.Resolve<IPlayerLifeQuery>().LocalState;
 
         private static bool IsTakenOffAtFullThrottle() =>
-            RunModel().Phase != ShipRunPhase.Build
-            && SessionQueries.Resolve<IReadOnlyShipThrottleModel>().Position >= FULL_THROTTLE - FULL_THROTTLE_TOLERANCE;
+            RunModel().Phase != ShipRunPhase.Build && ReadThrottlePosition() >= FULL_THROTTLE - FULL_THROTTLE_TOLERANCE;
+
+        private static float ReadThrottlePosition() =>
+            SessionQueries.Resolve<IReadOnlyShipThrottleModel>().Position;
 
         private static IReadOnlyShipRunModel RunModel() =>
             SessionQueries.Resolve<IReadOnlyShipRunModel>();

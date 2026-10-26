@@ -13,7 +13,9 @@ the landing repairs both), takes off and lands twice (in the first cruise `LoopS
 the debug window as a player does: it clicks the corner button (the panel opens, the cursor is freed), types the damage
 into "Hit the hull" and clicks it, clicks the corner button again (closed, cursor released), and checks the armor-reduced drop in the synced model, after the landing that the hull is full again), and checks the phases,
 `LoopIndex`, engines after landing, the ship on the new pad, one shop kiosk per pad, the player on deck, no wreckage.
-At the first station it reaches it buys back a dead crewmate with a second player, a bot on the host (`LoopSmokeReviveCheck`:
+At the first station it reaches it tops the wallet up through the debug window as a player does (`LoopSmokeDebugMoneyGrant`:
+the corner button, Shop → "+1000", the synced balance grows by `WalletConfiguration.DebugGrantAmount`, the corner button
+again; a normal run starts with only 300) and buys back a dead crewmate with a second player, a bot on the host (`LoopSmokeReviveCheck`:
 the price is taken once for a double click, no buy-back without money, the revived player stands at a deck spawn
 point; then the host dies and the bot buys them back). The bot joins through the server's real receive path
 (`LoopSmokeBot`, `LoopSmokeTransportInput`). `LoopSmokeRejoinCheck`: a new player joins at that station on a deck spawn
@@ -22,7 +24,7 @@ the Crew list, under its new name. After the second landing everyone dies, the c
 the lobby and `LoopSmokeRunLeakCheck` checks that no object of the first run is left (and that run 2 starts with the same
 station items and spawns the same pad and drops on its first landing). Then it starts a second run, flies five loops (after the first one it checks the station's crew terminal and puts the
 player back on the deck)
-in a row and at the fifth station buys 5 items at the kiosk through the real aim and the window (`LoopSmokeShopCheck`: delivery
+in a row and at the fifth station tops the wallet up the same way and buys 5 items at the kiosk through the real aim and the window (`LoopSmokeShopCheck`: the mouse wheel over an item row scrolls the list until the last item is in view, delivery
 point, window closes when walking away, the bought items come to rest within a timeout, a far purchase is refused), takes off a sixth time
 and destroys the hull in that cruise (`LoopSmokeRunEnd.HullLossInCruise`, `LoopSmokeSession.ReturnToLobbyByHullLossCoroutine`:
 hull 0 -> the crew in the lobby; `LoopSmokeHullLossCheck`: the host stands by the minigun before the takeoff and sits at it
@@ -73,9 +75,10 @@ balance grew by the rewards; after that landing the popped list and the balloons
 through the real camera, holds E (`LocalPlayerInteraction.Interact`) and moves the mouse forward through the
 interaction's look input (`MoveHeldControl`) until the ship takes off and the handle is at Full (the server gave it to the
 host's key, the view was locked while held, it let go and stayed at Full on release; the steps are the shared
-`Tests.Shared.ShipThrottleHandling`, also used by the coop client); in that cruise "Throttle = N" puts it at 0 (the ship
-comes to a stop) and back at 1 (it flies again), both with the player riding on the deck; after the landing the handle is
-back at Stop and free. `LoopSmokeStationMarkerCheck` (run 2 cruise 5): the debug window's "Show station: off" clicked as a
+`Tests.Shared.ShipThrottleHandling`, also used by the coop client); in that cruise the riding host pulls the handle back
+to Stop by hand (the ship stops within 6 s and stays still for 2 s) and pushes it to Full again (it flies again), both
+with the player riding on the deck; after the landing the handle is
+back at Stop and free. `LoopSmokeRockNearPassCheck` (run 1 cruise 1, after the rock impacts): "Show impact volume" clicked on through the debug window, the ship is put to pass the biggest lone small rock with its side halfway between the rock's contact and data spheres; the hull must come inside the data sphere, and the rock may break only if the hull came within the contact sphere; then the toggle off and the ship back. `LoopSmokeStationMarkerCheck` (run 2 cruise 5): the debug window's "Show station: off" clicked as a
 player does turns the own station marker on, the level camera turned toward the station through the look input shows
 it over the station with its distance, turned away on the screen's edge, and "Show station: on" takes it off again. The test timeout is 240 s (a run takes about 170 s). The shared steps live in helpers both loop tests use:
 `LoopSmokeSession` (menu, Host, lobby, Start, all dead -> lobby, Leave; waits record the run phases),

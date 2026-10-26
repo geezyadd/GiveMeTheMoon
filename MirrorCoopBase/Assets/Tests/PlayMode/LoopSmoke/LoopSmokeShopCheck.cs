@@ -14,6 +14,7 @@ using Mirror;
 using NUnit.Framework;
 using Tests.Shared;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
@@ -36,6 +37,11 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float DELIVERY_AREA_RADIUS = 2.5f;
         private const float BELOW_DELIVERY_TOLERANCE = 1.2f;
         private const float SETTLED_SPEED = 0.3f;
+        // One mouse wheel notch as the UI input module reports it (InputSystemUIInputModule.scrollDeltaPerTick).
+        private const float WHEEL_NOTCH = 6f;
+        private const int MAX_WHEEL_NOTCHES = 40;
+        private const float VIEWPORT_TOLERANCE = 1f;
+        private const string SCROLLED_SCREENSHOT = "shop-scrolled-to-last-item.png";
 
         private readonly LoopSmokeFlight _flight;
 
@@ -55,7 +61,9 @@ namespace Tests.PlayMode.LoopSmoke {
             List<ShipItem> itemsBefore = FindAllItems();
             try {
                 CameraLookDriver.DebugPitchOverride = true;
+                yield return LoopSmokeDebugMoneyGrant.GrantThroughDebugWindowCoroutine();
                 yield return OpenAtKioskCoroutine(kiosk, shop);
+                yield return WheelToLastRowCoroutine();
                 yield return BuyCoroutine(wallet);
                 yield return WalkAwayCoroutine(kiosk, shop);
                 yield return AssertDeliveredCoroutine(kiosk, itemsBefore);
@@ -85,6 +93,35 @@ namespace Tests.PlayMode.LoopSmoke {
                 buy.onClick.Invoke();
                 yield return WaitForCoroutine(() => wallet.Balance < balance, $"the balance to drop after purchase {i + 1}");
             }
+        }
+
+        // The wheel over an item row scrolls the list (the row's button does not swallow it) until the last item is in
+        // view: every catalog entry can be reached, however many the shop sells.
+        private static IEnumerator WheelToLastRowCoroutine() {
+            List<ShopItemRow> rows = FindActiveRows();
+            ScrollRect scroll = rows[0].GetComponentInParent<ScrollRect>();
+            Assert.IsNotNull(scroll, "The shop's item list is not in a scroll view.");
+            RectTransform last = (RectTransform)rows[^1].transform;
+            PointerEventData wheel = new PointerEventData(EventSystem.current) { scrollDelta = Vector2.down * WHEEL_NOTCH };
+            for (int i = 0; i < MAX_WHEEL_NOTCHES && IsInsideViewport(last, scroll.viewport) == false; i++) {
+                ExecuteEvents.ExecuteHierarchy(rows[0].gameObject, wheel, ExecuteEvents.scrollHandler);
+                yield return null;
+            }
+
+            Assert.IsTrue(IsInsideViewport(last, scroll.viewport), "The mouse wheel does not bring the shop's last item into view.");
+            yield return LoopSmokeReviveCheck.CaptureScreenshotCoroutine(SCROLLED_SCREENSHOT);
+        }
+
+        private static bool IsInsideViewport(RectTransform row, RectTransform viewport) {
+            Rect rowRect = WorldRect(row);
+            Rect viewportRect = WorldRect(viewport);
+            return rowRect.yMin >= viewportRect.yMin - VIEWPORT_TOLERANCE && rowRect.yMax <= viewportRect.yMax + VIEWPORT_TOLERANCE;
+        }
+
+        private static Rect WorldRect(RectTransform rectTransform) {
+            Vector3[] corners = new Vector3[4];
+            rectTransform.GetWorldCorners(corners);
+            return Rect.MinMaxRect(corners[0].x, corners[0].y, corners[2].x, corners[2].y);
         }
 
         private static IEnumerator WalkAwayCoroutine(ShopKioskInteractable kiosk, ShopModel shop) {
@@ -162,6 +199,12 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         private static Button FindBuyButton(int entry) {
+            List<ShopItemRow> active = FindActiveRows();
+            Assert.Greater(active.Count, entry, "The shop window shows too few rows.");
+            return active[entry].GetComponentInChildren<Button>();
+        }
+
+        private static List<ShopItemRow> FindActiveRows() {
             ShopItemRow[] rows = Object.FindObjectsByType<ShopItemRow>(FindObjectsSortMode.InstanceID);
             List<ShopItemRow> active = new List<ShopItemRow>();
             foreach (ShopItemRow row in rows) {
@@ -170,8 +213,8 @@ namespace Tests.PlayMode.LoopSmoke {
             }
 
             active.Sort((left, right) => left.transform.GetSiblingIndex().CompareTo(right.transform.GetSiblingIndex()));
-            Assert.Greater(active.Count, entry, "The shop window shows too few rows.");
-            return active[entry].GetComponentInChildren<Button>();
+            Assert.IsNotEmpty(active, "The shop window shows no item rows.");
+            return active;
         }
 
         private static List<ShipItem> FindAllItems() =>
