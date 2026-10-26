@@ -9,8 +9,8 @@ using Zenject;
 
 namespace Features.SpaceHazeModule.Scripts.Rendering {
     // A full-screen pass after the sky: every pixel takes the camera depth, and a thing farther than the clear
-    // distance fades into the sky behind it (SpaceHaze.shader). It runs before the transparents and the HUD, so the
-    // screen markers are never hazed.
+    // distance fades into the backdrop behind it, the sky and the planets (SpaceHaze.shader,
+    // ISpaceHazeBackdropRecorder). It runs before the transparents and the HUD, so the screen markers are never hazed.
     public sealed class SpaceHazeRenderPass : ScriptableRenderPass, ISpaceHazeRenderer, IInitializable, IDisposable {
         private const string PASS_NAME = "Space Haze";
         private const string COLOR_TEXTURE_NAME = "_SpaceHazeColor";
@@ -19,16 +19,17 @@ namespace Features.SpaceHazeModule.Scripts.Rendering {
         private static readonly int _distancesId = Shader.PropertyToID("_SpaceHazeDistances");
         private static readonly int _strengthId = Shader.PropertyToID("_SpaceHazeStrength");
         private static readonly int _tintId = Shader.PropertyToID("_SpaceHazeTint");
+        private static readonly int _backdropId = Shader.PropertyToID("_SpaceHazeBackdrop");
         private static readonly Vector4 _fullScaleBias = new(1f, 1f, 0f, 0f);
 
         private readonly SpaceHazeConfiguration _spaceHazeConfiguration;
-        private readonly ISpaceHazeSkySource _spaceHazeSkySource;
+        private readonly ISpaceHazeBackdropRecorder _spaceHazeBackdropRecorder;
 
         private Material _material;
 
-        public SpaceHazeRenderPass(SpaceHazeConfiguration spaceHazeConfiguration, ISpaceHazeSkySource spaceHazeSkySource) {
+        public SpaceHazeRenderPass(SpaceHazeConfiguration spaceHazeConfiguration, ISpaceHazeBackdropRecorder spaceHazeBackdropRecorder) {
             _spaceHazeConfiguration = spaceHazeConfiguration;
-            _spaceHazeSkySource = spaceHazeSkySource;
+            _spaceHazeBackdropRecorder = spaceHazeBackdropRecorder;
         }
 
         public void Initialize() {
@@ -43,11 +44,13 @@ namespace Features.SpaceHazeModule.Scripts.Rendering {
         public void Dispose() =>
             CoreUtils.Destroy(_material);
 
-        public void Enqueue(ScriptableRenderer renderer, SpaceHazeShape shape) {
+        public void Enqueue(ScriptableRenderContext context, Camera camera, ScriptableRenderer renderer, SpaceHazeShape shape) {
+            if (_spaceHazeBackdropRecorder.TryCull(context, camera, shape.BackdropEndMeters) == false)
+                return;
+
             _material.SetVector(_distancesId, new Vector4(shape.ClearMeters, shape.HiddenMeters, shape.BackdropStartMeters, shape.BackdropEndMeters));
             _material.SetFloat(_strengthId, shape.Strength);
             _material.SetColor(_tintId, _spaceHazeConfiguration.Tint);
-            _spaceHazeSkySource.Apply(_material);
             renderer.EnqueuePass(this);
         }
 
@@ -56,6 +59,7 @@ namespace Features.SpaceHazeModule.Scripts.Rendering {
             if (resourceData.isActiveTargetBackBuffer)
                 return;
 
+            TextureHandle backdrop = _spaceHazeBackdropRecorder.Record(renderGraph, frameData);
             TextureHandle source = resourceData.activeColorTexture;
             TextureDesc destinationDescription = renderGraph.GetTextureDesc(source);
             destinationDescription.name = COLOR_TEXTURE_NAME;
@@ -63,8 +67,10 @@ namespace Features.SpaceHazeModule.Scripts.Rendering {
             TextureHandle destination = renderGraph.CreateTexture(destinationDescription);
             using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass(PASS_NAME, out SpaceHazePassData passData, profilingSampler)) {
                 passData.Source = source;
+                passData.Backdrop = backdrop;
                 passData.Material = _material;
                 builder.UseTexture(source);
+                builder.UseTexture(backdrop);
                 builder.UseTexture(resourceData.cameraDepthTexture);
                 builder.SetRenderAttachment(destination, 0);
                 builder.SetRenderFunc<SpaceHazePassData>(ExecutePass);
@@ -73,7 +79,9 @@ namespace Features.SpaceHazeModule.Scripts.Rendering {
             resourceData.cameraColor = destination;
         }
 
-        private static void ExecutePass(SpaceHazePassData passData, RasterGraphContext context) =>
+        private static void ExecutePass(SpaceHazePassData passData, RasterGraphContext context) {
+            passData.Material.SetTexture(_backdropId, passData.Backdrop);
             Blitter.BlitTexture(context.cmd, passData.Source, _fullScaleBias, passData.Material, SHADER_PASS);
+        }
     }
 }
