@@ -83,7 +83,6 @@ namespace Features.ShipModule.Scripts.Debug {
         private int _shiftMarks;
         private int _lastShifts;
         private int _lastGc;
-        private int _spikeLines;
         private string _pendingShot;
         private int _pendingShotWait;
         private bool _captureSample;
@@ -92,8 +91,6 @@ namespace Features.ShipModule.Scripts.Debug {
         private string _finishLabel;
         private string _finishCamera;
         private int _finishState;
-        private float _dockFpJerkRms;
-        private float _dockTpJerkRms;
         private int _flightPass;
         private int _loopsSeen;
         private bool _shotStation;

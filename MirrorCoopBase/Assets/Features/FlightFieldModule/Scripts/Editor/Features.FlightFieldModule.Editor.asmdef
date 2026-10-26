@@ -2,6 +2,7 @@
     "name": "Features.FlightFieldModule.Editor",
     "rootNamespace": "Features.FlightFieldModule.Editor",
     "references": [
+        "GUID:5d6793be2d204514a9702ab824c001ed",
         "GUID:de3859a8001533e4785d57768b0ba05c",
         "GUID:1baf1984ba18f484c9db7270a36bfd43",
         "GUID:0d8beb7f090555447a6cf5ce9e54dbb4",

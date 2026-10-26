@@ -12,21 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7c8d9e0f1a2433bb4c5d6e7f8092a31, type: 3}
   m_Name: ShipAccumulativeStatsConfiguration_Default
   m_EditorClassIdentifier: 
-  AccumulativeStats:
-  - 4
+  AccumulativeStats: 06000000
   _defaults:
-  - Type: 1
-    MaxValue: 999
-    Value: 0
   - Type: 5
     MaxValue: 99
     Value: 1
   - Type: 2
     MaxValue: 20
     Value: 1
-  - Type: 3
-    MaxValue: 20
-    Value: 1
   - Type: 4
     MaxValue: 100
+    Value: 0
+  - Type: 6
+    MaxValue: 100
     Value: 100
+  - Type: 7
+    MaxValue: 5000
+    Value: 0

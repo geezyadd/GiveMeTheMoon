@@ -6,16 +6,13 @@ using Features.FlightFieldModule.Scripts.Structures;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Generation.Steps {
-    // Balance numbers of the finished field: the zone shares, the smallest gap between two debris rocks in the main
-    // and alternative corridors (laid out exactly as the peers will build them) and the dodges per minute: the debris
-    // rocks a ship flying the first main centerline at cruise speed would hit, per minute of that flight. An obstacle
-    // field has no corridors: its rocks around the straight main line count, and every giant on the line is a dodge.
+    // Balance numbers of the finished field: the zone shares and the dodges per minute: the debris rocks (laid out
+    // exactly as the peers will build them) and the giants a ship flying the main centerline at cruise speed would
+    // hit, per minute of that flight.
     public sealed class FieldBalanceMetricStep : IFieldGenerationStep {
         private const float SECONDS_PER_MINUTE = 60f;
         private const float HALF = 0.5f;
         private const float CELL_CENTER = 0.5f;
-        // Rocks up to 30 m across stand anywhere in their cell: pairs up to two cells apart can be the closest.
-        private const int GAP_REACH_CELLS = 2;
 
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
         private readonly FieldStructureCatalog _fieldStructureCatalog;
@@ -30,23 +27,14 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             _fieldRandomFactory = fieldRandomFactory;
         }
 
-        public bool IsUsedBy(FieldLayoutKind layout) =>
-            true;
-
         public void Execute(FieldGenerationContext context) {
             MeasureShares(context);
-            HashSet<Vector2Int> lineCells = CollectMainLineCells(context);
-            Dictionary<Vector2Int, List<FieldDebrisSpot>> corridorDebris = LayOutCorridorDebris(context, lineCells);
-            context.Metrics.MinCorridorGapMeters = MeasureMinGap(corridorDebris, context.Frame.CellSize);
-            context.Metrics.DodgesPerMinute = MeasureDodges(context, corridorDebris);
+            context.Metrics.DodgesPerMinute = MeasureDodges(context, LayOutLineDebris(context, CollectMainLineCells(context)));
         }
 
-        // The cells the dodges of an obstacle field are counted in: the main centerline and its neighbours.
+        // The cells the dodges are counted in: the main centerline and its neighbours.
         private static HashSet<Vector2Int> CollectMainLineCells(FieldGenerationContext context) {
             HashSet<Vector2Int> cells = new();
-            if (context.Profile.Layout != FieldLayoutKind.Obstacles)
-                return cells;
-
             foreach (Vector2Int cell in context.Routes[0].Centerline)
                 AddWithNeighbours(cells, cell);
 
@@ -77,16 +65,15 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             context.Metrics.EmptyShare = 1f - context.Metrics.BlockedShare - context.Metrics.DebrisShare;
         }
 
-        private Dictionary<Vector2Int, List<FieldDebrisSpot>> LayOutCorridorDebris(FieldGenerationContext context, HashSet<Vector2Int> lineCells) {
+        private Dictionary<Vector2Int, List<FieldDebrisSpot>> LayOutLineDebris(FieldGenerationContext context, HashSet<Vector2Int> lineCells) {
             Dictionary<Vector2Int, List<FieldDebrisSpot>> spotsByCell = new();
             MatrixFieldDebrisCells cells = new(context.Cells, _fieldStructureCatalog, context.Profile);
             FieldDebrisWorkspace workspace = new(_fieldRandomFactory.Create(0));
             Vector2Int size = context.Frame.Size;
             for (int y = 0; y < size.y; y++) {
                 for (int x = 0; x < size.x; x++) {
-                    FieldCell cell = context.Cells[x, y];
-                    bool isMeasured = cell.Reserve is FieldReserveKind.RouteCorridor or FieldReserveKind.AlternativeCorridor || lineCells.Contains(new Vector2Int(x, y));
-                    if (cell.HasDebris && isMeasured)
+                    bool isMeasured = context.Cells[x, y].HasDebris && lineCells.Contains(new Vector2Int(x, y));
+                    if (isMeasured)
                         spotsByCell.Add(new Vector2Int(x, y), LayOut(context, new Vector2Int(x, y), cells, workspace));
                 }
             }
@@ -98,36 +85,6 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             List<FieldDebrisSpot> spots = new();
             _fieldDebrisLayout.Fill(context.Seed, position, context.Frame.CellSize, cells, workspace, spots);
             return spots;
-        }
-
-        // Every pair of rocks in cells up to two apart; rocks in cells farther apart are farther than any gap that matters.
-        private static float MeasureMinGap(Dictionary<Vector2Int, List<FieldDebrisSpot>> spotsByCell, float cellSize) {
-            float minGap = float.PositiveInfinity;
-            foreach (KeyValuePair<Vector2Int, List<FieldDebrisSpot>> entry in spotsByCell) {
-                for (int y = -GAP_REACH_CELLS; y <= GAP_REACH_CELLS; y++) {
-                    for (int x = -GAP_REACH_CELLS; x <= GAP_REACH_CELLS; x++)
-                        minGap = Mathf.Min(minGap, MinGapBetween(entry.Key, entry.Value, entry.Key + new Vector2Int(x, y), spotsByCell, cellSize));
-                }
-            }
-
-            return minGap;
-        }
-
-        private static float MinGapBetween(Vector2Int cell, List<FieldDebrisSpot> spots, Vector2Int otherCell, Dictionary<Vector2Int, List<FieldDebrisSpot>> spotsByCell,
-                                           float cellSize) {
-            if (!spotsByCell.TryGetValue(otherCell, out List<FieldDebrisSpot> others))
-                return float.PositiveInfinity;
-
-            float minGap = float.PositiveInfinity;
-            for (int i = 0; i < spots.Count; i++) {
-                for (int j = 0; j < others.Count; j++) {
-                    bool isSameRock = cell == otherCell && i == j;
-                    if (!isSameRock)
-                        minGap = Mathf.Min(minGap, Vector2.Distance(OnPlane(cell, spots[i], cellSize), OnPlane(otherCell, others[j], cellSize)) - spots[i].Radius - others[j].Radius);
-                }
-            }
-
-            return minGap;
         }
 
         // Every rock in the cells around a centerline segment that the ship, flying the segment, would touch; a rock
@@ -149,10 +106,8 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
             return minutes > 0f ? (dodged.Count + dodgedGiants.Count) / minutes : 0f;
         }
 
-        // A giant of an obstacle field standing on the line; a corridor field keeps its giants off its centerlines.
         private static void CollectGiantDodges(FieldGenerationContext context, Vector2Int cell, HashSet<int> dodgedGiants) {
-            bool isGiantOnLine = context.Profile.Layout == FieldLayoutKind.Obstacles && context.Cells[cell].IsOccupied;
-            if (isGiantOnLine)
+            if (context.Cells[cell].IsOccupied)
                 dodgedGiants.Add(context.Cells[cell].PlacementId);
         }
 
@@ -172,15 +127,9 @@ namespace Features.FlightFieldModule.Scripts.Generation.Steps {
                 return;
 
             for (int i = 0; i < spots.Count; i++) {
-                if (DistanceToSegment(OnPlane(cell, spots[i], cellSize), start, end) < halfShip + spots[i].Radius)
+                if (FieldPlaneGeometry.DistanceToSegment(OnPlane(cell, spots[i], cellSize), start, end) < halfShip + spots[i].Radius)
                     dodged.Add((cell, i));
             }
-        }
-
-        private static float DistanceToSegment(Vector2 point, Vector2 start, Vector2 end) {
-            Vector2 segment = end - start;
-            float along = Mathf.Clamp01(Vector2.Dot(point - start, segment) / segment.sqrMagnitude);
-            return Vector2.Distance(point, start + segment * along);
         }
 
         // Field plane coordinates: x across (matrix y), y along (matrix x).

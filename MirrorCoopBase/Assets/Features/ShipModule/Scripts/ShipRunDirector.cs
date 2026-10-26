@@ -18,9 +18,6 @@ namespace Features.ShipModule.Scripts {
         private ShipStationCatalog _stations;
 
         [Inject]
-        private IShipRadarBinding _radar;
-
-        [Inject]
         private IShipClientBindingModel _clientShip;
 
         [Inject]
@@ -50,17 +47,15 @@ namespace Features.ShipModule.Scripts {
                 _run.Unbind(this);
         }
 
-        // The server binds the ship in ShipRunService.Bind; a client's HUD radar needs the same ship.
+        // The server binds the ship in ShipRunService.Bind; a client's own systems (the sonar) need the same ship.
         public override void OnStartClient() {
             base.OnStartClient();
             _clientStarted = true;
-            _radar.BindShip(_ship);
             _clientShip.Bind(_ship);
         }
 
         public override void OnStopClient() {
             _clientStarted = false;
-            _radar.UnbindShip();
             _clientShip.Clear();
             base.OnStopClient();
         }

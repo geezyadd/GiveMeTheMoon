@@ -1,7 +1,6 @@
 namespace Features.FlightFieldModule.Scripts.Model {
     // One cell of the field matrix: why it is kept empty (Reserve), what the generator decided it is (Class), which
     // placement stands on it and, for a debris cell, how dense its small rocks are and which debris type they are.
-    // Only corridor cells may be reserved and occupied at once (a closed alternative route).
     public readonly struct FieldCell {
         public const int NO_PLACEMENT = 0;
 
@@ -13,8 +12,7 @@ namespace Features.FlightFieldModule.Scripts.Model {
         public bool IsOccupied => PlacementId != NO_PLACEMENT;
         public bool IsReserved => Reserve != FieldReserveKind.None;
         public bool IsFree => !IsOccupied && !IsReserved;
-        public bool IsCorridor => Reserve is FieldReserveKind.RouteCorridor or FieldReserveKind.AlternativeCorridor or FieldReserveKind.DeadEndCorridor;
-        public bool IsBlockedClass => Class is FieldCellClass.Wall or FieldCellClass.Ridge;
+        public bool IsBlockedClass => Class == FieldCellClass.Ridge;
         public bool HasDebris => Class == FieldCellClass.Debris && DebrisDensity > 0f;
 
         public FieldCell(FieldReserveKind reserve, int placementId, FieldCellClass cellClass) {
@@ -41,9 +39,5 @@ namespace Features.FlightFieldModule.Scripts.Model {
 
         public FieldCell WithDebris(float density, string debrisId) =>
             new(Reserve, PlacementId, FieldCellClass.Debris, density, debrisId);
-
-        // A cell whose structure is taken out is open again.
-        public FieldCell WithoutPlacement() =>
-            new(Reserve, NO_PLACEMENT, FieldCellClass.Empty, 0f, null);
     }
 }

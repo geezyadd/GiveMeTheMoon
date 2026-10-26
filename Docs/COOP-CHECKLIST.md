@@ -11,7 +11,7 @@ console of both sides; any `Error` / `Exception` goes into the result with its s
 
 **Auto** says what the automated tests already cover, so the manual pass can focus on the rest:
 - `2P` - covered by the two-process test `CoopTwoProcessTest` (editor host + development-build client, see
-  `AGENTS.md` → "Two-player test"); host and client views are compared;
+  [`MirrorCoopBase/Assets/Tests/Coop/AGENTS.md`](../MirrorCoopBase/Assets/Tests/Coop/AGENTS.md)); host and client views are compared;
 - `2P part` - partly covered, the column says what is left;
 - `LS` - covered only on the host by `LoopSmokeTest` (an in-process bot, not a real second client);
 - `-` - not automated.
@@ -24,7 +24,7 @@ console of both sides; any `Error` / `Exception` goes into the result with its s
 | 2 | The client picks up a module and installs it in a slot; the host sees it in the slot. And the other way round. | | | | - |
 | 3 | The client takes a module off (Engine or Radar): it is in the client's hands, the host sees it there. | | | | - (LS: host only) |
 | 4 | The client buys at the kiosk (aim + **E**, buy in the window): the balance drops for both, the item lies on the kiosk's delivery pad for both. | | | | - (LS: host only) |
-| 5 | Both on the deck, the host pulls the lever: takeoff, flight, landing; both stay on the deck, no jerks, no falling through. Repeat with the client pulling the lever. | | | | 2P part: host pulls; client pulling and "no jerks" by eye are left |
+| 5 | Both on the deck, the host pushes the throttle lever (hold E, mouse forward): takeoff, flight, landing; both stay on the deck, no jerks, no falling through. Repeat with the client pushing it; in flight pull it back to Stop: the ship eases to a stop. | | | | 2P part: the host launches; the client pushes the throttle handle to launch the last loop (the host sees it at Full and the ship flying); "no jerks" by eye is left |
 | 6 | The client sits at the helm and steers: the host sees the ship turn and the client in the seat. | | | | - |
 | 7 | Three full loops in a row: modules in place for both, both on the same pad. | | | | 2P (3 loops, sockets, both on the deck) |
 | 8 | A world shift in flight (`DebugForceRecenter` or a long flight): no jerk of the ship, the rocks or the player on the client. | | | | - (LS: host only, field follows the shift) |

@@ -1,10 +1,18 @@
+using Features.NetworkModelModule.Scripts;
+using Features.ShipModule.Scripts.Helm;
 using NUnit.Framework;
 
-namespace Features.ShipModule.Scripts.Editor.Tests {
+namespace Features.ShipModule.Editor.Tests {
+    // The helm station's steer: the host pilot's own stick, a client pilot's sent steer and its send cadence, and no
+    // steer left over from a pilot who has gone.
     public sealed class HelmSteerTests {
-        private const uint PILOT = 7;
-        private const uint OTHER_PILOT = 9;
-        private const float STEER = 0.7f;
+        private const float STICK = -1f;
+        private const float SENT_STEER = 0.7f;
+        private const float SEND_SECONDS = 0.03f;
+        private const double NOW = 10d;
+
+        private static readonly PlayerKey _pilot = new PlayerKey("client:pilot");
+        private static readonly PlayerKey _otherPilot = new PlayerKey("client:other");
 
         private HelmSteer _steer;
 
@@ -13,32 +21,71 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
             _steer = new HelmSteer();
 
         [Test]
-        public void WhenPilotSteers_ThenHelmReadsItsSteer() {
-            _steer.Set(PILOT, STEER);
+        public void WhenNobodySits_ThenSteerIsZero() =>
+            Assert.AreEqual(0f, _steer.Read(STICK));
 
-            Assert.AreEqual(STEER, _steer.Read(PILOT));
+        [Test]
+        public void WhenHostPilotHoldsTheStick_ThenHelmReadsTheStick() {
+            SitDown(_pilot, true);
+
+            Assert.AreEqual(STICK, _steer.Read(STICK));
         }
 
         [Test]
-        public void WhenPilotLeavesTheHelm_ThenSteerIsZero() {
-            _steer.Set(PILOT, STEER);
+        public void WhenRemotePilotSendsSteer_ThenHelmReadsTheSentSteerNotTheHostStick() {
+            SitDown(_pilot, false);
 
-            Assert.AreEqual(0f, _steer.Read(0));
+            _steer.ServerReceive(SENT_STEER);
+
+            Assert.AreEqual(SENT_STEER, _steer.Read(STICK));
         }
 
         [Test]
-        public void WhenAnotherPilotTakesTheHelm_ThenPreviousSteerIsNotApplied() {
-            _steer.Set(PILOT, STEER);
+        public void WhenRemotePilotStandsUp_AndAnotherPilotSits_ThenThePreviousSteerIsNotApplied() {
+            SitDown(_pilot, false);
+            _steer.ServerReceive(SENT_STEER);
 
-            Assert.AreEqual(0f, _steer.Read(OTHER_PILOT));
+            _steer.Exit();
+            SitDown(_otherPilot, false);
+
+            Assert.AreEqual(0f, _steer.Read(STICK));
         }
 
         [Test]
-        public void WhenCleared_AndSamePilotSitsAgain_ThenSteerIsZero() {
-            _steer.Set(PILOT, STEER);
-            _steer.Clear();
+        public void WhenPilotsObjectIsNotOnThisPeerYet_ThenItIsNotLocal_AndSendsNothing() {
+            _steer.Enter(_pilot);
 
-            Assert.AreEqual(0f, _steer.Read(PILOT));
+            Assert.IsTrue(_steer.HasPilot);
+            Assert.IsFalse(_steer.IsOccupantLocal);
+            Assert.IsFalse(_steer.TryTakeSendTurn(false, NOW, SEND_SECONDS));
+        }
+
+        [Test]
+        public void WhenClientPilotSits_ThenItSendsAtOnce_AndThenOncePerInterval() {
+            SitDown(_pilot, true);
+
+            Assert.IsTrue(_steer.TryTakeSendTurn(false, NOW, SEND_SECONDS));
+            Assert.IsFalse(_steer.TryTakeSendTurn(false, NOW + SEND_SECONDS / 2d, SEND_SECONDS));
+            Assert.IsTrue(_steer.TryTakeSendTurn(false, NOW + SEND_SECONDS, SEND_SECONDS));
+        }
+
+        [Test]
+        public void WhenHostPilotSits_ThenItSendsNothing() {
+            SitDown(_pilot, true);
+
+            Assert.IsFalse(_steer.TryTakeSendTurn(true, NOW, SEND_SECONDS));
+        }
+
+        [Test]
+        public void WhenRemotePilotSits_ThenThisPeerSendsNothingForIt() {
+            SitDown(_pilot, false);
+
+            Assert.IsFalse(_steer.TryTakeSendTurn(false, NOW, SEND_SECONDS));
+        }
+
+        private void SitDown(PlayerKey pilot, bool isLocal) {
+            _steer.Enter(pilot);
+            _steer.TakeOccupant(isLocal);
         }
     }
 }

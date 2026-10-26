@@ -21,11 +21,10 @@ MonoBehaviour:
   _description: Compact rocket engine. Fits any engine socket.
   _price: 300
   _statModifiers:
-  - Stat: 1
-    Value: 3
-    Type: 0
   - Stat: 5
     Value: 0.5
     Type: 0
   _isRemovable: 1
   _isControlModule: 0
+  _canBreak: 1
+  _breakChanceMultiplier: 1

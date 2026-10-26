@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56d2ffb2d3a75ac41a222a02aaf61b98, type: 3}
+  m_Name: SonarConfiguration_Default
+  m_EditorClassIdentifier: 
+  _minRangeMeters: 300
+  _rangeRingCount: 3
+  _pingCooldownSeconds: 2.5
+  _pingWaveSeconds: 1.2
+  _echoFadeSeconds: 4
+  _markLimit: 3
+  _serverCheckSeconds: 0.25
+  _markerEdgeMarginPixels: 56
+  _consoleKeepOpenMeters: 3
+  _kinds:
+  - {fileID: 11400000, guid: c9e6921bf57271343a9ada775a0ad1b0, type: 2}
+  - {fileID: 11400000, guid: 0d73de613562993449c922c389c3e8ad, type: 2}
+  - {fileID: 11400000, guid: 860a193a0261fec4d93c2118dccc9ce7, type: 2}
+  - {fileID: 11400000, guid: 5e946e5f004057046b015d272e17ee1d, type: 2}
+  _stationKind: {fileID: 11400000, guid: c9e6921bf57271343a9ada775a0ad1b0, type: 2}
+  _largeRockKind: {fileID: 11400000, guid: 0d73de613562993449c922c389c3e8ad, type: 2}
+  _debrisKind: {fileID: 11400000, guid: 860a193a0261fec4d93c2118dccc9ce7, type: 2}
+  _targetKind: {fileID: 11400000, guid: 5e946e5f004057046b015d272e17ee1d, type: 2}
+  _debrisCellMeters: 120
+  _debrisMinRocks: 6
+  _debrisCellHalfHeightMeters: 2000

@@ -12,6 +12,9 @@ namespace Features.ShipModule.Scripts {
         private const float ARRIVE_DISTANCE = 0.4f;
         private const float ARRIVE_SPEED_SQR = 0.25f;
 
+        private readonly ShipKnockback _knockback = new ShipKnockback();
+        private readonly ShipCruiseSpeed _cruiseSpeed = new ShipCruiseSpeed();
+
         private ShipFlightSettings _settings;
         private ShipFlightMode _mode = ShipFlightMode.TravelInSpace;
         private Vector3 _from;
@@ -33,7 +36,6 @@ namespace Features.ShipModule.Scripts {
         private float _dodgeVel;
         private float _dodgeRangeScale = 1f;
         private float _travelSpeed;
-        private float _cruiseAge;
         private float _takeoffAge;
         private float _takeoffSeconds = 9f;
         private float _landAge;
@@ -78,11 +80,12 @@ namespace Features.ShipModule.Scripts {
             _bank = 0f;
             _bankVel = 0f;
             _travelSpeed = 0f;
-            _cruiseAge = 0f;
+            _cruiseSpeed.Reset();
             _takeoffAge = 0f;
             _takeoffSeconds = Mathf.Max(0.2f, takeoffSeconds);
             _landAge = 0f;
             _landed = false;
+            _knockback.Reset();
             // The autopilot keeps the takeoff heading; the crew finds the destination by radar and steers there.
             _restHeading = FlattenHeading(heading);
             Rotation = _restHeading;
@@ -90,7 +93,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         public void BeginCruise() {
-            _cruiseAge = 0f;
+            _cruiseSpeed.Reset();
             _routeAnchor = _hover;
             _phase = Phase.Cruise;
         }
@@ -123,8 +126,18 @@ namespace Features.ShipModule.Scripts {
             _manualHeading = manual;
         }
 
+        // The cruise speed the throttle asks for; the ship eases to it within the acceleration limit.
         public void SetTravelSpeed(float metersPerSecond) {
             _travelSpeed = Mathf.Max(0f, metersPerSecond);
+        }
+
+        public void ApplyKnockback(Vector3 velocity, float fadeSeconds, float maxAcceleration) =>
+            _knockback.Apply(velocity, fadeSeconds, maxAcceleration);
+
+        // The ship as a whole moves along the direction at least this fast, whatever its own flight does.
+        public void SustainKnockback(Vector3 direction, float minimumSpeed) {
+            Vector3 ownVelocity = _velocity - _knockback.Velocity;
+            _knockback.Sustain(direction, minimumSpeed - Vector3.Dot(ownVelocity, direction));
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -151,11 +164,14 @@ namespace Features.ShipModule.Scripts {
             _velocity = Vector3.zero;
             _landVelocity = Vector3.zero;
             _landed = false;
+            _knockback.Reset();
         }
 
         public void Simulate(float dt) {
             if (IsActive == false || dt <= 0f)
                 return;
+
+            ApplyKnockbackStep(dt);
 
             if (_phase == Phase.Takeoff)
                 SimulateTakeoff(dt);
@@ -187,15 +203,24 @@ namespace Features.ShipModule.Scripts {
         }
 
         private void AdvanceRoute(float dt) {
-            _cruiseAge += dt;
-            float accelSeconds = _settings != null ? _settings.TravelAccelSeconds : 0f;
-            float ramp = accelSeconds <= 0.01f ? 1f : Mathf.Clamp01(_cruiseAge / accelSeconds);
+            float maxAcceleration = _settings != null ? _settings.CruiseAcceleration : 0f;
+            float speed = _cruiseSpeed.Step(_travelSpeed, maxAcceleration, dt);
             Vector3 forward = _restHeading * Vector3.forward;
             forward.y = 0f;
             if (forward.sqrMagnitude < 0.0001f)
                 return;
 
-            _routeAnchor += forward.normalized * (_travelSpeed * ramp) * dt;
+            _routeAnchor += forward.normalized * speed * dt;
+        }
+
+        // The knockback moves the path the ship follows, so it stays where it was pushed to; the pad it lands on stays.
+        private void ApplyKnockbackStep(float dt) {
+            Vector3 push = _knockback.Step(dt);
+            _from += push;
+            _hover += push;
+            _routeAnchor += push;
+            if (_phase == Phase.Landing && _mode == ShipFlightMode.TravelInSpace)
+                _position += push;
         }
 
         private Vector3 CruiseAnchor() {

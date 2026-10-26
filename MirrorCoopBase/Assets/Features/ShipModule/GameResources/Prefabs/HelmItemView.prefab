@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 2230425617804743941}
   - component: {fileID: 7152401028627730188}
   - component: {fileID: 1492569836942902581}
+  - component: {fileID: 2127736537512667700}
   m_Layer: 0
   m_Name: HelmItemView
   m_TagString: Untagged
@@ -131,5 +132,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4e5f6478091a2b3c4d5e6f708192031, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _role: 1
   _sitPoint: {fileID: 6492061514254209430}
+--- !u!114 &2127736537512667700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8129054716116993446}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c1aff32af726a94bbf68a27705d6c87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

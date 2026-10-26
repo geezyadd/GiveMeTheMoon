@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Features.FlightFieldModule.Scripts.Decor {
     // Reads the volume source from the live field model, the same on every peer: the profile by its synced id and its
     // volume (its own or the configuration's), the field's difficulty (the hardest route), the ends of the first main
-    // route's centerline and, for an obstacle field, the spheres of its giants. The giants are read again only when the
+    // route's centerline and the spheres of the field's giants. The giants are read again only when the
     // field number or the placement count changes (a client may get the lists after the state): the source is read
     // for every decor chunk.
     public sealed class LiveFieldVolumeSourceReader : IFieldVolumeSourceReader {
@@ -49,12 +49,12 @@ namespace Features.FlightFieldModule.Scripts.Decor {
 
             float cellSize = _liveFieldModel.CellSize;
             FieldVolumeConfiguration volume = profile.HasOwnVolume ? profile.Volume : _flightFieldConfiguration.Volume;
-            ReadGiants(profile);
+            ReadGiants();
             source = new FieldVolumeSource(profile, volume, difficulty, cellSize, OnPlane(start, cellSize), OnPlane(end, cellSize), _giants);
             return true;
         }
 
-        private void ReadGiants(FieldDifficultyProfile profile) {
+        private void ReadGiants() {
             bool isRead = _giantsFieldNumber == _liveFieldModel.Number && _giantsPlacementCount == _liveFieldModel.Placements.Count;
             if (isRead)
                 return;
@@ -62,9 +62,6 @@ namespace Features.FlightFieldModule.Scripts.Decor {
             _giantsFieldNumber = _liveFieldModel.Number;
             _giantsPlacementCount = _liveFieldModel.Placements.Count;
             _giants.Clear();
-            if (profile.Layout != FieldLayoutKind.Obstacles)
-                return;
-
             foreach (FieldPlacementEntry placement in _liveFieldModel.Placements)
                 _giants.Add(ToGiant(placement));
         }

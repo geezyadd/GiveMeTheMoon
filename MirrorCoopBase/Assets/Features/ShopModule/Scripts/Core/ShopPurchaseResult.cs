@@ -1,13 +1,15 @@
-using Features.ShipModule.Scripts;
+using Features.GrabModule.Scripts;
 
 namespace Features.ShopModule.Scripts.Core {
     public readonly struct ShopPurchaseResult {
         public ShopPurchaseStatus Status { get; }
-        public ModuleDefinition Module { get; }
+        public long Price { get; }
+        public Grabbable ItemPrefab { get; }
 
-        public ShopPurchaseResult(ShopPurchaseStatus status, ModuleDefinition module) {
+        public ShopPurchaseResult(ShopPurchaseStatus status, long price, Grabbable itemPrefab) {
             Status = status;
-            Module = module;
+            Price = price;
+            ItemPrefab = itemPrefab;
         }
     }
 }

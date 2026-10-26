@@ -8,6 +8,8 @@ using Features.PlayerProfileModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Generated;
 using Features.ShopModule.Scripts.Generated;
+using Features.SonarModule.Data;
+using Features.SonarModule.Data.Generated;
 using Mirror;
 using Tests.Shared;
 using TMPro;
@@ -16,7 +18,8 @@ using Object = UnityEngine.Object;
 
 namespace Tests.Coop.Shared {
     // Reads what this process sees of the shared game: the run, the ship's sockets and stats, the crew balance, the
-    // flight field, the other player's nameplate, where the local player stands and whether it is alive.
+    // flight field, the other player's nameplate, where the local player stands, whether it is alive and at the helm,
+    // and the throttle.
     // The host and the client capture the same fields.
     public static class CoopObserver {
         private const string SOCKET_FORMAT = "{0}={1}";
@@ -37,7 +40,19 @@ namespace Tests.Coop.Shared {
             CaptureLocalPlayer(observation);
             observation.LifeState = SessionQueries.Resolve<IPlayerLifeQuery>().LocalState.ToString();
             observation.IsSpectating = SessionQueries.Resolve<SpectatorModel>().IsSpectating;
+            observation.SonarMarks = CaptureSonarMarks(SessionQueries.Resolve<IReadOnlySonarConsoleModel>());
+            observation.ThrottlePosition = SessionQueries.Resolve<IReadOnlyShipThrottleModel>().Position;
             return observation;
+        }
+
+        // The contacts the crew has marked, as this process's synced sonar model holds them.
+        private static string[] CaptureSonarMarks(IReadOnlySonarConsoleModel sonar) {
+            List<string> marks = new List<string>();
+            foreach (SonarMark mark in sonar.Marks)
+                marks.Add(mark.ContactId);
+
+            marks.Sort(StringComparer.Ordinal);
+            return marks.ToArray();
         }
 
         private static string[] CaptureSockets(IReadOnlyShipSocketsModel sockets) {
@@ -52,9 +67,7 @@ namespace Tests.Coop.Shared {
         }
 
         private static void CaptureStats(IReadOnlyShipStatsModel stats, CoopObservation observation) {
-            observation.Thrust = stats.Thrust;
             observation.DodgeRange = stats.DodgeRange;
-            observation.Handling = stats.Handling;
             observation.Armor = stats.Armor;
             observation.FlightSpeed = stats.FlightSpeed;
         }
@@ -81,6 +94,7 @@ namespace Tests.Coop.Shared {
             Vector3 position = SessionQueries.LocalPlayer.transform.position;
             observation.Position = position;
             observation.IsOnDeck = SessionQueries.IsOnDeck(ship, position);
+            observation.IsHelmPilot = CoopHelm.FindStation(ship).IsSteeredByLocalPlayer;
         }
     }
 }

@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 
 namespace Features.FlightFieldModule.Scripts.Editor {
-    // The flight plane of a field as the slalom numbers see it: its area and the diameters of the giants of an obstacle
-    // field (none for a corridor field, whose closed cells are walls).
+    // The flight plane of a field as the slalom numbers see it: its area and the diameters of its giants.
     public sealed class FieldSlalomPlane {
         public float AreaSquareMeters { get; }
         public IReadOnlyList<float> GiantDiametersMeters { get; }

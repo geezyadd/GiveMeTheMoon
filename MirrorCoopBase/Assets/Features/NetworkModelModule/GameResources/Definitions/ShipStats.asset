@@ -18,18 +18,21 @@ MonoBehaviour:
   _atomic: 1
   _scope: 0
   _fields:
-  - _name: Thrust
-    _typeName: float
-    _defaultValue: 
   - _name: DodgeRange
-    _typeName: float
-    _defaultValue: 
-  - _name: Handling
     _typeName: float
     _defaultValue: 
   - _name: Armor
     _typeName: float
     _defaultValue: 
   - _name: FlightSpeed
+    _typeName: float
+    _defaultValue: 
+  - _name: Hull
+    _typeName: float
+    _defaultValue: 
+  - _name: HullMax
+    _typeName: float
+    _defaultValue: 
+  - _name: SonarRange
     _typeName: float
     _defaultValue: 

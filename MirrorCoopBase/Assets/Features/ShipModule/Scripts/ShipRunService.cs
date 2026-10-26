@@ -1,4 +1,5 @@
 using Features.GameCoreModule.Contracts;
+using Features.ShipModule.Scripts.Contracts;
 using Features.ShipModule.Scripts.Generated;
 using Game.Connection;
 using Mirror;
@@ -8,6 +9,7 @@ namespace Features.ShipModule.Scripts {
     public sealed class ShipRunService : IShipRunService, IGameplaySession {
         private const float WRECK_PITCH_DEGREES = 12f;
         private const float WRECK_ROLL_DEGREES = 18f;
+        private const int FIRST_LOOP_INDEX = 0;
 
         private readonly IReadOnlyShipRunModel _model;
         private readonly ShipRunConfig _config;
@@ -17,9 +19,11 @@ namespace Features.ShipModule.Scripts {
         private readonly IShipFlightStatService _flightStats;
         private readonly IShipRoute _route;
         private readonly IShipWorldShiftService _worldShift;
-        private readonly IShipRadarBinding _radar;
         private readonly ConnectionSpawnModel _spawn;
         private readonly IFlightRouteListener _flightRouteListener;
+        private readonly IShipRunStage _runStage;
+        private readonly IShipLandingRepair _shipLandingRepair;
+        private readonly IShipRunStartListener _shipRunStartListener;
 
         private float _wreckUntil;
 
@@ -30,7 +34,6 @@ namespace Features.ShipModule.Scripts {
         public ShipRunService(
             IReadOnlyShipRunModel model,
             ShipRunConfig config,
-            IShipRadarBinding radar,
             ConnectionSpawnModel spawn,
             IShipRunBindingModel binding,
             IShipStationPads pads,
@@ -38,10 +41,12 @@ namespace Features.ShipModule.Scripts {
             IShipFlightStatService flightStats,
             IShipRoute route,
             IShipWorldShiftService worldShift,
-            IFlightRouteListener flightRouteListener) {
+            IFlightRouteListener flightRouteListener,
+            IShipRunStage runStage,
+            IShipLandingRepair shipLandingRepair,
+            IShipRunStartListener shipRunStartListener) {
             _model = model;
             _config = config;
-            _radar = radar;
             _spawn = spawn;
             _binding = binding;
             _pads = pads;
@@ -50,6 +55,9 @@ namespace Features.ShipModule.Scripts {
             _route = route;
             _worldShift = worldShift;
             _flightRouteListener = flightRouteListener;
+            _runStage = runStage;
+            _shipLandingRepair = shipLandingRepair;
+            _shipRunStartListener = shipRunStartListener;
         }
 
         public void CleanupGameplay() {
@@ -63,11 +71,13 @@ namespace Features.ShipModule.Scripts {
         public void Bind(ShipRunDirector director, ShipBase ship, ShipLandingPad startPad) {
             _binding.Bind(director, ship);
             _pads.Reset(startPad);
-            director.ServerSetState(StartState());
-            if (ship != null && startPad != null)
+            director.ServerSetState(StartState(_runStage.StartLoopIndex));
+            if (ship != null && startPad != null) {
                 ship.ServerResetForBuild(startPad.BuildBerth.position, startPad.BuildBerth.rotation);
+                _runStage.ServerPrepareShip(ship);
+                _shipRunStartListener.ServerOnRunStarted();
+            }
 
-            _radar.BindShip(ship);
             PublishPreview();
         }
 
@@ -83,19 +93,21 @@ namespace Features.ShipModule.Scripts {
                 Ship.ServerResetForBuild(CurrentPad.BuildBerth.position, CurrentPad.BuildBerth.rotation);
 
             if (NetworkServer.active && Director != null)
-                Director.ServerSetState(StartState());
+                Director.ServerSetState(StartState(FIRST_LOOP_INDEX));
 
             _flightRouteListener.ServerOnFlightEnded();
+            _runStage.OnRunEnded();
             _binding.Clear();
             _pads.Reset(null);
             _wreckUntil = 0f;
             _route.Reset();
-            _radar.UnbindShip();
         }
 
-        private static ShipRunState StartState() =>
+        private ShipRunState StartState(int loopIndex) =>
             new ShipRunState {
                 Phase = ShipRunPhase.Build,
+                LoopIndex = loopIndex,
+                LaunchLocked = IsLaunchLocked(loopIndex),
                 TransitSpeed = 1f,
                 TransitAlignment = 1f
             };
@@ -134,18 +146,6 @@ namespace Features.ShipModule.Scripts {
             state.Phase = ShipRunPhase.Takeoff;
             Director.ServerSetState(_route.WithTransit(state));
             return true;
-        }
-
-        public void ServerAbort(ShipRunAbortReason reason) {
-            if (NetworkServer.active == false || Ship == null || Director == null)
-                return;
-
-            if (_model.Phase != ShipRunPhase.Takeoff
-                && _model.Phase != ShipRunPhase.Cruise
-                && _model.Phase != ShipRunPhase.Landing)
-                return;
-
-            FinishAtCurrentPose(reason);
         }
 
         public void ServerTick() {
@@ -238,6 +238,7 @@ namespace Features.ShipModule.Scripts {
 
         private void FinishLanded() {
             Ship.ServerSettleAfterLanding();
+            _shipLandingRepair.ServerRepairAfterLanding();
             EnterStation(CurrentPad, ShipRunPhase.Build, _model.LastAbortReason);
             // After EnterStation's origin shift: riders still bound are carried by it, released ones would stay behind.
             Ship.Riders.ServerReleaseRiders();
@@ -273,12 +274,15 @@ namespace Features.ShipModule.Scripts {
 
             ShipRunState state = Director.State;
             state.LoopIndex += 1;
-            state.LaunchLocked = _config.MaxLoops > 0 && state.LoopIndex >= _config.MaxLoops;
+            state.LaunchLocked = IsLaunchLocked(state.LoopIndex);
             state.LastAbortReason = reason;
             state.Phase = phase;
             _route.EndRoute();
             Director.ServerSetState(_route.WithTransit(state));
         }
+
+        private bool IsLaunchLocked(int loopIndex) =>
+            _config.MaxLoops > 0 && loopIndex >= _config.MaxLoops;
 
         private void PublishPreview() {
             _route.RefreshPreview();

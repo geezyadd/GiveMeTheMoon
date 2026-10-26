@@ -5,18 +5,20 @@ using System;
 
 namespace Features.ShipModule.Scripts.Generated {
     public interface IReadOnlyShipStatsModel {
-        public float Thrust { get; }
         public float DodgeRange { get; }
-        public float Handling { get; }
         public float Armor { get; }
         public float FlightSpeed { get; }
+        public float Hull { get; }
+        public float HullMax { get; }
+        public float SonarRange { get; }
         public bool IsAvailable { get; }
 
-        public event Action OnThrustChanged;
         public event Action OnDodgeRangeChanged;
-        public event Action OnHandlingChanged;
         public event Action OnArmorChanged;
         public event Action OnFlightSpeedChanged;
+        public event Action OnHullChanged;
+        public event Action OnHullMaxChanged;
+        public event Action OnSonarRangeChanged;
         public event Action OnChanged;
         public event Action OnAvailableChanged;
     }

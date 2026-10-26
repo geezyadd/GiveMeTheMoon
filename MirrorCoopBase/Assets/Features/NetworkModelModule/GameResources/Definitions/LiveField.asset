@@ -54,3 +54,12 @@ MonoBehaviour:
   - _name: DebrisRuns
     _typeName: List<FieldDebrisRunEntry>
     _defaultValue: 
+  - _name: BrokenRocks
+    _typeName: List<FieldRockId>
+    _defaultValue: 
+  - _name: Targets
+    _typeName: List<FieldTargetEntry>
+    _defaultValue: 
+  - _name: PoppedTargets
+    _typeName: List<FieldTargetId>
+    _defaultValue: 

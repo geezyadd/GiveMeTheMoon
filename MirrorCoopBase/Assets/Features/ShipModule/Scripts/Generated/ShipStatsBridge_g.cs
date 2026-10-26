@@ -10,23 +10,9 @@ namespace Features.ShipModule.Scripts.Generated {
         private ShipStatsState _state;
 
         [Server]
-        public void ServerSetThrust(float value) {
-            ShipStatsState state = _state;
-            state.Thrust = value;
-            AssignState(state);
-        }
-
-        [Server]
         public void ServerSetDodgeRange(float value) {
             ShipStatsState state = _state;
             state.DodgeRange = value;
-            AssignState(state);
-        }
-
-        [Server]
-        public void ServerSetHandling(float value) {
-            ShipStatsState state = _state;
-            state.Handling = value;
             AssignState(state);
         }
 
@@ -41,6 +27,27 @@ namespace Features.ShipModule.Scripts.Generated {
         public void ServerSetFlightSpeed(float value) {
             ShipStatsState state = _state;
             state.FlightSpeed = value;
+            AssignState(state);
+        }
+
+        [Server]
+        public void ServerSetHull(float value) {
+            ShipStatsState state = _state;
+            state.Hull = value;
+            AssignState(state);
+        }
+
+        [Server]
+        public void ServerSetHullMax(float value) {
+            ShipStatsState state = _state;
+            state.HullMax = value;
+            AssignState(state);
+        }
+
+        [Server]
+        public void ServerSetSonarRange(float value) {
+            ShipStatsState state = _state;
+            state.SonarRange = value;
             AssignState(state);
         }
 
@@ -61,7 +68,7 @@ namespace Features.ShipModule.Scripts.Generated {
         }
 
         protected override void ClearLocal() {
-            Model.ApplyState(new ShipStatsState { Thrust = default, DodgeRange = default, Handling = default, Armor = default, FlightSpeed = default });
+            Model.ApplyState(new ShipStatsState { DodgeRange = default, Armor = default, FlightSpeed = default, Hull = default, HullMax = default, SonarRange = default });
         }
 
         private void OnStateSynced(ShipStatsState previous, ShipStatsState current) =>

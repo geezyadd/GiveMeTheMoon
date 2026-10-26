@@ -147,6 +147,15 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""Fire"",
+                    ""type"": ""Button"",
+                    ""id"": ""5c6d7e8f-901a-4b3c-8d5e-6f708192a3c5"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""Release"",
                     ""type"": ""Button"",
                     ""id"": ""293a4b5c-6d7e-8f90-1a2b-3c4d5e6f7082"",
@@ -322,6 +331,28 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
+                    ""id"": ""6d7e8f90-1a2b-4c3d-9e4f-708192a3b4d6"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and Mouse"",
+                    ""action"": ""Fire"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7e8f901a-2b3c-4d4e-8f50-8192a3b4c5e7"",
+                    ""path"": ""<Gamepad>/rightTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Touchscreen"",
+                    ""action"": ""Fire"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
                     ""id"": ""3a4b5c6d-7e8f-901a-2b3c-4d5e6f708193"",
                     ""path"": ""<Keyboard>/q"",
                     ""interactions"": """",
@@ -349,15 +380,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             ""id"": ""5e1c7a2b-3d4f-4a60-9b8c-7d6e5f4a3b21"",
             ""actions"": [
                 {
-                    ""name"": ""Shop"",
-                    ""type"": ""Button"",
-                    ""id"": ""6f2d8b3c-4e5a-4b71-8c9d-8e7f6a5b4c32"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
                     ""name"": ""CloseWindow"",
                     ""type"": ""Button"",
                     ""id"": ""7a3e9c4d-5f6b-4c82-9dae-9f8a7b6c5d43"",
@@ -368,17 +390,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                 }
             ],
             ""bindings"": [
-                {
-                    ""name"": """",
-                    ""id"": ""8b4fad5e-6a7c-4d93-aebf-a09b8c7d6e54"",
-                    ""path"": ""<Keyboard>/l"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Keyboard and Mouse"",
-                    ""action"": ""Shop"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
                 {
                     ""name"": """",
                     ""id"": ""9c5abe6f-7b8d-4ea4-bfc0-b1ac9d8e7f65"",
@@ -462,11 +473,11 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         m_MovementMap_SwitchCamera = m_MovementMap.FindAction("SwitchCamera", throwIfNotFound: true);
         m_MovementMap_Look = m_MovementMap.FindAction("Look", throwIfNotFound: true);
         m_MovementMap_Grab = m_MovementMap.FindAction("Grab", throwIfNotFound: true);
+        m_MovementMap_Fire = m_MovementMap.FindAction("Fire", throwIfNotFound: true);
         m_MovementMap_Release = m_MovementMap.FindAction("Release", throwIfNotFound: true);
         m_MovementMap_ToggleCursor = m_MovementMap.FindAction("ToggleCursor", throwIfNotFound: true);
         // UiMap
         m_UiMap = asset.FindActionMap("UiMap", throwIfNotFound: true);
-        m_UiMap_Shop = m_UiMap.FindAction("Shop", throwIfNotFound: true);
         m_UiMap_CloseWindow = m_UiMap.FindAction("CloseWindow", throwIfNotFound: true);
         // SpectatorMap
         m_SpectatorMap = asset.FindActionMap("SpectatorMap", throwIfNotFound: true);
@@ -560,6 +571,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_MovementMap_SwitchCamera;
     private readonly InputAction m_MovementMap_Look;
     private readonly InputAction m_MovementMap_Grab;
+    private readonly InputAction m_MovementMap_Fire;
     private readonly InputAction m_MovementMap_Release;
     private readonly InputAction m_MovementMap_ToggleCursor;
     /// <summary>
@@ -597,6 +609,10 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "MovementMap/Grab".
         /// </summary>
         public InputAction @Grab => m_Wrapper.m_MovementMap_Grab;
+        /// <summary>
+        /// Provides access to the underlying input action "MovementMap/Fire".
+        /// </summary>
+        public InputAction @Fire => m_Wrapper.m_MovementMap_Fire;
         /// <summary>
         /// Provides access to the underlying input action "MovementMap/Release".
         /// </summary>
@@ -649,6 +665,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @Grab.started += instance.OnGrab;
             @Grab.performed += instance.OnGrab;
             @Grab.canceled += instance.OnGrab;
+            @Fire.started += instance.OnFire;
+            @Fire.performed += instance.OnFire;
+            @Fire.canceled += instance.OnFire;
             @Release.started += instance.OnRelease;
             @Release.performed += instance.OnRelease;
             @Release.canceled += instance.OnRelease;
@@ -684,6 +703,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @Grab.started -= instance.OnGrab;
             @Grab.performed -= instance.OnGrab;
             @Grab.canceled -= instance.OnGrab;
+            @Fire.started -= instance.OnFire;
+            @Fire.performed -= instance.OnFire;
+            @Fire.canceled -= instance.OnFire;
             @Release.started -= instance.OnRelease;
             @Release.performed -= instance.OnRelease;
             @Release.canceled -= instance.OnRelease;
@@ -727,7 +749,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     // UiMap
     private readonly InputActionMap m_UiMap;
     private List<IUiMapActions> m_UiMapActionsCallbackInterfaces = new List<IUiMapActions>();
-    private readonly InputAction m_UiMap_Shop;
     private readonly InputAction m_UiMap_CloseWindow;
     /// <summary>
     /// Provides access to input actions defined in input action map "UiMap".
@@ -740,10 +761,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// Construct a new instance of the input action map wrapper class.
         /// </summary>
         public UiMapActions(@InputActions wrapper) { m_Wrapper = wrapper; }
-        /// <summary>
-        /// Provides access to the underlying input action "UiMap/Shop".
-        /// </summary>
-        public InputAction @Shop => m_Wrapper.m_UiMap_Shop;
         /// <summary>
         /// Provides access to the underlying input action "UiMap/CloseWindow".
         /// </summary>
@@ -774,9 +791,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         {
             if (instance == null || m_Wrapper.m_UiMapActionsCallbackInterfaces.Contains(instance)) return;
             m_Wrapper.m_UiMapActionsCallbackInterfaces.Add(instance);
-            @Shop.started += instance.OnShop;
-            @Shop.performed += instance.OnShop;
-            @Shop.canceled += instance.OnShop;
             @CloseWindow.started += instance.OnCloseWindow;
             @CloseWindow.performed += instance.OnCloseWindow;
             @CloseWindow.canceled += instance.OnCloseWindow;
@@ -791,9 +805,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UiMapActions" />
         private void UnregisterCallbacks(IUiMapActions instance)
         {
-            @Shop.started -= instance.OnShop;
-            @Shop.performed -= instance.OnShop;
-            @Shop.canceled -= instance.OnShop;
             @CloseWindow.started -= instance.OnCloseWindow;
             @CloseWindow.performed -= instance.OnCloseWindow;
             @CloseWindow.canceled -= instance.OnCloseWindow;
@@ -1013,6 +1024,13 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnGrab(InputAction.CallbackContext context);
         /// <summary>
+        /// Method invoked when associated input action "Fire" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnFire(InputAction.CallbackContext context);
+        /// <summary>
         /// Method invoked when associated input action "Release" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
@@ -1034,13 +1052,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     /// <seealso cref="UiMapActions.RemoveCallbacks(IUiMapActions)" />
     public interface IUiMapActions
     {
-        /// <summary>
-        /// Method invoked when associated input action "Shop" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnShop(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "CloseWindow" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>

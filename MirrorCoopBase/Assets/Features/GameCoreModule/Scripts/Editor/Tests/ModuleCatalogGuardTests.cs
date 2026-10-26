@@ -1,16 +1,13 @@
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Features.AddressablesConstantGeneratorModule.EditorLoading;
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.GrabModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Configurations;
 using Mirror;
 using NUnit.Framework;
-using UnityEditor;
-using UnityEditor.AddressableAssets;
-using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -20,7 +17,6 @@ namespace Features.GameCoreModule.Editor.Tests {
     // spawned and taken off a slot again, and ship and shop code never branches on a concrete module.
     public sealed class ModuleCatalogGuardTests {
         private const string GLOBAL_SCENE_PATH = "Assets/Features/GameCoreModule/GameResources/Scenes/GlobalScene.unity";
-        private const string SOURCE_PATTERN = "*.cs";
         private const string TESTS_FOLDER = "/Editor/Tests/";
         // ItemViewId, or a category compared with or switched on a concrete value to pick behaviour (the former
         // "Engine and Radar are removable" and "the Control slot steers" rules). Declaring a slot category, passing it
@@ -41,7 +37,7 @@ namespace Features.GameCoreModule.Editor.Tests {
 
         [SetUp]
         public void SetUp() =>
-            _moduleCatalog = LoadConfiguration<ModuleCatalog>(Address.Configurations.ModuleCatalog_Default);
+            _moduleCatalog = AddressableConfigurationLoader.Load<ModuleCatalog>(Address.Configurations.ModuleCatalog_Default);
 
         [Test]
         public void WhenModuleCatalogIsRead_ThenEveryIdIsSetAndUnique() {
@@ -51,6 +47,10 @@ namespace Features.GameCoreModule.Editor.Tests {
             string[] duplicates = ids.GroupBy(id => id).Where(group => group.Count() > 1).Select(group => group.Key).ToArray();
             Assert.IsEmpty(duplicates, $"Module ids used twice, uninstall would return the wrong item: {string.Join(", ", duplicates)}");
         }
+
+        [Test]
+        public void WhenModuleCatalogIsValidated_ThenEveryModifierNamesAKnownStat() =>
+            Assert.DoesNotThrow(new ModuleCatalogValidator(_moduleCatalog).Initialize);
 
         [Test]
         public void WhenModuleCatalogIsRead_ThenEveryModuleHasAnItemThatPointsBackToIt() {
@@ -78,14 +78,14 @@ namespace Features.GameCoreModule.Editor.Tests {
 
         [Test]
         public void WhenShopCatalogIsRead_ThenEveryModuleIsInTheModuleCatalog() {
-            ShopCatalog shopCatalog = LoadConfiguration<ShopCatalog>(Address.Configurations.ShopCatalog_Default);
+            ShopCatalog shopCatalog = AddressableConfigurationLoader.Load<ShopCatalog>(Address.Configurations.ShopCatalog_Default);
 
             AssertAllInModuleCatalog(shopCatalog.Modules, shopCatalog.name);
         }
 
         [Test]
         public void WhenStationDropsAreRead_ThenEveryModuleIsInTheModuleCatalog() {
-            ShipStationCatalog stationCatalog = LoadConfiguration<ShipStationCatalog>(Address.Configurations.ShipStationCatalog_Default);
+            ShipStationCatalog stationCatalog = AddressableConfigurationLoader.Load<ShipStationCatalog>(Address.Configurations.ShipStationCatalog_Default);
 
             AssertAllInModuleCatalog(stationCatalog.Drops.Select(drop => drop.Module).ToArray(), stationCatalog.name);
         }
@@ -93,10 +93,7 @@ namespace Features.GameCoreModule.Editor.Tests {
         [Test]
         public void WhenShipAndShopSourcesAreScanned_ThenNoneChecksAConcreteModule() {
             string[] offenders = _moduleCodeFolders
-                .SelectMany(folder => Directory.GetFiles(folder, SOURCE_PATTERN, SearchOption.AllDirectories))
-                .Select(ToAssetPath)
-                .Where(path => path.Contains(TESTS_FOLDER) == false)
-                .Where(path => Regex.IsMatch(File.ReadAllText(path), CONCRETE_MODULE_PATTERN))
+                .SelectMany(folder => SourceScan.FindFilesMatching(folder, TESTS_FOLDER, ChecksAConcreteModule))
                 .ToArray();
 
             Assert.IsEmpty(offenders, $"Module behaviour comes from ModuleDefinition, not from checks of a module type: {string.Join(", ", offenders)}");
@@ -129,14 +126,7 @@ namespace Features.GameCoreModule.Editor.Tests {
             }
         }
 
-        private static T LoadConfiguration<T>(string address) where T : ScriptableObject {
-            AddressableAssetGroup group = AddressableAssetSettingsDefaultObject.Settings.FindGroup(Address.Configurations.ADDRESSABLE_GROUP_NAME);
-            AddressableAssetEntry entry = group.entries.FirstOrDefault(candidate => candidate.address == address);
-            Assert.IsNotNull(entry, $"No entry with address {address} in the {Address.Configurations.ADDRESSABLE_GROUP_NAME} group.");
-            return AssetDatabase.LoadAssetAtPath<T>(entry.AssetPath);
-        }
-
-        private static string ToAssetPath(string path) =>
-            path.Replace('\\', '/');
+        private static bool ChecksAConcreteModule(string source) =>
+            Regex.IsMatch(source, CONCRETE_MODULE_PATTERN);
     }
 }

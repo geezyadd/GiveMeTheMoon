@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78d1d0e4312ba85469cecd72be8d34ef, type: 3}
+  m_Name: FieldRockDurabilityConfiguration_Default
+  m_EditorClassIdentifier: 
+  _smallMaxDiameterMeters: 35
+  _breakEffect: {fileID: 5157833999273168651, guid: 9181edf2cb69912418f8a010cd481d13, type: 3}
+  _hitPointsByDiameter:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 8
+      inSlope: 0
+      outSlope: 0.114285715
+      tangentMode: 69
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 35
+      value: 12
+      inSlope: 0.114285715
+      outSlope: 1.12
+      tangentMode: 69
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 60
+      value: 40
+      inSlope: 1.12
+      outSlope: 0.6666667
+      tangentMode: 69
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 150
+      value: 100
+      inSlope: 0.6666667
+      outSlope: 0
+      tangentMode: 69
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  _hitPointToleranceMeters: 3
+  _hitFeedbackSeconds: 0.09
+  _hitFlashEmission: {r: 0.9, g: 0.55, b: 0.3, a: 1}
+  _hitShakeShare: 0.02

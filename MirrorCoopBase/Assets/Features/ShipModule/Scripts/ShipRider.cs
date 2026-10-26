@@ -3,6 +3,7 @@ using Features.CharacterMovableModule.Scripts;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.FloatingControllerModule;
 using Features.GameCoreModule.Contracts;
+using Features.NetworkModelModule.Scripts;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using Features.ShipModule.Scripts.Debug;
 #endif
@@ -35,14 +36,14 @@ namespace Features.ShipModule.Scripts {
         [SyncVar(hook = nameof(OnSeatedChanged))]
         private bool _seated;
 
+        // The player's stable key, written by the server at spawn: seats hold it, not the netId, which a rejoin changes.
         [SyncVar]
-        private bool _helmSeat;
+        private string _playerKey;
 
-        [Inject]
         private CharacterInputBuffer _input;
-
-        [Inject]
         private IGameCameraService _cameras;
+        private IPlayerIdentityService _playerIdentityService;
+        private ShipRiderKeyModel _shipRiderKeyModel;
 
         private const float OffsetSendSeconds = 0.05f;
         private const float OFFSET_RESEND_SQR_METERS = 0.000001f;
@@ -61,12 +62,13 @@ namespace Features.ShipModule.Scripts {
         private RigidbodyInterpolation _wasInterpolation;
         private bool _netBodyWasEnabled;
         private float _nextOffsetSend;
-        private float _nextSteerSend;
         private float _rideRestY;
         private float _rideFloorY;
         private readonly RideVertical _vertical = new RideVertical();
+        private readonly SeatStandingSpot _standingSpot = new SeatStandingSpot();
         private Vector3 _rideVelocity;
         private float _reboardAt;
+        private Transform _seatPoint;
 
         internal Vector3 DebugLocalOffset => _localOffset;
         public bool IsRiding => _bound;
@@ -74,13 +76,38 @@ namespace Features.ShipModule.Scripts {
         internal ShipRideDiagnostics RideDiagnostics { get; } = new ShipRideDiagnostics();
 #endif
         public bool IsSeated => _seated;
-        internal bool IsHelmSeat => _helmSeat;
-        internal float CurrentSteer => _input != null ? _input.MoveStick.x : 0f;
+        private bool IsFollowingSeatPoint => _seated && _seatPoint != null;
+        public PlayerKey Key => new PlayerKey(_playerKey);
+
+        [Inject]
+        private void InjectDependencies(
+            CharacterInputBuffer characterInputBuffer,
+            IGameCameraService gameCameraService,
+            IPlayerIdentityService playerIdentityService,
+            ShipRiderKeyModel shipRiderKeyModel) {
+            _input = characterInputBuffer;
+            _cameras = gameCameraService;
+            _playerIdentityService = playerIdentityService;
+            _shipRiderKeyModel = shipRiderKeyModel;
+        }
+
+        public override void OnStartServer() {
+            _playerKey = _playerIdentityService.GetKey(connectionToClient).Id;
+            _shipRiderKeyModel.Register(this);
+        }
+
+        // A client gets the key with the spawn, before this; on the host the server start registered it already.
+        public override void OnStartClient() =>
+            _shipRiderKeyModel.Register(this);
 
         public override void OnStopServer() {
+            _shipRiderKeyModel.Unregister(this);
             if (_ship != null)
                 _ship.ServerRemoveRider(this);
         }
+
+        public override void OnStopClient() =>
+            _shipRiderKeyModel.Unregister(this);
 
         internal ShipRideRefusal CheckLanding(ShipBase ship) {
             // Right after a drop the interpolated body still trails the moving deck by a frame; without this it lands
@@ -188,7 +215,6 @@ namespace Features.ShipModule.Scripts {
             RideDiagnostics.LogReleased(this, _ship, ShipRideDiagnostics.CAUSE_SERVER_RELEASE);
 #endif
             _seated = false;
-            _helmSeat = false;
             _syncedRideShip = null;
             if (_bound)
                 ReleaseFromPlatform();
@@ -196,13 +222,26 @@ namespace Features.ShipModule.Scripts {
             RpcRelease();
         }
 
-        internal void ReleaseFromPlatform() {
+        internal void ReleaseFromPlatform() =>
+            Unbind(isOwned && _ship.IsFlying);
+
+        // The ship goes away (its map unloads or it is destroyed): the rider is freed where it is, without the ride's
+        // velocity; the server also clears the ride and the seat the other peers read.
+        internal void ReleaseFromLeavingShip() {
+            if (isServer) {
+                _seated = false;
+                _syncedRideShip = null;
+            }
+
+            Unbind(false);
+        }
+
+        private void Unbind(bool carryVelocity) {
             if (_bound == false)
                 return;
 
             // The ship may have been snapped (origin shift at the station) since the last Follow.
             ApplyWorldPose();
-            bool carryVelocity = isOwned && _ship.IsFlying;
             if (carryVelocity)
                 _reboardAt = Time.time + _ship.ReboardDelaySeconds;
             _bound = false;
@@ -212,10 +251,8 @@ namespace Features.ShipModule.Scripts {
             released.SetParent(null, true);
             released.SetPositionAndRotation(worldPosition, worldRotation);
             _platform = null;
-            if (isServer) {
+            if (isServer)
                 _seated = false;
-                _helmSeat = false;
-            }
 
             if (_rb != null) {
                 _rb.isKinematic = _wasKinematic;
@@ -233,18 +270,56 @@ namespace Features.ShipModule.Scripts {
                 CmdEndRide();
         }
 
-        internal void ServerLockSeat(Vector3 localOffset, bool helm, NetworkIdentity ship) {
+        internal void ServerLockSeat(Vector3 localOffset, NetworkIdentity ship) {
             _seated = true;
-            _helmSeat = helm;
             _localOffset = localOffset;
             _syncedOffsetTime = NetworkTime.time;
             _syncedLocalOffset = localOffset;
             _syncedRideShip = ship;
         }
 
+        // A seat station's own stand-up button (a turret's interact key) goes the same way as the jump.
+        public void OwnerRequestStand() {
+            if (isOwned && _seated)
+                CmdStand();
+        }
+
+        // What a seat station needs from its seated owner on the server (the helm's steer); the station decides how often.
+        internal void OwnerSendSeatInput(float value) {
+            if (isOwned && _seated)
+                CmdSetSeatInput(value);
+        }
+
         internal void ServerUnlockSeat() {
+            if (_seated && TryMoveToStandingSpot())
+                ServerSyncStandingSpot();
+
             _seated = false;
-            _helmSeat = false;
+        }
+
+        // A seat station whose seat point moves with it (a turret's yaw) has the seated rider follow that point on
+        // every peer, from the aim that peer shows; no offset is sent while seated.
+        public void FollowSeatPoint(Transform seatPoint) =>
+            _seatPoint = seatPoint;
+
+        public void StopFollowingSeatPoint(Transform seatPoint) {
+            if (ReferenceEquals(_seatPoint, seatPoint))
+                _seatPoint = null;
+        }
+
+        // A moving seat point (a turret's) leaves the rider away from the offset it sat down at: the others stand it up
+        // where the server saw it.
+        private void ServerSyncStandingSpot() {
+            _syncedOffsetTime = NetworkTime.time;
+            _syncedLocalOffset = _localOffset;
+        }
+
+        private bool TryMoveToStandingSpot() {
+            if (_bound == false || _standingSpot.TryResolve(_localOffset, _ship.DeckGeometry, _deckInset, out Vector3 standingOffset) == false)
+                return false;
+
+            _localOffset = standingOffset;
+            return true;
         }
 
         internal void Follow(float dt) {
@@ -257,9 +332,6 @@ namespace Features.ShipModule.Scripts {
                 if (_seated) {
                     // The press that stands the rider up must not jump right after.
                     _vertical.DropQueuedJump();
-                    if (_helmSeat)
-                        SendSteerIfNeeded();
-
                     if (jumped)
                         CmdStand();
                 }
@@ -272,6 +344,7 @@ namespace Features.ShipModule.Scripts {
 
             Vector3 next = RideOffset();
             _localOffset = next;
+            _standingSpot.Track(IsFollowingSeatPoint);
             Vector3 previousWorld = transform.position;
             ApplyWorldPose();
             TrackRideVelocity(previousWorld, dt);
@@ -387,23 +460,10 @@ namespace Features.ShipModule.Scripts {
                 CmdSetRideOffset(_localOffset, NetworkTime.time);
         }
 
-        private void SendSteerIfNeeded() {
-            if (_input == null || _ship == null)
-                return;
-
-            if (isServer) {
-                _ship.Seats.ServerSetSteer(netId, _input.MoveStick.x);
-                return;
-            }
-
-            if (Time.unscaledTime < _nextSteerSend)
-                return;
-
-            _nextSteerSend = Time.unscaledTime + 0.03f;
-            CmdSetSteer(_input.MoveStick.x);
-        }
-
         private Vector3 RideOffset() {
+            if (IsFollowingSeatPoint)
+                return Quaternion.Inverse(_platform.rotation) * (_seatPoint.position - _platform.position);
+
             if (isOwned || _seated)
                 return _localOffset;
 
@@ -426,6 +486,7 @@ namespace Features.ShipModule.Scripts {
         // Standing up must not blend back to the offset from before the seat.
         private void OnSeatedChanged(bool previous, bool current) {
             if (isOwned && current == false) {
+                TryMoveToStandingSpot();
                 // Standing up starts from rest on the seat, never with a velocity left over from before sitting.
                 ResetVertical(0f);
                 return;
@@ -525,9 +586,9 @@ namespace Features.ShipModule.Scripts {
         }
 
         [Command]
-        private void CmdSetSteer(float lateral) {
+        private void CmdSetSeatInput(float value) {
             if (_ship != null)
-                _ship.Seats.ServerSetSteer(netId, lateral);
+                _ship.Seats.ServerReceiveSeatInput(this, value);
         }
 
         [Command]

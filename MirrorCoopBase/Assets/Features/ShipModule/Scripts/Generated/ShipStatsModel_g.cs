@@ -7,40 +7,46 @@ using Features.NetworkModelModule.Scripts;
 
 namespace Features.ShipModule.Scripts.Generated {
     public sealed class ShipStatsModel : NetworkModelBase, IReadOnlyShipStatsModel {
-        public float Thrust { get; private set; }
         public float DodgeRange { get; private set; }
-        public float Handling { get; private set; }
         public float Armor { get; private set; }
         public float FlightSpeed { get; private set; }
+        public float Hull { get; private set; }
+        public float HullMax { get; private set; }
+        public float SonarRange { get; private set; }
 
-        public event Action OnThrustChanged;
         public event Action OnDodgeRangeChanged;
-        public event Action OnHandlingChanged;
         public event Action OnArmorChanged;
         public event Action OnFlightSpeedChanged;
+        public event Action OnHullChanged;
+        public event Action OnHullMaxChanged;
+        public event Action OnSonarRangeChanged;
 
         internal void ApplyState(ShipStatsState state) {
-            bool thrustChanged = EqualityComparer<float>.Default.Equals(Thrust, state.Thrust) == false;
             bool dodgeRangeChanged = EqualityComparer<float>.Default.Equals(DodgeRange, state.DodgeRange) == false;
-            bool handlingChanged = EqualityComparer<float>.Default.Equals(Handling, state.Handling) == false;
             bool armorChanged = EqualityComparer<float>.Default.Equals(Armor, state.Armor) == false;
             bool flightSpeedChanged = EqualityComparer<float>.Default.Equals(FlightSpeed, state.FlightSpeed) == false;
-            Thrust = state.Thrust;
+            bool hullChanged = EqualityComparer<float>.Default.Equals(Hull, state.Hull) == false;
+            bool hullMaxChanged = EqualityComparer<float>.Default.Equals(HullMax, state.HullMax) == false;
+            bool sonarRangeChanged = EqualityComparer<float>.Default.Equals(SonarRange, state.SonarRange) == false;
             DodgeRange = state.DodgeRange;
-            Handling = state.Handling;
             Armor = state.Armor;
             FlightSpeed = state.FlightSpeed;
-            if (thrustChanged)
-                OnThrustChanged?.Invoke();
+            Hull = state.Hull;
+            HullMax = state.HullMax;
+            SonarRange = state.SonarRange;
             if (dodgeRangeChanged)
                 OnDodgeRangeChanged?.Invoke();
-            if (handlingChanged)
-                OnHandlingChanged?.Invoke();
             if (armorChanged)
                 OnArmorChanged?.Invoke();
             if (flightSpeedChanged)
                 OnFlightSpeedChanged?.Invoke();
-            if (thrustChanged || dodgeRangeChanged || handlingChanged || armorChanged || flightSpeedChanged)
+            if (hullChanged)
+                OnHullChanged?.Invoke();
+            if (hullMaxChanged)
+                OnHullMaxChanged?.Invoke();
+            if (sonarRangeChanged)
+                OnSonarRangeChanged?.Invoke();
+            if (dodgeRangeChanged || armorChanged || flightSpeedChanged || hullChanged || hullMaxChanged || sonarRangeChanged)
                 RaiseChanged();
         }
     }

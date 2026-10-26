@@ -18,14 +18,13 @@ MonoBehaviour:
   _slotViewPrefab: {fileID: 6201338388048282597, guid: 4a7c91e2b3d046f0a1c2d3e4f5061728, type: 3}
   _displayName: Large Engine
   _icon: {fileID: 0}
-  _description: Heavy engine with high thrust and top speed.
+  _description: Heavy engine with a high top speed.
   _price: 800
   _statModifiers:
-  - Stat: 1
-    Value: 6
-    Type: 0
   - Stat: 5
     Value: 1
     Type: 0
   _isRemovable: 1
   _isControlModule: 0
+  _canBreak: 1
+  _breakChanceMultiplier: 1

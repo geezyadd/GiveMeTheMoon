@@ -14,9 +14,7 @@ namespace Tests.Coop.Shared {
         public string Phase;
         public int LoopIndex;
         public string[] Sockets;
-        public float Thrust;
         public float DodgeRange;
-        public float Handling;
         public float Armor;
         public float FlightSpeed;
         public long Balance;
@@ -27,17 +25,22 @@ namespace Tests.Coop.Shared {
         public bool IsOnDeck;
         public string LifeState;
         public bool IsSpectating;
+        public bool IsHelmPilot;
         public Vector3 Position;
         public string RejectReason;
         public bool IsRejectTextShown;
         public string Message;
+        public string[] SonarMarks;
+        public float ThrottlePosition;
         public string[] Errors;
 
         public string Describe() =>
             $"{Step} at {RealTime:0.0} s: phase {Phase}, loop {LoopIndex}, {LifeState}, spectating {IsSpectating}, on deck {IsOnDeck} at {Position}, "
+            + $"helm pilot {IsHelmPilot}, "
             + $"field #{FieldNumber} seed {FieldSeed} placements {FieldPlacements}, nameplate '{OtherNameplate}', "
             + $"sockets [{string.Join(LIST_SEPARATOR, Sockets ?? Array.Empty<string>())}], "
-            + $"stats thrust {Thrust} dodge {DodgeRange} handling {Handling} armor {Armor} speed {FlightSpeed}, balance {Balance}"
+            + $"stats dodge {DodgeRange} armor {Armor} speed {FlightSpeed}, balance {Balance}, "
+            + $"sonar marks [{string.Join(LIST_SEPARATOR, SonarMarks ?? Array.Empty<string>())}], throttle {ThrottlePosition:0.00}"
             + (string.IsNullOrEmpty(Message) ? string.Empty : $", message: {Message}");
     }
 }

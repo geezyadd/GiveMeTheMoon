@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Tooltip_Radar
   m_EditorClassIdentifier: 
   _title: 'Radar'
-  _description: 'Shows the heading to the next landing pad.'
+  _description: 'A sonar console: in flight, ping for rocks and the station and mark them for the crew.'
   _actionHint: 'Grab'

@@ -39,9 +39,6 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 6c0c82f39238a074daee4db9a5babb0a, type: 2}
   - {fileID: 2100000, guid: e996aa373ca5ee54e8c3410147ba1add, type: 2}
   - {fileID: 2100000, guid: d0893f6cec687c34f976ceef3786efaf, type: 2}
-  _smallDiameterMeters: {x: 10, y: 30}
-  _bigDiameterMeters: {x: 40, y: 150}
-  _bigShare: 0.05
   _crossShare: 0.6
   _offPlaneShare: 0
   _offPlaneHeightMeters: {x: 20, y: 80}

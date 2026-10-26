@@ -41,18 +41,22 @@ namespace Tests.PlayMode.LoopSmoke {
         private const string DECK_SCREENSHOT = "revive-host-on-deck.png";
 
         private readonly ShipBase _ship;
+        private readonly LoopSmokeFlight _flight;
         private readonly IReadOnlyWalletModel _wallet = SessionQueries.Resolve<IReadOnlyWalletModel>();
         private readonly IPlayerLifeQuery _lifeQuery = SessionQueries.Resolve<IPlayerLifeQuery>();
         private readonly long _price = SessionQueries.Resolve<ReviveConfiguration>().RevivePrice;
 
-        public LoopSmokeReviveCheck(ShipBase ship) =>
-            _ship = ship;
+        public LoopSmokeReviveCheck(LoopSmokeContext context) {
+            _ship = context.Session.Ship;
+            _flight = context.Flight;
+        }
 
         private static NetworkIdentity Player => NetworkClient.localPlayer;
         private static CrewWallet Wallet => Object.FindAnyObjectByType<CrewWallet>();
 
-        public IEnumerator BuyBackCrewCoroutine(ShipLandingPad pad) {
-            ShopKioskInteractable kiosk = pad.GetComponentInChildren<ShopKioskInteractable>();
+        [LoopSmokeStep(LoopSmokePhase.AfterLanding, 1, 1, 40)]
+        public IEnumerator BuyBackCrewCoroutine() {
+            ShopKioskInteractable kiosk = _flight.FindPadUnderShip().GetComponentInChildren<ShopKioskInteractable>();
             ShopModel shop = SessionQueries.Resolve<ShopModel>();
             LoopSmokeBot bot = LoopSmokeBot.Join();
             try {

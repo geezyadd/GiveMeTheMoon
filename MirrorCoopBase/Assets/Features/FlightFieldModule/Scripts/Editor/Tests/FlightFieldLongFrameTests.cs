@@ -6,8 +6,7 @@ using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // The rectangular frame of long flights: the length follows A -> B, the width stays the configured one unless the
-    // cruise start lies far off the axis, and the main route from the cruise start to B keeps its passage on every
-    // difficulty profile.
+    // cruise start lies far off the axis, and the cruise start keeps the side margin on every difficulty profile.
     public sealed class FlightFieldLongFrameTests {
         private const int SEED = 23;
         private const float EASY = 0f;
@@ -28,7 +27,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [TestCase(FIRST_FLIGHT_DISTANCE)]
         [TestCase(FIFTH_FLIGHT_DISTANCE)]
         public void WhenFlightIsLong_ThenFrameIsAsLongAsTheFlightAndAsWideAsConfigured(float distance) {
-            FlightField field = _composition.Generator.Generate(CreateRequest(distance, 0f, EASY, FieldTestProfiles.Corridors(_composition.Configuration)[0]));
+            FlightField field = _composition.Generator.Generate(CreateRequest(distance, 0f, EASY, _composition.Configuration.DifficultyProfiles[0]));
 
             int expectedLength = Mathf.CeilToInt(distance / _composition.Configuration.CellSize) + _composition.Configuration.MarginBehindACells
                 + _composition.Configuration.MarginBehindBCells;
@@ -40,21 +39,15 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [TestCase(CONE_EDGE_DEGREES, EASY)]
         [TestCase(-CONE_EDGE_DEGREES, HARD)]
         [TestCase(CONE_EDGE_DEGREES, HARD)]
-        public void WhenShipStartsAtTheConeEdge_ThenCruiseStartHasSideRoomAndTheRouteHasAPassage(float launchYaw, float difficulty) {
-            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Corridors(_composition.Configuration))
-                AssertSideRoomAndPassage(_composition.Generator.Generate(CreateRequest(FIFTH_FLIGHT_DISTANCE, launchYaw, difficulty, profile)), profile);
+        public void WhenShipStartsAtTheConeEdge_ThenCruiseStartHasSideRoom(float launchYaw, float difficulty) {
+            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles)
+                AssertSideRoom(_composition.Generator.Generate(CreateRequest(FIFTH_FLIGHT_DISTANCE, launchYaw, difficulty, profile)), profile);
         }
 
-        private void AssertSideRoomAndPassage(FlightField field, FieldDifficultyProfile profile) {
+        private void AssertSideRoom(FlightField field, FieldDifficultyProfile profile) {
             int sideRoom = _composition.Configuration.SideMarginCells;
-            Assert.GreaterOrEqual(field.CruiseStartCell.y, sideRoom, "No room beside the cruise start on the left.");
-            Assert.LessOrEqual(field.CruiseStartCell.y, field.Frame.WidthCells - 1 - sideRoom, "No room beside the cruise start on the right.");
-            Assert.IsFalse(field.IsPassageForced, $"{profile.Id}: the passage was forced.");
-            FieldTestOccupancy occupancy = new(field, _composition.Catalog, _composition.FootprintReader);
-            foreach (FieldRoute route in field.Routes) {
-                if (route.Kind == FieldRouteKind.Main)
-                    Assert.IsTrue(occupancy.HasPassage(route.Start, field.StationBCell, _composition.Configuration.PassageClearanceCells), $"{profile.Id}: route {route.Id} has no passage.");
-            }
+            Assert.GreaterOrEqual(field.CruiseStartCell.y, sideRoom, $"{profile.Id}: no room beside the cruise start on the left.");
+            Assert.LessOrEqual(field.CruiseStartCell.y, field.Frame.WidthCells - 1 - sideRoom, $"{profile.Id}: no room beside the cruise start on the right.");
         }
 
         // A on the origin, B straight along +z; the ship takes off with the given yaw from the A -> B axis.

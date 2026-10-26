@@ -4,9 +4,9 @@ namespace Features.ShipModule.Scripts {
     [CreateAssetMenu(fileName = "ShipFlightConfig_Default", menuName = "Game/Ship Flight Config")]
     public sealed class ShipFlightSettings : ScriptableObject {
         [SerializeField] private ShipFlightMode _flightMode = ShipFlightMode.TravelInSpace;
-        [SerializeField] private float _travelAccelSeconds = 1.5f;
+        [Tooltip("The cruise speed changes by at most this much per second when the throttle moves or the cruise starts (m/s²).")]
+        [SerializeField] private float _cruiseAcceleration = 8f;
         [SerializeField] private float _dodgeRange = 4f;
-        [SerializeField] private float _turnDegrees = 22f;
         [SerializeField] private float _turnRate = 80f;
         [SerializeField] private float _cruiseSpeed = 14f;
         [SerializeField] private float _bankDegrees = 22f;
@@ -25,13 +25,14 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private float _catchMaxHeight = 1.5f;
         [Tooltip("In flight a rider rising faster than this (m/s) is not bound to the deck yet: it is still on its way up.")]
         [SerializeField] private float _catchMaxRiseSpeed = 0.15f;
+        [Tooltip("A pilot on a client sends its helm steer to the server at most this often (s).")]
+        [SerializeField] private float _helmSteerSendSeconds = 0.03f;
 
         public ShipFlightMode FlightMode =>
             _flightMode == ShipFlightMode.None ? ShipFlightMode.TravelInSpace : _flightMode;
 
-        public float TravelAccelSeconds => Mathf.Max(0f, _travelAccelSeconds);
+        public float CruiseAcceleration => Mathf.Max(0f, _cruiseAcceleration);
         public float DodgeRange => Mathf.Max(0f, _dodgeRange);
-        public float TurnDegrees => _turnDegrees;
         public float TurnRate => Mathf.Max(10f, _turnRate);
         public float CruiseSpeed => Mathf.Max(0f, _cruiseSpeed);
         public float BankDegrees => _bankDegrees;
@@ -45,5 +46,6 @@ namespace Features.ShipModule.Scripts {
         public float CatchMinHeight => _catchMinHeight;
         public float CatchMaxHeight => _catchMaxHeight;
         public float CatchMaxRiseSpeed => _catchMaxRiseSpeed;
+        public float HelmSteerSendSeconds => Mathf.Max(0f, _helmSteerSendSeconds);
     }
 }

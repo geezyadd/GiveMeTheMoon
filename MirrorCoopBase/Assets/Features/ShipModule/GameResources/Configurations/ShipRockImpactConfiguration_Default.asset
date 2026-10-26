@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f91f205e6a9a0be4db8b076a7d580495, type: 3}
+  m_Name: ShipRockImpactConfiguration_Default
+  m_EditorClassIdentifier: 
+  _smallDamageMinDiameter: 10
+  _smallDamageMaxDiameter: 35
+  _smallDamageAtMinDiameter: 3
+  _smallDamageAtMaxDiameter: 12
+  _referenceSpeed: 14
+  _minSpeedFactor: 0.25
+  _maxSpeedFactor: 2
+  _smallAwaySpeed: 1.5
+  _smallBackSpeedShare: 0.12
+  _smallPushSeconds: 0.6
+  _smallMaxAcceleration: 6
+  _largeRockDamage: 0
+  _largeAwaySpeed: 5
+  _largeBackSpeedShare: 1.3
+  _largeKnockbackSeconds: 1.4
+  _largeMaxAcceleration: 22
+  _contactPushOutSpeed: 3
+  _largeContactMarginMeters: 1
+  _largeContactRadiusShare: 0.8
+  _brakingLookAheadShare: 0.8
+  _maxLookAheadMeters: 16
+  _largeHitCooldownSeconds: 1
+  _maxSweepMeters: 60
+  _smallFeel:
+    _shake: {fileID: 11400000, guid: 1f95eaf2e2eaeef4f87b933f1680660d, type: 2}
+    _effectSize: 6
+  _largeFeel:
+    _shake: {fileID: 11400000, guid: a8e09aaaaba0ab5409fbd7614beea2d1, type: 2}
+    _effectSize: 10
+  _impactEffect: {fileID: 6636624147284935301, guid: a1390414e8aec334b9b9f91c4bce496e, type: 3}

@@ -1,7 +1,7 @@
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts {
-    internal sealed class ShipFlightControl : IShipFlightControl
+    internal sealed class ShipFlightControl : IShipFlightControl, IShipKnockback
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         , IShipFlightControlDebug
 #endif
@@ -13,7 +13,9 @@ namespace Features.ShipModule.Scripts {
         // Read on use: the settings can be injected after the parts are created.
         private readonly System.Func<ShipFlightSettings> _flightSettings;
         private readonly IShipModules _modules;
-        private readonly IShipSeats _seats;
+        private readonly IShipSteering _steering;
+        // The throttle's share of the max cruise speed, read on use from the synced throttle.
+        private readonly System.Func<float> _throttle;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private bool _debugSteerActive;
@@ -27,12 +29,17 @@ namespace Features.ShipModule.Scripts {
         internal bool IsActive => _flight.IsActive;
         internal Vector3 Position => _flight.Position;
         internal Quaternion Rotation => _flight.Rotation;
-        internal Vector3 Velocity => _flight.Velocity;
+        public Vector3 Velocity => _flight.Velocity;
 
-        internal ShipFlightControl(System.Func<ShipFlightSettings> flightSettings, IShipModules modules, IShipSeats seats) {
+        internal ShipFlightControl(
+            System.Func<ShipFlightSettings> flightSettings,
+            IShipModules modules,
+            IShipSteering steering,
+            System.Func<float> throttle) {
             _flightSettings = flightSettings;
             _modules = modules;
-            _seats = seats;
+            _steering = steering;
+            _throttle = throttle;
         }
 
         internal void BeginTakeoff(
@@ -83,6 +90,12 @@ namespace Features.ShipModule.Scripts {
         internal void ShiftWorld(Vector3 delta) =>
             _flight.ShiftWorld(delta);
 
+        public void ApplyKnockback(Vector3 velocity, float fadeSeconds, float maxAcceleration) =>
+            _flight.ApplyKnockback(velocity, fadeSeconds, maxAcceleration);
+
+        public void SustainKnockback(Vector3 direction, float minimumSpeed) =>
+            _flight.SustainKnockback(direction, minimumSpeed);
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public void SetDebugSteer(bool active, float steer) {
             _debugSteerActive = active;
@@ -91,6 +104,10 @@ namespace Features.ShipModule.Scripts {
 
         public void DebugFace(Vector3 worldForward) =>
             _flight.DebugFace(worldForward);
+
+        // Moves the whole flight path like a world shift, so the move itself is no velocity.
+        public void DebugMove(Vector3 delta) =>
+            _flight.ShiftWorld(delta);
 #endif
 
         internal void ServerStep(float dt) {
@@ -100,7 +117,7 @@ namespace Features.ShipModule.Scripts {
             _flight.SetManualHeading(manual);
             float steer = debugSteering
                 ? debugSteer
-                : canSteer && _seats.HasHelmPilot() ? _seats.ReadHelmSteer() : 0f;
+                : canSteer ? _steering.ReadSteer() : 0f;
             _flight.SetSteer(steer);
             PushTravelSpeed();
             SimulateFlight(dt);
@@ -121,7 +138,7 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             float stat = Mathf.Max(ShipTransit.MinSpeed, _modules.GetStatFull(ShipStatType.FlightSpeed));
-            _flight.SetTravelSpeed(_flightSettings().CruiseSpeed * stat);
+            _flight.SetTravelSpeed(_flightSettings().CruiseSpeed * stat * Mathf.Clamp01(_throttle()));
         }
 
         private void SimulateFlight(float dt) {

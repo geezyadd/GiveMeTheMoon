@@ -17,11 +17,7 @@ namespace Features.ShipModule.Scripts {
         public bool TryGetWalkableFloorY(out bool isFlying, out float floorY) {
             isFlying = false;
             floorY = 0f;
-            ShipRunPhase phase = _model.Phase;
-            bool flying = phase == ShipRunPhase.Takeoff
-                || phase == ShipRunPhase.Cruise
-                || phase == ShipRunPhase.Landing;
-            if (flying) {
+            if (_model.Phase.IsFlight()) {
                 ShipBase ship = _binding.Ship;
                 if (ship == null || TryGetDeckSurfaceWorldY(ship, out floorY) == false)
                     return false;
@@ -52,6 +48,7 @@ namespace Features.ShipModule.Scripts {
 
             ship.Seats.ServerStand(rider);
             ship.Riders.UnregisterRider(rider);
+            ship.Throttle.ServerLetGo(rider.Key.Id);
         }
 
         private static bool TryGetDeckSurfaceWorldY(ShipBase ship, out float worldY) {

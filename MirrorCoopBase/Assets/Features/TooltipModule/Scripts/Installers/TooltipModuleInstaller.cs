@@ -6,6 +6,8 @@ namespace Features.TooltipModule.Scripts.Installers {
         public override void InstallBindings() {
             Container.Bind<IGameplaySession>().To<TooltipSession>().AsSingle();
             Container.Bind<ITooltipContentService>().To<TooltipContentService>().AsSingle();
+            Container.BindInterfacesTo<ShipModuleRepairTooltipProvider>().AsSingle();
+            Container.BindInterfacesTo<ShipThrottleTooltipProvider>().AsSingle();
         }
     }
 }

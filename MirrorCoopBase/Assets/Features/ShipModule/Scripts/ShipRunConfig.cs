@@ -13,7 +13,6 @@ namespace Features.ShipModule.Scripts {
         [Tooltip("The most cruise seconds of a flight; 0 = no cap.")]
         [SerializeField] private float _maxFlightSeconds;
         [SerializeField] private float _landingSeconds = 9f;
-        [SerializeField] private float _thrustCruiseBonus = 1.5f;
         [SerializeField] private float _stationSpacing = 48f;
         [Tooltip("Random destination yaw cone in front of launch heading. 170 keeps the pad ahead, never behind.")]
         [SerializeField] private float _destinationConeDegrees = 170f;
@@ -30,7 +29,6 @@ namespace Features.ShipModule.Scripts {
         public float PerLoopFlightSeconds => _perLoopFlightSeconds;
         public float MaxFlightSeconds => _maxFlightSeconds;
         public float LandingSeconds => Mathf.Max(0.2f, _landingSeconds);
-        public float ThrustCruiseBonus => Mathf.Max(0f, _thrustCruiseBonus);
         public float StationSpacing => Mathf.Max(2f, _stationSpacing);
         public float DestinationConeDegrees => Mathf.Clamp(_destinationConeDegrees, 10f, 170f);
         public float WreckSettleSeconds => Mathf.Max(0.1f, _wreckSettleSeconds);

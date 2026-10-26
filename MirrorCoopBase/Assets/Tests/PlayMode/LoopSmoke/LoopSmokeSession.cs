@@ -7,6 +7,7 @@ using Features.LobbyModule.Scripts;
 using Features.MenuModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
 using Features.ShipModule.Scripts;
+using Features.ShipModule.Scripts.Debug;
 using Features.ShipModule.Scripts.Generated;
 using Game.Connection;
 using Mirror;
@@ -58,6 +59,14 @@ namespace Tests.PlayMode.LoopSmoke {
         public IEnumerator ReturnToLobbyByAllDeadCoroutine() {
             SessionQueries.LocalPlayer.GetComponent<IDamageable>().ServerKill(DamageType.Generic);
             yield return WaitForCoroutine(IsBackInLobby, RETURN_TO_LOBBY_TIMEOUT_SECONDS, "the lobby after everyone died, with GameScene unloaded");
+            Ship = null;
+            Model = null;
+        }
+
+        // The other way back: a destroyed hull (the debug window's "Destroy the hull" entry) sends everyone to the lobby through the same exit.
+        public IEnumerator ReturnToLobbyByHullLossCoroutine() {
+            SessionQueries.Resolve<IShipHullDebug>().DebugDestroy();
+            yield return WaitForCoroutine(IsBackInLobby, RETURN_TO_LOBBY_TIMEOUT_SECONDS, "the lobby after the hull was destroyed, with GameScene unloaded");
             Ship = null;
             Model = null;
         }

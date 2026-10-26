@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // The rocks of a cluster come only from the seed (every peer builds the same field), the first rock crosses the
     // flight plane, every rock stays within the footprint (a dense field: within its spill, because the client does
-    // not know the corridor cells) and within the recipe's height, and the game's recipes are complete visual-only
+    // not know which cells around it are kept open) and within the recipe's height, and the game's recipes are complete visual-only
     // data whose meshes fit the layout's reach.
     public sealed class FieldClusterLayoutTests {
         private const float CELL_SIZE = 40f;
@@ -29,7 +29,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [OneTimeSetUp]
         public void OneTimeSetUp() {
             _composition = new FlightFieldEditorCompositionFactory().Create();
-            _layout = new FieldClusterLayout(new FieldPlaneCoverLayout());
+            _layout = new FieldClusterLayout();
         }
 
         [Test]
@@ -55,8 +55,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             foreach (FieldStructureDefinition structure in GetClusterStructures()) {
                 for (int seed = FIRST_SEED; seed <= SEEDS; seed++) {
                     FieldClusterRockPose first = Lay(structure, seed)[0];
-                    float crossing = first.IsPlaneCover ? first.Scale.y * structure.ClusterRecipe.PlaneHalfExtentShare
-                        : Mathf.Min(first.Scale.x, Mathf.Min(first.Scale.y, first.Scale.z)) * MAIN_CROSSING_SHARE;
+                    float crossing = Mathf.Min(first.Scale.x, Mathf.Min(first.Scale.y, first.Scale.z)) * MAIN_CROSSING_SHARE;
 
                     Assert.Less(Mathf.Abs(first.Offset.y), crossing, $"{structure.name} seed {seed}: the first rock may miss the flight plane.");
                 }
@@ -75,7 +74,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         }
 
         [Test]
-        public void WhenCatalogIsRead_ThenEveryLocalStructureHasACompleteRecipeOfColliderFreeRocks() {
+        public void WhenCatalogIsRead_ThenEveryLocalStructureHasACompleteRecipeOfRocksThatNeverCollide() {
             foreach (FieldStructureDefinition structure in _composition.Catalog.Structures.Where(structure => !structure.IsNetworked)) {
                 Assert.IsTrue(structure.HasClusterRecipe, $"{structure.name} has no cluster recipe: it would be an invisible trigger.");
                 FieldClusterRecipe recipe = structure.ClusterRecipe;
@@ -84,9 +83,19 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 Assert.IsTrue(recipe.Materials.All(material => material != null), $"{recipe.name} has an empty material slot.");
                 foreach (FieldClusterRockOption option in recipe.Rocks) {
                     Assert.IsNotNull(option.Prefab, $"{recipe.name} has an empty rock slot.");
-                    Assert.IsEmpty(option.Prefab.GetComponentsInChildren<Collider>(true), $"{option.Prefab.name} has a collider: visual rocks must not collide.");
+                    AssertOnlyWeaponTargetTrigger(option.Prefab);
                     Assert.LessOrEqual(GetFarthestVertex(option.Prefab), FieldRockVisual.MESH_REACH + TOLERANCE, $"{option.Prefab.name} reaches farther than the layout allows: normalise its mesh to about 1 m.");
                 }
+            }
+        }
+
+        // A visual rock never collides: its only collider is its weapon target's trigger, off until a builder binds it.
+        private static void AssertOnlyWeaponTargetTrigger(FieldRockVisual rock) {
+            Assert.IsNotNull(rock.Target, $"{rock.name} has no weapon target.");
+            foreach (Collider collider in rock.GetComponentsInChildren<Collider>(true)) {
+                Assert.AreSame(rock.Target.gameObject, collider.gameObject, $"{rock.name} has a collider besides its weapon target's.");
+                Assert.IsTrue(collider.isTrigger, $"{rock.name}: the weapon target's collider must be a trigger, visual rocks must not collide.");
+                Assert.IsFalse(collider.enabled, $"{rock.name}: the weapon target's collider must be off until a builder binds it.");
             }
         }
 
@@ -121,22 +130,19 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 AssertSameRock(first[i], second[i], $"{structure.name} seed {seed} rock {i}");
         }
 
-        // A dense-field recipe's rocks may reach past the footprint by its spill (extra rocks by their own radius,
-        // which stays within the spill); other recipes keep every rock inside.
+        // Every rock of a recipe stays inside the footprint.
         private void AssertRocksStayInside(FieldStructureDefinition structure, int seed, float acrossLimit, float alongLimit) {
             FieldClusterRecipe recipe = structure.ClusterRecipe;
             List<FieldClusterRockPose> rocks = Lay(structure, seed);
-            float spill = recipe.HasPlaneCover ? recipe.PlaneMaxSpillMeters : 0f;
-            float highest = recipe.HasPlaneCover ? recipe.ExtraHeightMeters.y : recipe.HeightSpreadCells * CELL_SIZE;
+            float highest = recipe.HeightSpreadCells * CELL_SIZE;
             Assert.IsNotEmpty(rocks, $"{structure.name} seed {seed}: no rock.");
             foreach (FieldClusterRockPose rock in rocks) {
                 Bounds bounds = _meshBounds.Get(rock.Prefab, rock.Rotation, rock.Scale);
-                Assert.LessOrEqual(Mathf.Abs(rock.Offset.x) + bounds.extents.x + Mathf.Abs(bounds.center.x), acrossLimit + spill,
+                Assert.LessOrEqual(Mathf.Abs(rock.Offset.x) + bounds.extents.x + Mathf.Abs(bounds.center.x), acrossLimit,
                     $"{structure.name} seed {seed}: a rock reaches too far across the field.");
-                Assert.LessOrEqual(Mathf.Abs(rock.Offset.z) + bounds.extents.z + Mathf.Abs(bounds.center.z), alongLimit + spill,
+                Assert.LessOrEqual(Mathf.Abs(rock.Offset.z) + bounds.extents.z + Mathf.Abs(bounds.center.z), alongLimit,
                     $"{structure.name} seed {seed}: a rock reaches too far along the field.");
-                float heightLimit = rock.IsPlaneCover ? recipe.PlaneHeightJitterMeters : highest;
-                Assert.LessOrEqual(Mathf.Abs(rock.Offset.y), heightLimit + TOLERANCE, $"{structure.name} seed {seed}: a rock is too far from the plane.");
+                Assert.LessOrEqual(Mathf.Abs(rock.Offset.y), highest + TOLERANCE, $"{structure.name} seed {seed}: a rock is too far from the plane.");
             }
         }
 

@@ -2,8 +2,8 @@
 using System;
 using System.Collections;
 using Features.CharacterMovableModule.Scripts;
-using Features.GrabModule.Scripts;
 using Features.ShipModule.Scripts;
+using Features.ShipModule.Scripts.Debug;
 using Features.ShipModule.Scripts.Generated;
 using Features.ShopModule.Scripts.Network;
 using Mirror;
@@ -13,8 +13,8 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace Tests.PlayMode.LoopSmoke {
-    // One station -> flight -> station loop of the host's ship: engines, boarding, the launch lever, the phases and
-    // the checks after landing. Failure messages start with the loop number.
+    // One station -> flight -> station loop of the host's ship: engines, boarding, the launch by the throttle lever,
+    // the phases and the checks after landing. Failure messages start with the loop number.
     public sealed class LoopSmokeFlight {
         private const float FLIGHT_TIMEOUT_SECONDS = 30f;
         private const float BOARD_SETTLE_SECONDS = 1.5f;
@@ -27,6 +27,7 @@ namespace Tests.PlayMode.LoopSmoke {
         public const int REQUIRED_ENGINES = 2;
         private const string ROCKET_ENGINE_MODULE_ID = "rocket-engine";
         private const float MILLISECONDS_PER_SECOND = 1000f;
+        private const float FULL_THROTTLE = 1f;
 
         private static readonly ShipRunPhase[] _expectedLoopPhases = {
             ShipRunPhase.Build,
@@ -39,6 +40,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private readonly LoopSmokeSession _session;
         private readonly LoopSmokeFieldCheck _fieldCheck;
         private float _longestTakeoffFrame;
+        private Func<int, IEnumerator> _nextLaunch;
 
         private ShipBase Ship =>
             _session.Ship;
@@ -77,10 +79,20 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         public IEnumerator FlyLoopCoroutine(int expectedLoopIndex, Func<IEnumerator> inCruise = null) {
+            yield return FlyToCruiseCoroutine(expectedLoopIndex, inCruise);
+
+            yield return _session.WaitForCoroutine(IsBackInBuild, FLIGHT_TIMEOUT_SECONDS, $"Build after landing of loop {expectedLoopIndex}");
+            CollectionAssert.AreEqual(_expectedLoopPhases, _session.Phases, $"Loop {expectedLoopIndex}: phase sequence {string.Join(" -> ", _session.Phases)}");
+            Assert.AreEqual(expectedLoopIndex, Model.LoopIndex, $"Loop {expectedLoopIndex}: LoopIndex after landing.");
+            yield return _fieldCheck.AssertFieldClearedCoroutine(expectedLoopIndex);
+        }
+
+        // A flight that never lands: its run ends in this cruise (LoopSmokeRunEnd.HullLossInCruise).
+        public IEnumerator FlyToCruiseCoroutine(int expectedLoopIndex, Func<IEnumerator> inCruise) {
             Assert.AreEqual(expectedLoopIndex - 1, Model.LoopIndex, $"Loop {expectedLoopIndex}: LoopIndex before launch.");
             _session.StartPhaseRecord();
             _longestTakeoffFrame = 0f;
-            PullLaunchLever(expectedLoopIndex);
+            yield return LaunchCoroutine(expectedLoopIndex);
 
             yield return _session.WaitForCoroutine(IsCruisingAfterTakeoffFrame, FLIGHT_TIMEOUT_SECONDS, $"Cruise of loop {expectedLoopIndex}");
             Debug.Log($"[LoopSmoke] loop {expectedLoopIndex} takeoff: longest frame {_longestTakeoffFrame * MILLISECONDS_PER_SECOND:0.0} ms");
@@ -89,11 +101,6 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return _fieldCheck.AssertNewFieldStandsCoroutine(expectedLoopIndex);
             if (inCruise != null)
                 yield return inCruise();
-
-            yield return _session.WaitForCoroutine(IsBackInBuild, FLIGHT_TIMEOUT_SECONDS, $"Build after landing of loop {expectedLoopIndex}");
-            CollectionAssert.AreEqual(_expectedLoopPhases, _session.Phases, $"Loop {expectedLoopIndex}: phase sequence {string.Join(" -> ", _session.Phases)}");
-            Assert.AreEqual(expectedLoopIndex, Model.LoopIndex, $"Loop {expectedLoopIndex}: LoopIndex after landing.");
-            yield return _fieldCheck.AssertFieldClearedCoroutine(expectedLoopIndex);
         }
 
         public IEnumerator AssertLandedSafelyCoroutine(int loop, ShipLandingPad launchPad, ShipLandingPad landingPad) {
@@ -145,11 +152,48 @@ namespace Tests.PlayMode.LoopSmoke {
         public void FaceDestination() =>
             Ship.FlightControlDebug.DebugFace(Model.TransitDestination - Ship.transform.position);
 
+        // Beside the point and heading across the line to it, this much lower, so the ship passes it by while the gunner
+        // shoots at it (a debug move in cruise).
+        public void PutShipBeside(Vector3 center, float distance, float heightBelow) {
+            Vector3 direction = HorizontalDirection(Ship.transform.position, center);
+            Vector3 position = center - direction * distance + Vector3.down * heightBelow;
+            Ship.FlightControlDebug.DebugMove(position - Ship.transform.position);
+            Ship.FlightControlDebug.DebugFace(Vector3.Cross(Vector3.up, direction));
+        }
+
+        // Back where a check found the ship before its debug moves: the flight applies the move in its next step, and the
+        // pilot faces the destination from there.
+        public IEnumerator PutShipBackCoroutine(Vector3 start) {
+            Ship.FlightControlDebug.DebugMove(start - Ship.transform.position);
+            yield return null;
+            FaceDestination();
+        }
+
+        public static Vector3 HorizontalDirection(Vector3 from, Vector3 to) {
+            Vector3 direction = to - from;
+            direction.y = 0f;
+            return direction.sqrMagnitude > 0f ? direction.normalized : Vector3.forward;
+        }
+
+        // The next flight takes off by this launch instead of the debug throttle (a check pushes the handle by hand).
+        public void LaunchNextFlightBy(Func<int, IEnumerator> launch) =>
+            _nextLaunch = launch;
+
+        // As the debug window's "Throttle = N" does it: the throttle lever at Full, past the launch mark.
         public void PullLaunchLever(int loop) {
-            ShipLaunchInteractable lever = Object.FindAnyObjectByType<ShipLaunchInteractable>();
-            GrabController grab = LocalPlayer.GetComponentInChildren<GrabController>();
-            Assert.IsTrue(lever.CanUse(LocalPlayer, grab), $"Loop {loop}: the launch lever cannot be used.");
-            lever.ServerUse(LocalPlayer, grab);
+            Assert.IsTrue(Ship.CanLaunch, $"Loop {loop}: the ship cannot launch.");
+            SessionQueries.Resolve<IShipThrottleDebug>().DebugSetThrottle(FULL_THROTTLE);
+        }
+
+        private IEnumerator LaunchCoroutine(int loop) {
+            Func<int, IEnumerator> launch = _nextLaunch;
+            _nextLaunch = null;
+            if (launch == null) {
+                PullLaunchLever(loop);
+                yield break;
+            }
+
+            yield return launch(loop);
         }
 
         private bool IsCruisingAfterTakeoffFrame() {

@@ -16,6 +16,8 @@ namespace Features.CameraModule.Scripts.Services {
         void ClearLocalPlayer();
         void BlendTo(string id, float duration = -1f);
         void ToggleFpAndTp();
+        void BeginFixedView(Transform eye);
+        void EndFixedView();
         bool TryGet(string id, out GameCamera camera);
     }
 }

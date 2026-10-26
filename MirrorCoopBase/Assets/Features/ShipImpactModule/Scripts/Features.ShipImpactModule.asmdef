@@ -1,0 +1,24 @@
+{
+    "name": "Features.ShipImpactModule",
+    "rootNamespace": "Features.ShipImpactModule",
+    "references": [
+        "GUID:3b5eff428eda466ebde9ed0aa64229c5",
+        "GUID:640d4f6813af4f238a5dd7d4725fed78",
+        "GUID:d3b0c1a2e4f54a6b9c8d7e6f5a4b3c21",
+        "GUID:4c9e2b7d1a3f4e6b8d0c2a4e6f8b1d3c",
+        "GUID:297532363aab4787b83d31ec2b8a3add",
+        "GUID:a637b2d2f1cb470a8bea9746a87397c0",
+        "GUID:7c3e1a9b4d2f4e6a8b0c1d2e3f4a5b6c",
+        "GUID:30817c1a0e6d646d99c048fc403f5979",
+        "GUID:0d8beb7f090555447a6cf5ce9e54dbb4"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

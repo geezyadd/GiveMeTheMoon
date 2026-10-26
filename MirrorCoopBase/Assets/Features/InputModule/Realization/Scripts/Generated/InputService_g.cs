@@ -15,9 +15,9 @@ namespace Features.InputModule.Realization.Scripts.Generated {
         public InputDefaultActions SwitchCamera { get; set; } = new();
         public InputVector2Actions Look { get; set; } = new();
         public InputDefaultActions Grab { get; set; } = new();
+        public InputDefaultActions Fire { get; set; } = new();
         public InputDefaultActions Release { get; set; } = new();
         public InputDefaultActions ToggleCursor { get; set; } = new();
-        public InputDefaultActions Shop { get; set; } = new();
         public InputDefaultActions CloseWindow { get; set; } = new();
         public InputDefaultActions SpectatePrev { get; set; } = new();
         public InputDefaultActions SpectateNext { get; set; } = new();
@@ -122,6 +122,12 @@ namespace Features.InputModule.Realization.Scripts.Generated {
             if(context.performed)Grab.Performed?.Invoke();
             if(context.canceled)Grab.Canceled?.Invoke();
         }
+        public void OnFire(InputAction.CallbackContext context)
+         {
+            if(context.started)Fire.Started?.Invoke();
+            if(context.performed)Fire.Performed?.Invoke();
+            if(context.canceled)Fire.Canceled?.Invoke();
+        }
         public void OnRelease(InputAction.CallbackContext context)
          {
             if(context.started)Release.Started?.Invoke();
@@ -133,12 +139,6 @@ namespace Features.InputModule.Realization.Scripts.Generated {
             if(context.started)ToggleCursor.Started?.Invoke();
             if(context.performed)ToggleCursor.Performed?.Invoke();
             if(context.canceled)ToggleCursor.Canceled?.Invoke();
-        }
-        public void OnShop(InputAction.CallbackContext context)
-         {
-            if(context.started)Shop.Started?.Invoke();
-            if(context.performed)Shop.Performed?.Invoke();
-            if(context.canceled)Shop.Canceled?.Invoke();
         }
         public void OnCloseWindow(InputAction.CallbackContext context)
          {

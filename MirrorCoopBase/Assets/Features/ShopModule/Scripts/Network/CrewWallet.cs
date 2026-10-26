@@ -1,6 +1,5 @@
 using System;
 using Features.NetworkModelModule.Scripts;
-using Features.ShopModule.Scripts.Configurations;
 using Features.ShopModule.Scripts.Core;
 using Features.ShopModule.Scripts.Data;
 using Features.ShopModule.Scripts.Generated;
@@ -9,32 +8,41 @@ using Zenject;
 
 namespace Features.ShopModule.Scripts.Network {
     public sealed class CrewWallet : WalletBridge, ICrewWallet {
-        private WalletConfiguration _walletConfiguration;
+        private IWalletStartingBalanceSource _walletStartingBalanceSource;
         private ShopPurchaseRequestEventClass _shopPurchaseRequestEventClass;
         private IShopPurchaseSystem _shopPurchaseSystem;
         private ShopReviveRequestEventClass _shopReviveRequestEventClass;
         private IReviveShopSystem _reviveShopSystem;
+        private ICrewWalletBindingModel _crewWalletBindingModel;
 
         public long Balance =>
             Model.Balance;
 
         [Inject]
         private void InjectDependencies(
-            WalletConfiguration walletConfiguration,
+            IWalletStartingBalanceSource walletStartingBalanceSource,
             ShopPurchaseRequestEventClass shopPurchaseRequestEventClass,
             IShopPurchaseSystem shopPurchaseSystem,
             ShopReviveRequestEventClass shopReviveRequestEventClass,
-            IReviveShopSystem reviveShopSystem) {
-            _walletConfiguration = walletConfiguration;
+            IReviveShopSystem reviveShopSystem,
+            ICrewWalletBindingModel crewWalletBindingModel) {
+            _walletStartingBalanceSource = walletStartingBalanceSource;
             _shopPurchaseRequestEventClass = shopPurchaseRequestEventClass;
             _shopPurchaseSystem = shopPurchaseSystem;
             _shopReviveRequestEventClass = shopReviveRequestEventClass;
             _reviveShopSystem = reviveShopSystem;
+            _crewWalletBindingModel = crewWalletBindingModel;
         }
 
         public override void OnStartServer() {
             base.OnStartServer();
-            ServerSetBalance(_walletConfiguration.StartingBalance);
+            ServerSetBalance(_walletStartingBalanceSource.StartingBalance);
+            _crewWalletBindingModel.Bind(this);
+        }
+
+        public override void OnStopServer() {
+            _crewWalletBindingModel.Clear(this);
+            base.OnStopServer();
         }
 
         public override void OnStartClient() {
@@ -59,6 +67,14 @@ namespace Features.ShopModule.Scripts.Network {
 
             ServerSetBalance(Balance - amount);
             return true;
+        }
+
+        [Server]
+        public void ServerEarn(long amount) {
+            if (amount < 0)
+                throw new ArgumentOutOfRangeException(nameof(amount), amount, null);
+
+            ServerSetBalance(Balance + amount);
         }
 
         [Command(requiresAuthority = false)]

@@ -4,13 +4,11 @@ using Features.MatrixModule.Scripts;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor {
-    // What stands in the flight plane: the closed cells, grown by the reach of their own rocks past the cell (the wall
-    // clearance), the cells outside the matrix, and the debris rocks that cross the plane, kept per cell for the
-    // nearest-obstacle lookup.
+    // What stands in the flight plane: the closed cells (the giants, one rock inside their footprint), the cells outside
+    // the matrix, and the debris rocks that cross the plane, kept per cell for the nearest-obstacle lookup.
     public sealed class FieldSlalomObstacles {
         private readonly IMatrix<FieldCell> _cells;
         private readonly float _cellSize;
-        private readonly float _wallReach;
         private readonly Vector2Int _size;
         // Per matrix cell (index x * width + y), null where no rock stands.
         private readonly List<FieldSlalomRock>[] _rocksByCell;
@@ -19,15 +17,13 @@ namespace Features.FlightFieldModule.Scripts.Editor {
 
         public Vector2Int Size => _size;
         public float CellSize => _cellSize;
-        public float WallReach => _wallReach;
         public IReadOnlyList<FieldSlalomRock> PlaneRocks => _planeRocks;
 
-        public FieldSlalomObstacles(IMatrix<FieldCell> cells, Vector2Int size, float cellSize, float wallReach) {
+        public FieldSlalomObstacles(IMatrix<FieldCell> cells, Vector2Int size, float cellSize) {
             _cells = cells;
             _size = size;
             _rocksByCell = new List<FieldSlalomRock>[size.x * size.y];
             _cellSize = cellSize;
-            _wallReach = wallReach;
         }
 
         public void Add(FieldSlalomRock rock) {
@@ -59,13 +55,13 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             !_cells.ValidateIndex(cell) || _cells[cell].IsOccupied;
 
         private float WallClearance(Vector2 point, Vector2Int center, float limit) {
-            int reach = Mathf.CeilToInt((_wallReach + limit) / _cellSize);
+            int reach = Mathf.CeilToInt(limit / _cellSize);
             float clearance = limit;
             for (int along = center.x - reach; along <= center.x + reach; along++) {
                 for (int across = center.y - reach; across <= center.y + reach; across++) {
                     Vector2Int cell = new(along, across);
                     if (IsClosed(cell))
-                        clearance = Mathf.Min(clearance, DistanceToCell(point, cell) - _wallReach);
+                        clearance = Mathf.Min(clearance, DistanceToCell(point, cell));
                 }
             }
 

@@ -2,19 +2,25 @@
 using System;
 using System.Collections.Generic;
 using Features.CameraModule.Scripts;
+using Features.DebugModule.Contracts;
 using Features.GameCoreModule.Contracts;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using Zenject;
 
 namespace Features.PlayerLifeModule.Scripts.Spectator {
     // Debug-only stand-in for IPlayerLifeQuery (editor and development builds). Every spawned player stays Alive.
-    // F9 toggles the local player Dead/Alive so the spectator can be tested before the real life states exist.
-    public sealed class DebugPlayerLifeQuery : IPlayerLifeQuery, ITickable, IGameplaySession {
+    // The debug window's "Toggle dead / alive" action switches the local player Dead/Alive so the spectator can be
+    // tested without the real life states.
+    public sealed class DebugPlayerLifeQuery : IPlayerLifeQuery, IInitializable, IDisposable, ITickable, IGameplaySession {
         private const float SCAN_INTERVAL = 0.25f;
+        private const string TOGGLE_LABEL = "Toggle dead / alive (stand-in life)";
+        private const string TOGGLE_DESCRIPTION = "Only in a setup without the real life states: switches your player between dead and alive to test the spectator.";
 
+        private readonly IDebugActionRegistry _debugActionRegistry;
         private readonly List<Transform> _targets = new();
         private readonly List<Transform> _scan = new();
+
+        private IDisposable _registration;
 
         private PlayerLifeState _localState = PlayerLifeState.Alive;
         private float _nextScanAt;
@@ -34,8 +40,16 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
             }
         }
 
+        public DebugPlayerLifeQuery(IDebugActionRegistry debugActionRegistry) =>
+            _debugActionRegistry = debugActionRegistry;
+
+        public void Initialize() =>
+            _registration = _debugActionRegistry.Register(new DebugActionDefinition(DebugSections.PLAYER, TOGGLE_LABEL, TOGGLE_DESCRIPTION, ReadUnavailableReason, ToggleLocalState));
+
+        public void Dispose() =>
+            _registration.Dispose();
+
         public void Tick() {
-            PollDeathToggle();
             if (HasMissingTarget() || Time.time >= _nextScanAt)
                 RefreshTargets(true);
         }
@@ -49,11 +63,10 @@ namespace Features.PlayerLifeModule.Scripts.Spectator {
         private void ResetLocalState() =>
             _localState = PlayerLifeState.Alive;
 
-        private void PollDeathToggle() {
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard == null || keyboard.f9Key.wasPressedThisFrame == false)
-                return;
+        private static string ReadUnavailableReason() =>
+            null;
 
+        private void ToggleLocalState() {
             _localState = _localState == PlayerLifeState.Dead
                 ? PlayerLifeState.Alive
                 : PlayerLifeState.Dead;

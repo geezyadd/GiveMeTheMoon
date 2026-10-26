@@ -37,7 +37,7 @@ namespace Tests.Coop.Host {
         }
 
         private static string DescribeStats(CoopObservation observation) =>
-            $"thrust {Round(observation.Thrust)} dodge {Round(observation.DodgeRange)} handling {Round(observation.Handling)} "
+            $"dodge {Round(observation.DodgeRange)} "
             + $"armor {Round(observation.Armor)} speed {Round(observation.FlightSpeed)}";
 
         private static string DescribeField(CoopObservation observation) =>

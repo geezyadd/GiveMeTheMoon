@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.AddressablesConstantGeneratorModule.EditorLoading;
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Decor;
@@ -33,7 +34,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         public void OneTimeSetUp() {
             _composition = new FlightFieldEditorCompositionFactory().Create();
             _structureLayout = new FieldStructureLayout(_composition.FootprintReader);
-            _decor = FlightFieldEditorCompositionFactory.LoadConfiguration<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default);
+            _decor = AddressableConfigurationLoader.Load<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default);
             FieldVolumeCandidates candidates = new(new FieldRidgeNoise(new FieldValueNoise()), _randomFactory);
             _chunkLayout = new FieldDecorChunkLayout(_decor, candidates, _sourceReader);
         }
@@ -76,7 +77,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         }
 
         private IEnumerable<(FlightField field, FieldVolumeSource source, List<FieldClusterRockPose> rocks)> LayOutFields() {
-            foreach (FieldDifficultyProfile profile in FieldTestProfiles.Obstacles(_composition.Configuration)) {
+            foreach (FieldDifficultyProfile profile in _composition.Configuration.DifficultyProfiles) {
                 for (int seed = FIRST_SEED; seed < FIRST_SEED + SEEDS; seed++) {
                     FlightField field = _composition.Generator.Generate(FieldTestRequests.WithProfile(_scenario.CreateRequest(_composition.RequestFactory, seed, 0), profile));
                     FieldVolumeSource source = CreateSource(field, profile);

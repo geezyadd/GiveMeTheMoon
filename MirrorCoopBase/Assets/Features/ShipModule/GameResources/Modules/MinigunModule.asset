@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 509f3383bc3377540bf979f60c974604, type: 3}
+  m_Name: MinigunModule
+  m_EditorClassIdentifier: 
+  _id: minigun
+  _slotType: 3
+  _itemPrefab: {fileID: 8664903783980145932, guid: 92ee43f06b433fb408db994c1e30b804, type: 3}
+  _slotViewPrefab: {fileID: 9130762909865663195, guid: aeb9c59c1b2c8e64ead16ff8d151ce2c, type: 3}
+  _displayName: Minigun
+  _icon: {fileID: 0}
+  _description: 'A mounted minigun turret for the deck. Sit at it and hold the left
+    mouse button: a stream of bullets breaks small rocks before they hit the ship.'
+  _price: 600
+  _statModifiers: []
+  _isRemovable: 1
+  _isControlModule: 0
+  _canBreak: 1
+  _breakChanceMultiplier: 1

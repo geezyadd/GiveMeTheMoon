@@ -6,14 +6,14 @@ using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Debris {
     // Lays out the rocks of passable cells from a jittered grid over the whole field plane: a grid point anywhere in
-    // its grid square holds a rock with the density of the cell it lands in, small or big by the cell's recipe, unless
-    // it would come closer than the wall clearance to a closed cell or reach into an empty one. A point that comes
+    // its grid square holds a rock with the density of the cell it lands in, sized by the profile's size classes, unless
+    // it would come closer than the ship gap to a giant's cell or reach into an empty one. A point that comes
     // closer than the ship gap to a kept neighbour with a higher priority gives way (sequential Matern thinning: a
     // neighbour that gave way itself does not push anyone out), so any two rocks of the field leave the ship room and
     // nothing clumps. A point depends only on the field seed, its grid coordinates and the cells around it, so every
-    // peer gets the same rocks whatever order the cells are built in. An obstacle field sizes its rocks by its profile's
-    // size classes, lets the bigger rock win a conflict (so the rare big ones are not thinned away by the many small
-    // ones) and keeps the full ship gap from its giants, so no gap between a rock and a giant is one the ship almost fits.
+    // peer gets the same rocks whatever order the cells are built in. The bigger rock wins a conflict (so the rare big
+    // ones are not thinned away by the many small ones); the full ship gap from the giants means no gap between a rock
+    // and a giant is one the ship almost fits.
     public sealed class FieldDebrisLayout : IFieldDebrisLayout {
         private const float HALF = 0.5f;
         private const uint POINT_X_PRIME = 0x8DA6B343u;
@@ -22,13 +22,11 @@ namespace Features.FlightFieldModule.Scripts.Debris {
         private const float CELL_CENTER = 0.5f;
 
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
-        private readonly FieldStructureCatalog _fieldStructureCatalog;
-        // The catalog does not change while the game runs, so the widest debris reach is read once.
+        // The profiles do not change while the game runs, so the widest debris reach is read once.
         private readonly float _largestRadius;
 
-        public FieldDebrisLayout(FlightFieldConfiguration flightFieldConfiguration, FieldStructureCatalog fieldStructureCatalog) {
+        public FieldDebrisLayout(FlightFieldConfiguration flightFieldConfiguration) {
             _flightFieldConfiguration = flightFieldConfiguration;
-            _fieldStructureCatalog = fieldStructureCatalog;
             _largestRadius = LargestRadius();
         }
 
@@ -137,7 +135,7 @@ namespace Features.FlightFieldModule.Scripts.Debris {
             Vector2 position = (point + new Vector2(random.Value(), random.Value())) * _flightFieldConfiguration.DebrisGridSpacingMeters;
             float presence = random.Value();
             float priority = random.Value();
-            float bigRoll = random.Value();
+            float classRoll = random.Value();
             float sizeRoll = random.Value();
             float offPlaneRoll = random.Value();
             float heightRoll = random.Value();
@@ -146,23 +144,12 @@ namespace Features.FlightFieldModule.Scripts.Debris {
                 return new FieldDebrisCandidate(position, 0f, 0f, priority, false, lookSeed);
 
             FieldDifficultyProfile profile = frame.Cells.Profile;
-            Vector2 range = GetDiameterRange(profile, recipe, bigRoll);
+            Vector2 range = FieldWeightedPick.Pick(profile.DebrisSizeClasses, classRoll).DiameterMeters;
             float diameter = Mathf.Lerp(range.x, range.y, sizeRoll);
             float height = GetHeight(recipe, diameter * HALF, offPlaneRoll, heightRoll);
-            bool exists = presence < density && IsClearOfWalls(frame, position, diameter * HALF, GetWallClearance(profile));
-            float rank = profile.HasDebrisSizeClasses ? diameter + priority : priority;
-            return new FieldDebrisCandidate(position, height, diameter, rank, exists, lookSeed);
+            bool exists = presence < density && IsClearOfGiants(frame, position, diameter * HALF, _flightFieldConfiguration.DebrisMinGapMeters);
+            return new FieldDebrisCandidate(position, height, diameter, diameter + priority, exists, lookSeed);
         }
-
-        private static Vector2 GetDiameterRange(FieldDifficultyProfile profile, FieldDebrisRecipe recipe, float classRoll) {
-            if (profile.HasDebrisSizeClasses)
-                return FieldWeightedPick.Pick(profile.DebrisSizeClasses, classRoll).DiameterMeters;
-
-            return classRoll < recipe.BigShare ? recipe.BigDiameterMeters : recipe.SmallDiameterMeters;
-        }
-
-        private float GetWallClearance(FieldDifficultyProfile profile) =>
-            profile.Layout == FieldLayoutKind.Obstacles ? _flightFieldConfiguration.DebrisMinGapMeters : _flightFieldConfiguration.DebrisWallClearanceMeters;
 
         // In the plane the middle stays within the cross share of the radius; off the plane the surface stands clear.
         private static float GetHeight(FieldDebrisRecipe recipe, float radius, float offPlaneRoll, float heightRoll) {
@@ -174,17 +161,17 @@ namespace Features.FlightFieldModule.Scripts.Debris {
             return side * (radius + lift);
         }
 
-        // No closed cell within the radius and the wall clearance, no empty cell (station zone, takeoff corridor, open
-        // space, outside the field) under the rock.
-        private static bool IsClearOfWalls(DebrisLayoutFrame frame, Vector2 position, float radius, float clearance) {
-            float wallClearance = radius + clearance;
+        // No giant's cell within the radius and the ship gap, no empty cell (station zone, takeoff corridor, open space,
+        // outside the field) under the rock.
+        private static bool IsClearOfGiants(DebrisLayoutFrame frame, Vector2 position, float radius, float clearance) {
+            float giantClearance = radius + clearance;
             Vector2Int center = ToCell(position, frame.CellSize);
-            int reach = Mathf.CeilToInt(Mathf.Max(wallClearance, radius) / frame.CellSize);
+            int reach = Mathf.CeilToInt(Mathf.Max(giantClearance, radius) / frame.CellSize);
             for (int along = center.x - reach; along <= center.x + reach; along++) {
                 for (int across = center.y - reach; across <= center.y + reach; across++) {
                     Vector2Int cell = new(along, across);
                     float distance = DistanceToCell(position, cell, frame.CellSize);
-                    bool isTooClose = frame.Cells.IsBlocked(cell) ? distance < wallClearance : distance < radius && frame.Cells.IsEmpty(cell);
+                    bool isTooClose = frame.Cells.IsBlocked(cell) ? distance < giantClearance : distance < radius && frame.Cells.IsEmpty(cell);
                     if (isTooClose)
                         return false;
                 }
@@ -195,9 +182,6 @@ namespace Features.FlightFieldModule.Scripts.Debris {
 
         private float LargestRadius() {
             float largest = 0f;
-            foreach (FieldDebrisDefinition debris in _fieldStructureCatalog.Debris)
-                largest = Mathf.Max(largest, Mathf.Max(debris.Recipe.BigDiameterMeters.y, debris.Recipe.SmallDiameterMeters.y) * HALF);
-
             foreach (FieldDifficultyProfile profile in _flightFieldConfiguration.DifficultyProfiles) {
                 foreach (FieldRockSizeClass sizeClass in profile.DebrisSizeClasses)
                     largest = Mathf.Max(largest, sizeClass.DiameterMeters.y * HALF);

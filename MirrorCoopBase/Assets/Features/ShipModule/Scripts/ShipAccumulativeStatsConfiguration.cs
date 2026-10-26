@@ -14,7 +14,7 @@ namespace Features.ShipModule.Scripts {
 
         private void OnEnable() {
             if (AccumulativeStats == null)
-                AccumulativeStats = new List<ShipStatType> { ShipStatType.Armor };
+                AccumulativeStats = new List<ShipStatType> { ShipStatType.Hull };
         }
 
         [Serializable]
