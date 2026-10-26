@@ -22,7 +22,7 @@ MonoBehaviour:
   _price: 400
   _statModifiers:
   - Stat: 7
-    Value: 800
+    Value: 1000
     Type: 0
   _isRemovable: 1
   _isControlModule: 0

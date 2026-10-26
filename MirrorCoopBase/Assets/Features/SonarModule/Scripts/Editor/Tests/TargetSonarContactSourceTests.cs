@@ -42,6 +42,20 @@ namespace Features.SonarModule.Editor.Tests {
         }
 
         [Test]
+        public void WhenABalloonGivesAHighReward_ThenItIsTheKindOfItsRewardTier() {
+            _targets.Add(new FieldTargetDescription(new FieldTargetId(1), KIND_ID, new Vector3(0f, 100f, 200f), BALLOON_RADIUS, SonarTestConfiguration.GOLDEN_TARGET_MIN_REWARD));
+            _targets.Add(new FieldTargetDescription(new FieldTargetId(2), KIND_ID, new Vector3(0f, 100f, 300f), BALLOON_RADIUS, SonarTestConfiguration.GOLDEN_TARGET_MIN_REWARD - 1));
+
+            _source.CollectContacts(new Vector3(0f, 100f, 0f), RANGE, _contacts);
+
+            Assert.AreEqual(2, _contacts.Count);
+            Assert.AreSame(_configuration.GoldenTargetKind, _contacts[0].Kind);
+            Assert.AreSame(_configuration.TargetKind, _contacts[1].Kind);
+            Assert.IsTrue(_source.TryGetContact(_contacts[0].Id, out SonarContact golden));
+            Assert.AreSame(_configuration.GoldenTargetKind, golden.Kind);
+        }
+
+        [Test]
         public void WhenABalloonIsOutOfRange_ThenTheSonarDoesNotSeeIt() {
             _targets.Add(Balloon(0, new Vector3(0f, 100f, RANGE * 2f)));
 

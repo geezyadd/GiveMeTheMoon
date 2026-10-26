@@ -16,6 +16,7 @@ namespace Features.SonarModule.Scripts.Installers {
             Container.Bind<ISonarConsoleRule>().To<SonarConsoleRule>().AsSingle();
             Container.Bind<ISonarPingRule>().To<SonarPingRule>().AsSingle();
             Container.Bind<ISonarScopeLayout>().To<SonarScopeLayout>().AsSingle();
+            Container.Bind<ISonarBearingService>().To<SonarBearingService>().AsSingle();
             Container.Bind<ISonarMarkerProjection>().To<SonarMarkerProjection>().AsSingle();
             Container.BindInterfacesTo<SonarNavigatorSystem>().AsSingle();
             Container.BindInterfacesTo<SonarMarkSystem>().AsSingle();

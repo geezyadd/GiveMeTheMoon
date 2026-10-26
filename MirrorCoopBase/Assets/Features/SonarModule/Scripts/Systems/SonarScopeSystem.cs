@@ -12,7 +12,8 @@ using Zenject;
 namespace Features.SonarModule.Scripts.Systems {
     // The ping game on the navigator's peer: a ping takes the contacts in range from this peer's own data, the wave
     // runs out from the ship and lights each one as it passes, the echoes fade, and every frame the scope gets the
-    // echoes laid out around the ship's nose. Nothing of it goes over the network.
+    // echoes laid out around the ship's nose (the biggest first), its heading and the station's bearing. Nothing of
+    // it goes over the network.
     public sealed class SonarScopeSystem : IInitializable, IDisposable, ITickable {
         private const float WAVE_GONE = -1f;
         private const float WAVE_END_SHARE = 1f;
@@ -25,6 +26,7 @@ namespace Features.SonarModule.Scripts.Systems {
         private readonly ISonarRangeService _sonarRangeService;
         private readonly ISonarPingRule _sonarPingRule;
         private readonly ISonarScopeLayout _sonarScopeLayout;
+        private readonly ISonarBearingService _sonarBearingService;
         private readonly ISonarCondition _sonarCondition;
         private readonly SonarConfiguration _sonarConfiguration;
         private readonly List<SonarContact> _unlitContacts = new();
@@ -38,6 +40,7 @@ namespace Features.SonarModule.Scripts.Systems {
             ISonarRangeService sonarRangeService,
             ISonarPingRule sonarPingRule,
             ISonarScopeLayout sonarScopeLayout,
+            ISonarBearingService sonarBearingService,
             ISonarCondition sonarCondition,
             SonarConfiguration sonarConfiguration) {
             _sonarScopeModel = sonarScopeModel;
@@ -48,6 +51,7 @@ namespace Features.SonarModule.Scripts.Systems {
             _sonarRangeService = sonarRangeService;
             _sonarPingRule = sonarPingRule;
             _sonarScopeLayout = sonarScopeLayout;
+            _sonarBearingService = sonarBearingService;
             _sonarCondition = sonarCondition;
             _sonarConfiguration = sonarConfiguration;
         }
@@ -71,9 +75,10 @@ namespace Features.SonarModule.Scripts.Systems {
             float range = _sonarRangeService.GetRangeMeters();
             float waveShare = _sonarPingRule.GetWaveShare(now, _sonarScopeModel.LastPingAt);
             Vector3 shipPosition = ship.transform.position;
+            float shipYaw = ship.transform.eulerAngles.y;
             LightReachedContacts(shipPosition, range, waveShare, now);
             RemoveFadedEchoes(now);
-            LayOutBlips(shipPosition, ship.transform.eulerAngles.y, range, now);
+            LayOutBlips(shipPosition, shipYaw, range, now);
             bool isWaveRunning = waveShare <= WAVE_END_SHARE;
             _sonarScopeModel.CommitFrame(new SonarScopeFrame(
                 range,
@@ -81,7 +86,8 @@ namespace Features.SonarModule.Scripts.Systems {
                 _sonarPingRule.GetCooldownShare(now, _sonarScopeModel.LastPingAt),
                 _sonarCondition.IsWorking,
                 _sonarConsoleModel.Marks.Count,
-                _sonarConfiguration.MarkLimit));
+                _sonarConfiguration.MarkLimit,
+                _sonarBearingService.GetBearings(shipPosition, shipYaw, range)));
         }
 
         private void LightReachedContacts(Vector3 shipPosition, float range, float waveShare, float now) {
@@ -130,8 +136,10 @@ namespace Features.SonarModule.Scripts.Systems {
                     continue;
 
                 float alpha = _sonarPingRule.GetEchoAlpha(now, echoes[i].LitAt);
-                _sonarScopeModel.AddBlip(new SonarBlip(contact.Id, contact.Kind, scopePosition, alpha, IsMarked(contact.Id)));
+                _sonarScopeModel.AddBlip(new SonarBlip(contact.Id, contact.Kind, scopePosition, contact.Radius / range, alpha, IsMarked(contact.Id)));
             }
+
+            _sonarScopeModel.SortBlipsBySize();
         }
 
         private bool IsMarked(string contactId) {

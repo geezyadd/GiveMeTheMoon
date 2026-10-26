@@ -6,7 +6,7 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace Features.SonarModule.Editor.Tests {
-    // A sonar configuration with its four kinds made in memory for a test, set through the serialized fields.
+    // A sonar configuration with its kinds made in memory for a test, set through the serialized fields.
     public sealed class SonarTestConfiguration : IDisposable {
         public const int MARK_LIMIT = 2;
         public const float DEBRIS_CELL_METERS = 100f;
@@ -17,18 +17,24 @@ namespace Features.SonarModule.Editor.Tests {
         public const float WAVE_SECONDS = 1f;
         public const float ECHO_SECONDS = 4f;
         public const float KEEP_OPEN_METERS = 3f;
+        public const float BIG_ROCK_MIN_DIAMETER_METERS = 40f;
+        public const int GOLDEN_TARGET_MIN_REWARD = 100;
 
         public SonarConfiguration Configuration { get; }
         public SonarContactKind StationKind { get; }
         public SonarContactKind LargeRockKind { get; }
+        public SonarContactKind BigRockKind { get; }
         public SonarContactKind DebrisKind { get; }
         public SonarContactKind TargetKind { get; }
+        public SonarContactKind GoldenTargetKind { get; }
 
         public SonarTestConfiguration() {
             StationKind = CreateKind("station", true);
             LargeRockKind = CreateKind("large-rock", false);
+            BigRockKind = CreateKind("big-rock", false);
             DebrisKind = CreateKind("debris", false);
             TargetKind = CreateKind("target", false);
+            GoldenTargetKind = CreateKind("target-golden", false);
             Configuration = ScriptableObject.CreateInstance<SonarConfiguration>();
             SerializedObject configuration = new SerializedObject(Configuration);
             configuration.FindProperty("_markLimit").intValue = MARK_LIMIT;
@@ -40,16 +46,13 @@ namespace Features.SonarModule.Editor.Tests {
             configuration.FindProperty("_pingWaveSeconds").floatValue = WAVE_SECONDS;
             configuration.FindProperty("_echoFadeSeconds").floatValue = ECHO_SECONDS;
             configuration.FindProperty("_consoleKeepOpenMeters").floatValue = KEEP_OPEN_METERS;
+            configuration.FindProperty("_bigRockMinDiameterMeters").floatValue = BIG_ROCK_MIN_DIAMETER_METERS;
             configuration.FindProperty("_stationKind").objectReferenceValue = StationKind;
             configuration.FindProperty("_largeRockKind").objectReferenceValue = LargeRockKind;
+            configuration.FindProperty("_bigRockKind").objectReferenceValue = BigRockKind;
             configuration.FindProperty("_debrisKind").objectReferenceValue = DebrisKind;
-            configuration.FindProperty("_targetKind").objectReferenceValue = TargetKind;
-            SerializedProperty kinds = configuration.FindProperty("_kinds");
-            kinds.arraySize = 4;
-            kinds.GetArrayElementAtIndex(0).objectReferenceValue = StationKind;
-            kinds.GetArrayElementAtIndex(1).objectReferenceValue = LargeRockKind;
-            kinds.GetArrayElementAtIndex(2).objectReferenceValue = DebrisKind;
-            kinds.GetArrayElementAtIndex(3).objectReferenceValue = TargetKind;
+            SetTargetTiers(configuration.FindProperty("_targetTiers"));
+            SetKinds(configuration.FindProperty("_kinds"));
             configuration.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -57,8 +60,25 @@ namespace Features.SonarModule.Editor.Tests {
             Object.DestroyImmediate(Configuration);
             Object.DestroyImmediate(StationKind);
             Object.DestroyImmediate(LargeRockKind);
+            Object.DestroyImmediate(BigRockKind);
             Object.DestroyImmediate(DebrisKind);
             Object.DestroyImmediate(TargetKind);
+            Object.DestroyImmediate(GoldenTargetKind);
+        }
+
+        private void SetTargetTiers(SerializedProperty tiers) {
+            tiers.arraySize = 2;
+            tiers.GetArrayElementAtIndex(0).FindPropertyRelative("_minReward").intValue = 0;
+            tiers.GetArrayElementAtIndex(0).FindPropertyRelative("_kind").objectReferenceValue = TargetKind;
+            tiers.GetArrayElementAtIndex(1).FindPropertyRelative("_minReward").intValue = GOLDEN_TARGET_MIN_REWARD;
+            tiers.GetArrayElementAtIndex(1).FindPropertyRelative("_kind").objectReferenceValue = GoldenTargetKind;
+        }
+
+        private void SetKinds(SerializedProperty kinds) {
+            SonarContactKind[] all = { StationKind, LargeRockKind, BigRockKind, DebrisKind, TargetKind, GoldenTargetKind };
+            kinds.arraySize = all.Length;
+            for (int i = 0; i < all.Length; i++)
+                kinds.GetArrayElementAtIndex(i).objectReferenceValue = all[i];
         }
 
         private static SonarContactKind CreateKind(string id, bool isShownBeyondRange) {

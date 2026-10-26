@@ -147,7 +147,7 @@ its own player; the others follow the owner's synced offset. When and how a play
   (cruise speed, base 1 (the starter ship without engines); per engine socket, two sockets: the large engine +0.5
   (1 000), the rocket engine +0.25 (400), the propeller +0.1 (150); was +1 / +0.5 / +0.08 at 800 / 300 / 150),
   `DodgeRange` (side sway), `Hull` and `Armor` (see "Ship hull" in Key places below) and `SonarRange` (the sonar's range in metres, base 0,
-  the radar module +800; see [SonarModule](../SonarModule/AGENTS.md)); no module changes `DodgeRange`, `Hull` or `Armor`. The unused `Thrust` and
+  the radar module +1000; see [SonarModule](../SonarModule/AGENTS.md)); no module changes `DodgeRange`, `Hull` or `Armor`. The unused `Thrust` and
   `Handling` stats are removed (2026-10-25);
 - **ship hull:** `ShipStatType.Hull` is the hull HP, an accumulative stat (current + max, start 100/100 in
   `ShipAccumulativeStatsConfiguration_Default`). Only `ShipHullService.ServerApplyDamage(ShipDamage)` (`IShipHull`)

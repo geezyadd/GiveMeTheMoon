@@ -1,0 +1,14 @@
+{
+    "name": "Features.SpaceHazeModule.Data",
+    "rootNamespace": "Features.SpaceHazeModule.Data",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
