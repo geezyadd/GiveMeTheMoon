@@ -62,6 +62,7 @@ namespace Tests.PlayMode.LoopSmoke {
             try {
                 CameraLookDriver.DebugPitchOverride = true;
                 yield return LoopSmokeShopCheck.WaitForCoroutine(() => bot.Identity != null && bot.Identity.isClient, "the bot player spawned on the host client");
+                yield return LoopSmokeDebugMoneyGrant.GrantThroughDebugWindowCoroutine();
                 yield return BuyBackBotAtKioskCoroutine(bot, kiosk, shop);
                 yield return AssertRefusedWithoutMoneyCoroutine(bot);
                 shop.Close();
@@ -198,7 +199,7 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         // Kept in the project's Temp folder for a human to look at; the test does not compare images.
-        private static IEnumerator CaptureScreenshotCoroutine(string fileName) {
+        internal static IEnumerator CaptureScreenshotCoroutine(string fileName) {
             string folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", SCREENSHOT_FOLDER));
             Directory.CreateDirectory(folder);
             ScreenCapture.CaptureScreenshot(Path.Combine(folder, fileName));

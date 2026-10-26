@@ -20,7 +20,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const string GOLDEN_ID = "balloon_golden";
         private const int SMALL_REWARD = 20;
         private const int MEDIUM_REWARD = 50;
-        private const int GOLDEN_REWARD = 200;
+        private const int GOLDEN_REWARD = 150;
 
         private readonly List<ScriptableObject> _created = new();
 

@@ -13,7 +13,9 @@ the landing repairs both), takes off and lands twice (in the first cruise `LoopS
 the debug window as a player does: it clicks the corner button (the panel opens, the cursor is freed), types the damage
 into "Hit the hull" and clicks it, clicks the corner button again (closed, cursor released), and checks the armor-reduced drop in the synced model, after the landing that the hull is full again), and checks the phases,
 `LoopIndex`, engines after landing, the ship on the new pad, one shop kiosk per pad, the player on deck, no wreckage.
-At the first station it reaches it buys back a dead crewmate with a second player, a bot on the host (`LoopSmokeReviveCheck`:
+At the first station it reaches it tops the wallet up through the debug window as a player does (`LoopSmokeDebugMoneyGrant`:
+the corner button, Shop → "+1000", the synced balance grows by `WalletConfiguration.DebugGrantAmount`, the corner button
+again; a normal run starts with only 300) and buys back a dead crewmate with a second player, a bot on the host (`LoopSmokeReviveCheck`:
 the price is taken once for a double click, no buy-back without money, the revived player stands at a deck spawn
 point; then the host dies and the bot buys them back). The bot joins through the server's real receive path
 (`LoopSmokeBot`, `LoopSmokeTransportInput`). `LoopSmokeRejoinCheck`: a new player joins at that station on a deck spawn
@@ -22,7 +24,7 @@ the Crew list, under its new name. After the second landing everyone dies, the c
 the lobby and `LoopSmokeRunLeakCheck` checks that no object of the first run is left (and that run 2 starts with the same
 station items and spawns the same pad and drops on its first landing). Then it starts a second run, flies five loops (after the first one it checks the station's crew terminal and puts the
 player back on the deck)
-in a row and at the fifth station buys 5 items at the kiosk through the real aim and the window (`LoopSmokeShopCheck`: delivery
+in a row and at the fifth station tops the wallet up the same way and buys 5 items at the kiosk through the real aim and the window (`LoopSmokeShopCheck`: the mouse wheel over an item row scrolls the list until the last item is in view, delivery
 point, window closes when walking away, the bought items come to rest within a timeout, a far purchase is refused), takes off a sixth time
 and destroys the hull in that cruise (`LoopSmokeRunEnd.HullLossInCruise`, `LoopSmokeSession.ReturnToLobbyByHullLossCoroutine`:
 hull 0 -> the crew in the lobby; `LoopSmokeHullLossCheck`: the host stands by the minigun before the takeoff and sits at it

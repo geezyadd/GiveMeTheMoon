@@ -6,9 +6,18 @@ The station shop kiosk, the crew wallet and buying back a dead crewmate. Read th
 `Features.ShopModule` (layer 6; references: PlayerLife, Ship, ShipDamage for the repair tools, Camera, GameFlow, Mvp, NetworkModel, PlayerProfileModule.Data, FlightFieldModule.Contracts for the balloon rewards).
 
 ## Loop status
-- the only income is the target balloons of the flight field (see "Target balloons" in [FlightFieldModule](../FlightFieldModule/AGENTS.md): 20 / 50 / 200 per
-  balloon, 6-10 balloons per flight on loop 0); the rest is the starting balance (`WalletConfiguration`, 1 000 000 now;
-  a stage preset brings its own);
+- the only income is the target balloons of the flight field (see "Target balloons" in [FlightFieldModule](../FlightFieldModule/AGENTS.md): 20 / 50 / 150 per
+  balloon, 6-10 balloons per flight on loop 0, about 300 if all pop, a decent flight earns 150-250); the rest is the
+  starting balance (`WalletConfiguration`, 300 for a normal run since 2026-10-26, was 1 000 000; a stage preset brings
+  its own); there are no free station drops in a normal run, so engines and guns are bought;
+- debug money: the debug window's Shop → "+1000" (`ShopDebugMoneySystem`, editor / development builds, any player)
+  raises `ShopDebugMoneyRequestEventClass`; `CrewWallet.CmdDebugGrantMoney` makes the server add
+  `WalletConfiguration.DebugGrantAmount` (1 000) through `ServerEarn`;
+- the shop window (`ShopWindow.prefab`) lists the Crew section and every catalog entry in a scroll view (`ShopPanel/Scroll`:
+  `Viewport` with `RectMask2D`, `Content` with a vertical layout and a `ContentSizeFitter`, an auto-hiding vertical
+  `Scrollbar`; mouse wheel sensitivity 20 = about one row per notch with the Input System UI module), so a longer
+  catalog scrolls instead of spilling out of the panel; the 1200 x 960 panel fits the 1920 x 1080 windows canvas
+  (`WindowsRootService`, every 16:9 screen, 1280 x 720 included);
 
 ## Key places
 | What | Where |
@@ -19,4 +28,4 @@ The station shop kiosk, the crew wallet and buying back a dead crewmate. Read th
 The shop wallet is the `Wallet` model (`long Balance`). The start value comes from `WalletConfiguration`, a purchase lowers the balance, HUD and shop read `IReadOnlyWalletModel`.
 
 ## Tests
-- `Features.ShopModule.Editor.Tests` (incl. `FieldTargetRewardSystemTests`: a pop pays its reward once)
+- `Features.ShopModule.Editor.Tests` (incl. `FieldTargetRewardSystemTests`: a pop pays its reward once; `ShopWindowScrollTests`: the shipped window with 12 items stacks its rows without overlap, the wheel over a row and the scrollbar scroll the list to the last item, the panel fits the windows canvas)

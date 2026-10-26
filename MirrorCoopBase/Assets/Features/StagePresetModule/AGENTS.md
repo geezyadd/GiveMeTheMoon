@@ -9,7 +9,7 @@ The playtest stage presets. Read the [root AGENTS.md](../../../../AGENTS.md) fir
 ## Playtest stage presets
 To test mid- and late-game fun without flying 15 loops, the host picks a stage preset in the lobby before Start: the
 "Stage preset (playtest)" panel under Start offers Normal run, Early (loop 0, two propellers, 300), Mid (loop 4, two
-large engines, the radar and the minigun, 1 500) and Late (loop 9, the same modules, 2 400); presets give no free station drops.
+large engines, the radar and the minigun, 1 500) and Late (loop 9, the same modules, 2 400); presets give no free station drops, and neither does the normal run (`StagePresetCatalog._areNormalRunStationDropsEnabled`, off since 2026-10-26: the crew starts with 300 and buys its modules).
 Everyone sees "Preset: <name>" under the balance; the choice ends with the run. The panel shows only in editor and
 development builds (release: `StagePresetCatalog._isPickerShownInReleaseBuilds`). A new preset is a new `StagePreset`
 asset in `StagePresetCatalog_Default`: modules from the `ModuleCatalog`, socket ids of `ShipPlatform` (`engine-left`,

@@ -11,8 +11,11 @@ namespace Features.StagePresetModule.Scripts.Configurations {
         [SerializeField] private StagePreset[] _presets = Array.Empty<StagePreset>();
         [Tooltip("Editor and development builds always show the lobby preset picker; a release build only with this on.")]
         [SerializeField] private bool _isPickerShownInReleaseBuilds;
+        [Tooltip("On: a normal run (no preset picked) drops free modules at every station. Off: the crew buys its modules in the shop.")]
+        [SerializeField] private bool _areNormalRunStationDropsEnabled;
 
         public IReadOnlyList<StagePreset> Presets => _presets;
         public bool IsPickerShownInReleaseBuilds => _isPickerShownInReleaseBuilds;
+        public bool AreNormalRunStationDropsEnabled => _areNormalRunStationDropsEnabled;
     }
 }
