@@ -53,7 +53,7 @@ namespace Features.SpaceHazeModule.Scripts.Systems {
             if (shape.Strength <= 0f || TryGetBaseCameraData(camera, out UniversalAdditionalCameraData cameraData) == false)
                 return;
 
-            _spaceHazeRenderer.Enqueue(cameraData.scriptableRenderer, shape);
+            _spaceHazeRenderer.Enqueue(context, camera, cameraData.scriptableRenderer, shape);
         }
     }
 }
