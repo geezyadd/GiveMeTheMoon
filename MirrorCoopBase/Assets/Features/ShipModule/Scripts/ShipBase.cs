@@ -3,6 +3,7 @@ using Features.GameCoreModule.Contracts;
 using Features.ShipModule.Scripts.Generated;
 using Features.ShipModule.Scripts.Hull;
 using Features.ShipModule.Scripts.Throttle;
+using Game.Connection;
 using Mirror;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -44,6 +45,7 @@ namespace Features.ShipModule.Scripts {
         private CharacterMovableModel _characterMovableModel;
         private ShipRiderKeyModel _shipRiderKeyModel;
         private IReadOnlyShipThrottleModel _shipThrottleModel;
+        private ConnectionNetworkEvents _connectionNetworkEvents;
 
         public Transform Destination => _destination;
         public bool IsFlying => _flying;
@@ -96,7 +98,8 @@ namespace Features.ShipModule.Scripts {
             IShipRunService runService,
             CharacterMovableModel characterMovableModel,
             ShipRiderKeyModel shipRiderKeyModel,
-            IReadOnlyShipThrottleModel shipThrottleModel) {
+            IReadOnlyShipThrottleModel shipThrottleModel,
+            ConnectionNetworkEvents connectionNetworkEvents) {
             _flightSettings = settings;
             _statsConfiguration = statsConfiguration;
 
@@ -105,6 +108,7 @@ namespace Features.ShipModule.Scripts {
             _characterMovableModel = characterMovableModel;
             _shipRiderKeyModel = shipRiderKeyModel;
             _shipThrottleModel = shipThrottleModel;
+            _connectionNetworkEvents = connectionNetworkEvents;
         }
 
         private void Awake() {
@@ -126,6 +130,25 @@ namespace Features.ShipModule.Scripts {
                 _poseSync.BindShip(this, transform);
 
             _modules.ApplyDefaultStats();
+        }
+
+        private void Start() =>
+            _connectionNetworkEvents.MapUnloading += OnMapUnloading;
+
+        private void OnDestroy() {
+            _connectionNetworkEvents.MapUnloading -= OnMapUnloading;
+            _riders.ReleaseAllOnLeave();
+        }
+
+        // Every peer leaves the map before the players are teleported to the next one: a rider still bound here would
+        // be carried back onto this ship and be left in the void when the ship goes with the map.
+        private void OnMapUnloading(string sceneName) {
+            _riders.ReleaseAllOnLeave();
+            if (NetworkServer.active == false)
+                return;
+
+            _seats.ClearAllOccupants();
+            _throttle.ServerReset();
         }
 
         internal bool ServerRequestLaunch() {
