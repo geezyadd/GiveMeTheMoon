@@ -48,6 +48,12 @@ the editor is the host, a Windows development build of the game is the client. O
   (`throttle-pulled`); the host sees the throttle at Stop, the ship stopped within 6 s and still for 2 s; on
   `push-throttle-in-cruise` the client pushes it to Full (`throttle-pushed-in-cruise`), the ship flies again and the host
   faces it to the station.
+  At the first station the host drops a free item (the one nearest to the deck's middle it can aim at) on the deck by hand
+  (`LoopSmokeDeckItemCheck.DropOnDeckByHandCoroutine`); both sides report every loose box item over the deck with its
+  gap above the deck surface in ship space (`DeckItemIds` / `DeckItemGaps`, `Tests.Shared.ShipDeckItemRest`), and in
+  every cruise the host checks the same items on both peers, the client's gaps within 5 cm of its own, and its dropped
+  item lying on the deck (within 5 cm) and seen by the client. At a station the client sees loose items through their
+  network bodies a moment behind the server, so they are not compared there.
 - The test always kills the client process (also on failure or timeout). A passed run deletes its folder
   `Builds/CoopRuns/<time>/`; a failed one keeps the client's log and the exchange files there, and the failure message
   ends with the tail of the client's log.

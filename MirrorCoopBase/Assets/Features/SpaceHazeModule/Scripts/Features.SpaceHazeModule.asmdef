@@ -1,0 +1,21 @@
+{
+    "name": "Features.SpaceHazeModule",
+    "rootNamespace": "Features.SpaceHazeModule",
+    "references": [
+        "GUID:84d200891cb1452b8e9b453e7052d1af",
+        "GUID:a637b2d2f1cb470a8bea9746a87397c0",
+        "GUID:d3b0c1a2e4f54a6b9c8d7e6f5a4b3c21",
+        "GUID:0d8beb7f090555447a6cf5ce9e54dbb4",
+        "GUID:15fc0a57446b3144c949da3e2b9737a9",
+        "GUID:df380645f10b7bc4b97d4f5eb6303d95"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

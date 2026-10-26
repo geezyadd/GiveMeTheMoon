@@ -1,0 +1,25 @@
+{
+    "name": "Features.SpaceHazeModule.Editor.Tests",
+    "rootNamespace": "Features.SpaceHazeModule.Editor.Tests",
+    "references": [
+        "GUID:66bd8bd70084424bbbcc7a7bc5c73787",
+        "GUID:84d200891cb1452b8e9b453e7052d1af",
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

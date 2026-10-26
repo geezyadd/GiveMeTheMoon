@@ -45,7 +45,7 @@ run 2 that a networked placement was checked); the field pool never grows past w
 the first launch `LoopSmokeSonarCheck` stands the host behind the reinstalled radar (its console is inactive at the
 station); first in the cruise of run 1 loop 1 it takes the console through its use command (what E sends): the
 `SonarWindow` opens, the synced model names a navigator and walking / aim are blocked; the window's Ping button
-lights the station's echo at the radar's 800 m range, a click on that echo puts a station mark into the synced
+lights the station's echo at the radar's 1 000 m range, a click on that echo puts a station mark into the synced
 `Marks` and a marker on the HUD, the Leave button closes the window, frees the console and the controls, and the mark
 runs out (`LoopSmokeSonarConfigOverride` binds a copy of `SonarConfiguration` whose station marks last 2 s). In the
 cruise of run 1 loop 1 `LoopSmokeRockBreakCheck` breaks the rock nearest to the ship through `IFieldRockBreakDebug`:
@@ -78,7 +78,15 @@ host's key, the view was locked while held, it let go and stayed at Full on rele
 `Tests.Shared.ShipThrottleHandling`, also used by the coop client); in that cruise the riding host pulls the handle back
 to Stop by hand (the ship stops within 6 s and stays still for 2 s) and pushes it to Full again (it flies again), both
 with the player riding on the deck; after the landing the handle is
-back at Stop and free. `LoopSmokeRockNearPassCheck` (run 1 cruise 1, after the rock impacts): "Show impact volume" clicked on through the debug window, the ship is put to pass the biggest lone small rock with its side halfway between the rock's contact and data spheres; the hull must come inside the data sphere, and the rock may break only if the hull came within the contact sphere; then the toggle off and the ship back. `LoopSmokeStationMarkerCheck` (run 2 cruise 5): the debug window's "Show station: off" clicked as a
+back at Stop and free. `LoopSmokeRockNearPassCheck` (run 1 cruise 1, after the rock impacts): "Show impact volume" clicked on through the debug window, the ship is put to pass the biggest lone small rock with its side halfway between the rock's contact and data spheres; the hull must come inside the data sphere, and the rock may break only if the hull came within the contact sphere; then the toggle off and the ship back. `LoopSmokeDeckItemCheck` (run 2 flight 3): before the takeoff the host grabs two free items with a box
+collider nearest to the deck's middle (in practice the wrench and the hammer of the tool rack; some station drops lie
+under the deck, out of reach, so an item the aim cannot take is skipped and the list is tried up to 3 times) through
+the real aim, drops the first on the deck (it comes to rest as a physics body) and
+carries the second aboard; in that cruise (after the forced world shift) the first lies on the deck, the second, let
+go from the hand, falls onto it, and after a hard turn (`SetDebugSteer`) both still lie on it where they were; after the
+landing both are physics bodies again (not kinematic), at rest on the deck and can be picked up. "Lies on the deck" is
+the gap between the item box's lowest corner and the deck surface under it in ship space (`Tests.Shared.ShipDeckItemRest`),
+within 5 cm. `LoopSmokeStationMarkerCheck` (run 2 cruise 5): the debug window's "Show station: off" clicked as a
 player does turns the own station marker on, the level camera turned toward the station through the look input shows
 it over the station with its distance, turned away on the screen's edge, and "Show station: on" takes it off again. The test timeout is 240 s (a run takes about 170 s). The shared steps live in helpers both loop tests use:
 `LoopSmokeSession` (menu, Host, lobby, Start, all dead -> lobby, Leave; waits record the run phases),

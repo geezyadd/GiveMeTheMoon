@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Features.SonarModule.Scripts.Sources {
     // The target balloons of the flight field from the data this peer has (IPeerFieldTargetQuery: the published
-    // balloons, popped ones already left out), one contact each.
+    // balloons, popped ones already left out), one contact each, of the kind of its reward's tier.
     public sealed class TargetSonarContactSource : ISonarContactSource {
         private const string TARGET_ID_PREFIX = "target:";
         private const string TARGET_ID_FORMAT = TARGET_ID_PREFIX + "{0}";
@@ -36,7 +36,17 @@ namespace Features.SonarModule.Scripts.Sources {
         }
 
         private SonarContact CreateContact(FieldTargetDescription target) =>
-            new(string.Format(TARGET_ID_FORMAT, target.Id.Index), _sonarConfiguration.TargetKind, target.Center, target.Radius);
+            new(string.Format(TARGET_ID_FORMAT, target.Id.Index), GetKind(target.Reward), target.Center, target.Radius);
+
+        // The validator keeps the tiers rising from reward 0, so the first one always fits.
+        private SonarContactKind GetKind(int reward) {
+            IReadOnlyList<SonarTargetTier> tiers = _sonarConfiguration.TargetTiers;
+            SonarContactKind kind = tiers[0].Kind;
+            for (int i = 1; i < tiers.Count && tiers[i].MinReward <= reward; i++)
+                kind = tiers[i].Kind;
+
+            return kind;
+        }
 
         private static bool TryParseIndex(string contactId, out int index) {
             index = 0;

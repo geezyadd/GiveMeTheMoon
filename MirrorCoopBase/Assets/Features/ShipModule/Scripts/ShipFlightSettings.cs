@@ -25,6 +25,8 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private float _catchMaxHeight = 1.5f;
         [Tooltip("In flight a rider rising faster than this (m/s) is not bound to the deck yet: it is still on its way up.")]
         [SerializeField] private float _catchMaxRiseSpeed = 0.15f;
+        [Tooltip("In flight an item let go over the deck up to this height above the deck surface under it falls onto the deck and flies with the ship (m).")]
+        [SerializeField] private float _cargoCatchMaxHeight = 6f;
         [Tooltip("A pilot on a client sends its helm steer to the server at most this often (s).")]
         [SerializeField] private float _helmSteerSendSeconds = 0.03f;
 
@@ -46,6 +48,7 @@ namespace Features.ShipModule.Scripts {
         public float CatchMinHeight => _catchMinHeight;
         public float CatchMaxHeight => _catchMaxHeight;
         public float CatchMaxRiseSpeed => _catchMaxRiseSpeed;
+        public float CargoCatchMaxHeight => _cargoCatchMaxHeight;
         public float HelmSteerSendSeconds => Mathf.Max(0f, _helmSteerSendSeconds);
     }
 }

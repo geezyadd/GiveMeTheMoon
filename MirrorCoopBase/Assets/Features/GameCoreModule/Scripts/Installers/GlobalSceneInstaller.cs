@@ -15,6 +15,7 @@ using Features.ShipImpactModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Installers;
 using Features.SonarModule.Scripts.Installers;
+using Features.SpaceHazeModule.Scripts.Installers;
 using Features.StagePresetModule.Scripts.Installers;
 using Features.TooltipModule.Scripts.Installers;
 using Features.WeaponModule.Scripts;
@@ -38,6 +39,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             PlayerProfileModuleInstaller.Install(Container);
             ShopModuleInstaller.Install(Container);
             SonarModuleInstaller.Install(Container);
+            SpaceHazeModuleInstaller.Install(Container);
             StagePresetModuleInstaller.Install(Container);
             TooltipModuleInstaller.Install(Container);
             CrewInviteModuleInstaller.Install(Container);

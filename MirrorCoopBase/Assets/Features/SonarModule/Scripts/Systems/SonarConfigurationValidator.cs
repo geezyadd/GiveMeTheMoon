@@ -6,7 +6,7 @@ using Zenject;
 
 namespace Features.SonarModule.Scripts.Systems {
     // The one startup check of the sonar data: every kind listed once by a unique id, the source kinds among them,
-    // and the timings and limits above zero.
+    // the balloon tiers rising from reward 0, and the timings and limits above zero.
     public sealed class SonarConfigurationValidator : IInitializable {
         private const string ERROR_FORMAT = "{0}: {1}";
 
@@ -19,8 +19,9 @@ namespace Features.SonarModule.Scripts.Systems {
             ValidateKinds();
             ValidateKindListed(_sonarConfiguration.StationKind, nameof(SonarConfiguration.StationKind));
             ValidateKindListed(_sonarConfiguration.LargeRockKind, nameof(SonarConfiguration.LargeRockKind));
+            ValidateKindListed(_sonarConfiguration.BigRockKind, nameof(SonarConfiguration.BigRockKind));
             ValidateKindListed(_sonarConfiguration.DebrisKind, nameof(SonarConfiguration.DebrisKind));
-            ValidateKindListed(_sonarConfiguration.TargetKind, nameof(SonarConfiguration.TargetKind));
+            ValidateTargetTiers();
             ValidatePositive(_sonarConfiguration.MinRangeMeters, nameof(SonarConfiguration.MinRangeMeters));
             ValidatePositive(_sonarConfiguration.PingCooldownSeconds, nameof(SonarConfiguration.PingCooldownSeconds));
             ValidatePositive(_sonarConfiguration.PingWaveSeconds, nameof(SonarConfiguration.PingWaveSeconds));
@@ -30,6 +31,19 @@ namespace Features.SonarModule.Scripts.Systems {
             ValidatePositive(_sonarConfiguration.ConsoleKeepOpenMeters, nameof(SonarConfiguration.ConsoleKeepOpenMeters));
             ValidatePositive(_sonarConfiguration.DebrisCellMeters, nameof(SonarConfiguration.DebrisCellMeters));
             ValidatePositive(_sonarConfiguration.DebrisMinRocks, nameof(SonarConfiguration.DebrisMinRocks));
+            ValidatePositive(_sonarConfiguration.BigRockMinDiameterMeters, nameof(SonarConfiguration.BigRockMinDiameterMeters));
+        }
+
+        private void ValidateTargetTiers() {
+            IReadOnlyList<SonarTargetTier> tiers = _sonarConfiguration.TargetTiers;
+            if (tiers.Count == 0 || tiers[0].MinReward != 0)
+                Fail($"{nameof(SonarConfiguration.TargetTiers)} must start with a tier from reward 0.");
+
+            for (int i = 0; i < tiers.Count; i++) {
+                ValidateKindListed(tiers[i].Kind, $"{nameof(SonarConfiguration.TargetTiers)}[{i}]");
+                if (i > 0 && tiers[i].MinReward <= tiers[i - 1].MinReward)
+                    Fail($"{nameof(SonarConfiguration.TargetTiers)} must rise: tier {i} starts at {tiers[i].MinReward}.");
+            }
         }
 
         private void ValidateKinds() {

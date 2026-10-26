@@ -77,7 +77,6 @@ namespace Features.ShipModule.Scripts.Debug {
         private bool _measureReady;
         private bool _approachReady;
         private bool _stationReady;
-        private bool _cargoNoted;
         private bool _shiftDock;
         private bool _shiftCruise;
         private int _shiftMarks;
@@ -300,17 +299,6 @@ namespace Features.ShipModule.Scripts.Debug {
                 if (_ship.CanLaunch == false) {
                     Fail("ship cannot launch. " + ModuleLine());
                     return;
-                }
-            }
-
-            if (_cargoNoted == false) {
-                _cargoNoted = true;
-                if (_ship.Cargo.AttachedCount == 0 && _looseItem != null) {
-                    _ship.CargoDebug.DebugAttach(_looseItem);
-                    Note("Deck scan missed the loose item; pinned it directly. cargo=" + _ship.Cargo.AttachedCount);
-                }
-                else {
-                    Note("Deck cargo attached by scan. cargo=" + _ship.Cargo.AttachedCount);
                 }
             }
 
@@ -1222,6 +1210,11 @@ namespace Features.ShipModule.Scripts.Debug {
             _itemSpawned = true;
         }
 
+        // At a station the deck no longer holds its items: the loose item lies on it as a physics body.
+        private bool IsLooseItemOnDeck() =>
+            _looseItem != null
+            && _ship.DeckGeometry.ContainsDeckWalk(_ship.transform.InverseTransformPoint(_looseItem.transform.position), 0f);
+
         private float CargoDrift() {
             if (_ship.Cargo.TryMeasure(out Vector3 local, out float drift))
                 _cargoDriftMax = Mathf.Max(_cargoDriftMax, drift);
@@ -1312,8 +1305,6 @@ namespace Features.ShipModule.Scripts.Debug {
             _measureReady = false;
             _approachReady = false;
             _stationReady = false;
-            if (state == 5 || state == 10)
-                _cargoNoted = false;
         }
 
         private float Age() {
@@ -1321,7 +1312,7 @@ namespace Features.ShipModule.Scripts.Debug {
         }
 
         private void Finish(bool success) {
-            if (success && _client == false && _ship != null && _ship.Cargo.AttachedCount == 0) {
+            if (success && _client == false && _ship != null && IsLooseItemOnDeck() == false) {
                 Note("no loose item stayed on the deck");
                 success = false;
             }
