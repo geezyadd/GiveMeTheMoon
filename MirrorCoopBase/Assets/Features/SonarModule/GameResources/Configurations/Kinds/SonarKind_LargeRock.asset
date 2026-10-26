@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: SonarKind_LargeRock
   m_EditorClassIdentifier: 
   _id: large-rock
-  _displayName: Large rock
-  _color: {r: 1, g: 0.25, b: 0.2, a: 1}
-  _icon: {fileID: 21300000, guid: 0a15353a5b3726e4b9792f1f7f5a0792, type: 3}
+  _displayName: Giant rock
+  _color: {r: 1, g: 0.25, b: 0.2, a: 0.55}
+  _icon: {fileID: 21300000, guid: 8e73063c8d76d8e4aa26005c284c66e3, type: 3}
   _iconPixels: 26
   _markSeconds: 20
   _isMarkable: 1

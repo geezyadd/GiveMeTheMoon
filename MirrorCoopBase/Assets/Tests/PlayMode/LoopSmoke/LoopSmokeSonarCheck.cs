@@ -25,7 +25,7 @@ namespace Tests.PlayMode.LoopSmoke {
         public const string STATION_CONTACT_ID = "station";
 
         private const string RADAR_MODULE_ID = "radar";
-        private const float RADAR_RANGE_METERS = 800f;
+        private const float RADAR_RANGE_METERS = 1000f;
         private const float TIMEOUT_SECONDS = 4f;
         private const float BOARD_SETTLE_SECONDS = 0.6f;
         private const float DROP_HEIGHT = 0.5f;

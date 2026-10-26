@@ -45,7 +45,7 @@ run 2 that a networked placement was checked); the field pool never grows past w
 the first launch `LoopSmokeSonarCheck` stands the host behind the reinstalled radar (its console is inactive at the
 station); first in the cruise of run 1 loop 1 it takes the console through its use command (what E sends): the
 `SonarWindow` opens, the synced model names a navigator and walking / aim are blocked; the window's Ping button
-lights the station's echo at the radar's 800 m range, a click on that echo puts a station mark into the synced
+lights the station's echo at the radar's 1 000 m range, a click on that echo puts a station mark into the synced
 `Marks` and a marker on the HUD, the Leave button closes the window, frees the console and the controls, and the mark
 runs out (`LoopSmokeSonarConfigOverride` binds a copy of `SonarConfiguration` whose station marks last 2 s). In the
 cruise of run 1 loop 1 `LoopSmokeRockBreakCheck` breaks the rock nearest to the ship through `IFieldRockBreakDebug`:

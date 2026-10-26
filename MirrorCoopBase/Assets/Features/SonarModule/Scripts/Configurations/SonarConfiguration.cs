@@ -9,8 +9,8 @@ namespace Features.SonarModule.Scripts.Configurations {
     public sealed class SonarConfiguration : ScriptableObject {
         [Header("Scope")]
         [Tooltip("The range when the ship's SonarRange stat is lower, in metres.")]
-        [SerializeField] private float _minRangeMeters = 300f;
-        [SerializeField] private int _rangeRingCount = 3;
+        [SerializeField] private float _minRangeMeters = 1000f;
+        [SerializeField] private int _rangeRingCount = 4;
 
         [Header("Ping")]
         [SerializeField] private float _pingCooldownSeconds = 2.5f;
@@ -34,9 +34,15 @@ namespace Features.SonarModule.Scripts.Configurations {
         [Header("Contacts")]
         [SerializeField] private SonarContactKind[] _kinds = Array.Empty<SonarContactKind>();
         [SerializeField] private SonarContactKind _stationKind;
+        [Tooltip("The giants of the field (a footprint of many cells).")]
         [SerializeField] private SonarContactKind _largeRockKind;
+        [Tooltip("A debris rock at least BigRockMinDiameterMeters across, one contact each.")]
+        [SerializeField] private SonarContactKind _bigRockKind;
+        [Tooltip("A patch of smaller debris rocks.")]
         [SerializeField] private SonarContactKind _debrisKind;
-        [SerializeField] private SonarContactKind _targetKind;
+        [Tooltip("The balloons by their reward: a balloon is the kind of the highest tier its reward reaches.")]
+        [SerializeField] private SonarTargetTier[] _targetTiers = Array.Empty<SonarTargetTier>();
+        [SerializeField] private float _bigRockMinDiameterMeters = 40f;
         [Tooltip("Small rocks are counted in square cells of this size; a cell with enough of them is one debris contact.")]
         [SerializeField] private float _debrisCellMeters = 120f;
         [SerializeField] private int _debrisMinRocks = 6;
@@ -55,8 +61,10 @@ namespace Features.SonarModule.Scripts.Configurations {
         public IReadOnlyList<SonarContactKind> Kinds => _kinds;
         public SonarContactKind StationKind => _stationKind;
         public SonarContactKind LargeRockKind => _largeRockKind;
+        public SonarContactKind BigRockKind => _bigRockKind;
         public SonarContactKind DebrisKind => _debrisKind;
-        public SonarContactKind TargetKind => _targetKind;
+        public IReadOnlyList<SonarTargetTier> TargetTiers => _targetTiers;
+        public float BigRockMinDiameterMeters => _bigRockMinDiameterMeters;
         public float DebrisCellMeters => _debrisCellMeters;
         public int DebrisMinRocks => _debrisMinRocks;
         public float DebrisCellHalfHeightMeters => _debrisCellHalfHeightMeters;
