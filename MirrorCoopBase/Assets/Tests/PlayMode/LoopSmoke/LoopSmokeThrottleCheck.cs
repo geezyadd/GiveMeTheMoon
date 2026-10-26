@@ -3,7 +3,6 @@ using System;
 using System.Collections;
 using Features.CameraModule.Scripts.Models;
 using Features.ShipModule.Scripts;
-using Features.ShipModule.Scripts.Debug;
 using Features.ShipModule.Scripts.Generated;
 using Mirror;
 using NUnit.Framework;
@@ -12,20 +11,23 @@ using UnityEngine;
 
 namespace Tests.PlayMode.LoopSmoke {
     // The throttle lever as a player uses it: in run 2 flight 4 the host stands behind the handle, holds interact on
-    // it and pushes the mouse forward until the ship takes off; in that cruise the debug window's "Throttle = N" puts it
-    // at 0 (the ship eases to a stop) and at 1 (it flies again) with the player riding on the deck; after the landing
-    // the handle is back at Stop and free.
+    // it and pushes the mouse forward until the ship takes off; in that cruise the riding host pulls the handle back to
+    // Stop by hand (the ship eases to a stop and stays there) and pushes it to Full again (it flies again), with the
+    // player riding on the deck; after the landing the handle is back at Stop and free.
     public sealed class LoopSmokeThrottleCheck {
         private const int RUN = 2;
         private const int FLIGHT = 4;
         private const float FULL = 1f;
         private const float FULL_TOLERANCE = 0.02f;
-        private const float STOP_TIMEOUT_SECONDS = 12f;
+        private const float STOP = 0f;
+        private const float STOP_TIMEOUT_SECONDS = 6f;
+        private const float STAY_STOPPED_SECONDS = 2f;
         private const float SPEED_SAMPLE_SECONDS = 0.5f;
         private const float STOPPED_SPEED = 0.2f;
         private const float MOVING_SPEED = 5f;
 
         private readonly WaitForSeconds _speedSample = new WaitForSeconds(SPEED_SAMPLE_SECONDS);
+        private readonly WaitForSeconds _stayStopped = new WaitForSeconds(STAY_STOPPED_SECONDS);
         private readonly LoopSmokeSession _session;
         private readonly LoopSmokeFlight _flight;
 
@@ -42,13 +44,17 @@ namespace Tests.PlayMode.LoopSmoke {
             _flight.LaunchNextFlightBy(PushHandleToLaunchCoroutine);
 
         [LoopSmokeStep(LoopSmokePhase.InCruise, RUN, FLIGHT, 10)]
-        public IEnumerator StopAndGoInCruiseCoroutine() {
-            IShipThrottleDebug throttleDebug = SessionQueries.Resolve<IShipThrottleDebug>();
-            throttleDebug.DebugSetThrottle(0f);
+        public IEnumerator StopAndGoByTheHandleInCruiseCoroutine() {
+            ShipThrottleHandling handling = new ShipThrottleHandling(_session.Ship);
+            yield return handling.PullHandleCoroutine(() => Throttle.Position <= STOP + FULL_TOLERANCE);
+            Assert.IsNull(handling.Failure, $"Throttle: pulling the handle to Stop in cruise failed: {handling.Failure}.");
+            Assert.AreEqual(STOP, handling.ReleasedPosition, FULL_TOLERANCE, "Throttle: the handle did not stay at Stop after release in cruise.");
             yield return WaitForSpeedCoroutine(speed => speed < STOPPED_SPEED, "the ship to stop at throttle 0");
+            yield return AssertStaysStoppedCoroutine();
             AssertRidingOnDeck("stopped at throttle 0");
 
-            throttleDebug.DebugSetThrottle(FULL);
+            yield return handling.PushHandleCoroutine(() => Throttle.Position >= FULL - FULL_TOLERANCE);
+            Assert.IsNull(handling.Failure, $"Throttle: pushing the handle to Full in cruise failed: {handling.Failure}.");
             yield return WaitForSpeedCoroutine(speed => speed > MOVING_SPEED, "the ship to fly again at throttle 1");
             AssertRidingOnDeck("flying again at throttle 1");
         }
@@ -86,6 +92,14 @@ namespace Tests.PlayMode.LoopSmoke {
                 if (Time.realtimeSinceStartup > deadline)
                     Assert.Fail($"Throttle: timed out waiting for {target}; the ship moves at {speed:0.00} m/s.");
             }
+        }
+
+        private IEnumerator AssertStaysStoppedCoroutine() {
+            Vector3 start = _session.Ship.transform.position;
+            yield return _stayStopped;
+            Vector3 moved = _session.Ship.transform.position - start;
+            moved.y = 0f;
+            Assert.Less(moved.magnitude / STAY_STOPPED_SECONDS, STOPPED_SPEED, "Throttle: the ship did not stay still at throttle 0.");
         }
 
         private void AssertRidingOnDeck(string when) {

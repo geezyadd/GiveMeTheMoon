@@ -20,6 +20,8 @@ namespace Features.ShipImpactModule.Scripts {
         [SerializeField] private float _minSpeedFactor = 0.25f;
         [Tooltip("The damage factor never rises above this, however fast the ship is.")]
         [SerializeField] private float _maxSpeedFactor = 2f;
+        [Tooltip("Share of a small rock's data radius the hull must reach to hit it. The data radius holds the turned mesh with room to spare: the mesh's surface lies at about 0.53 of it (0.35-0.71 for most rocks and sides), so 1 hits rocks the hull visibly passes by.")]
+        [SerializeField] private float _smallContactRadiusShare = 0.6f;
 
         [Header("Small rock: push")]
         [Tooltip("Push away from the rock, m/s.")]
@@ -46,8 +48,8 @@ namespace Features.ShipImpactModule.Scripts {
         [SerializeField] private float _contactPushOutSpeed = 3f;
         [Tooltip("A large rock counts as touched this far (m) before the hull reaches it.")]
         [SerializeField] private float _largeContactMarginMeters = 1f;
-        [Tooltip("Share of a large rock's data radius the hull bounces off. The data radius holds the turned mesh with room to spare; 1 = the ship stops at the outer sphere, visibly before the rock.")]
-        [SerializeField] private float _largeContactRadiusShare = 0.8f;
+        [Tooltip("Share of a large rock's data radius the hull bounces off. The data radius holds the turned mesh with room to spare (its surface at about 0.53 of it, see the small share); 1 = the ship stops at the outer sphere, visibly before the rock.")]
+        [SerializeField] private float _largeContactRadiusShare = 0.65f;
         [Tooltip("Share of the braking distance (speed^2 / 2 x max acceleration) a large rock is felt ahead of the hull along its motion, so the ship stops at the rock, not inside it.")]
         [SerializeField] private float _brakingLookAheadShare = 0.8f;
         [Tooltip("The look-ahead never reaches further than this, metres (a fast takeoff would feel rocks far away).")]
@@ -69,6 +71,7 @@ namespace Features.ShipImpactModule.Scripts {
         public float SmallDamageMaxDiameter => _smallDamageMaxDiameter;
         public float SmallDamageAtMinDiameter => _smallDamageAtMinDiameter;
         public float SmallDamageAtMaxDiameter => _smallDamageAtMaxDiameter;
+        public float SmallContactRadiusShare => _smallContactRadiusShare;
         public float ReferenceSpeed => _referenceSpeed;
         public float MinSpeedFactor => _minSpeedFactor;
         public float MaxSpeedFactor => _maxSpeedFactor;

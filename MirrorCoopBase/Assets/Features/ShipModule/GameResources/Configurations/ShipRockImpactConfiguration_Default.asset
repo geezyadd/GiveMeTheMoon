@@ -19,6 +19,7 @@ MonoBehaviour:
   _referenceSpeed: 14
   _minSpeedFactor: 0.25
   _maxSpeedFactor: 2
+  _smallContactRadiusShare: 0.6
   _smallAwaySpeed: 1.5
   _smallBackSpeedShare: 0.12
   _smallPushSeconds: 0.6
@@ -30,7 +31,7 @@ MonoBehaviour:
   _largeMaxAcceleration: 22
   _contactPushOutSpeed: 3
   _largeContactMarginMeters: 1
-  _largeContactRadiusShare: 0.8
+  _largeContactRadiusShare: 0.65
   _brakingLookAheadShare: 0.8
   _maxLookAheadMeters: 16
   _largeHitCooldownSeconds: 1

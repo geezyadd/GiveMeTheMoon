@@ -75,9 +75,10 @@ balance grew by the rewards; after that landing the popped list and the balloons
 through the real camera, holds E (`LocalPlayerInteraction.Interact`) and moves the mouse forward through the
 interaction's look input (`MoveHeldControl`) until the ship takes off and the handle is at Full (the server gave it to the
 host's key, the view was locked while held, it let go and stayed at Full on release; the steps are the shared
-`Tests.Shared.ShipThrottleHandling`, also used by the coop client); in that cruise "Throttle = N" puts it at 0 (the ship
-comes to a stop) and back at 1 (it flies again), both with the player riding on the deck; after the landing the handle is
-back at Stop and free. `LoopSmokeDeckItemCheck` (run 2 flight 3): before the takeoff the host grabs two free items with a box
+`Tests.Shared.ShipThrottleHandling`, also used by the coop client); in that cruise the riding host pulls the handle back
+to Stop by hand (the ship stops within 6 s and stays still for 2 s) and pushes it to Full again (it flies again), both
+with the player riding on the deck; after the landing the handle is
+back at Stop and free. `LoopSmokeRockNearPassCheck` (run 1 cruise 1, after the rock impacts): "Show impact volume" clicked on through the debug window, the ship is put to pass the biggest lone small rock with its side halfway between the rock's contact and data spheres; the hull must come inside the data sphere, and the rock may break only if the hull came within the contact sphere; then the toggle off and the ship back. `LoopSmokeDeckItemCheck` (run 2 flight 3): before the takeoff the host grabs two free items with a box
 collider nearest to the deck's middle (in practice the wrench and the hammer of the tool rack; some station drops lie
 under the deck, out of reach, so an item the aim cannot take is skipped and the list is tried up to 3 times) through
 the real aim, drops the first on the deck (it comes to rest as a physics body) and

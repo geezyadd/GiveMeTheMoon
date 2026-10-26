@@ -6,18 +6,21 @@ using UnityEngine;
 
 namespace Features.ShipImpactModule.Scripts {
     // Asks the field data (not the scene: the host may not have the rocks built) for the rocks under the swept hull:
-    // one query around all the boxes, then every box on its own. A large rock is a share of its data sphere, which
-    // holds the turned mesh with room to spare. The query list is reused, so a scan allocates nothing once it has
-    // grown.
+    // one query around all the boxes, then every box on its own. A rock is touched at a share of its data sphere per
+    // kind: the sphere holds the turned mesh with room to spare, so the whole sphere hits rocks the hull visibly
+    // passes by. The query list is reused, so a scan allocates nothing once it has grown.
     public sealed class ShipHullRockScanner : IShipHullRockScanner {
         private readonly IFieldRockQuery _fieldRockQuery;
         private readonly IShipRockImpactClassifier _shipRockImpactClassifier;
+        private readonly IShipRockContactRule _shipRockContactRule;
         private readonly ShipRockImpactConfiguration _shipRockImpactConfiguration;
         private readonly List<FieldRockDescription> _rocks = new();
 
-        public ShipHullRockScanner(IFieldRockQuery fieldRockQuery, IShipRockImpactClassifier shipRockImpactClassifier, ShipRockImpactConfiguration shipRockImpactConfiguration) {
+        public ShipHullRockScanner(IFieldRockQuery fieldRockQuery, IShipRockImpactClassifier shipRockImpactClassifier, IShipRockContactRule shipRockContactRule,
+                                   ShipRockImpactConfiguration shipRockImpactConfiguration) {
             _fieldRockQuery = fieldRockQuery;
             _shipRockImpactClassifier = shipRockImpactClassifier;
+            _shipRockContactRule = shipRockContactRule;
             _shipRockImpactConfiguration = shipRockImpactConfiguration;
         }
 
@@ -29,9 +32,10 @@ namespace Features.ShipImpactModule.Scripts {
             _fieldRockQuery.FindInBox(query.Center, query.HalfExtents, query.Rotation, _rocks);
             foreach (FieldRockDescription rock in _rocks) {
                 ShipRockImpactKind kind = _shipRockImpactClassifier.Classify(rock);
+                float contactRadius = _shipRockContactRule.CalculateContactRadius(kind, rock.Radius);
                 bool isTouching = kind == ShipRockImpactKind.Small
-                    ? TryTouch(boxes, from, to, 0f, rock.Center, rock.Radius, out Vector3 hullPoint)
-                    : TryTouch(boxes, from, ahead, largeMargin, rock.Center, rock.Radius * _shipRockImpactConfiguration.LargeContactRadiusShare, out hullPoint);
+                    ? TryTouch(boxes, from, to, 0f, rock.Center, contactRadius, out Vector3 hullPoint)
+                    : TryTouch(boxes, from, ahead, largeMargin, rock.Center, contactRadius, out hullPoint);
                 if (isTouching)
                     contacts.Add(new ShipRockContact(rock, kind, hullPoint));
             }

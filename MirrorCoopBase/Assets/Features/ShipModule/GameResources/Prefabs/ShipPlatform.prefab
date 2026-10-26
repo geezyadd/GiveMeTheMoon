@@ -136,11 +136,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _boxes:
   - Center: {x: 0, y: 0.75, z: -5.6}
-    HalfExtents: {x: 5.5, y: 1.75, z: 5.2}
+    HalfExtents: {x: 4.7, y: 1.75, z: 5.2}
   - Center: {x: 0, y: 0.75, z: 1}
     HalfExtents: {x: 4.9, y: 1.75, z: 2.4}
   - Center: {x: 0, y: 0.75, z: 5.4}
-    HalfExtents: {x: 2.5, y: 1.75, z: 2.4}
+    HalfExtents: {x: 2.1, y: 1.75, z: 2.4}
 --- !u!1 &2000000001
 GameObject:
   m_ObjectHideFlags: 0
