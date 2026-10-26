@@ -25,18 +25,19 @@ Module pages: [ShipImpactModule](../ShipImpactModule/AGENTS.md), [ShipDamageModu
   the ship really flies to the next station;
 - on launch the route is chosen and the next pad spawns right away at the destination: a random direction inside a
   170° cone ahead (`ShipRoute.ChooseDestination`). The flight length is set in time in `ShipRunConfig`:
-  seconds(loop) = `FirstFlightSeconds` (120) + loop × `PerLoopFlightSeconds` (120), capped by `MaxFlightSeconds`
-  (0 = no cap; `ShipRunConfigValidator` checks the values at startup), and the destination lies seconds × `CruiseSpeed`
-  from the hover point (1 680 m on loop 0, 8 400 m on loop 4 at 14 m/s): about 2 minutes of straight cruise at flight
-  speed 1, faster engines shorten it (`ShipFlightStatService.EvaluateRouteWork`). Tests shorten it with their own copy
+  seconds(loop) = `FirstFlightSeconds` (120) + loop × `PerLoopFlightSeconds` (15; was 120), capped by `MaxFlightSeconds`
+  (180; was 0 = no cap; `ShipRunConfigValidator` checks the values at startup), and the destination lies seconds × `CruiseSpeed`
+  from the hover point (960 m on loop 0, 1 440 m from loop 4 on at 8 m/s; was 1 680 m and 8 400 m at 14 m/s): 2 to 3
+  minutes of straight cruise at flight speed 1, faster engines shorten it (`ShipFlightStatService.EvaluateRouteWork`). Tests shorten it with their own copy
   of the config (`LoopSmokeShipRunConfigOverride`) or, in editor / development builds, with
   `IShipFlightLengthDebug.DebugUseFlightSeconds` (`DeckFeelHarness`);
-- on takeoff the ship moves over 9 s to a hover point (+350 m forward, +100 m up) and **keeps the heading it had at
+- on takeoff the ship moves over 11 s (was 9 s) to a hover point (+180 m forward, was +350 m; +100 m up) and **keeps the heading it had at
   the station**: the autopilot does not turn to the destination (`ShipFlight`);
-- in cruise it flies along its heading at `CruiseSpeed` (14 m/s) × the `FlightSpeed` stat × the **throttle** (0..1,
-  see "Throttle lever" below), eased to that target with `ShipFlightSettings.CruiseAcceleration` (8 m/s²,
-  `ShipCruiseSpeed`; it also starts every cruise from 0, which replaced the old `TravelAccelSeconds` ramp: was 0 → full
-  in 1.5 s, now at most 8 m/s², about 1.75 s to 14 m/s, 3.5 s to the rocket engines' 28 m/s). Throttle 0 holds the
+- in cruise it flies along its heading at `CruiseSpeed` (8 m/s; was 14, slowed for the 2026-10-26 playtest so players
+  can follow the flight) × the `FlightSpeed` stat × the **throttle** (0..1, see "Throttle lever" below), eased to that
+  target with `ShipFlightSettings.CruiseAcceleration` (4.5 m/s², was 8; `ShipCruiseSpeed`; it also starts every cruise
+  from 0, which replaced the old `TravelAccelSeconds` ramp: about 1.8 s to 8 m/s, 3.6 s to the two large engines'
+  16 m/s). The helm turns at `TurnRate` 55°/s (was 80) and sways with `SwayStiffness` 7 (was 10). Throttle 0 holds the
   ship still in the field; a knockback still moves it. The HUD's time estimate still assumes full throttle. The pilot in the helm
   seat turns the heading and sways the ship sideways. The destination lies up to 85° off the takeoff heading, so the
   crew finds it **by the navigator's sonar**: the station is a contact on the radar module's sonar console (see
@@ -49,7 +50,7 @@ Module pages: [ShipImpactModule](../ShipImpactModule/AGENTS.md), [ShipDamageModu
 - arrival is by distance: the ship is within `ApproachDistance` (70 m) of the destination (`ShipRoute.HasArrived`).
   In this mode `ShipTransit` only gives the HUD estimate, live from the current position: distance / cruise speed;
   while the nose points away from the destination the HUD shows the distance instead (`FlightTimePresenter`);
-- on landing the ship eases onto the pad's landing point (`LandingSeconds` = 9 s) and the phase becomes `Build`;
+- on landing the ship eases onto the pad's landing point (`LandingSeconds` = 11 s, was 9 s) and the phase becomes `Build`;
 - after a landing farther than 800 m from the world origin the world is shifted back to it
   (`ShipWorldShiftService.RecenterIfFar`, `WorldShift`; clients get it through `ShipRunDirector`);
 - at every launch (`TravelInSpace` only) the server generates a **flight field** of rocks between the stations
@@ -139,13 +140,14 @@ its own player; the others follow the owner's synced offset. When and how a play
   start and end of a run and on a wreck (`ShipRunService.FinishAtCurrentPose`, only when the next pad is missing; the unused `ServerAbort` was
   removed on 2026-10-25);
 - modules are installed and removed only in the `Build` phase (`ShipSocketRule`);
-- modules still drop for free on every arrival at a station (`ShipStationCatalog.Drops`,
-  `ShipStationDropService.SpawnDrops`), so the shop is not needed yet (a stage preset turns the drops off, see
-  [StagePresetModule](../StagePresetModule/AGENTS.md));
+- free module drops at stations (`ShipStationCatalog.Drops`, `ShipStationDropService.SpawnDrops`) are off: the crew
+  buys its modules in the shop. A normal run reads the switch `StagePresetCatalog._areNormalRunStationDropsEnabled`
+  (off), a stage preset its own (see [StagePresetModule](../StagePresetModule/AGENTS.md));
 - the final ship stats are synced to clients (`ShipStats` model) and gameplay reads every one of them: `FlightSpeed`
-  (cruise speed, base 1: the large engine +1, the rocket engine +0.5, the propeller a very small +0.08),
+  (cruise speed, base 1 (the starter ship without engines); per engine socket, two sockets: the large engine +0.5
+  (1 000), the rocket engine +0.25 (400), the propeller +0.1 (150); was +1 / +0.5 / +0.08 at 800 / 300 / 150),
   `DodgeRange` (side sway), `Hull` and `Armor` (see "Ship hull" in Key places below) and `SonarRange` (the sonar's range in metres, base 0,
-  the radar module +800; see [SonarModule](../SonarModule/AGENTS.md)); no module changes `DodgeRange`, `Hull` or `Armor`. The unused `Thrust` and
+  the radar module +1000; see [SonarModule](../SonarModule/AGENTS.md)); no module changes `DodgeRange`, `Hull` or `Armor`. The unused `Thrust` and
   `Handling` stats are removed (2026-10-25);
 - **ship hull:** `ShipStatType.Hull` is the hull HP, an accumulative stat (current + max, start 100/100 in
   `ShipAccumulativeStatsConfiguration_Default`). Only `ShipHullService.ServerApplyDamage(ShipDamage)` (`IShipHull`)

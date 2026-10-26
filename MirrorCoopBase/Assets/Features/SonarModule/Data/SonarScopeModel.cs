@@ -7,6 +7,7 @@ namespace Features.SonarModule.Data {
     public sealed class SonarScopeModel {
         private readonly List<SonarEcho> _echoes = new();
         private readonly List<SonarBlip> _blips = new();
+        private readonly SonarBlipSizeComparer _blipSizeComparer = new();
 
         public bool IsOpen { get; private set; }
         public string NavigatorKey { get; private set; } = string.Empty;
@@ -67,6 +68,9 @@ namespace Features.SonarModule.Data {
 
         public void AddBlip(SonarBlip blip) =>
             _blips.Add(blip);
+
+        public void SortBlipsBySize() =>
+            _blips.Sort(_blipSizeComparer);
 
         public void CommitFrame(SonarScopeFrame frame) {
             Frame = frame;

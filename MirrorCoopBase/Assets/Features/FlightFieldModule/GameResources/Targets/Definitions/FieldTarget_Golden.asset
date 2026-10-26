@@ -15,7 +15,7 @@ MonoBehaviour:
   _id: balloon_golden
   _prefab: {fileID: 3760357350564428458, guid: b41ab0b298af6ee4fbfc65f74104e983, type: 3}
   _radiusMeters: 3.5
-  _reward: 200
+  _reward: 150
   _hitPoints: 3
   _spawnWeight: 0.6
   _popColor: {r: 1, g: 0.85, b: 0.25, a: 1}

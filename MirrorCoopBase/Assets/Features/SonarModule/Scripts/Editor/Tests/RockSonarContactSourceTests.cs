@@ -11,6 +11,7 @@ namespace Features.SonarModule.Editor.Tests {
         private const float FLIGHT_HEIGHT = 100f;
         private const float LARGE_DIAMETER = 80f;
         private const float SMALL_DIAMETER = 12f;
+        private const float BIG_DEBRIS_DIAMETER = 60f;
         private const float TOLERANCE = 0.01f;
         private const string STRUCTURE_ID = "rock";
 
@@ -39,6 +40,31 @@ namespace Features.SonarModule.Editor.Tests {
 
             Assert.AreEqual(1, _contacts.Count);
             Assert.AreSame(_configuration.LargeRockKind, _contacts[0].Kind);
+        }
+
+        [Test]
+        public void WhenABigDebrisRockIsInRange_ThenItIsABigRockContactFoundAgainById() {
+            FieldRockId id = FieldRockId.CreateDebris(new Vector2Int(2, 3), 0);
+            _rocks.Add(new FieldRockDescription(id, STRUCTURE_ID, new Vector3(0f, FLIGHT_HEIGHT, 250f), BIG_DEBRIS_DIAMETER, FieldRockSize.Small, true));
+
+            _source.CollectContacts(new Vector3(0f, FLIGHT_HEIGHT, 0f), RANGE, _contacts);
+
+            Assert.AreEqual(1, _contacts.Count);
+            Assert.AreSame(_configuration.BigRockKind, _contacts[0].Kind);
+            Assert.AreEqual(BIG_DEBRIS_DIAMETER * 0.5f, _contacts[0].Radius, TOLERANCE);
+            Assert.IsTrue(_source.TryGetContact(_contacts[0].Id, out SonarContact again));
+            Assert.AreSame(_configuration.BigRockKind, again.Kind);
+        }
+
+        [Test]
+        public void WhenBigDebrisRocksShareACell_ThenTheyDoNotMakeADebrisContact() {
+            for (int i = 0; i < SonarTestConfiguration.DEBRIS_MIN_ROCKS; i++)
+                _rocks.Add(new FieldRockDescription(FieldRockId.CreateDebris(new Vector2Int(1, 1), i), STRUCTURE_ID, new Vector3(110f + i * 15f, FLIGHT_HEIGHT, 120f), BIG_DEBRIS_DIAMETER, FieldRockSize.Small, true));
+
+            _source.CollectContacts(new Vector3(0f, FLIGHT_HEIGHT, 0f), RANGE, _contacts);
+
+            Assert.AreEqual(SonarTestConfiguration.DEBRIS_MIN_ROCKS, _contacts.Count);
+            Assert.IsTrue(_contacts.TrueForAll(IsBigRock));
         }
 
         [Test]
@@ -115,6 +141,9 @@ namespace Features.SonarModule.Editor.Tests {
 
             return positions;
         }
+
+        private bool IsBigRock(SonarContact contact) =>
+            contact.Kind == _configuration.BigRockKind;
 
         private static FieldRockDescription LargeRock(int placement, Vector3 position) =>
             new(FieldRockId.CreateCluster(placement, 0), STRUCTURE_ID, position, LARGE_DIAMETER, FieldRockSize.Large, true);

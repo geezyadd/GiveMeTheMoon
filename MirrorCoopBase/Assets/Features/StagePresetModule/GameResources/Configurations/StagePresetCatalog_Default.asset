@@ -17,3 +17,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 25a72282eda94eb48dab913bdf94ef71, type: 2}
   - {fileID: 11400000, guid: 1db23749d79c4f0db3bd6d3af047cf56, type: 2}
   _isPickerShownInReleaseBuilds: 0
+  _areNormalRunStationDropsEnabled: 0

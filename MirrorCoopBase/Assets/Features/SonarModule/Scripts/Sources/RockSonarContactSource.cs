@@ -7,7 +7,8 @@ using UnityEngine;
 namespace Features.SonarModule.Scripts.Sources {
     // The dangers of the flight field from the data this peer has (IPeerFieldRockQuery: the published field, broken
     // rocks already left out), so a navigator on a client sees them as one on the host: every
-    // large rock is a contact of its own, small rocks only count where a debris cell holds enough of them.
+    // giant and every big debris rock is a contact of its own, smaller rocks only count where a debris cell holds
+    // enough of them.
     public sealed class RockSonarContactSource : ISonarContactSource {
         private const float HALF = 0.5f;
 
@@ -28,8 +29,8 @@ namespace Features.SonarModule.Scripts.Sources {
             _debrisCells.Clear();
             for (int i = 0; i < _rocks.Count; i++) {
                 FieldRockDescription rock = _rocks[i];
-                if (rock.Size == FieldRockSize.Large)
-                    results.Add(CreateRockContact(rock));
+                if (TryGetSingleRockKind(rock, out SonarContactKind kind))
+                    results.Add(CreateRockContact(rock, kind));
                 else
                     CountInDebrisCell(rock);
             }
@@ -43,18 +44,29 @@ namespace Features.SonarModule.Scripts.Sources {
         public bool TryGetContact(string contactId, out SonarContact contact) {
             contact = default;
             if (_rockSonarContactIds.TryParseRockId(contactId, out FieldRockId rockId))
-                return TryGetLargeRock(rockId, out contact);
+                return TryGetSingleRock(rockId, out contact);
 
             return _rockSonarContactIds.TryParseDebrisId(contactId, out Vector2Int cell) && TryGetDebris(cell, out contact);
         }
 
-        private bool TryGetLargeRock(FieldRockId rockId, out SonarContact contact) {
+        private bool TryGetSingleRock(FieldRockId rockId, out SonarContact contact) {
             contact = default;
-            if (_peerFieldRockQuery.TryGetRock(rockId, out FieldRockDescription rock) == false || rock.Size != FieldRockSize.Large)
+            if (_peerFieldRockQuery.TryGetRock(rockId, out FieldRockDescription rock) == false || TryGetSingleRockKind(rock, out SonarContactKind kind) == false)
                 return false;
 
-            contact = CreateRockContact(rock);
+            contact = CreateRockContact(rock, kind);
             return true;
+        }
+
+        // A giant or a big debris rock is a contact of its own; a smaller rock only counts in its debris cell.
+        private bool TryGetSingleRockKind(FieldRockDescription rock, out SonarContactKind kind) {
+            kind = null;
+            if (rock.Size == FieldRockSize.Large)
+                kind = _sonarConfiguration.LargeRockKind;
+            else if (rock.Diameter >= _sonarConfiguration.BigRockMinDiameterMeters)
+                kind = _sonarConfiguration.BigRockKind;
+
+            return kind != null;
         }
 
         private bool TryGetDebris(Vector2Int cell, out SonarContact contact) {
@@ -66,7 +78,7 @@ namespace Features.SonarModule.Scripts.Sources {
             _peerFieldRockQuery.FindInBox(cellCenter, halfExtents, Quaternion.identity, _rocks);
             for (int i = 0; i < _rocks.Count; i++) {
                 FieldRockDescription rock = _rocks[i];
-                if (rock.Size != FieldRockSize.Large && ToCell(rock.Center) == cell)
+                if (TryGetSingleRockKind(rock, out _) == false && ToCell(rock.Center) == cell)
                     sum = sum.Add(rock.Center);
             }
 
@@ -88,8 +100,8 @@ namespace Features.SonarModule.Scripts.Sources {
             return new Vector2Int(Mathf.FloorToInt(position.x / cellMeters), Mathf.FloorToInt(position.z / cellMeters));
         }
 
-        private SonarContact CreateRockContact(FieldRockDescription rock) =>
-            new(_rockSonarContactIds.CreateRockId(rock.Id), _sonarConfiguration.LargeRockKind, rock.Center, rock.Radius);
+        private SonarContact CreateRockContact(FieldRockDescription rock, SonarContactKind kind) =>
+            new(_rockSonarContactIds.CreateRockId(rock.Id), kind, rock.Center, rock.Radius);
 
         private SonarContact CreateDebrisContact(Vector2Int cell, DebrisCellSum sum) =>
             new(_rockSonarContactIds.CreateDebrisId(cell), _sonarConfiguration.DebrisKind, sum.PositionSum / sum.Count, _sonarConfiguration.DebrisCellMeters * HALF);
