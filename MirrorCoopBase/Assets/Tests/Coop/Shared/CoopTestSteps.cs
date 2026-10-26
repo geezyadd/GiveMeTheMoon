@@ -20,6 +20,9 @@ namespace Tests.Coop.Shared {
         // The loop the client launches by pushing the throttle handle (at the station after its buy-back).
         public const int THROTTLE_LOOP = 3;
         public const string THROTTLE_PUSHED = "throttle-pushed";
+        // In that loop's cruise the client pulls the handle back to Stop and, once the host saw the ship stop, to Full.
+        public const string THROTTLE_PULLED = "throttle-pulled";
+        public const string THROTTLE_PUSHED_IN_CRUISE = "throttle-pushed-in-cruise";
         // The loop whose cruise the host navigator marks a contact in.
         public const int SONAR_MARK_LOOP = 1;
         public const string FINISHED = "finished";
@@ -28,6 +31,8 @@ namespace Tests.Coop.Shared {
         public const string COMMAND_REJOIN = "rejoin";
         public const string COMMAND_FINISH = "finish";
         public const string COMMAND_PUSH_THROTTLE = "push-throttle";
+        public const string COMMAND_PULL_THROTTLE = "pull-throttle";
+        public const string COMMAND_PUSH_THROTTLE_IN_CRUISE = "push-throttle-in-cruise";
     }
 }
 #endif
