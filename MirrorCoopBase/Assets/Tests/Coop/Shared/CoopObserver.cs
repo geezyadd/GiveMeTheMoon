@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Features.FlightFieldModule.Scripts.Network.Generated;
+using Features.GrabModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
 using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.PlayerProfileModule.Scripts;
@@ -19,7 +20,7 @@ using Object = UnityEngine.Object;
 namespace Tests.Coop.Shared {
     // Reads what this process sees of the shared game: the run, the ship's sockets and stats, the crew balance, the
     // flight field, the other player's nameplate, where the local player stands, whether it is alive and at the helm,
-    // and the throttle.
+    // the throttle and how the items on the deck lie.
     // The host and the client capture the same fields.
     public static class CoopObserver {
         private const string SOCKET_FORMAT = "{0}={1}";
@@ -42,7 +43,40 @@ namespace Tests.Coop.Shared {
             observation.IsSpectating = SessionQueries.Resolve<SpectatorModel>().IsSpectating;
             observation.SonarMarks = CaptureSonarMarks(SessionQueries.Resolve<IReadOnlySonarConsoleModel>());
             observation.ThrottlePosition = SessionQueries.Resolve<IReadOnlyShipThrottleModel>().Position;
+            CaptureDeckItems(Object.FindAnyObjectByType<ShipBase>(), observation);
             return observation;
+        }
+
+        // Sorted by net id, so the host and the client list the same items in the same order.
+        private static void CaptureDeckItems(ShipBase ship, CoopObservation observation) {
+            List<uint> ids = new List<uint>();
+            List<float> gaps = new List<float>();
+            foreach (Grabbable item in Object.FindObjectsByType<Grabbable>(FindObjectsSortMode.None)) {
+                if (TryMeasureDeckItem(ship, item, out uint netId, out float gap) == false)
+                    continue;
+
+                ids.Add(netId);
+                gaps.Add(gap);
+            }
+
+            observation.DeckItemIds = ids.ToArray();
+            observation.DeckItemGaps = gaps.ToArray();
+            Array.Sort(observation.DeckItemIds, observation.DeckItemGaps);
+        }
+
+        private static bool TryMeasureDeckItem(ShipBase ship, Grabbable item, out uint netId, out float gap) {
+            netId = 0u;
+            gap = 0f;
+            if (item.CanBeGrabbed == false)
+                return false;
+
+            BoxCollider box = item.GetComponentInChildren<BoxCollider>();
+            if (box == null || SessionQueries.IsOnDeck(ship, item.transform.position) == false)
+                return false;
+
+            netId = item.netId;
+            gap = ShipDeckItemRest.MeasureGapAboveDeck(ship, box);
+            return true;
         }
 
         // The contacts the crew has marked, as this process's synced sonar model holds them.
