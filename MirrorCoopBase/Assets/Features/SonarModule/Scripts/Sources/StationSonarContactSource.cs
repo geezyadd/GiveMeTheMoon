@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Features.SonarModule.Scripts.Sources {
     // The next station, as the old radar's beacon: while the ship flies, the destination pad from the synced run
     // model, whatever its distance (the kind shows it on the scope's edge when it lies beyond the range).
-    public sealed class StationSonarContactSource : ISonarContactSource {
+    public sealed class StationSonarContactSource : ISonarContactSource, IStationSonarContactSource {
         private const string STATION_CONTACT_ID = "station";
 
         private readonly IReadOnlyShipRunModel _shipRunModel;
@@ -29,10 +29,15 @@ namespace Features.SonarModule.Scripts.Sources {
 
         public bool TryGetContact(string contactId, out SonarContact contact) {
             contact = default;
-            if (contactId != STATION_CONTACT_ID || IsFlying == false)
+            return contactId == STATION_CONTACT_ID && TryGetStation(out contact);
+        }
+
+        public bool TryGetStation(out SonarContact station) {
+            station = default;
+            if (IsFlying == false)
                 return false;
 
-            contact = CreateStation();
+            station = CreateStation();
             return true;
         }
 

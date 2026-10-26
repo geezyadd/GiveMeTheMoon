@@ -75,7 +75,9 @@ interaction's look input (`MoveHeldControl`) until the ship takes off and the ha
 host's key, the view was locked while held, it let go and stayed at Full on release; the steps are the shared
 `Tests.Shared.ShipThrottleHandling`, also used by the coop client); in that cruise "Throttle = N" puts it at 0 (the ship
 comes to a stop) and back at 1 (it flies again), both with the player riding on the deck; after the landing the handle is
-back at Stop and free. The test timeout is 240 s (a run takes about 170 s). The shared steps live in helpers both loop tests use:
+back at Stop and free. `LoopSmokeStationMarkerCheck` (run 2 cruise 5): the debug window's "Show station: off" clicked as a
+player does turns the own station marker on, the level camera turned toward the station through the look input shows
+it over the station with its distance, turned away on the screen's edge, and "Show station: on" takes it off again. The test timeout is 240 s (a run takes about 170 s). The shared steps live in helpers both loop tests use:
 `LoopSmokeSession` (menu, Host, lobby, Start, all dead -> lobby, Leave; waits record the run phases),
 `LoopSmokeFlight` (engines, boarding, the launch (the throttle lever at Full through the debug window's "Throttle = N",
 `IShipThrottleDebug`; a check can launch the next flight its own way with `LaunchNextFlightBy`), the phases of a loop with the field checks and the checks after

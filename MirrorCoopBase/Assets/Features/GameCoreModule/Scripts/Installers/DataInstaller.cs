@@ -78,6 +78,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<SonarConsoleBindingModel>().AsSingle();
             Container.Bind<SonarScopeModel>().AsSingle();
             Container.Bind<SonarMarkerScreenModel>().AsSingle();
+            Container.Bind<SonarStationMarkerModel>().AsSingle();
         }
     }
 }

@@ -9,8 +9,9 @@ using UnityEngine;
 using Zenject;
 
 namespace Features.SonarModule.Scripts.Systems {
-    // Every peer: lays the crew's synced marks out on this peer's screen once per frame, after the camera moved.
-    // A mark that ran out hides at once here; the server takes it out of the model a moment later.
+    // Every peer: lays the crew's synced marks and this peer's own station marker out on its screen once per frame,
+    // after the camera moved. A mark that ran out hides at once here; the server takes it out of the model a moment
+    // later.
     public sealed class SonarMarkerSystem : ILateTickable {
         private readonly IReadOnlySonarConsoleModel _sonarConsoleModel;
         private readonly SonarMarkerScreenModel _sonarMarkerScreenModel;
@@ -18,6 +19,7 @@ namespace Features.SonarModule.Scripts.Systems {
         private readonly ISonarContactService _sonarContactService;
         private readonly ISonarMarkRule _sonarMarkRule;
         private readonly ISonarMarkerProjection _sonarMarkerProjection;
+        private readonly ISonarStationMarkerSource _sonarStationMarkerSource;
 
         private bool _hasShownMarkers;
 
@@ -27,42 +29,51 @@ namespace Features.SonarModule.Scripts.Systems {
             IGameCameraService gameCameraService,
             ISonarContactService sonarContactService,
             ISonarMarkRule sonarMarkRule,
-            ISonarMarkerProjection sonarMarkerProjection) {
+            ISonarMarkerProjection sonarMarkerProjection,
+            ISonarStationMarkerSource sonarStationMarkerSource) {
             _sonarConsoleModel = sonarConsoleModel;
             _sonarMarkerScreenModel = sonarMarkerScreenModel;
             _gameCameraService = gameCameraService;
             _sonarContactService = sonarContactService;
             _sonarMarkRule = sonarMarkRule;
             _sonarMarkerProjection = sonarMarkerProjection;
+            _sonarStationMarkerSource = sonarStationMarkerSource;
         }
 
         public void LateTick() {
             Camera camera = _gameCameraService.OutputCamera;
-            bool hasMarks = camera != null && _sonarConsoleModel.Marks.Count > 0;
-            if (hasMarks == false && _hasShownMarkers == false)
+            bool hasStation = _sonarStationMarkerSource.TryGetStation(out SonarContact station);
+            bool hasMarkers = camera != null && (_sonarConsoleModel.Marks.Count > 0 || hasStation);
+            if (hasMarkers == false && _hasShownMarkers == false)
                 return;
 
             _sonarMarkerScreenModel.BeginFrame();
-            if (hasMarks)
-                LayOutMarkers(camera);
+            if (hasMarkers)
+                LayOutMarkers(camera, hasStation, station);
 
-            _hasShownMarkers = hasMarks;
+            _hasShownMarkers = hasMarkers;
             _sonarMarkerScreenModel.CommitFrame();
         }
 
-        private void LayOutMarkers(Camera camera) {
+        private void LayOutMarkers(Camera camera, bool hasStation, SonarContact station) {
             IReadOnlyList<SonarMark> marks = _sonarConsoleModel.Marks;
-            Vector2 screenSize = new Vector2(Screen.width, Screen.height);
-            Vector3 cameraPosition = camera.transform.position;
             for (int i = 0; i < marks.Count; i++) {
                 SonarMark mark = marks[i];
                 if (_sonarMarkRule.IsExpired(mark.ExpiresAt, NetworkTime.time) || _sonarContactService.TryGetKind(mark.KindId, out SonarContactKind kind) == false)
                     continue;
 
-                SonarMarkerPlacement placement = _sonarMarkerProjection.Place(camera.WorldToScreenPoint(mark.Position), screenSize);
-                float distance = Vector3.Distance(cameraPosition, mark.Position);
-                _sonarMarkerScreenModel.AddMarker(new SonarMarkerDisplay(kind, placement.ScreenPosition, placement.IsOnScreen, placement.ArrowDegrees, distance));
+                AddMarker(camera, kind, mark.Position);
             }
+
+            if (hasStation)
+                AddMarker(camera, station.Kind, station.Position + Vector3.up * station.Radius);
+        }
+
+        private void AddMarker(Camera camera, SonarContactKind kind, Vector3 position) {
+            Vector2 screenSize = new Vector2(Screen.width, Screen.height);
+            SonarMarkerPlacement placement = _sonarMarkerProjection.Place(camera.WorldToScreenPoint(position), screenSize);
+            float distance = Vector3.Distance(camera.transform.position, position);
+            _sonarMarkerScreenModel.AddMarker(new SonarMarkerDisplay(kind, placement.ScreenPosition, placement.IsOnScreen, placement.ArrowDegrees, distance));
         }
     }
 }
