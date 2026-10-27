@@ -26,6 +26,7 @@ using Features.SonarModule.Data.Generated;
 using Features.SpaceHazeModule.Data;
 using Features.StagePresetModule.Data;
 using Features.StagePresetModule.Data.Generated;
+using Features.WeaponModule.Scripts.Readiness;
 using Game.Connection;
 using Zenject;
 
@@ -47,6 +48,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<ShipRiderKeyModel>().AsSingle();
             Container.Bind<HoveredInteractableModel>().AsSingle();
             Container.Bind<HoldUseModel>().AsSingle();
+            Container.Bind<HeldWeaponReadinessModel>().AsSingle();
             Container.Bind<SpectatorModel>().AsSingle();
             Container.Bind<ShopVisitModel>().AsSingle();
             Container.Bind<DeadCrewModel>().AsSingle();

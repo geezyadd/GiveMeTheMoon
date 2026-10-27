@@ -71,6 +71,21 @@ puts the ship beside the nearest target balloon in clear sight and fires until i
 ship is put before another balloon and flies into it (the real hull check). Each balloon is in the synced popped list,
 hidden on the host, `TargetPopped` fired once (Weapon by the host with `minigun` / `ShipCollision`) and the synced crew
 balance grew by the rewards; after that landing the popped list and the balloons are gone.
+`LoopSmokeTurretTierCheck` (run 2): at the station before flight 3 (ahead of the deck item check) the host buys the
+light machine gun at the kiosk through the real aim and the window (`LoopSmokeKiosk`: buy one entry, walk away, pick
+the delivered item up by hand; money from the debug window when short), takes the minigun off through the socket's use
+command (from behind the gun the seat volume covers the socket plate under the crosshair), drops it on the pad (then
+removed), installs the light gun from the hand and boards; before flight 5 it stands by the turret, and in that cruise
+(after the pistol) sits at it and fires at the debug dummy until 3 hits are accepted (screenshot
+`turret-tier1-light-machine-gun.png`); after landing 5 the heavy gun goes in (`ServerTryInstall`, test setup) and fires
+the same way first in cruise 6, before the hull loss check sits there (`turret-tier3-heavy-gun.png`); the minigun shot
+of `LoopSmokeTurretCheck` takes `turret-tier2-minigun.png`. `LoopSmokePistolCheck` (run 2 flight 5): the host buys the
+pistol and picks it up (the HUD ring is ready) by the turret (a move in cruise leaves the player behind the flying
+ship); in cruise it aims the camera through the look input and clicks `Fire` through the input service
+(`Tests.Shared.HandWeaponAiming`): one hit on the dummy (a miss of the swaying dummy is retried after the cooldown, at
+most 3), a second click within 2 s fires nothing, the ring fills up again (`pistol-in-hand-cooldown.png`), one shot
+breaks a small rock (Weapon break, the host, `pistol`); then it gives the view turn back, drops the pistol (hand and
+ring empty); after the landing the dropped pistol is removed.
 `LoopSmokeThrottleCheck` (run 2 flight 4): before the takeoff the host stands behind the throttle handle, aims at it
 through the real camera, holds E (`LocalPlayerInteraction.Interact`) and moves the mouse forward through the
 interaction's look input (`MoveHeldControl`) until the ship takes off and the handle is at Full (the server gave it to the

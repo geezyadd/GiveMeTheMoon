@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 509f3383bc3377540bf979f60c974604, type: 3}
+  m_Name: LightMachineGunModule
+  m_EditorClassIdentifier: 
+  _id: light-machine-gun
+  _slotType: 3
+  _itemPrefab: {fileID: 1290278823234435900, guid: 83de23c9660643643b13af128e0748e4, type: 3}
+  _slotViewPrefab: {fileID: 2596329204716080809, guid: c05236a61e1a0d948ae8887102995510, type: 3}
+  _displayName: Light machine gun
+  _icon: {fileID: 0}
+  _description: 'Turret tier 1: a light deck gun for the turret socket. Sit at it
+    and hold the left mouse button: 6 shots a second, 1 damage each, 250 m. Slowly
+    chips small rocks apart.'
+  _price: 400
+  _statModifiers: []
+  _isRemovable: 1
+  _isControlModule: 0
+  _canBreak: 1
+  _breakChanceMultiplier: 1

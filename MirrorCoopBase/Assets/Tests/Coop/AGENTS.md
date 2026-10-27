@@ -19,7 +19,10 @@ the editor is the host, a Windows development build of the game is the client. O
   a free port the test picks, not Steam), boards at the stern (`ShipDeckBoarding.PutAboveStern`), rides the loops the host flies, takes the helm after the first landing (put
   beside the seat, the seat's use command, then D held through the scripted move stick, `seated-at-helm`), steers the
   next cruise for 0.5 s and leaves in flight from the helm, is turned away in
-  flight, rejoins at the next station on the deck, dies (the dev kill command, like the debug window's "Kill me"), waits to be bought back, on the
+  flight, rejoins at the next station on the deck, dies (the dev kill command, like the debug window's "Kill me"), waits to be bought back, on the host's
+  `fire-pistol` command fires the pistol the host put in its hand at the dummy before the ship (3 clicks a cooldown
+  apart, aimed through the look input, `Tests.Shared.HandWeaponAiming`; reports `pistol-fired`; the host checks the
+  client's trigger arrived, it replayed the shot with a tracer and the server accepted a hit), on the
   host's `push-throttle` command launches the last loop by pushing the throttle handle (`Tests.Shared.ShipThrottleHandling`:
   behind the handle, the real aim, E held, the mouse forward until takeoff at Full, release; reports `throttle-pushed`),
   rides that loop and quits.

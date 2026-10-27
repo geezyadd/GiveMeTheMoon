@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 509f3383bc3377540bf979f60c974604, type: 3}
+  m_Name: HeavyGunModule
+  m_EditorClassIdentifier: 
+  _id: heavy-gun
+  _slotType: 3
+  _itemPrefab: {fileID: 7145110730703220089, guid: df1a5f82b675995499b9ce67a233ca7c, type: 3}
+  _slotViewPrefab: {fileID: 1057357235742529034, guid: 877db64318332e2469881540cc680334, type: 3}
+  _displayName: Heavy gun
+  _icon: {fileID: 0}
+  _description: 'Turret tier 3: twin barrels with heavy rounds for the turret socket.
+    4 shots a second, 8 damage each, 600 m. Breaks big rocks the minigun only scratches.'
+  _price: 1600
+  _statModifiers: []
+  _isRemovable: 1
+  _isControlModule: 0
+  _canBreak: 1
+  _breakChanceMultiplier: 1

@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b605cd8debde17c4994371d03cc65001, type: 3}
+  m_Name: HeavyGun
+  m_EditorClassIdentifier: 
+  _id: heavy-gun
+  _displayName: Heavy gun
+  _shotsPerSecond: 4
+  _damagePerHit: 8
+  _rangeMeters: 600
+  _fireMode:
+    rid: 3002219236546576460
+  _delivery:
+    rid: 3002219236546576461
+  _hitEffects:
+  - rid: 3002219236546576462
+  _feelProfile: {fileID: 11400000, guid: fbb55161f21bf97469bfe227e7466ad1, type: 2}
+  references:
+    version: 2
+    RefIds:
+    - rid: 3002219236546576460
+      type: {class: AutoFireModeDefinition, ns: Features.WeaponModule.Scripts.Parts.FireModes, asm: Features.WeaponModule}
+      data:
+        _spinUpSeconds: 0.35
+        _spinDownSeconds: 0.5
+    - rid: 3002219236546576461
+      type: {class: HitscanDeliveryDefinition, ns: Features.WeaponModule.Scripts.Parts.Delivery, asm: Features.WeaponModule}
+      data:
+        _spreadDegrees: 0.4
+        _hitLayers:
+          serializedVersion: 2
+          m_Bits: 256
+    - rid: 3002219236546576462
+      type: {class: DamageHitEffect, ns: Features.WeaponModule.Scripts.Parts.Effects, asm: Features.WeaponModule}
+      data: 

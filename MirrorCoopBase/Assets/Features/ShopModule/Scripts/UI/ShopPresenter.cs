@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.HandWeaponModule.Scripts;
 using Features.MvpModule;
 using Features.ShipDamageModule.Scripts.Repair;
 using Features.ShipModule.Scripts;
@@ -11,6 +12,8 @@ namespace Features.ShopModule.Scripts.UI {
     public sealed class ShopPresenter : PresenterBehaviour<ShopViewBase> {
         private const string MODULE_TYPE_FORMAT = "Module: {0}";
         private const string TOOL_TYPE_FORMAT = "Tool: repairs {0}";
+        private const string HAND_WEAPON_TYPE = "Hand weapon";
+        private const string HAND_WEAPON_STATS_FORMAT = "Damage {0:0.##}   One shot every {1:0.#} s   Range {2:0} m";
         private const string PRICE_FORMAT = "{0:N0}";
 
         private readonly ShopCatalog _shopCatalog;
@@ -68,6 +71,15 @@ namespace Features.ShopModule.Scripts.UI {
                     tool.Description,
                     string.Format(PRICE_FORMAT, tool.Price),
                     tool.Icon));
+
+            foreach (HandWeaponDefinition handWeapon in _shopCatalog.HandWeapons)
+                displays.Add(new ShopItemDisplay(
+                    handWeapon.DisplayName,
+                    HAND_WEAPON_TYPE,
+                    string.Format(HAND_WEAPON_STATS_FORMAT, handWeapon.Weapon.DamagePerHit, 1f / handWeapon.Weapon.ShotsPerSecond, handWeapon.Weapon.RangeMeters),
+                    handWeapon.Description,
+                    string.Format(PRICE_FORMAT, handWeapon.Price),
+                    handWeapon.Icon));
 
             return displays;
         }

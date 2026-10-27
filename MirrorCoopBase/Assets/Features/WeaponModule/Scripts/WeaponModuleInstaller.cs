@@ -14,6 +14,7 @@ namespace Features.WeaponModule.Scripts {
             Container.BindInterfacesTo<WeaponTargetRegistry>().AsSingle();
             Container.BindInterfacesTo<PhysicsShotDeliveryContext>().AsSingle();
             Container.Bind<IWeaponShooterFactory>().To<WeaponShooterFactory>().AsSingle();
+            Container.Bind<IWeaponCatalogIndexService>().To<WeaponCatalogIndexService>().AsSingle();
         }
     }
 }
