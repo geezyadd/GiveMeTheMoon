@@ -212,6 +212,9 @@ for a confined deck and walk the player off the narrow nose of the deck, which d
 ## Tests
 - `Features.ShipModule.Editor.Tests`
 - EditMode guard: `ShipSocketIdTests` (every ship socket has a unique id).
+- EditMode guard: `ShipItemNetworkBodyTests` (every network transform in a feature prefab targets its own prefab: the
+  wrench and the hammer were copies whose network body still synced `PropellerItem`'s transform, so clients saw them
+  frozen where they spawned or were let go).
 - The throttle's `ShipThrottleLaunchRuleTests` (a station that cannot launch keeps Stop, the launch mark takes off, any
   share in flight without a launch), `ShipThrottleHandleTests` (inertia and top speed, soft detents, one click per
   detent, a max position at Stop, the drop into a detent on release, mode names), `ShipThrottleLocalHoldTests` (send
