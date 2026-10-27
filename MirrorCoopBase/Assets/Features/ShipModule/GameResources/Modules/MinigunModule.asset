@@ -18,9 +18,10 @@ MonoBehaviour:
   _slotViewPrefab: {fileID: 9130762909865663195, guid: aeb9c59c1b2c8e64ead16ff8d151ce2c, type: 3}
   _displayName: Minigun
   _icon: {fileID: 0}
-  _description: 'A mounted minigun turret for the deck. Sit at it and hold the left
-    mouse button: a stream of bullets breaks small rocks before they hit the ship.'
-  _price: 600
+  _description: 'Turret tier 2: a mounted minigun for the turret socket. Sit at it
+    and hold the left mouse button: the barrels spin up, then 20 shots a second,
+    1 damage each, 400 m. Breaks small rocks before they hit the ship.'
+  _price: 900
   _statModifiers: []
   _isRemovable: 1
   _isControlModule: 0

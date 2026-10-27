@@ -198,7 +198,7 @@ namespace Tests.PlayMode.LoopSmoke {
             yield return new WaitForSeconds(STAND_SETTLE_SECONDS);
         }
 
-        private static Button FindBuyButton(int entry) {
+        internal static Button FindBuyButton(int entry) {
             List<ShopItemRow> active = FindActiveRows();
             Assert.Greater(active.Count, entry, "The shop window shows too few rows.");
             return active[entry].GetComponentInChildren<Button>();

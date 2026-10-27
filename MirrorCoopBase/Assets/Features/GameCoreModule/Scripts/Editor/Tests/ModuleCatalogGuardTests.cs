@@ -77,6 +77,19 @@ namespace Features.GameCoreModule.Editor.Tests {
         }
 
         [Test]
+        public void WhenNetworkManagerIsRead_ThenEveryShopHandWeaponIsSpawnable() {
+            ShopCatalog shopCatalog = AddressableConfigurationLoader.Load<ShopCatalog>(Address.Configurations.ShopCatalog_Default);
+            HashSet<GameObject> spawnable = ReadSpawnablePrefabs();
+
+            string[] missing = shopCatalog.HandWeapons
+                .Where(handWeapon => spawnable.Contains(handWeapon.ItemPrefab.gameObject) == false)
+                .Select(handWeapon => handWeapon.name)
+                .ToArray();
+
+            Assert.IsEmpty(missing, $"Hand weapon items not in the Mirror spawnable prefabs, a client could not spawn them: {string.Join(", ", missing)}");
+        }
+
+        [Test]
         public void WhenShopCatalogIsRead_ThenEveryModuleIsInTheModuleCatalog() {
             ShopCatalog shopCatalog = AddressableConfigurationLoader.Load<ShopCatalog>(Address.Configurations.ShopCatalog_Default);
 

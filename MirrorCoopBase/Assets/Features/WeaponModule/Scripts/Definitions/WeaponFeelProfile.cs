@@ -48,6 +48,10 @@ namespace Features.WeaponModule.Scripts.Definitions {
         [SerializeField, Min(0f)] private float _recoilNoiseFrequency;
         [Tooltip("Seconds the recoil takes to settle after the fire stops.")]
         [SerializeField, Min(0f)] private float _recoilSettleSeconds;
+        [Tooltip("How far a single shot kicks the gun back; it springs back over the settle seconds.")]
+        [SerializeField, Min(0f)] private float _recoilKickMeters;
+        [Tooltip("How far a single shot tips the gun's muzzle up.")]
+        [SerializeField, Min(0f)] private float _recoilKickDegrees;
 
         [Header("Camera shake")]
         [Tooltip("The holder's view shake while firing, continuous at intensity 1.")]
@@ -56,6 +60,8 @@ namespace Features.WeaponModule.Scripts.Definitions {
         [SerializeField] private CameraShakeProfile _nearImpactShake;
         [Tooltip("Impacts closer than this shake the view, stronger the closer they are.")]
         [SerializeField, Min(0f)] private float _nearImpactDistanceMeters;
+        [Tooltip("The holder's view kick on every shot of a single-shot weapon, at strength 1.")]
+        [SerializeField] private CameraShakeProfile _shotShake;
 
         [Header("Tracers")]
         [Tooltip("Every Nth shot draws a tracer (3 = every third shot).")]
@@ -85,6 +91,8 @@ namespace Features.WeaponModule.Scripts.Definitions {
         [SerializeField, Min(0f)] private float _targetFlashSeconds;
 
         [Header("Sound (an empty clip is a silent hook)")]
+        [Tooltip("Played on every shot, for a weapon whose shots are heard one by one.")]
+        [SerializeField] private AudioClip _shotClip;
         [SerializeField] private AudioClip _fireLoopClip;
         [SerializeField] private AudioClip _fireTailClip;
         [SerializeField] private AudioClip _casingClip;
@@ -120,9 +128,12 @@ namespace Features.WeaponModule.Scripts.Definitions {
         public float RecoilRotationNoiseDegrees => _recoilRotationNoiseDegrees;
         public float RecoilNoiseFrequency => _recoilNoiseFrequency;
         public float RecoilSettleSeconds => _recoilSettleSeconds;
+        public float RecoilKickMeters => _recoilKickMeters;
+        public float RecoilKickDegrees => _recoilKickDegrees;
         public CameraShakeProfile FireShake => _fireShake;
         public CameraShakeProfile NearImpactShake => _nearImpactShake;
         public float NearImpactDistanceMeters => _nearImpactDistanceMeters;
+        public CameraShakeProfile ShotShake => _shotShake;
         public int TracerEveryNthShot => _tracerEveryNthShot;
         public float TracerSpeedMetersPerSecond => _tracerSpeedMetersPerSecond;
         public float TracerWidthMeters => _tracerWidthMeters;
@@ -140,6 +151,7 @@ namespace Features.WeaponModule.Scripts.Definitions {
         public float ImpactFlashSeconds => _impactFlashSeconds;
         public float ImpactFlashMinSizeShare => _impactFlashMinSizeShare;
         public float TargetFlashSeconds => _targetFlashSeconds;
+        public AudioClip ShotClip => _shotClip;
         public AudioClip FireLoopClip => _fireLoopClip;
         public AudioClip FireTailClip => _fireTailClip;
         public AudioClip CasingClip => _casingClip;

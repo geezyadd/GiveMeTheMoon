@@ -1,14 +1,19 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
 using System.Collections;
+using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts;
 using Features.GrabModule.Scripts;
+using Features.HandWeaponModule.Scripts;
+using Features.WeaponModule.Scripts.Readiness;
 using Features.PlayerLifeModule.Scripts;
 using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.ShipModule.Scripts;
+using Features.ShipModule.Scripts.Debug;
 using Features.ShipModule.Scripts.Generated;
 using Features.SonarModule.Data.Generated;
 using Game.Connection;
+using Mirror;
 using Tests.Coop.Shared;
 using Tests.PlayMode.LoopSmoke;
 using Tests.Shared;
@@ -34,6 +39,9 @@ namespace Tests.Coop.Client {
         private const float STOPPED_SPEED = 0.2f;
         private const float STOP_TIMEOUT_SECONDS = 6f;
         private const float SPEED_SAMPLE_SECONDS = 0.5f;
+        private const int PISTOL_SHOTS = 3;
+        // Longer than the pistol's cooldown, so every click fires.
+        private const float PISTOL_AIM_SECONDS = 2.2f;
         // The pilot steers this long into the cruise before it leaves, so the host sees the ship turn.
         private const float STEER_BEFORE_LEAVING_SECONDS = 0.5f;
         // Held on the move stick from the helm: D, a turn to the right.
@@ -81,6 +89,7 @@ namespace Tests.Coop.Client {
             yield return RejoinAtStationCoroutine();
             yield return DieCoroutine();
             yield return WaitForBuyBackCoroutine();
+            yield return FirePistolCoroutine();
             yield return PushThrottleCoroutine();
             yield return RideLoopCoroutine(LAST_LOOP);
             yield return FinishCoroutine();
@@ -174,6 +183,37 @@ namespace Tests.Coop.Client {
             yield return WaitForCoroutine(() => LocalLifeState() == PlayerLifeState.Alive, "being bought back by the host");
             yield return _settle;
             Report(CoopObserver.CaptureGame(CoopTestSteps.REVIVED));
+        }
+
+        // On the host's command, with the pistol the host put in the hand: aims the view at the debug dummy through the
+        // look input and clicks the fire button a few times, one cooldown apart; the host checks what arrived.
+        private IEnumerator FirePistolCoroutine() {
+            yield return WaitForCoroutine(() => _exchange.HasCommand(CoopTestSteps.COMMAND_FIRE_PISTOL), "the host's fire-pistol command", _exchangePoll);
+            GrabController hand = NetworkClient.localPlayer.GetComponent<GrabController>();
+            yield return WaitForCoroutine(() => hand.Held != null && hand.Held.TryGetComponent(out HandWeaponItem _), "the pistol in the hand");
+            WeaponDebugTarget target = null;
+            yield return WaitForCoroutine(() => (target = Object.FindAnyObjectByType<WeaponDebugTarget>()) != null, "the host's debug target");
+            try {
+                CameraLookDriver.DebugPitchOverride = true;
+                for (int shot = 0; shot < PISTOL_SHOTS; shot++) {
+                    for (float aimed = 0f; aimed < PISTOL_AIM_SECONDS; aimed += Time.deltaTime) {
+                        HandWeaponAiming.KeepAiming(target.GetComponentInChildren<Collider>().bounds.center);
+                        yield return null;
+                    }
+
+                    yield return HandWeaponAiming.ClickFireCoroutine();
+                    if (SessionQueries.Resolve<HeldWeaponReadinessModel>().Readiness >= 1f)
+                        yield return FailCoroutine($"A click on the ready pistol did not fire (cursor {Cursor.lockState}).");
+                }
+            } finally {
+                CameraLookDriver.DebugPitchOverride = false;
+                CameraLookDriver.DebugPitch = 0f;
+            }
+
+            HandWeaponAiming.TurnViewBack();
+            yield return null;
+
+            Report(CoopObserver.CaptureGame(CoopTestSteps.PISTOL_FIRED));
         }
 
         // On the host's command: behind the throttle handle, hold E on it and push the mouse forward until the ship

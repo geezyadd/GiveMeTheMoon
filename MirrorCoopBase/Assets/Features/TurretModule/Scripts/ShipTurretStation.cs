@@ -1,4 +1,3 @@
-using System;
 using Features.CameraModule.Scripts.Models;
 using Features.CameraModule.Scripts.Services;
 using Features.GrabModule.Scripts;
@@ -21,8 +20,6 @@ namespace Features.TurretModule.Scripts {
     // its hit reports are accepted. A broken turret module does not fire until it is repaired. The seat point turns with
     // the gun, and the seated player's body follows it on every peer.
     public sealed class ShipTurretStation : MonoBehaviour, ISeatStation {
-        private const string WEAPON_NOT_IN_CATALOG_FORMAT = "{0}: weapon {1} is not in the {2}; add it there, the server checks every hit against the catalog.";
-
         [SerializeField] private ShipTurretDefinition _definition;
         [SerializeField] private WeaponDefinition _weapon;
         [SerializeField] private Transform _yawPivot;
@@ -35,7 +32,7 @@ namespace Features.TurretModule.Scripts {
 
         private IGameCameraService _gameCameraService;
         private IWeaponShooterFactory _weaponShooterFactory;
-        private WeaponCatalog _weaponCatalog;
+        private IWeaponCatalogIndexService _weaponCatalogIndexService;
         private IShipModuleCondition _shipModuleCondition;
         private TurretOwnerInput _ownerInput;
 
@@ -72,11 +69,11 @@ namespace Features.TurretModule.Scripts {
             HoveredInteractableModel hoveredInteractableModel,
             IGameCameraService gameCameraService,
             IWeaponShooterFactory weaponShooterFactory,
-            WeaponCatalog weaponCatalog,
+            IWeaponCatalogIndexService weaponCatalogIndexService,
             IShipModuleCondition shipModuleCondition) {
             _gameCameraService = gameCameraService;
             _weaponShooterFactory = weaponShooterFactory;
-            _weaponCatalog = weaponCatalog;
+            _weaponCatalogIndexService = weaponCatalogIndexService;
             _shipModuleCondition = shipModuleCondition;
             _ownerInput = new TurretOwnerInput(inputService, cursorModel, hoveredInteractableModel);
         }
@@ -93,7 +90,7 @@ namespace Features.TurretModule.Scripts {
             _yawRest = _yawPivot.localRotation;
             _pitchRest = _pitchPivot.localRotation;
             _seatPoint = _seat.SitPoint;
-            _weaponIndex = FindWeaponIndex();
+            _weaponIndex = _weaponCatalogIndexService.GetIndex(_weapon);
             _feel.Bind(_weapon.FeelProfile, new ShipDeckFeelFloor(_ship.transform, _ship.DeckGeometry));
             _replayShooter = _weaponShooterFactory.Create(_weapon, _feel, new ShownShotOutcomes(_feel));
             _hands.SetActive(false);
@@ -251,15 +248,6 @@ namespace Features.TurretModule.Scripts {
 
         private WeaponShooter CurrentShooter() =>
             _ownerShooter ?? _replayShooter;
-
-        private int FindWeaponIndex() {
-            for (int i = 0; i < _weaponCatalog.Weapons.Count; i++) {
-                if (_weaponCatalog.Weapons[i] == _weapon)
-                    return i;
-            }
-
-            throw new InvalidOperationException(string.Format(WEAPON_NOT_IN_CATALOG_FORMAT, name, _weapon.Id, nameof(WeaponCatalog)));
-        }
 
         private void OnConditionChanged() =>
             _isWorking = _shipModuleCondition.IsWorking(_socket.SocketId);
