@@ -7,31 +7,29 @@ using UnityEngine;
 using Zenject;
 
 namespace Features.GameCoreModule.Scripts {
-    // A player the host turned away is back in the menu scene but still in the session state: switch to the menu
-    // state so the menu window opens and shows why. Join enters the session state right after connecting, so the
-    // rejection can come back while that switch is still running.
-    public sealed class RejectedJoinMenuSystem : IInitializable, IDisposable {
+    // A session that ended without the local player's Leave (the host turned the join away, quit or the connection
+    // dropped) leaves the client in the menu scene but still in the session state: switch to the menu state so the menu
+    // window opens (and shows the reason of a rejection). Join enters the session state right after connecting, so the
+    // drop can come while that switch is still running.
+    public sealed class SessionDroppedMenuSystem : IInitializable, IDisposable {
         private readonly ConnectionNetworkEvents _connectionNetworkEvents;
-        private readonly ConnectionRejectModel _connectionRejectModel;
         private readonly IGameFlowStateMachineService _gameFlowStateMachineService;
         private bool _isMenuPending;
 
-        public RejectedJoinMenuSystem(
+        public SessionDroppedMenuSystem(
             ConnectionNetworkEvents connectionNetworkEvents,
-            ConnectionRejectModel connectionRejectModel,
             IGameFlowStateMachineService gameFlowStateMachineService) {
             _connectionNetworkEvents = connectionNetworkEvents;
-            _connectionRejectModel = connectionRejectModel;
             _gameFlowStateMachineService = gameFlowStateMachineService;
         }
 
         public void Initialize() {
-            _connectionNetworkEvents.ReturnedToMenu += OnReturnedToMenu;
+            _connectionNetworkEvents.SessionDropped += OnSessionDropped;
             _gameFlowStateMachineService.StateEntered += OnStateEntered;
         }
 
         public void Dispose() {
-            _connectionNetworkEvents.ReturnedToMenu -= OnReturnedToMenu;
+            _connectionNetworkEvents.SessionDropped -= OnSessionDropped;
             _gameFlowStateMachineService.StateEntered -= OnStateEntered;
         }
 
@@ -53,10 +51,7 @@ namespace Features.GameCoreModule.Scripts {
             }
         }
 
-        private void OnReturnedToMenu() {
-            if (_connectionRejectModel.HasRejection == false)
-                return;
-
+        private void OnSessionDropped() {
             _isMenuPending = true;
             TryEnterMenu();
         }
