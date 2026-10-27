@@ -19,7 +19,6 @@ namespace Features.SonarModule.Data {
         public SonarScopeFrame Frame { get; private set; }
 
         public event Action OnOpenChanged;
-        public event Action OnPinged;
         public event Action OnFrameChanged;
 
         public void Open(string navigatorKey, int frame) {
@@ -49,10 +48,8 @@ namespace Features.SonarModule.Data {
         public void ConfirmSeat() =>
             IsSeatConfirmed = true;
 
-        public void StartPing(float now) {
+        public void StartPing(float now) =>
             LastPingAt = now;
-            OnPinged?.Invoke();
-        }
 
         public void AddEcho(SonarEcho echo) =>
             _echoes.Add(echo);

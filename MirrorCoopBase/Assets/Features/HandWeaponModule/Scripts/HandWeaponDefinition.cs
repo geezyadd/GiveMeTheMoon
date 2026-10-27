@@ -17,6 +17,10 @@ namespace Features.HandWeaponModule.Scripts {
         [SerializeField, Min(0f)] private float _minTriggerReportSeconds = 0.25f;
         [Tooltip("What the crosshair's ray can rest on; the shot flies from the muzzle to that point. Use the weapon's hit layers.")]
         [SerializeField] private LayerMask _crosshairLayers;
+        [Tooltip("Where the weapon sits in its holder's own first-person view, in the view's frame (right, up, forward).")]
+        [SerializeField] private Vector3 _viewOffset;
+        [Tooltip("Where the weapon sits from the holder's arm point when seen in the hand (third person, other players).")]
+        [SerializeField] private Vector3 _handOffset;
 
         public string Id => _id;
         public string DisplayName => _displayName;
@@ -27,5 +31,7 @@ namespace Features.HandWeaponModule.Scripts {
         public WeaponDefinition Weapon => _weapon;
         public float MinTriggerReportSeconds => _minTriggerReportSeconds;
         public LayerMask CrosshairLayers => _crosshairLayers;
+        public Vector3 ViewOffset => _viewOffset;
+        public Vector3 HandOffset => _handOffset;
     }
 }

@@ -80,7 +80,7 @@ the scene's sceneId still matches). Code in `ShipModule/Scripts/Throttle/`, numb
 - **The handle** (`ShipThrottleHandle`, holder's peer): the mouse moves the hand target (`ThrottlePerLookUnit`), the
   heavy handle follows with `SmoothDamp` (`HandleSmoothSeconds`, top speed `HandleMaxSpeed`), soft detents
   Stop 0 / Slow 0.3 / Half 0.6 / Full 1 pull it in within `DetentPullRadius` (`IShipThrottleDetentRule` / `ShipThrottleDetentRule`), a click on
-  entering one (`DetentClickRadius`) plays the handle's `AudioSource` hook (no clip yet) and a light `ICameraShakeService`
+  entering one (`DetentClickRadius`) gives a light `ICameraShakeService`
   shake (`CameraShake_ThrottleDetent`) for the holder, and a handle let go within a detent's pull radius drops into it.
   The holder sends the position at most every `SendIntervalSeconds` (0.05 s) and the last one on release
   (`ShipThrottleLocalHold`; a take the server does not confirm within `TakeTimeoutSeconds` ends the local hold).

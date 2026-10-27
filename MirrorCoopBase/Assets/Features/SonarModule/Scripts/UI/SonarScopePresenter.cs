@@ -43,7 +43,6 @@ namespace Features.SonarModule.Scripts.UI {
             View.OnCloseClicked += OnCloseClicked;
             View.OnBlipClicked += OnBlipClicked;
             _sonarScopeModel.OnFrameChanged += OnFrameChanged;
-            _sonarScopeModel.OnPinged += OnPinged;
             OnFrameChanged();
         }
 
@@ -52,7 +51,6 @@ namespace Features.SonarModule.Scripts.UI {
             View.OnCloseClicked -= OnCloseClicked;
             View.OnBlipClicked -= OnBlipClicked;
             _sonarScopeModel.OnFrameChanged -= OnFrameChanged;
-            _sonarScopeModel.OnPinged -= OnPinged;
         }
 
         private void OnFrameChanged() {
@@ -112,9 +110,6 @@ namespace Features.SonarModule.Scripts.UI {
             _shownStationSteps = steps;
             View.ShowStationDistance(string.Format(STATION_DISTANCE_FORMAT, steps * STATION_DISTANCE_STEP_METERS / METERS_PER_KILOMETER));
         }
-
-        private void OnPinged() =>
-            View.PlayPing();
 
         private void OnPingClicked() =>
             _sonarConsoleRequests.RequestPing();

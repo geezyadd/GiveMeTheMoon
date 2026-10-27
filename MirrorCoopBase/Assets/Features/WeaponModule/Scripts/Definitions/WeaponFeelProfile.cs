@@ -12,8 +12,9 @@ namespace Features.WeaponModule.Scripts.Definitions {
         [Header("Muzzle flash")]
         [SerializeField] private Color _muzzleFlashColor = Color.white;
         [SerializeField, Min(0f)] private float _muzzleFlashSize;
-        [Tooltip("Random share of the flash size and light that changes every frame of fire (0 = steady).")]
+        [Tooltip("Random share of the flash size and light that changes on every shot (0 = steady).")]
         [SerializeField, Range(0f, 1f)] private float _muzzleFlashFlicker;
+        [Tooltip("How long one shot's flash and light last.")]
         [SerializeField, Min(0f)] private float _muzzleFlashSeconds;
         [SerializeField, Min(0f)] private float _muzzleLightIntensity;
         [SerializeField, Min(0f)] private float _muzzleLightRange;
@@ -90,18 +91,6 @@ namespace Features.WeaponModule.Scripts.Definitions {
         [SerializeField, Range(0f, 1f)] private float _impactFlashMinSizeShare;
         [SerializeField, Min(0f)] private float _targetFlashSeconds;
 
-        [Header("Sound (an empty clip is a silent hook)")]
-        [Tooltip("Played on every shot, for a weapon whose shots are heard one by one.")]
-        [SerializeField] private AudioClip _shotClip;
-        [SerializeField] private AudioClip _fireLoopClip;
-        [SerializeField] private AudioClip _fireTailClip;
-        [SerializeField] private AudioClip _casingClip;
-        [Tooltip("Share of the casings that clink when they land.")]
-        [SerializeField, Range(0f, 1f)] private float _casingClinkShare;
-        [SerializeField] private AudioClip _impactClip;
-        [Tooltip("Every Nth impact plays the impact sound.")]
-        [SerializeField, Min(1)] private int _impactSoundEveryNth = 1;
-
         public float BarrelSpinDegreesPerSecond => _barrelSpinDegreesPerSecond;
         public Color MuzzleFlashColor => _muzzleFlashColor;
         public float MuzzleFlashSize => _muzzleFlashSize;
@@ -151,12 +140,5 @@ namespace Features.WeaponModule.Scripts.Definitions {
         public float ImpactFlashSeconds => _impactFlashSeconds;
         public float ImpactFlashMinSizeShare => _impactFlashMinSizeShare;
         public float TargetFlashSeconds => _targetFlashSeconds;
-        public AudioClip ShotClip => _shotClip;
-        public AudioClip FireLoopClip => _fireLoopClip;
-        public AudioClip FireTailClip => _fireTailClip;
-        public AudioClip CasingClip => _casingClip;
-        public float CasingClinkShare => _casingClinkShare;
-        public AudioClip ImpactClip => _impactClip;
-        public int ImpactSoundEveryNth => _impactSoundEveryNth;
     }
 }

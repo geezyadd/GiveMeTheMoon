@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: MinigunFeelProfile
   m_EditorClassIdentifier: 
   _barrelSpinDegreesPerSecond: 1440
-  _muzzleFlashColor: {r: 1, g: 0.92, b: 0.6, a: 1}
-  _muzzleFlashSize: 1.2
-  _muzzleFlashFlicker: 0.35
-  _muzzleFlashSeconds: 0.05
-  _muzzleLightIntensity: 8
-  _muzzleLightRange: 7
+  _muzzleFlashColor: {r: 1, g: 0.85, b: 0.55, a: 0.7}
+  _muzzleFlashSize: 0.35
+  _muzzleFlashFlicker: 0.3
+  _muzzleFlashSeconds: 0.03
+  _muzzleLightIntensity: 2
+  _muzzleLightRange: 3.5
   _casingPoolSize: 200
   _casingLifetimeSeconds: 6
   _casingFadeSeconds: 1
@@ -58,9 +58,3 @@ MonoBehaviour:
   _impactFlashSeconds: 0.07
   _impactFlashMinSizeShare: 0.7
   _targetFlashSeconds: 0.08
-  _fireLoopClip: {fileID: 8300000, guid: d2f7009334d59f44d92d9f87d2e6709d, type: 3}
-  _fireTailClip: {fileID: 8300000, guid: fa6993adf072b664cbad727917ae86db, type: 3}
-  _casingClip: {fileID: 8300000, guid: a9ae746008989274ea9cc9e5946f6045, type: 3}
-  _casingClinkShare: 0.35
-  _impactClip: {fileID: 8300000, guid: d3dce68e2177b6a4e8e4b1ac57b55e25, type: 3}
-  _impactSoundEveryNth: 2

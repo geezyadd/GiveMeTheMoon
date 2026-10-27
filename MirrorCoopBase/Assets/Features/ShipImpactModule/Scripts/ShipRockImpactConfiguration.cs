@@ -64,7 +64,7 @@ namespace Features.ShipImpactModule.Scripts {
         [Header("Feedback")]
         [SerializeField] private ShipRockImpactFeel _smallFeel = new();
         [SerializeField] private ShipRockImpactFeel _largeFeel = new();
-        [Tooltip("The pooled effect played at the hit point on every peer; its audio source is the impact sound's hook.")]
+        [Tooltip("The pooled effect played at the hit point on every peer.")]
         [SerializeField] private ShipImpactEffect _impactEffect;
 
         public float SmallDamageMinDiameter => _smallDamageMinDiameter;
