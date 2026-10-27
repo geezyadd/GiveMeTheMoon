@@ -17,7 +17,7 @@ namespace Tests.Coop.Client {
     // pulls it to Stop in the cruise and pushes it to Full again; at the next station it sits at the helm, steers the
     // next cruise right and left, tries the throttle from the seat (it must not get it), reports the ship's pose and
     // stands up. Each step on the host's command.
-    public sealed class CoopThrottleAndHelmClient : CoopClientBot {
+    public sealed class CoopThrottleAndHelmClient : CoopScenarioClientBot {
         private const int THROTTLE_LOOP = 1;
         private const int HELM_LOOP = 2;
         private const float FULL_THROTTLE = 1f;

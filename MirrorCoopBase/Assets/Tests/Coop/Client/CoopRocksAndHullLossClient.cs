@@ -17,7 +17,7 @@ namespace Tests.Coop.Client {
     // peer gets and whether its view shook, through the host's small and large rock hits and then a near pass, and
     // reports them with the hull and its damage; the host then destroys the hull in that cruise and the client reports
     // whether it stands free in the lobby. Each step on the host's command.
-    public sealed class CoopRocksAndHullLossClient : CoopClientBot {
+    public sealed class CoopRocksAndHullLossClient : CoopScenarioClientBot {
         private const int LOOP = 1;
         private const string ROCK_IMPACT_SCREENSHOT = "rock-impact";
         private const float LOBBY_SETTLE_SECONDS = 2f;

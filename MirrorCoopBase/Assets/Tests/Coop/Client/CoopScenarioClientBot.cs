@@ -15,7 +15,7 @@ namespace Tests.Coop.Client {
     // The common part of a coop client scenario (the coop flight tests): joins the host by direct IP through the menu,
     // boards, waits for the host's commands, reports what it sees into the exchange folder, captures the screen, and
     // leaves and quits at the end. The host test decides pass or fail.
-    public abstract class CoopClientBot : MonoBehaviour {
+    public abstract class CoopScenarioClientBot : MonoBehaviour {
         private const float STEP_TIMEOUT_SECONDS = 120f;
         private const float SETTLE_SECONDS = 1.5f;
         private const int FAILURE_EXIT_CODE = 1;

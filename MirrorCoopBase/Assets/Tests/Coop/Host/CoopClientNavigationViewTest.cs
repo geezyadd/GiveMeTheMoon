@@ -29,11 +29,11 @@ namespace Tests.Coop.Host {
         private const float LONG_RANGE_METERS = 300f;
         private const float HAZE_DISTANCE_TOLERANCE = 0.01f;
 
-        private CoopHostHarness _host;
+        private CoopFlightHostHarness _host;
 
         [SetUp]
         public void SetUp() =>
-            _host = new CoopHostHarness();
+            _host = new CoopFlightHostHarness();
 
         [TearDown]
         public void TearDown() =>

@@ -21,7 +21,7 @@ namespace Tests.Coop.Client {
     // command, pings, marks the station and the farthest rock echo for the crew and leaves the console; then it turns
     // its own haze off and on and its own station marker on and off through the debug window, capturing the screen.
     // Each step on the host's command.
-    public sealed class CoopNavigationViewClient : CoopClientBot {
+    public sealed class CoopNavigationViewClient : CoopScenarioClientBot {
         private const int LOOP = 1;
         private const string STATION_CONTACT_ID = "station";
         private const string HAZE_SHOWN_LABEL = "Haze: on";

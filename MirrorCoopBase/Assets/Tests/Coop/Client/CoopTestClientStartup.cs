@@ -19,7 +19,10 @@ namespace Tests.Coop.Client {
             if (CoopClientScenarios.TryStart(clientObject, arguments))
                 return;
 
-            clientObject.AddComponent<CoopTestClient>().Run(arguments);
+            if (arguments.Scenario == CoopConnectionCommands.SCENARIO)
+                clientObject.AddComponent<CoopConnectionClient>().Run(arguments);
+            else
+                clientObject.AddComponent<CoopTestClient>().Run(arguments);
         }
     }
 }

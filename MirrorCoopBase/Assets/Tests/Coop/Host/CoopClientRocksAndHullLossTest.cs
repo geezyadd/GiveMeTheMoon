@@ -39,14 +39,14 @@ namespace Tests.Coop.Host {
         private readonly List<ShipRockImpact> _hostImpacts = new List<ShipRockImpact>();
         private readonly List<FieldRockDestroyed> _destroyed = new List<FieldRockDestroyed>();
 
-        private CoopHostHarness _host;
+        private CoopFlightHostHarness _host;
         private LoopSmokeContext _context;
 
         private ShipBase Ship => _host.Ship;
 
         [SetUp]
         public void SetUp() =>
-            _host = new CoopHostHarness();
+            _host = new CoopFlightHostHarness();
 
         [TearDown]
         public void TearDown() =>

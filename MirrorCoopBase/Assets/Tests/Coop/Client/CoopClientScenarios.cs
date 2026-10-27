@@ -18,7 +18,7 @@ namespace Tests.Coop.Client {
             if (_bots.TryGetValue(arguments.Scenario, out Type bot) == false)
                 return false;
 
-            ((CoopClientBot)clientObject.AddComponent(bot)).Run(arguments);
+            ((CoopScenarioClientBot)clientObject.AddComponent(bot)).Run(arguments);
             return true;
         }
     }

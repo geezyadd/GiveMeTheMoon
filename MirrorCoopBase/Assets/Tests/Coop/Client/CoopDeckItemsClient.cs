@@ -13,7 +13,7 @@ namespace Tests.Coop.Client {
     // and carries another one aboard; in the cruise it lets the carried one go onto the deck; it reports the items it
     // sees on the deck after the release, after the host's hard turn and after the landing. Each step on the host's
     // command.
-    public sealed class CoopDeckItemsClient : CoopClientBot {
+    public sealed class CoopDeckItemsClient : CoopScenarioClientBot {
         private const int LOOP = 1;
         private const float HAND_DROP_HEIGHT = 1f;
         private const float FALL_SECONDS = 1.5f;

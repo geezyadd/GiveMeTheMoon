@@ -39,7 +39,7 @@ namespace Tests.Coop.Host {
         private readonly WaitForSeconds _stayStopped = new WaitForSeconds(STAY_STOPPED_SECONDS);
         private readonly CoopShipPoseTrack _poseTrack = new CoopShipPoseTrack();
 
-        private CoopHostHarness _host;
+        private CoopFlightHostHarness _host;
         private float _cruiseStartYaw;
         private float _mostRightDegrees;
         private bool _hasClientHeldThrottle;
@@ -52,7 +52,7 @@ namespace Tests.Coop.Host {
 
         [SetUp]
         public void SetUp() =>
-            _host = new CoopHostHarness();
+            _host = new CoopFlightHostHarness();
 
         [TearDown]
         public void TearDown() =>

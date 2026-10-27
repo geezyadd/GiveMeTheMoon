@@ -36,13 +36,13 @@ namespace Tests.Coop.Host {
         private readonly List<Grabbable> _items = new List<Grabbable>();
         private readonly ShipDeckItemHandling _handling = new ShipDeckItemHandling();
 
-        private CoopHostHarness _host;
+        private CoopFlightHostHarness _host;
 
         private ShipBase Ship => _host.Ship;
 
         [SetUp]
         public void SetUp() =>
-            _host = new CoopHostHarness();
+            _host = new CoopFlightHostHarness();
 
         [TearDown]
         public void TearDown() =>
