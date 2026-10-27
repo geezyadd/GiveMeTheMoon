@@ -1,11 +1,13 @@
 using Features.GrabModule.Scripts;
+using Features.HandWeaponModule.Scripts;
 using Features.ShipDamageModule.Scripts.Repair;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Configurations;
 using UnityEngine;
 
 namespace Features.ShopModule.Scripts.Core {
-    // Shop entry indices: the catalog's modules first, then its tools; every bought item is a grabbable prefab.
+    // Shop entry indices: the catalog's modules first, then its tools, then its hand weapons; every bought item is a
+    // grabbable prefab.
     public sealed class ShopPurchaseService : IShopPurchaseService {
         private readonly ShopCatalog _shopCatalog;
 
@@ -40,9 +42,17 @@ namespace Features.ShopModule.Scripts.Core {
                 return true;
             }
 
-            RepairToolDefinition tool = _shopCatalog.Tools[entryIndex - moduleCount];
-            price = tool.Price;
-            item = tool.ItemPrefab;
+            int toolIndex = entryIndex - moduleCount;
+            if (toolIndex < _shopCatalog.Tools.Count) {
+                RepairToolDefinition tool = _shopCatalog.Tools[toolIndex];
+                price = tool.Price;
+                item = tool.ItemPrefab;
+                return true;
+            }
+
+            HandWeaponDefinition handWeapon = _shopCatalog.HandWeapons[toolIndex - _shopCatalog.Tools.Count];
+            price = handWeapon.Price;
+            item = handWeapon.ItemPrefab;
             return true;
         }
     }

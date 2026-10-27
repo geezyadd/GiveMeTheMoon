@@ -1,0 +1,32 @@
+{
+    "name": "Features.HandWeaponModule.Editor.Tests",
+    "rootNamespace": "Features.HandWeaponModule.Editor.Tests",
+    "references": [
+        "GUID:b07a8bb06a154c5ebc940c9f1f25fb10",
+        "GUID:e596d38ca81247398483edaf270c2ed8",
+        "GUID:b6dfe6b104334a39bf4687b18f26a0bf",
+        "GUID:de3859a8001533e4785d57768b0ba05c",
+        "GUID:1f74e8c7b4c74b6ab22be0bd160a9a17",
+        "GUID:30817c1a0e6d646d99c048fc403f5979",
+        "GUID:0d8beb7f090555447a6cf5ce9e54dbb4",
+        "GUID:5d6793be2d204514a9702ab824c001ed",
+        "GUID:03a835aea0a645a7b43f5f0c61e8d191",
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

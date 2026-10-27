@@ -2,8 +2,8 @@ using Features.WeaponModule.Scripts.Definitions;
 using UnityEngine;
 
 namespace Features.WeaponModule.Scripts.Feel {
-    // The sound hooks of a weapon: a fire loop with a tail when it stops, casing clinks and impacts. A clip the profile
-    // leaves empty keeps its hook silent.
+    // The sound hooks of a weapon: a sound per shot, a fire loop with a tail when it stops, casing clinks and impacts.
+    // A clip the profile leaves empty keeps its hook silent.
     public sealed class WeaponFeelAudio {
         private readonly AudioSource _loopSource;
         private readonly AudioSource _oneShotSource;
@@ -35,6 +35,9 @@ namespace Features.WeaponModule.Scripts.Feel {
             _loopSource.Stop();
             PlayOneShot(_profile.FireTailClip);
         }
+
+        public void PresentShot() =>
+            PlayOneShot(_profile.ShotClip);
 
         // At most one clink a frame: a pile of landings in one frame is one sound.
         public void PresentCasingsLanded(int landedCount) {

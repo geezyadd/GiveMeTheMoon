@@ -87,6 +87,7 @@ namespace Features.WeaponModule.Scripts.Feel {
 
         public void PresentShot(in WeaponShotOutcome outcome) {
             _shots++;
+            _audio.PresentShot();
             _casings.Eject(_casingEjectPoint.position, CreateCasingVelocity());
             if (_shots % _profile.TracerEveryNthShot == 0)
                 _tracers.Launch(_muzzle.position, outcome.EndPoint);

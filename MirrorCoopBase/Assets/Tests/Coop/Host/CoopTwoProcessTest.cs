@@ -7,14 +7,17 @@ using System.Net;
 using System.Net.Sockets;
 using Features.CameraModule.Scripts;
 using Features.GrabModule.Scripts;
+using Features.HandWeaponModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
 using Features.ShipModule.Scripts;
+using Features.ShipModule.Scripts.Debug;
 using Features.ShipModule.Scripts.Generated;
 using Features.ShopModule.Scripts.Configurations;
 using Features.ShopModule.Scripts.Data;
 using Features.ShopModule.Scripts.Generated;
 using Features.ShopModule.Scripts.Network;
 using Features.ShopModule.Scripts.UI;
+using Features.WeaponModule.Scripts.Network;
 using Game.Connection;
 using Mirror;
 using NUnit.Framework;
@@ -52,6 +55,7 @@ namespace Tests.Coop.Host {
         // The client holds D from the helm into the cruise: the ship turns right at the flight's turn rate.
         private const float MIN_STEERED_DEGREES = 1f;
         private const float FULL_THROTTLE = 1f;
+        private const string HAND_WEAPON_FEEL_FRAME = "HandWeaponFeelFrame";
         private const float THROTTLE_TOLERANCE = 0.02f;
         // The client's throttle at Full flies the ship at least this fast in the short test cruise (m/s).
         private const float MIN_CRUISE_SPEED = 5f;
@@ -115,6 +119,7 @@ namespace Tests.Coop.Host {
             yield return FlyWhileClientLeavesCoroutine();
             yield return LetClientRejoinCoroutine();
             yield return BuyBackDeadClientCoroutine();
+            yield return WatchClientFirePistolCoroutine();
             yield return RideLoopTogetherCoroutine(LAST_LOOP);
             yield return FinishCoroutine();
         }
@@ -251,6 +256,58 @@ namespace Tests.Coop.Host {
             BeginStep("host walks back to the deck");
             yield return _flight.BoardPlayerCoroutine();
             Assert.IsFalse(shop.IsOpen, "The shop window stayed open after the host walked back to the deck.");
+        }
+
+        // The host puts a pistol into the client's hand (test setup: the purchase is LoopSmokePistolCheck's) and a debug
+        // dummy before the ship; the client aims and clicks. The host sees the client's trigger arrive, replays the
+        // shot with its tracer on the client's pistol, and the server accepts the client's hit on the dummy.
+        private IEnumerator WatchClientFirePistolCoroutine() {
+            BeginStep("client fires the pistol");
+            ShipRider client = ClientRider();
+            HandWeaponDefinition pistol = SessionQueries.Resolve<ShopCatalog>().HandWeapons[0];
+            GameObject item = Object.Instantiate(pistol.ItemPrefab.gameObject, client.transform.position + Vector3.up, client.transform.rotation);
+            NetworkServer.Spawn(item);
+            yield return null;
+            Assert.IsTrue(client.GetComponent<GrabController>().ServerGive(item.GetComponent<Grabbable>()), "The pistol could not be put into the client's hand.");
+            IWeaponDebugTargets targets = SessionQueries.Resolve<IWeaponDebugTargets>();
+            WeaponDebugTarget target = targets.DebugSpawnTarget();
+            Assert.IsNotNull(target, "The debug target did not spawn at the station.");
+
+            _exchange.AppendCommand(CoopTestSteps.COMMAND_FIRE_PISTOL);
+            WeaponHolderSync clientWeapon = client.GetComponent<WeaponHolderSync>();
+            bool hasSeenTrigger = false;
+            bool hasSeenTracer = false;
+            _lastReport = null;
+            yield return WaitForCoroutine(() => WatchPistolAndTakeReport(clientWeapon, item.scene, ref hasSeenTrigger, ref hasSeenTracer), "the client's 'pistol-fired' report");
+            Assert.IsTrue(hasSeenTrigger, "The host never saw the client's pistol trigger.");
+            Assert.IsTrue(hasSeenTracer, "The host did not replay the client's pistol shot (no tracer).");
+            Assert.GreaterOrEqual(target.Hits, 1, "The server accepted no hit of the client's pistol on the dummy.");
+            Debug.Log($"[CoopTest] the client's pistol: {target.Hits} accepted hits on the dummy, its trigger and a tracer seen on the host");
+
+            client.GetComponent<GrabController>().ServerConsumeHeld();
+            targets.DebugDespawnTarget();
+        }
+
+        private bool WatchPistolAndTakeReport(WeaponHolderSync clientWeapon, UnityEngine.SceneManagement.Scene scene, ref bool hasSeenTrigger, ref bool hasSeenTracer) {
+            hasSeenTrigger |= clientWeapon.IsTriggerHeld;
+            hasSeenTracer |= HasActiveTracer(scene);
+            return TryTakeReport(CoopTestSteps.PISTOL_FIRED);
+        }
+
+        // A hand weapon's tracers fly in its feel frame, a scene root of their own: one shown means this peer
+        // replayed a shot.
+        private static bool HasActiveTracer(UnityEngine.SceneManagement.Scene scene) {
+            foreach (GameObject root in scene.GetRootGameObjects()) {
+                if (root.name != HAND_WEAPON_FEEL_FRAME)
+                    continue;
+
+                foreach (MeshRenderer renderer in root.GetComponentsInChildren<MeshRenderer>(false)) {
+                    if (renderer.gameObject.activeInHierarchy)
+                        return true;
+                }
+            }
+
+            return false;
         }
 
         private IEnumerator FinishCoroutine() {

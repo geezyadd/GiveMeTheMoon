@@ -17,6 +17,7 @@ namespace Tests.PlayMode.LoopSmoke {
     // (LoopSmokeRockShootCheck) and a target balloon (LoopSmokeTargetCheck), and stands up again.
     public sealed class LoopSmokeTurretCheck {
         private const string MINIGUN_MODULE_ID = "minigun";
+        private const string MINIGUN_SCREENSHOT = "turret-tier2-minigun.png";
         private const string TURRET_SOCKET_ID = "turret-front";
         private const int MIN_ACCEPTED_HITS = 5;
         private const float SEAT_TIMEOUT_SECONDS = 3f;
@@ -67,6 +68,7 @@ namespace Tests.PlayMode.LoopSmoke {
 
             station.DebugHoldTrigger(true);
             yield return _session.WaitForCoroutine(() => AimAndCountHits(station, target), FIRE_TIMEOUT_SECONDS, $"Turret: {MIN_ACCEPTED_HITS} hits the server accepted on the debug target");
+            yield return LoopSmokeReviveCheck.CaptureScreenshotCoroutine(MINIGUN_SCREENSHOT);
             station.DebugHoldTrigger(false);
             targets.DebugDespawnTarget();
         }

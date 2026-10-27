@@ -314,6 +314,9 @@ MonoBehaviour:
   - {fileID: 8601338388048282597, guid: f9a2b3c4d5e61728394a5b6c7d8e90f1, type: 3}
   - {fileID: 956412859401598705, guid: 181b5ec58bae5d643840d0ebe2b1f093, type: 3}
   - {fileID: 8601338388048282597, guid: 92ee43f06b433fb408db994c1e30b804, type: 3}
+  - {fileID: 2199452498837071317, guid: 83de23c9660643643b13af128e0748e4, type: 3}
+  - {fileID: 7802895366268531600, guid: df1a5f82b675995499b9ce67a233ca7c, type: 3}
+  - {fileID: 2536453138377315570, guid: a087be6ba66f6704f8326076ad53aaf4, type: 3}
   exceptionsDisconnect: 1
   snapshotSettings:
     bufferTimeMultiplier: 2

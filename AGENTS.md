@@ -114,7 +114,8 @@ types.
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
      `Features.WeaponModule`, `Features.SpaceHazeModule`.
   3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`.
-  4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`.
+  4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`,
+     `Features.HandWeaponModule`.
   5. `Features.ShipImpactModule`, `Features.ShipDamageModule`, `Features.TurretModule`, `Features.PlayerLifeModule`,
      `Features.LobbyModule` (Ship, Grab, GameFlow, Mvp, Connection).
   6. `Features.StagePresetModule`, `Features.ShopModule`, `Features.TooltipModule`, `Features.CrewInviteModule`,
@@ -129,9 +130,10 @@ types.
 | [ShipModule](MirrorCoopBase/Assets/Features/ShipModule/AGENTS.md) | the ship core: hull, flight, riders, slots and modules, seats and the helm, stats, world shift, the run, deck debugging |
 | [ShipImpactModule](MirrorCoopBase/Assets/Features/ShipImpactModule/AGENTS.md) | the hull's rock and balloon collisions, knockback feedback, impact shake and effects |
 | [ShipDamageModule](MirrorCoopBase/Assets/Features/ShipDamageModule/AGENTS.md) | module breakdowns, hull breaches, the leak, repair with the wrench and the hammer |
-| [TurretModule](MirrorCoopBase/Assets/Features/TurretModule/AGENTS.md) | the minigun turret's seat station (`ShipTurretStation`) |
+| [TurretModule](MirrorCoopBase/Assets/Features/TurretModule/AGENTS.md) | the turret's seat station (`ShipTurretStation`) and the turret gun tiers |
 | [FlightFieldModule](MirrorCoopBase/Assets/Features/FlightFieldModule/AGENTS.md) | the flight field: generation, breakable rocks, target balloons |
 | [WeaponModule](MirrorCoopBase/Assets/Features/WeaponModule/AGENTS.md) | the weapon core, its network path, the client feel |
+| [HandWeaponModule](MirrorCoopBase/Assets/Features/HandWeaponModule/AGENTS.md) | weapons carried in the hand: the pistol |
 | [SonarModule](MirrorCoopBase/Assets/Features/SonarModule/AGENTS.md) | the navigator's sonar console on the radar |
 | [SpaceHazeModule](MirrorCoopBase/Assets/Features/SpaceHazeModule/AGENTS.md) | the dark space haze: how far the crew sees by eye |
 | [DebugModule](MirrorCoopBase/Assets/Features/DebugModule/AGENTS.md) | the in-game debug window and its action registry |
