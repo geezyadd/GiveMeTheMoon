@@ -15,9 +15,9 @@ Three turret guns the crew buys one after another and installs in `turret-front`
 
 | Tier | Module (id) | Price | Fire | Shots/s | Damage | DPS | Range | Feel |
 |---|---|---|---|---|---|---|---|---|
-| 1 | Light machine gun (`light-machine-gun`) | 400 | instant | 6 | 1 | 6 | 250 m | one barrel, small flash, light shake, a tracer every 2nd shot, `LightMachineGunShot` per shot |
+| 1 | Light machine gun (`light-machine-gun`) | 400 | instant | 6 | 1 | 6 | 250 m | one barrel, small flash, light shake, a tracer every 2nd shot |
 | 2 | Minigun (`minigun`) | 900 (was 600) | 0.25 s spin-up | 20 | 1 | 20 | 400 m | unchanged |
-| 3 | Heavy gun (`heavy-gun`) | 1600 | 0.35 s spin-up | 4 | 8 | 32 | 600 m | twin barrels, big flash and light, strong recoil and `CameraShake_HeavyGunFire`, 0.45 m tracers on every shot, `HeavyGunShot` (deep) per shot |
+| 3 | Heavy gun (`heavy-gun`) | 1600 | 0.35 s spin-up | 4 | 8 | 32 | 600 m | twin barrels, a flash per shot (small since 2026-10-27, see WeaponModule), strong recoil and `CameraShake_HeavyGunFire`, 0.45 m tracers on every shot |
 
 A 60 m rock (40 HP) breaks in about 6.7 s / 2 s / 1.3 s, a 150 m one (100 HP) in 17 s / 5 s / 3 s. The shop text of each module states its numbers by hand (keep it in step with the weapon asset). The station drops and the presets still bring only the minigun. `TurretTierTests` keeps the rule: ordered by price, each tier deals more damage per second, hits at least as hard and reaches further.
 

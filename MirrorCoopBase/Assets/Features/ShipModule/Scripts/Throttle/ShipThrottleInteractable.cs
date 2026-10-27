@@ -12,8 +12,6 @@ namespace Features.ShipModule.Scripts.Throttle {
     public sealed class ShipThrottleInteractable : InteractableBase, IHeldControl, IHeldControlDriver {
         [SerializeField] private ShipThrottleLever _shipThrottleLever;
         [SerializeField] private ShipBase _ship;
-        [Tooltip("The detent click's sound hook: plays its clip, if any, on every click under the holder's hand.")]
-        [SerializeField] private AudioSource _detentClickSound;
 
         private IReadOnlyShipThrottleModel _shipThrottleModel;
         private IReadOnlyShipRunModel _shipRunModel;
@@ -88,11 +86,8 @@ namespace Features.ShipModule.Scripts.Throttle {
         private float ReadMaxPosition() =>
             _shipThrottleLaunchRule.ReadMaxPosition(_shipRunModel.Phase, _ship.CanLaunch);
 
-        private void PlayDetentClick() {
+        private void PlayDetentClick() =>
             _cameraShakeService.AddShake(_shipThrottleConfiguration.DetentClickShake, _shipThrottleConfiguration.DetentClickShakeStrength);
-            if (_detentClickSound.clip != null)
-                _detentClickSound.Play();
-        }
 
         private static string ReadPlayerKey(NetworkIdentity user) =>
             user.TryGetComponent(out ShipRider rider) ? rider.Key.Id : string.Empty;

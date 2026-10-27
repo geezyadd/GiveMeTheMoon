@@ -33,10 +33,9 @@ The loop runs from start to end, but it does not match the design yet:
 - players can join or come back in the lobby or while the ship stands at a station (`Build`); in flight, in a wreck,
   while the map changes and with a full crew they are turned away with a reason the menu shows (see "Player data and
   rejoin");
-- there is no sound except the minigun turret's placeholder sounds (see "Weapons" in
-  [WeaponModule](MirrorCoopBase/Assets/Features/WeaponModule/AGENTS.md)); the only VFX are
-  the turret's, the rock break and the rock impact effects (the impact effect's `AudioSource` is the hook for a
-  sound, empty for now).
+- there is no sound at all: every sound, its clips, `AudioSource` hooks and settings were removed on 2026-10-27
+  (sound comes back as a separate later step); the only VFX are the weapons', the rock break and the rock impact
+  effects.
 
 The per-module status (modules, slots, station drops, stats and hull in
 [ShipModule](MirrorCoopBase/Assets/Features/ShipModule/AGENTS.md); income in

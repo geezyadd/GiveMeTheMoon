@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: PistolFeelProfile
   m_EditorClassIdentifier: 
   _barrelSpinDegreesPerSecond: 0
-  _muzzleFlashColor: {r: 1, g: 0.92, b: 0.6, a: 1}
-  _muzzleFlashSize: 0.35
+  _muzzleFlashColor: {r: 1, g: 0.85, b: 0.55, a: 0.7}
+  _muzzleFlashSize: 0.14
   _muzzleFlashFlicker: 0.1
-  _muzzleFlashSeconds: 0.06
-  _muzzleLightIntensity: 6
-  _muzzleLightRange: 4
+  _muzzleFlashSeconds: 0.035
+  _muzzleLightIntensity: 1.5
+  _muzzleLightRange: 2.5
   _casingPoolSize: 0
   _casingLifetimeSeconds: 6
   _casingFadeSeconds: 1
@@ -61,10 +61,3 @@ MonoBehaviour:
   _impactFlashSeconds: 0.07
   _impactFlashMinSizeShare: 0.7
   _targetFlashSeconds: 0.08
-  _shotClip: {fileID: 8300000, guid: 81f6da8ee78a8bd4983367c13d6385eb, type: 3}
-  _fireLoopClip: {fileID: 0}
-  _fireTailClip: {fileID: 0}
-  _casingClip: {fileID: 0}
-  _casingClinkShare: 0.35
-  _impactClip: {fileID: 8300000, guid: d3dce68e2177b6a4e8e4b1ac57b55e25, type: 3}
-  _impactSoundEveryNth: 1

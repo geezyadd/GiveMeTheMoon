@@ -6,8 +6,8 @@ using UnityEngine;
 namespace Features.FlightFieldModule.Scripts.Targets {
     // The root of the balloon pop effect prefab: confetti and scraps tinted in the kind's colour (particle systems,
     // authored for a balloon of radius 1 m and scaled by the radius), coins that burst out and are sucked into the
-    // ship, a "+N" text that rises and fades facing the viewer, and the pop and coin sound hooks (an AudioSource plays
-    // only when a clip is set). It disables itself when all of it is over, so a disabled effect is free for the pool.
+    // ship and a "+N" text that rises and fades facing the viewer. It disables itself when all of it is over, so a
+    // disabled effect is free for the pool.
     public sealed class FieldTargetPopEffect : MonoBehaviour, ISelfDisablingEffect {
         private const string REWARD_FORMAT = "+{0}";
         // An irrational turn per coin spreads the coins evenly around the pop.
@@ -18,8 +18,6 @@ namespace Features.FlightFieldModule.Scripts.Targets {
         [SerializeField] private Transform _particleRoot;
         [SerializeField] private Transform[] _coins;
         [SerializeField] private TextMesh _rewardText;
-        [SerializeField] private AudioSource _popSound;
-        [SerializeField] private AudioSource _coinSound;
 
         private readonly Vector3[] _coinBurstEnds = new Vector3[MAX_COINS];
 
@@ -31,7 +29,6 @@ namespace Features.FlightFieldModule.Scripts.Targets {
         private Color _textColor;
         private float _seconds;
         private int _coinCount;
-        private bool _isCoinSoundPlayed;
 
         public bool IsPlaying => gameObject.activeSelf;
 
@@ -53,7 +50,6 @@ namespace Features.FlightFieldModule.Scripts.Targets {
             _textColor = color;
             _seconds = 0f;
             _coinCount = Mathf.Min(feel.CoinCount, Mathf.Min(_coins.Length, MAX_COINS));
-            _isCoinSoundPlayed = false;
             transform.SetPositionAndRotation(position, Quaternion.identity);
             _particleRoot.localScale = Vector3.one * radius;
             _rewardText.text = string.Format(REWARD_FORMAT, reward);
@@ -61,7 +57,6 @@ namespace Features.FlightFieldModule.Scripts.Targets {
             PlaceCoins(radius);
             gameObject.SetActive(true);
             TintAndPlay(color);
-            PlaySound(_popSound);
             MoveRewardText();
         }
 
@@ -107,11 +102,6 @@ namespace Features.FlightFieldModule.Scripts.Targets {
                 if (fly >= 1f)
                     coin.gameObject.SetActive(false);
             }
-
-            if (fly >= 1f && !_isCoinSoundPlayed) {
-                _isCoinSoundPlayed = true;
-                PlaySound(_coinSound);
-            }
         }
 
         private void MoveRewardText() {
@@ -140,11 +130,6 @@ namespace Features.FlightFieldModule.Scripts.Targets {
             }
 
             return false;
-        }
-
-        private static void PlaySound(AudioSource source) {
-            if (source.clip != null)
-                source.Play();
         }
     }
 }

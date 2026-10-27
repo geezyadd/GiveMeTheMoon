@@ -41,7 +41,7 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [SerializeField, Min(0.01f)] private float _hitFeedbackSeconds = 0.12f;
         [Tooltip("How much a struck balloon squashes at the start of the feedback, as a share of its size.")]
         [SerializeField, Range(0f, 0.5f)] private float _hitSquashShare = 0.15f;
-        [Tooltip("Played where a balloon pops, on every peer: confetti and scraps in the kind's colour, coins to the ship, the '+N' text, the pop and coin sound hooks.")]
+        [Tooltip("Played where a balloon pops, on every peer: confetti and scraps in the kind's colour, coins to the ship, the '+N' text.")]
         [SerializeField] private FieldTargetPopEffect _popEffect;
         [SerializeField] private FieldTargetPopFeel _popFeel = new() {
             CoinCount = 8,

@@ -30,8 +30,6 @@ namespace Features.SonarModule.Scripts.UI {
         [SerializeField] private Button _closeButton;
         [SerializeField] private Text _status;
         [SerializeField] private GameObject _noise;
-        [Tooltip("The ping sound's place: plays its clip on every ping when one is set.")]
-        [SerializeField] private AudioSource _pingAudio;
 
         private readonly List<SonarBlipButton> _blips = new();
         private readonly List<Text> _ringLabels = new();
@@ -144,11 +142,6 @@ namespace Features.SonarModule.Scripts.UI {
 
         public override void ShowNoise(bool isShown) =>
             _noise.SetActive(isShown);
-
-        public override void PlayPing() {
-            if (_pingAudio.clip != null)
-                _pingAudio.Play();
-        }
 
         private SonarBlipButton CreateBlip() {
             SonarBlipButton blip = Instantiate(_blipTemplate, _blipRoot);

@@ -5,8 +5,8 @@ using UnityEngine;
 using Zenject;
 
 namespace Features.WeaponModule.Scripts.Feel {
-    // How a barrel-spinning machine gun looks and feels on one peer, by its WeaponFeelProfile: barrel spin, muzzle
-    // glow, a stream of casings, recoil jitter, the holder's camera shake, tracers, impact bursts and sound hooks. Every
+    // How a barrel-spinning machine gun looks and feels on one peer, by its WeaponFeelProfile: barrel spin, a muzzle
+    // flash per shot, a stream of casings, recoil jitter, the holder's camera shake, tracers and impact bursts. Every
     // effect comes from a pool made at Bind, so continuous fire allocates nothing. The holder drives it every frame with
     // Advance.
     public sealed class MinigunFeel : MonoBehaviour, IWeaponFeelPresenter {
@@ -25,8 +25,6 @@ namespace Features.WeaponModule.Scripts.Feel {
         [SerializeField] private ParticleSystem _impactSparks;
         [SerializeField] private ParticleSystem _impactDebris;
         [SerializeField] private ParticleSystem _impactDust;
-        [SerializeField] private AudioSource _loopAudio;
-        [SerializeField] private AudioSource _oneShotAudio;
 
         private ICameraShakeService _cameraShakeService;
 
@@ -38,7 +36,6 @@ namespace Features.WeaponModule.Scripts.Feel {
         private CasingStream _casings;
         private TracerStream _tracers;
         private ImpactBursts _impacts;
-        private WeaponFeelAudio _audio;
         private ICameraShakeHandle _fireShake;
         private bool _isFiring;
         private float _readiness;
@@ -69,7 +66,6 @@ namespace Features.WeaponModule.Scripts.Feel {
             _casings = new CasingStream(_effectsRoot, _casingTemplate, floor, profile);
             _tracers = new TracerStream(_effectsRoot, _tracerTemplate, floor.Frame, profile);
             _impacts = new ImpactBursts(_impactFlash, _impactSparks, _impactDebris, _impactDust, floor.Frame, profile);
-            _audio = new WeaponFeelAudio(_loopAudio, _oneShotAudio, profile);
         }
 
         // Only the player who looks through the gun feels its shake.
@@ -87,7 +83,7 @@ namespace Features.WeaponModule.Scripts.Feel {
 
         public void PresentShot(in WeaponShotOutcome outcome) {
             _shots++;
-            _audio.PresentShot();
+            _muzzleFlash.Flash();
             _casings.Eject(_casingEjectPoint.position, CreateCasingVelocity());
             if (_shots % _profile.TracerEveryNthShot == 0)
                 _tracers.Launch(_muzzle.position, outcome.EndPoint);
@@ -98,20 +94,17 @@ namespace Features.WeaponModule.Scripts.Feel {
 
         public void Advance(float deltaTime) {
             _barrelSpin.Advance(_readiness, deltaTime);
-            _muzzleFlash.Present(_isFiring);
+            _muzzleFlash.Advance(deltaTime);
             _recoilJitter.Advance(_isFiring, deltaTime);
             if (IsViewOwned)
                 _fireShake.SetIntensity(_isFiring ? 1f : 0f);
 
             _casings.Advance(deltaTime);
             _tracers.Advance(deltaTime);
-            _audio.PresentFiring(_isFiring);
-            _audio.PresentCasingsLanded(_casings.LandedThisFrame);
         }
 
         private void PresentImpact(in WeaponShotOutcome outcome) {
             _impacts.Emit(outcome.EndPoint, outcome.Normal);
-            _audio.PresentImpact();
             float distance = Vector3.Distance(_viewPoint.position, outcome.EndPoint);
             if (IsViewOwned && distance < _profile.NearImpactDistanceMeters)
                 _cameraShakeService.AddShake(_profile.NearImpactShake, 1f - distance / _profile.NearImpactDistanceMeters);

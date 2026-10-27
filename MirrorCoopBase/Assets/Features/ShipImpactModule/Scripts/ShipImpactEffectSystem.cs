@@ -3,7 +3,7 @@ using Features.ShipModule.Scripts.Contracts;
 using Zenject;
 
 namespace Features.ShipImpactModule.Scripts {
-    // Every peer: a rock hit plays the pooled impact effect (dust, chunks, the sound hook) at the hit point.
+    // Every peer: a rock hit plays the pooled impact effect (dust, chunks) at the hit point.
     public sealed class ShipImpactEffectSystem : IInitializable, IDisposable {
         private readonly IShipImpactEvents _shipImpactEvents;
         private readonly IShipImpactEffectPool _shipImpactEffectPool;

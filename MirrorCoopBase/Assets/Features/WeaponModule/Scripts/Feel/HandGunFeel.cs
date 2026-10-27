@@ -6,8 +6,8 @@ using Zenject;
 
 namespace Features.WeaponModule.Scripts.Feel {
     // How a single-shot gun in a hand looks and feels on one peer, by its WeaponFeelProfile: a muzzle flash and a
-    // recoil kick on every shot, a tracer to where it landed, an impact burst, the shot sound and, for the player who
-    // holds it, a short view kick. Every effect comes from a pool made at Bind. The holder drives it every frame with
+    // recoil kick on every shot, a tracer to where it landed, an impact burst and, for the player who holds it, a short
+    // view kick. Every effect comes from a pool made at Bind. The holder drives it every frame with
     // Advance.
     public sealed class HandGunFeel : MonoBehaviour, IWeaponFeelPresenter {
         private const string EFFECTS_ROOT_NAME = "WeaponFeelEffects";
@@ -21,8 +21,6 @@ namespace Features.WeaponModule.Scripts.Feel {
         [SerializeField] private ParticleSystem _impactSparks;
         [SerializeField] private ParticleSystem _impactDebris;
         [SerializeField] private ParticleSystem _impactDust;
-        [SerializeField] private AudioSource _loopAudio;
-        [SerializeField] private AudioSource _oneShotAudio;
 
         private ICameraShakeService _cameraShakeService;
 
@@ -32,9 +30,7 @@ namespace Features.WeaponModule.Scripts.Feel {
         private RecoilKick _recoilKick;
         private TracerStream _tracers;
         private ImpactBursts _impacts;
-        private WeaponFeelAudio _audio;
         private bool _isViewOwned;
-        private bool _isFiring;
         private int _shots;
 
         public Transform Muzzle => _muzzle;
@@ -57,20 +53,20 @@ namespace Features.WeaponModule.Scripts.Feel {
             _recoilKick = new RecoilKick(_recoilRoot, profile);
             _tracers = new TracerStream(_effectsRoot, _tracerTemplate, floor.Frame, profile);
             _impacts = new ImpactBursts(_impactFlash, _impactSparks, _impactDebris, _impactDust, floor.Frame, profile);
-            _audio = new WeaponFeelAudio(_loopAudio, _oneShotAudio, profile);
         }
 
         // Only the player who holds the gun feels its kick.
         public void SetViewOwned(bool isViewOwned) =>
             _isViewOwned = isViewOwned;
 
-        public void PresentFiring(bool isFiring, float readiness) =>
-            _isFiring = isFiring;
+        // A single-shot gun shows only its shots: nothing lasts while the trigger is held.
+        public void PresentFiring(bool isFiring, float readiness) {
+        }
 
         public void PresentShot(in WeaponShotOutcome outcome) {
             _shots++;
             _recoilKick.Kick();
-            _audio.PresentShot();
+            _muzzleFlash.Flash();
             if (_shots % _profile.TracerEveryNthShot == 0)
                 _tracers.Launch(_muzzle.position, outcome.EndPoint);
 
@@ -82,15 +78,12 @@ namespace Features.WeaponModule.Scripts.Feel {
         }
 
         public void Advance(float deltaTime) {
-            _muzzleFlash.Present(_isFiring);
+            _muzzleFlash.Advance(deltaTime);
             _recoilKick.Advance(deltaTime);
             _tracers.Advance(deltaTime);
-            _audio.PresentFiring(_isFiring);
         }
 
-        private void PresentImpact(in WeaponShotOutcome outcome) {
+        private void PresentImpact(in WeaponShotOutcome outcome) =>
             _impacts.Emit(outcome.EndPoint, outcome.Normal);
-            _audio.PresentImpact();
-        }
     }
 }

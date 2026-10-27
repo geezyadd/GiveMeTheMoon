@@ -25,8 +25,6 @@ namespace Features.WeaponModule.Scripts.Feel {
 
         private int _next;
 
-        public int LandedThisFrame { get; private set; }
-
         public CasingStream(Transform container, Transform template, IWeaponFeelFloor floor, WeaponFeelProfile profile) {
             _frame = floor.Frame;
             _floor = floor;
@@ -70,7 +68,6 @@ namespace Features.WeaponModule.Scripts.Feel {
         }
 
         public void Advance(float deltaTime) {
-            LandedThisFrame = 0;
             Vector3 frameGravity = _frame.InverseTransformDirection(Physics.gravity);
             for (int i = 0; i < _casings.Length; i++) {
                 if (_isActive[i] == false)
@@ -126,7 +123,6 @@ namespace Features.WeaponModule.Scripts.Feel {
             _velocities[index] = Vector3.zero;
             _positions[index].y = floorHeight + _profile.CasingRestHeight + Random.Range(0f, _profile.CasingPileJitter);
             _rotations[index] = Quaternion.Euler(0f, Random.Range(0f, FULL_TURN_DEGREES), 0f) * Quaternion.Euler(LYING_PITCH_DEGREES, 0f, 0f);
-            LandedThisFrame++;
         }
 
         private bool IsFadedOut(int index) =>

@@ -25,7 +25,6 @@ namespace Features.SonarModule.Scripts.UI {
         public abstract void ShowHeading(string text);
         public abstract void ShowStationBearing(bool isShown, Vector2 scopePosition);
         public abstract void ShowStationDistance(string text);
-        public abstract void PlayPing();
 
         protected void InvokePingClicked() =>
             OnPingClicked?.Invoke();

@@ -27,6 +27,7 @@ namespace Features.HandWeaponModule.Scripts {
         private IShotDeliveryContext _shotDeliveryContext;
         private HeldWeaponReadinessModel _heldWeaponReadinessModel;
         private HandWeaponOwnerInput _ownerInput;
+        private HandWeaponPoseDriver _poseDriver;
 
         private Grabbable _resolvedGrabbable;
         private HandWeaponItem _resolvedItem;
@@ -47,6 +48,7 @@ namespace Features.HandWeaponModule.Scripts {
             IWeaponShooterFactory weaponShooterFactory,
             IWeaponCatalogIndexService weaponCatalogIndexService,
             IGameCameraService gameCameraService,
+            GameCameraModel gameCameraModel,
             IShotDeliveryContext shotDeliveryContext,
             HeldWeaponReadinessModel heldWeaponReadinessModel) {
             _weaponShooterFactory = weaponShooterFactory;
@@ -55,6 +57,7 @@ namespace Features.HandWeaponModule.Scripts {
             _shotDeliveryContext = shotDeliveryContext;
             _heldWeaponReadinessModel = heldWeaponReadinessModel;
             _ownerInput = new HandWeaponOwnerInput(inputService, cursorModel, playerControlBlockModel);
+            _poseDriver = new HandWeaponPoseDriver(gameCameraService, gameCameraModel);
         }
 
         private void OnDestroy() =>
@@ -77,6 +80,7 @@ namespace Features.HandWeaponModule.Scripts {
             else
                 AdvanceReplay();
 
+            _poseDriver.Advance();
             _shooter.Advance(_holder, deltaTime);
             _item.Feel.Advance(deltaTime);
             if (_isOwner)
@@ -102,9 +106,11 @@ namespace Features.HandWeaponModule.Scripts {
                 ? new ReportedShotOutcomes(item.Feel, _weaponSync)
                 : new ShownShotOutcomes(item.Feel);
             _shooter = _weaponShooterFactory.Create(weapon, item.Feel, outcomes);
+            _poseDriver.Begin(item, _grab.ArmPoint, _holder, _isOwner);
         }
 
         private void EndHolding() {
+            _poseDriver.End();
             if (_isOwner)
                 EndOwnerControl();
 

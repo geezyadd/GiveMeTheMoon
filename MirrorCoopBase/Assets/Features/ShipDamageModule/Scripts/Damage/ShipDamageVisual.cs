@@ -2,12 +2,11 @@ using UnityEngine;
 
 namespace Features.ShipDamageModule.Scripts.Damage {
     // The look of one damaged place on every peer: the damaged meshes and the smoke / sparks while damaged; a repair
-    // plays a short flash and the repair sound hook (its AudioSource plays a clip when one is set).
+    // plays a short flash.
     public sealed class ShipDamageVisual : MonoBehaviour {
         [SerializeField] private GameObject[] _damagedLooks;
         [SerializeField] private ParticleSystem[] _damagedEffects;
         [SerializeField] private ParticleSystem _repairFlash;
-        [SerializeField] private AudioSource _repairSound;
 
         private bool _isDamaged;
 
@@ -38,10 +37,7 @@ namespace Features.ShipDamageModule.Scripts.Damage {
             }
         }
 
-        private void PlayRepair() {
+        private void PlayRepair() =>
             _repairFlash.Play(true);
-            if (_repairSound.clip != null)
-                _repairSound.Play();
-        }
     }
 }
