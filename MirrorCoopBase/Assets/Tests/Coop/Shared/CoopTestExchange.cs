@@ -38,6 +38,12 @@ namespace Tests.Coop.Shared {
             return reports;
         }
 
+        // The host's commands after the first firstIndex ones, in order: a client that takes them one by one.
+        public List<string> ReadCommandsFrom(int firstIndex) {
+            List<string> lines = ReadCompleteLines(_commandsPath);
+            return firstIndex >= lines.Count ? new List<string>() : lines.GetRange(firstIndex, lines.Count - firstIndex);
+        }
+
         public bool HasCommand(string command) =>
             ReadCompleteLines(_commandsPath).Contains(command);
 

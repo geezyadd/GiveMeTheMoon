@@ -16,7 +16,10 @@ namespace Tests.Coop.Client {
 
             GameObject clientObject = new GameObject(OBJECT_NAME);
             Object.DontDestroyOnLoad(clientObject);
-            clientObject.AddComponent<CoopTestClient>().Run(arguments);
+            if (arguments.Scenario == CoopConnectionCommands.SCENARIO)
+                clientObject.AddComponent<CoopConnectionClient>().Run(arguments);
+            else
+                clientObject.AddComponent<CoopTestClient>().Run(arguments);
         }
     }
 }

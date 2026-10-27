@@ -67,3 +67,41 @@ the editor is the host, a Windows development build of the game is the client. O
   loop tests, the coop host test and the client build (no NUnit there); the host side reuses `LoopSmokeSession`,
   `LoopSmokeFlight` and `LoopSmokeShipRunConfigOverride`.
 - [`Docs/COOP-CHECKLIST.md`](../../../../Docs/COOP-CHECKLIST.md) is the manual two-player pass; its "Auto" column says what this test already covers.
+
+## Connection tests (command-driven client)
+Short tests of joining, leaving, crashing and quitting, each its own class in `Host/` with one scenario per test:
+`Invoke-AgentEditor.ps1 -AgentDir . -Command run-tests -Mode PlayMode -Filter 'CoopMidRunJoin|CoopLeaveRejoin|CoopClientCrash|CoopHostQuit|CoopHullLoss|CoopThreePlayer'`
+(about 1-2.5 min per test, about 13 min for all ten, plus the client build when the code changed).
+- **The client** (`Client/CoopConnectionClient`, scenario `connection-commands`, picked in `CoopTestClientStartup`) does
+  nothing by itself: it takes the host's commands one by one in order (`Shared/CoopConnectionCommands`: `join:<name>`,
+  `join-expect-reject:<name>`, `board`, `sit-at-helm`, `sit-at-turret`, `die`, `leave`, `wait-phase:<phase>`,
+  `wait-menu`, `wait-lobby`, `wait-station`, `walk`, `host-and-leave`, `report`, `screenshot:<name>`, `quit`), runs
+  each through the menu, the HUD or the player's real commands (`CoopClientPlayerActions`) and answers it with a report
+  whose step is the command. Every report carries `CoopObservation` (when in game) plus `CoopRunState`
+  (`Shared/CoopRunStateObserver`: hull and its broken modules / open breaches, the stage preset, the local player's
+  hand, seat, gunner, body (kinematic, collisions, hover), blocked controls, standing on ground, walked distance,
+  players seen, scene, hosting) and the errors the client logged so far. A wait times out after 80 s (under the host's
+  90 s) with the session state (network, scenes, game flow) in the message; a failure also saves `client-failure.png`.
+- **The host** (`Host/CoopHostHarness`) hosts on a free port, starts client processes (`CoopClientBot`: one exchange
+  folder per process, so a relaunched or a second client starts clean; its server connection and player are found by
+  the name it authenticated with), sends commands and waits for their reports, starts / launches / lands the run and
+  compares views (`AssertSameView`: `CoopObservationComparison` and, at a station, `CoopRunStateComparison`). All tests
+  of one run share one Play mode session: the first one binds the fast `ShipRunConfig` timings for all, each test's
+  `UnityTearDown` kills its clients and leaves to the menu, and `LoopSmokeSession.EnterLobbyAsHostCoroutine` does not
+  reload Bootstrap when the menu is already up. Client screenshots are copied to `Builds/CoopScreenshots/<test>/`.
+- **What they cover:** `CoopMidRunJoinTest` (first join at the station after loop 1: modules with the light machine
+  gun, the balance after a debug grant, an item dropped on the deck, a damaged hull, a broken turret and an open breach,
+  the field and preset; then one loop together), `CoopLeaveRejoinTest` (leave seated at the turret at a station: the
+  seat is free, back on the deck; leave in flight holding a tool: the tool drops on the deck, a join in flight is
+  turned away with `InFlight`, back at the next station with an empty hand; leave dead: back dead and spectating),
+  `CoopClientCrashTest` (the process is killed in flight at the helm: helm, its station and the throttle free, no
+  player object left; the relaunched client is turned away in flight and comes back at the next station under the same
+  key), `CoopHostQuitTest` (the host quits in flight / at a station: the client is in its menu without errors and can
+  host), `CoopHullLossTest` (the hull is lost with the client on the deck / seated at the turret: free in the lobby, on
+  the ground, walks; walks on the deck in the next run), `CoopThreePlayerTest` (two clients; one leaves in flight and
+  rejoins, the other rides on and sees the crew change). At the run's start players stand at the pad's player spawn
+  beside the ship and walk aboard (`board` stands in for it); a mid-run joiner appears on the deck.
+- **Not covered:** sonar marks for a joiner are compared, but a station never has any (marks die with their flight's
+  contacts), so a late joiner can only get an empty list; a client that spawns the ship in flight cannot happen (a join
+  in flight is turned away). All client processes share one `PlayerPrefs` client id, so a second client gets the key
+  `client:<id>#2` (real players have their own ids).

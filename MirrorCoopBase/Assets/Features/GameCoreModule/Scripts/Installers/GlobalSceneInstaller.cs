@@ -49,7 +49,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             DebugModuleInstaller.Install(Container);
 #endif
             Container.BindInterfacesTo<GameplaySessionLifecycle>().AsSingle();
-            Container.BindInterfacesTo<RejectedJoinMenuSystem>().AsSingle();
+            Container.BindInterfacesTo<SessionDroppedMenuSystem>().AsSingle();
             Container.BindInterfacesTo<FieldNetworkedPrefabSystem>().AsSingle();
         }
     }
