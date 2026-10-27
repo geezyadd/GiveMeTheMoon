@@ -79,7 +79,7 @@ namespace Tests.PlayMode.LoopSmoke {
 
         // The biggest small rock in reach with no other rock near it: the gap between its contact and data spheres is
         // the widest, and no neighbour can knock the ship into it on the way.
-        private bool TryFindSmallRock(Vector3 from, out FieldRockDescription found) {
+        public bool TryFindSmallRock(Vector3 from, out FieldRockDescription found) {
             found = default;
             float biggest = 0f;
             IFieldRockQuery query = SessionQueries.Resolve<IFieldRockQuery>();
@@ -108,7 +108,7 @@ namespace Tests.PlayMode.LoopSmoke {
             _destroyed.Exists(destroyed => destroyed.Id.Equals(id));
 
         // From the point to the nearest hull box, in ship space (m).
-        private static float ReadHullDistance(ShipBase ship, Vector3 point) {
+        public static float ReadHullDistance(ShipBase ship, Vector3 point) {
             Vector3 local = ship.transform.InverseTransformPoint(point);
             float nearest = float.MaxValue;
             foreach (ShipHullBox box in ship.HullVolume.Boxes) {
@@ -124,7 +124,7 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         // From the ship's middle line to the farthest side of its hull boxes (m).
-        private static float ReadHullHalfWidth(ShipBase ship) {
+        public static float ReadHullHalfWidth(ShipBase ship) {
             float halfWidth = 0f;
             foreach (ShipHullBox box in ship.HullVolume.Boxes)
                 halfWidth = Mathf.Max(halfWidth, Mathf.Abs(box.Center.x) + box.HalfExtents.x);

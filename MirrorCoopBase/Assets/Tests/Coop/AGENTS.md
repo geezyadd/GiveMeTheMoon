@@ -66,6 +66,42 @@ the editor is the host, a Windows development build of the game is the client. O
   some landing headings), `ContainsXZ`; `ShipDeckBoarding`) is used by the
   loop tests, the coop host test and the client build (no NUnit there); the host side reuses `LoopSmokeSession`,
   `LoopSmokeFlight` and `LoopSmokeShipRunConfigOverride`.
+## Coop flight tests (the client flies and navigates)
+Four host tests in `Tests/Coop/Host/`, one scenario each, the client doing the action and the host checking it; each
+starts its own client build process with its own `-scenario` and takes about 1.5-2.5 min. **Run one test class per
+Test Runner run** (`-Filter CoopClientThrottleAndHelmTest`, ...): the fast-timings config override needs a fresh
+`ProjectContext`, so a second test in the same play session fails in its SetUp ("ProjectContext exists before the test").
+- `CoopClientThrottleAndHelmTest` (`throttle-and-helm`, `CoopThrottleAndHelmClient`): the client pushes the throttle
+  handle past the mark to take off, pulls it to Stop in the cruise (the ship stops, stays still, stands at the same pose
+  from the destination on both peers within 0.25 m) and pushes it to Full; at the next station it sits at the helm,
+  holds D then A in the cruise (the ship turns right, then back left), tries the throttle from the seat (the aim does
+  not offer it, E with the mouse forward takes nothing, the server never gives it the handle), reports the flying ship's
+  pose (it must lie on the host's recorded track, `CoopShipPoseTrack`: a client shows the ship a moment behind the
+  server) and stands up with a jump (the helm is free). The lever position is compared at every step.
+- `CoopClientDeckItemsTest` (`deck-items`, `CoopDeckItemsClient`): the host drops an item on the deck by hand, the
+  client drops a station item on the deck and carries another aboard (`Tests.Shared.ShipDeckItemHandling`: the real
+  aim, interact, release), lets it go in the cruise and walks on; after a hard turn (they rode along on the host) and
+  after the landing (rested) every item is over the deck on both peers at the same height above the deck surface
+  (5 cm), its lowest collider point within 0.35 m of the deck on the host (a module's box collider may cover only its
+  upper part). The client drops its items on the right side, 1.5 m sternward of the host's: the throttle and the helm
+  stand on the left towards the bow, the engines at the stern corners, and an item lands on them.
+- `CoopClientNavigationViewTest` (`navigation-view`, `CoopNavigationViewClient`): the client takes the radar's sonar
+  console, pings and marks the station and the farthest rock echo (beyond 300 m); the host has the same marks at the
+  same positions, over its own sonar contacts, and shows a HUD marker for each. The client's haze has the host's clear
+  and hidden distances; its debug "Haze" toggle and "Show station" toggle change only the client's view. Client
+  screenshots: `client-sonar-marks`, `client-haze-on`, `client-haze-off`, `client-station-marker`.
+- `CoopClientRocksAndHullLossTest` (`rocks-and-hull-loss`, `CoopRocksAndHullLossClient`): with the client riding the
+  host flies into a small and a large rock (`LoopSmokeRockImpactCheck`); the client gets as many impacts as the host,
+  each one shakes its view (`CameraShakeModel`), and it sees the same hull, broken modules and breaches. A near pass
+  inside a small rock's data sphere and clear of its contact sphere gives no impact on either peer and no new damage.
+  Then the hull is destroyed in that cruise: host and client are back in the lobby, free of the ship and walking
+  (`Tests.Shared.PlayerReleaseProbe`). Client screenshot: `client-rock-impact`.
+- Shared parts: `CoopFlightHostHarness` (host, client process, reports, commands, finish), `CoopScenarioClientBot` (the client's base:
+  join, board, wait for commands, report, screenshots, finish), `CoopClientScenarios` (scenario name → bot), step and
+  command names in `CoopFlightSteps`, the extra observed fields in `CoopObservation.Flight.cs` / `CoopFlightObserver`.
+  The client's screenshots are copied to `Builds/CoopScreenshots/<test>/` (git-ignored) before a passed run's folder is
+  deleted.
+
 - [`Docs/COOP-CHECKLIST.md`](../../../../Docs/COOP-CHECKLIST.md) is the manual two-player pass; its "Auto" column says what this test already covers.
 
 ## Connection tests (command-driven client)

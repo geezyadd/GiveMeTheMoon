@@ -25,6 +25,9 @@ namespace Tests.Shared {
         private const float PUSH_TIMEOUT_SECONDS = 20f;
         // Mouse look per frame while pushing (pixels).
         private const float PUSH_LOOK = 12f;
+        private const float SERVER_CATCH_UP_SECONDS = 0.5f;
+
+        private readonly WaitForSeconds _serverCatchUp = new WaitForSeconds(SERVER_CATCH_UP_SECONDS);
 
         private readonly ShipBase _ship;
 
@@ -56,7 +59,8 @@ namespace Tests.Shared {
                     yield break;
 
                 if (Interaction.Target.Usable != handle) {
-                    Failure = "the throttle handle is not under the crosshair";
+                    InteractableBase lookedAt = Interaction.Target.LookedAt;
+                    Failure = $"the throttle handle is not under the crosshair (aim on '{(lookedAt != null ? lookedAt.name : "nothing")}', the player at ship-local {_ship.transform.InverseTransformPoint(Player.transform.position)}, the handle at {_ship.transform.InverseTransformPoint(handle.transform.position)})";
                     yield break;
                 }
 
@@ -86,15 +90,20 @@ namespace Tests.Shared {
             handle.TryGetLocalPosition(out float position) ? position : float.NaN;
 
         private IEnumerator AimAtHandleCoroutine(ShipThrottleInteractable handle) {
-            Vector3 target = handle.GetComponent<Collider>().bounds.center;
-            if (Player.GetComponent<ShipRider>().IsRiding == false)
-                StandBehindHandle(target);
+            Collider grip = handle.GetComponent<Collider>();
+            if (Player.GetComponent<ShipRider>().IsRiding == false) {
+                StandBehindHandle(grip.bounds.center);
+                // A client's take is checked against its position on the server, which arrives a moment later.
+                yield return _serverCatchUp;
+            }
 
             Camera camera = SessionQueries.Resolve<IGameCameraService>().OutputCamera;
             float deadline = Time.realtimeSinceStartup + AIM_TIMEOUT_SECONDS;
             while (true) {
                 yield return null;
                 Transform view = camera.transform;
+                // Read every frame: in flight the handle moves on with the ship.
+                Vector3 target = grip.bounds.center;
                 float error = Vector3.SignedAngle(view.forward, target - view.position, view.right);
                 if (Mathf.Abs(error) < AIM_TOLERANCE_DEGREES)
                     break;
