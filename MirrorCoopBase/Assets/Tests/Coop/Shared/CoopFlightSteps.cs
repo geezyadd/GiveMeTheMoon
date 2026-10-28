@@ -7,6 +7,7 @@ namespace Tests.Coop.Shared {
         public const string SCENARIO_DECK_ITEMS = "deck-items";
         public const string SCENARIO_NAVIGATION_VIEW = "navigation-view";
         public const string SCENARIO_ROCKS_AND_HULL_LOSS = "rocks-and-hull-loss";
+        public const string SCENARIO_FIELD_AGENTS = "field-agents";
 
         // Throttle and helm.
         public const string COMMAND_REPORT_STOPPED = "report-stopped";
@@ -53,6 +54,11 @@ namespace Tests.Coop.Shared {
         public const string WATCHING = "watching";
         public const string IMPACTS = "impacts";
         public const string FREE_IN_LOBBY = "free-in-lobby";
+
+        // Field agents: the host's debug flock, its size the debug window's default.
+        public const string COMMAND_REPORT_AGENTS = "report-agents";
+        public const string AGENTS_SEEN = "agents-seen";
+        public const int FIELD_AGENT_COUNT = 20;
 
         public const string CLIENT_SCREENSHOT_PREFIX = "client-";
         public const string SCREENSHOT_EXTENSION = ".png";

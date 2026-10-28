@@ -1,6 +1,7 @@
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
+using Features.FieldAgentModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Structures;
 using Features.GrabModule.Scripts;
@@ -58,6 +59,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<FieldRockDurabilityConfiguration>(Address.Configurations.FieldRockDurabilityConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FieldTargetCatalog>(Address.Configurations.FieldTargetCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FieldTargetConfiguration>(Address.Configurations.FieldTargetConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<FieldAgentConfiguration>(Address.Configurations.FieldAgentConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<StagePresetCatalog>(Address.Configurations.StagePresetCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WeaponCatalog>(Address.Configurations.WeaponCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WeaponHitRuleConfiguration>(Address.Configurations.WeaponHitRuleConfiguration_Default).AsSingle();

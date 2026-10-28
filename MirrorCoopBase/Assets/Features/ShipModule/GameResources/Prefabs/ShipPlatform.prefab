@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1000000004}
   - component: {fileID: 1000000005}
   - component: {fileID: 1000000006}
+  - component: {fileID: 3659761306970198438}
   m_Layer: 0
   m_Name: ShipPlatform
   m_TagString: Untagged
@@ -83,6 +84,7 @@ MonoBehaviour:
   _statsSync: {fileID: 3318842957701156421}
   _hullVolume: {fileID: 1000000006}
   _conditionSync: {fileID: 824932481742100716}
+  _deckNavMesh: {fileID: 3659761306970198438}
 --- !u!54 &1000000004
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -141,6 +143,38 @@ MonoBehaviour:
     HalfExtents: {x: 4.9, y: 1.75, z: 2.4}
   - Center: {x: 0, y: 0.75, z: 5.4}
     HalfExtents: {x: 2.1, y: 1.75, z: 2.4}
+--- !u!114 &3659761306970198438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000000001}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SerializedVersion: 0
+  m_AgentTypeID: 0
+  m_CollectObjects: 2
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 2, z: 0}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 65
+  m_UseGeometry: 1
+  m_DefaultArea: 0
+  m_GenerateLinks: 0
+  m_IgnoreNavMeshAgent: 1
+  m_IgnoreNavMeshObstacle: 1
+  m_OverrideTileSize: 0
+  m_TileSize: 256
+  m_OverrideVoxelSize: 0
+  m_VoxelSize: 0.16666667
+  m_MinRegionArea: 2
+  m_NavMeshData: {fileID: 23800000, guid: 1000a7f29ff382a44a25b688069b86ec, type: 2}
+  m_BuildHeightMesh: 0
 --- !u!1 &2000000001
 GameObject:
   m_ObjectHideFlags: 0
@@ -1006,6 +1040,7 @@ GameObject:
   - component: {fileID: 6000000002}
   - component: {fileID: 6000000003}
   - component: {fileID: 6000000004}
+  - component: {fileID: 5734638239298655557}
   m_Layer: 0
   m_Name: RideVolume
   m_TagString: Untagged
@@ -1062,6 +1097,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _ship: {fileID: 1000000003}
+--- !u!114 &5734638239298655557
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SerializedVersion: 0
+  m_OverrideArea: 0
+  m_Area: 0
+  m_OverrideGenerateLinks: 0
+  m_GenerateLinks: 0
+  m_IgnoreFromBuild: 1
+  m_ApplyToChildren: 1
+  m_AffectedAgents: ffffffff
 --- !u!1 &7100000001
 GameObject:
   m_ObjectHideFlags: 0
@@ -11928,6 +11983,7 @@ GameObject:
   - component: {fileID: 3318842957701156421}
   - component: {fileID: 7916488841181173115}
   - component: {fileID: 824932481742100716}
+  - component: {fileID: 198381502159145907}
   m_Layer: 0
   m_Name: PoseSync
   m_TagString: Untagged
@@ -12039,6 +12095,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 21bff73c7c6a75e4c859df97508dde89, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+--- !u!114 &198381502159145907
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7916488841181173114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dd696a021294c54e9db3a280292ca3a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   syncDirection: 0

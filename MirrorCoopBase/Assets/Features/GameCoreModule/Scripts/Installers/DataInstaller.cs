@@ -3,6 +3,8 @@ using Features.CameraModule.Scripts.Shake;
 using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.CrewInviteModule.Data.Generated;
+using Features.FieldAgentModule.Scripts.Agents;
+using Features.FieldAgentModule.Scripts.Network.Generated;
 using Features.FlightFieldModule.Scripts.Decor;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
@@ -77,6 +79,9 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindInterfacesAndSelfTo<FieldTargetCountScaleModel>().AsSingle();
             Container.BindInterfacesAndSelfTo<CrewWalletBindingModel>().AsSingle();
             Container.Bind<FieldDecorSceneModel>().AsSingle();
+            FieldAgentsModelInstaller.Install(Container);
+            Container.Bind<FieldAgentServerModel>().AsSingle();
+            Container.Bind<FieldAgentDiagnosticsModel>().AsSingle();
             SonarConsoleModelInstaller.Install(Container);
             Container.Bind<SonarConsoleBindingModel>().AsSingle();
             Container.Bind<SonarScopeModel>().AsSingle();

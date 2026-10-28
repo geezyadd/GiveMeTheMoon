@@ -67,10 +67,14 @@ the editor is the host, a Windows development build of the game is the client. O
   loop tests, the coop host test and the client build (no NUnit there); the host side reuses `LoopSmokeSession`,
   `LoopSmokeFlight` and `LoopSmokeShipRunConfigOverride`.
 ## Coop flight tests (the client flies and navigates)
-Four host tests in `Tests/Coop/Host/`, one scenario each, the client doing the action and the host checking it; each
+Five host tests in `Tests/Coop/Host/`, one scenario each, the client doing the action and the host checking it; each
 starts its own client build process with its own `-scenario` and takes about 1.5-2.5 min. **Run one test class per
 Test Runner run** (`-Filter CoopClientThrottleAndHelmTest`, ...): the fast-timings config override needs a fresh
 `ProjectContext`, so a second test in the same play session fails in its SetUp ("ProjectContext exists before the test").
+- `CoopClientFieldAgentsTest` (`field-agents`, `CoopFieldAgentsClient`): the host spawns the debug flock of field agents
+  in a slow cruise through its debug window; once it orbits the ship, the client reports every agent it shows with its
+  position from the destination and its network time (`CoopFieldAgentView`); the host compares it with its own view at
+  the same network time (recorded every frame): the same ids, every agent within 2 m (0.13 m measured on 2026-10-28).
 - `CoopClientThrottleAndHelmTest` (`throttle-and-helm`, `CoopThrottleAndHelmClient`): the client pushes the throttle
   handle past the mark to take off, pulls it to Stop in the cruise (the ship stops, stays still, stands at the same pose
   from the destination on both peers within 0.25 m) and pushes it to Full; at the next station it sits at the helm,
