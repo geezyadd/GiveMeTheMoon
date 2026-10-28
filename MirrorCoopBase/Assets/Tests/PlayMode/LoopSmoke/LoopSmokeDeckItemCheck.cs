@@ -99,22 +99,8 @@ namespace Tests.PlayMode.LoopSmoke {
 
         // Free items with a box collider (tools, modules), nearest to the deck's middle first: drops of earlier stations lie
         // far behind the ship, and some of this station's drops lie under its deck, out of reach.
-        public static Grabbable[] FindLooseBoxItems(ShipBase ship) {
-            List<Grabbable> items = new List<Grabbable>();
-            List<float> distances = new List<float>();
-            Vector3 deckMiddle = ship.DeckGeometry.Bounds.center;
-            foreach (Grabbable item in Object.FindObjectsByType<Grabbable>(FindObjectsSortMode.None)) {
-                if (IsLooseBoxItem(item) == false)
-                    continue;
-
-                items.Add(item);
-                distances.Add((item.transform.position - deckMiddle).sqrMagnitude);
-            }
-
-            Grabbable[] sorted = items.ToArray();
-            Array.Sort(distances.ToArray(), sorted);
-            return sorted;
-        }
+        public static Grabbable[] FindLooseBoxItems(ShipBase ship) =>
+            ShipDeckItemHandling.FindLooseBoxItems(ship);
 
         // At the station, as a player does: takes one of the items through the real aim, walks onto the deck beside its
         // middle and lets go; the item falls and comes to rest on the deck under physics.
@@ -142,7 +128,7 @@ namespace Tests.PlayMode.LoopSmoke {
             _carriedItem = item;
 
         private static bool IsLooseBoxItem(Grabbable item) =>
-            item != null && item.CanBeGrabbed && Box(item) != null;
+            ShipDeckItemHandling.IsLooseBoxItem(item);
 
         private static BoxCollider Box(Grabbable item) =>
             item.GetComponentInChildren<BoxCollider>();

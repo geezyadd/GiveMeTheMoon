@@ -35,6 +35,8 @@ namespace Tests.Coop.Shared {
         // The loose box items lying over the deck, by net id, and each one's gap above the deck surface in ship space.
         public uint[] DeckItemIds;
         public float[] DeckItemGaps;
+        // Filled only by the connection tests (CoopRunStateObserver).
+        public CoopRunState RunState;
         public string[] Errors;
 
         public string Describe() =>

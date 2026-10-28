@@ -15,6 +15,7 @@ using NUnit.Framework;
 using Tests.Shared;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Zenject;
 using Object = UnityEngine.Object;
 
 namespace Tests.PlayMode.LoopSmoke {
@@ -41,7 +42,9 @@ namespace Tests.PlayMode.LoopSmoke {
 
         // prepareHost runs in the menu right before Host is clicked: the coop test sets its port and player name there.
         public IEnumerator EnterLobbyAsHostCoroutine(Action prepareHost = null) {
-            SceneManager.LoadScene(SceneNames.Bootstrap);
+            // A test after another one in the same Play mode session starts from the menu that one left.
+            if (ProjectContext.HasInstance == false || SessionQueries.IsBackInMenu() == false)
+                SceneManager.LoadScene(SceneNames.Bootstrap);
 
             yield return WaitForCoroutine(SessionQueries.IsMenuReady, MENU_TIMEOUT_SECONDS, "the menu with a bound Host button");
             prepareHost?.Invoke();

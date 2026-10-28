@@ -59,6 +59,7 @@ namespace Features.NetworkModelModule.Scripts {
                 _bound.SetAvailable(false);
 
             _serverBound = false;
+            _bound = null;
         }
 
         public override void OnStopClient() {
@@ -69,7 +70,10 @@ namespace Features.NetworkModelModule.Scripts {
             if (_key.IsEmpty == false)
                 ReleaseClient(_key, isLocalPlayer);
 
-            _bound = null;
+            // On the host Mirror stops the client side first: the server side still writes its model in OnStopServer
+            // (a player's hand drops its item there), so the server binding stays until then.
+            if (_serverBound == false)
+                _bound = null;
         }
 
         protected abstract TModel BindServer(PlayerKey key);

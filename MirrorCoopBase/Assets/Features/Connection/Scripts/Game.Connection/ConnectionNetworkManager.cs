@@ -279,12 +279,17 @@ namespace Game.Connection
             Transport.active = transport;
         }
 
-        // Fire-and-forget entry for network callbacks; a failed scene unload would otherwise be lost silently.
+        // Fire-and-forget entry for network callbacks (the session dropped without the local Leave); a failed scene
+        // unload would otherwise be lost silently. A Leave already on its way to the menu raises no drop.
         public async void StopSessionAndReturnToMenu()
         {
+            if (returningToMenu)
+                return;
+
             try
             {
                 await StopSessionToMenuAsync();
+                events.RaiseSessionDropped();
             }
             catch (Exception exception)
             {

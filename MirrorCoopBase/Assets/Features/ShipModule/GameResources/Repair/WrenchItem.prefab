@@ -586,7 +586,7 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  target: {fileID: 8410579984047903521, guid: 7d0f24b5e6037923d4f50617283a4b5c, type: 3}
+  target: {fileID: 5526967621931809454}
   syncPosition: 1
   syncRotation: 1
   syncScale: 0
