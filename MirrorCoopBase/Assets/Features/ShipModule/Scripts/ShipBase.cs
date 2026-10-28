@@ -6,7 +6,9 @@ using Features.ShipModule.Scripts.Hull;
 using Features.ShipModule.Scripts.Throttle;
 using Game.Connection;
 using Mirror;
+using Unity.AI.Navigation;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Assertions;
 using Zenject;
 
@@ -25,6 +27,8 @@ namespace Features.ShipModule.Scripts {
         [SerializeField] private ShipStatsSync _statsSync;
         [SerializeField] private ShipHullVolume _hullVolume;
         [SerializeField] private ShipConditionSync _conditionSync;
+        // Baked deck NavMesh in ship space; the surface stays off, the field agents' server places its data itself.
+        [SerializeField] private NavMeshSurface _deckNavMesh;
 
         private ShipFlightSettings _flightSettings;
         private ShipAccumulativeStatsConfiguration _statsConfiguration;
@@ -67,6 +71,7 @@ namespace Features.ShipModule.Scripts {
         internal IShipDeckCargo Cargo => _cargo;
         internal ShipPoseSync PoseSync => _poseSync;
         public ShipHullVolume HullVolume => _hullVolume;
+        public NavMeshData DeckNavMeshData => _deckNavMesh.navMeshData;
         internal ShipConditionSync ConditionSync => _conditionSync;
         public IShipKnockback Knockback => _flightControl;
         internal ShipThrottleLever Throttle => _throttle;

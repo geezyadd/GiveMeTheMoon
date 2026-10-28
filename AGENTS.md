@@ -116,7 +116,7 @@ types.
   4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`,
      `Features.HandWeaponModule`.
   5. `Features.ShipImpactModule`, `Features.ShipDamageModule`, `Features.TurretModule`, `Features.PlayerLifeModule`,
-     `Features.LobbyModule` (Ship, Grab, GameFlow, Mvp, Connection).
+     `Features.LobbyModule` (Ship, Grab, GameFlow, Mvp, Connection), `Features.FieldAgentModule`.
   6. `Features.StagePresetModule`, `Features.ShopModule`, `Features.TooltipModule`, `Features.CrewInviteModule`,
      `Features.SonarModule`.
   7. Composition root: `Features.GameCoreModule`, `Features.BootstrapersModule` (Contracts, GameFlow, SceneLoader).
@@ -131,6 +131,7 @@ types.
 | [ShipDamageModule](MirrorCoopBase/Assets/Features/ShipDamageModule/AGENTS.md) | module breakdowns, hull breaches, the leak, repair with the wrench and the hammer |
 | [TurretModule](MirrorCoopBase/Assets/Features/TurretModule/AGENTS.md) | the turret's seat station (`ShipTurretStation`) and the turret gun tiers |
 | [FlightFieldModule](MirrorCoopBase/Assets/Features/FlightFieldModule/AGENTS.md) | the flight field: generation, breakable rocks, target balloons |
+| [FieldAgentModule](MirrorCoopBase/Assets/Features/FieldAgentModule/AGENTS.md) | flying field agents (base of bugs and future creatures): server steering round rocks, deck walking on the ship's NavMesh, hidden spawn, one batched synced model, pooled views |
 | [WeaponModule](MirrorCoopBase/Assets/Features/WeaponModule/AGENTS.md) | the weapon core, its network path, the client feel |
 | [HandWeaponModule](MirrorCoopBase/Assets/Features/HandWeaponModule/AGENTS.md) | weapons carried in the hand: the pistol |
 | [SonarModule](MirrorCoopBase/Assets/Features/SonarModule/AGENTS.md) | the navigator's sonar console on the radar |
