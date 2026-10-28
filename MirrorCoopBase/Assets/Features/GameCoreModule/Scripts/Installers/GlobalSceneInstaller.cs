@@ -4,6 +4,7 @@ using Features.CrewInviteModule.Scripts.Installers;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using Features.DebugModule.Scripts.Installers;
 #endif
+using Features.BugModule.Scripts;
 using Features.FieldAgentModule.Scripts;
 using Features.FlightFieldModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.Installers;
@@ -36,6 +37,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             ShipDamageModuleInstaller.Install(Container);
             FlightFieldModuleInstaller.Install(Container);
             FieldAgentModuleInstaller.Install(Container);
+            BugModuleInstaller.Install(Container);
             WeaponModuleInstaller.Install(Container);
             PlayerLifeModuleInstaller.Install(Container);
             PlayerProfileModuleInstaller.Install(Container);

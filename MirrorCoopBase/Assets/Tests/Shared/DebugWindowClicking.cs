@@ -12,7 +12,8 @@ namespace Tests.Shared {
         // Null while every step worked; otherwise what went wrong, and the click stopped there.
         public string Failure { get; private set; }
 
-        public IEnumerator ClickCoroutine(string section, string label) {
+        // value: typed into the row's number field first (an action with a value), none to keep its default.
+        public IEnumerator ClickCoroutine(string section, string label, string value = null) {
             Failure = null;
             DebugPanelModel panel = SessionQueries.Resolve<DebugPanelModel>();
             DebugToggleView toggle = Object.FindAnyObjectByType<DebugToggleView>();
@@ -28,7 +29,7 @@ namespace Tests.Shared {
                 yield break;
             }
 
-            ClickRow(section, label);
+            ClickRow(section, label, value);
             yield return null;
             toggle.DebugButton.onClick.Invoke();
             yield return null;
@@ -36,7 +37,7 @@ namespace Tests.Shared {
                 Failure = "the corner button did not close the debug panel";
         }
 
-        private void ClickRow(string section, string label) {
+        private void ClickRow(string section, string label, string value) {
             if (SessionQueries.Resolve<DebugActionsModel>().TryFind(section, label, out DebugActionDefinition action) == false) {
                 Failure = $"no \"{label}\" debug action registered in {section}";
                 return;
@@ -51,6 +52,9 @@ namespace Tests.Shared {
                 Failure = $"\"{label}\" is disabled";
                 return;
             }
+
+            if (value != null)
+                row.DebugValueField.text = value;
 
             row.DebugButton.onClick.Invoke();
         }

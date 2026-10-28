@@ -104,7 +104,7 @@ the gap between the item box's lowest corner and the deck surface under it in sh
 within 5 cm. `LoopSmokeStationMarkerCheck` (run 2 cruise 5): the debug window's "Show station: off" clicked as a
 player does turns the own station marker on, the level camera turned toward the station through the look input shows
 it over the station with its distance, turned away on the screen's edge, and "Show station: on" takes it off again. The test timeout is 240 s (a run takes about 170 s). The shared steps live in helpers both loop tests use:
-`LoopSmokeSession` (menu, Host, lobby, Start, all dead -> lobby, Leave; waits record the run phases),
+`LoopSmokeSession` (menu, Host, lobby, Start (it switches the random bug groups off, `BugRandomSpawnModel`, so no bug gnaws the ship in a check; the bug tests send their own), all dead -> lobby, Leave; waits record the run phases),
 `LoopSmokeFlight` (engines, boarding, the launch (the throttle lever at Full through the debug window's "Throttle = N",
 `IShipThrottleDebug`; a check can launch the next flight its own way with `LaunchNextFlightBy`), the phases of a loop with the field checks and the checks after
 landing, messages start with "Loop N:"; at the cruise start its pilot faces the ship to the destination once through

@@ -1,0 +1,30 @@
+{
+    "name": "Features.BugModule.Editor.Tests",
+    "rootNamespace": "Features.BugModule.Scripts.Editor.Tests",
+    "references": [
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3",
+        "GUID:2a5a18cc854481d4688d8c647af35316",
+        "GUID:138237ba762f4d85a503bbac4d4913e6",
+        "GUID:fa5e19f70cae49a1a3443dcc15f65118",
+        "GUID:a637b2d2f1cb470a8bea9746a87397c0",
+        "GUID:ec7e8f1783e34cd7a6ba8441101f8f7e",
+        "GUID:7c3e1a9b4d2f4e6a8b0c1d2e3f4a5b6c",
+        "GUID:3b5eff428eda466ebde9ed0aa64229c5"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

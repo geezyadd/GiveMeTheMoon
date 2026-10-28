@@ -8,6 +8,7 @@ namespace Tests.Coop.Shared {
         public const string SCENARIO_NAVIGATION_VIEW = "navigation-view";
         public const string SCENARIO_ROCKS_AND_HULL_LOSS = "rocks-and-hull-loss";
         public const string SCENARIO_FIELD_AGENTS = "field-agents";
+        public const string SCENARIO_BUGS = "bugs";
 
         // Throttle and helm.
         public const string COMMAND_REPORT_STOPPED = "report-stopped";
@@ -59,6 +60,11 @@ namespace Tests.Coop.Shared {
         public const string COMMAND_REPORT_AGENTS = "report-agents";
         public const string AGENTS_SEEN = "agents-seen";
         public const int FIELD_AGENT_COUNT = 20;
+
+        // Bugs: the host's debug group, a gnawing bug the client shoots with the pistol the host gave it.
+        public const string COMMAND_SHOOT_BUG = "shoot-bug";
+        public const string BUG_SHOT = "bug-shot";
+        public const int BUG_COUNT = 3;
 
         public const string CLIENT_SCREENSHOT_PREFIX = "client-";
         public const string SCREENSHOT_EXTENSION = ".png";

@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Features.BugModule.Scripts.Spawn;
 using Features.GameCoreModule.Contracts;
 using Features.LobbyModule.Scripts;
 using Features.MenuModule.Scripts;
@@ -54,6 +55,9 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         public IEnumerator StartGameCoroutine() {
+            // A rare random bug group would gnaw the hull and break modules in the middle of a check; the bug tests
+            // send their own groups.
+            SessionQueries.Resolve<BugRandomSpawnModel>().SetEnabled(false);
             Object.FindAnyObjectByType<StartGameViewBase>().OnStartClicked.Invoke();
             yield return WaitForCoroutine(IsGameReady, GAME_TIMEOUT_SECONDS, "GameScene with the ship, the local player and the Build phase");
         }

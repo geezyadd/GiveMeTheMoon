@@ -66,7 +66,7 @@ namespace Features.FieldAgentModule.Scripts.Client {
 
                 Vector3 position = pose.IsInShipSpace ? ship.transform.TransformPoint(pose.Position) : pose.Position;
                 Quaternion rotation = pose.IsInShipSpace ? ship.transform.rotation * pose.Rotation : pose.Rotation;
-                TakeOrReuseView(pose).ApplyPose(position, rotation, deltaTime, time);
+                TakeOrReuseView(pose).ApplyPose(position, rotation, pose.Mode, deltaTime, time);
                 _shown.Add(pose.Id);
             }
         }

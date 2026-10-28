@@ -50,6 +50,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5d7b8570650998f4fb43a308b561e8bc
+    m_Address: BugConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 64476fc0093d44e0891fb667bef579bc
     m_Address: GrabConfiguration_Default
     m_ReadOnly: 0

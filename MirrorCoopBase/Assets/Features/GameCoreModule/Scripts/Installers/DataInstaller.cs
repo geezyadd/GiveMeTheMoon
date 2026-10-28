@@ -1,3 +1,5 @@
+using Features.BugModule.Scripts.Brain;
+using Features.BugModule.Scripts.Spawn;
 using Features.CameraModule.Scripts.Models;
 using Features.CameraModule.Scripts.Shake;
 using Features.PlayerLifeModule.Scripts.Spectator;
@@ -86,6 +88,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<FieldAgentServerModel>().AsSingle();
             Container.Bind<FieldAgentDiagnosticsModel>().AsSingle();
             Container.BindInterfacesAndSelfTo<FieldAgentShownModel>().AsSingle();
+            Container.Bind<BugServerModel>().AsSingle();
+            Container.Bind<BugRandomSpawnModel>().AsSingle();
             SonarConsoleModelInstaller.Install(Container);
             Container.Bind<SonarConsoleBindingModel>().AsSingle();
             Container.Bind<SonarScopeModel>().AsSingle();

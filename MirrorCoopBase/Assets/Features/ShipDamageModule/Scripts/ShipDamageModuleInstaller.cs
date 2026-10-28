@@ -13,6 +13,7 @@ namespace Features.ShipDamageModule.Scripts {
             Container.BindInterfacesTo<ShipDamageRule>().AsSingle();
             Container.BindInterfacesTo<ShipDamageRandom>().AsSingle();
             Container.BindInterfacesTo<ShipConditionService>().AsSingle();
+            Container.BindInterfacesTo<ShipDamageCandidateSource>().AsSingle();
             Container.BindInterfacesTo<ShipImpactDamageService>().AsSingle();
             Container.BindInterfacesTo<ShipLandingRepair>().AsSingle();
             Container.BindInterfacesTo<ShipImpactDamageSystem>().AsSingle();

@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 991ddf8e150ee6d4b860f5c5aeed896e, type: 3}
+  m_Name: BugConfiguration_Default
+  m_EditorClassIdentifier: 
+  _profile: {fileID: 11400000, guid: db6ebb4d60f4d39479ee740fbf0a9afa, type: 2}
+  _sonarKind: {fileID: 11400000, guid: 71d4dbf7791a43249aa861f027ce4dc2, type: 2}
+  _deathEffectPrefab: {fileID: 2240213960970521061, guid: 3716f21270c58a54aac3c5bd0d754ec0, type: 3}
+  _maxHealth: 10
+  _approachRingMeters: 22
+  _approachHeightMeters: 5
+  _approachArriveMeters: 4
+  _approachSpreadDegrees: 200
+  _dartCycleSeconds: 1.5
+  _freezeShare: 0.3
+  _freezeSpeedShare: 0.08
+  _dashSidewaysMeters: 5
+  _loopMeters: 2.5
+  _loopSeconds: 0.9
+  _dartLookAheadMeters: 10
+  _calmNearGoalMeters: 6
+  _biteSeconds: 2
+  _biteHull: 0.75
+  _biteStrength: 0.05
+  _gnawArriveMeters: 1.2
+  _cargoGrabMeters: 1.5
+  _carrySpeedShare: 0.6
+  _carryAwayMeters: 400
+  _carryArriveMeters: 10
+  _fleeMeters: 300
+  _isRandomSpawnEnabled: 1
+  _randomSpawnIntervalSeconds: 60
+  _randomSpawnChance: 0.1
+  _cargoSpawnChanceMultiplier: 3
+  _groupMinSize: 3
+  _groupMaxSize: 5
+  _debugGroupSize: 4
