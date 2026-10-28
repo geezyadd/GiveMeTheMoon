@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Features.CharacterMovableModule.Scripts;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.NetworkModelModule.Scripts;
+using Features.ShipModule.Scripts.Overboard;
 using Mirror;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using Features.ShipModule.Scripts.Debug;
@@ -126,8 +127,12 @@ namespace Features.ShipModule.Scripts {
         internal void ReleaseAllOnLeave() {
             _hasLeft = true;
             for (int i = _riders.Count - 1; i >= 0; i--) {
-                if (_riders[i] != null)
-                    _riders[i].ReleaseFromLeavingShip();
+                if (_riders[i] == null)
+                    continue;
+
+                _riders[i].ReleaseFromLeavingShip();
+                if (_riders[i].TryGetComponent(out ShipOverboardRider overboardRider))
+                    overboardRider.EndOnShipLeave();
             }
 
             _riders.Clear();

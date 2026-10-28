@@ -76,6 +76,8 @@ namespace Features.ShipModule.Scripts {
         internal ShipRideDiagnostics RideDiagnostics { get; } = new ShipRideDiagnostics();
 #endif
         public bool IsSeated => _seated;
+        // What the server knows: the owner's ride or a seat. The server's own binding may lag the owner's.
+        internal bool HasSyncedRide => _syncedRideShip != null || _seated;
         private bool IsFollowingSeatPoint => _seated && _seatPoint != null;
         public PlayerKey Key => new PlayerKey(_playerKey);
 

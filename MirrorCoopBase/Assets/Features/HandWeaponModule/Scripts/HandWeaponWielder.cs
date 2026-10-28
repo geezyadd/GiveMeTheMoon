@@ -1,5 +1,6 @@
 using Features.CameraModule.Scripts.Models;
 using Features.CameraModule.Scripts.Services;
+using Features.CharacterMovableModule.Scripts.Drift;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts.Generated;
@@ -17,10 +18,12 @@ namespace Features.HandWeaponModule.Scripts {
     // the server the player holds that weapon, so its hit reports are accepted; on the owner's peer the fire button is
     // the trigger, the shot goes from the muzzle to where the crosshair points and the HUD shows the cooldown; every
     // other peer replays the shots from the synced trigger and aim. On every peer the weapon is an anchor of its
-    // player (a rope starts there). Everything ends when the item leaves the hand or is gone.
+    // player (a rope starts there). A shot pushes its owner back while drifting overboard. Everything ends when the item
+    // leaves the hand or is gone.
     public sealed class HandWeaponWielder : MonoBehaviour {
         [SerializeField] private GrabController _grab;
         [SerializeField] private WeaponHolderSync _weaponSync;
+        [SerializeField] private CharacterDrift _drift;
 
         private IWeaponShooterFactory _weaponShooterFactory;
         private IWeaponCatalogIndexService _weaponCatalogIndexService;
@@ -86,10 +89,14 @@ namespace Features.HandWeaponModule.Scripts {
                 AdvanceReplay();
 
             _poseDriver.Advance();
-            _shooter.Advance(_holder, deltaTime);
+            int shots = _shooter.Advance(_holder, deltaTime);
             _item.Feel.Advance(deltaTime);
-            if (_isOwner)
-                _heldWeaponReadinessModel.SetReadiness(_shooter.Readiness);
+            if (_isOwner == false)
+                return;
+
+            _heldWeaponReadinessModel.SetReadiness(_shooter.Readiness);
+            if (shots > 0)
+                _drift.OwnerPush(-_holder.Aim.Direction * (_item.Definition.DriftRecoilMetersPerSecond * shots));
         }
 
         private void BeginHolding(HandWeaponItem item) {

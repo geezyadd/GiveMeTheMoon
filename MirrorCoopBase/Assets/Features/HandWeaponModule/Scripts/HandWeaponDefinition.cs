@@ -21,6 +21,8 @@ namespace Features.HandWeaponModule.Scripts {
         [SerializeField] private Vector3 _viewOffset;
         [Tooltip("Where the weapon sits from the holder's arm point when seen in the hand (third person, other players).")]
         [SerializeField] private Vector3 _handOffset;
+        [Tooltip("A player drifting overboard is pushed back this fast by each shot, meters per second (a way to steer).")]
+        [SerializeField, Min(0f)] private float _driftRecoilMetersPerSecond;
 
         public string Id => _id;
         public string DisplayName => _displayName;
@@ -33,5 +35,6 @@ namespace Features.HandWeaponModule.Scripts {
         public LayerMask CrosshairLayers => _crosshairLayers;
         public Vector3 ViewOffset => _viewOffset;
         public Vector3 HandOffset => _handOffset;
+        public float DriftRecoilMetersPerSecond => _driftRecoilMetersPerSecond;
     }
 }
