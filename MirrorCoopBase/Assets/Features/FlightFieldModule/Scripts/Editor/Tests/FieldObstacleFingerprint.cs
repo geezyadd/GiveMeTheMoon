@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // A stable FNV-1a hash of everything a generated field holds: the seed and profile, every cell, the placements,
-    // the routes and the target balloons. Floats go in by their bits, so any change of the generation changes it.
+    // and the routes. Floats go in by their bits, so any change of the generation changes it.
     public static class FieldObstacleFingerprint {
         private const ulong OFFSET_BASIS = 14695981039346656037UL;
         private const ulong PRIME = 1099511628211UL;
@@ -17,8 +17,7 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             hash = Add(hash, field.ProfileId);
             hash = AddCells(hash, field);
             hash = AddPlacements(hash, field);
-            hash = AddRoutes(hash, field);
-            return AddTargets(hash, field);
+            return AddRoutes(hash, field);
         }
 
         private static ulong AddCells(ulong hash, FlightField field) {
@@ -59,18 +58,6 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                     hash = Add(hash, cell);
                 foreach (int halfWidth in route.HalfWidths)
                     hash = Add(hash, halfWidth);
-            }
-
-            return hash;
-        }
-
-        private static ulong AddTargets(ulong hash, FlightField field) {
-            hash = Add(hash, field.Targets.Count);
-            foreach (FieldTargetPlacement target in field.Targets) {
-                hash = Add(hash, target.KindId);
-                hash = Add(hash, target.FieldPosition.x);
-                hash = Add(hash, target.FieldPosition.y);
-                hash = Add(hash, target.FieldPosition.z);
             }
 
             return hash;

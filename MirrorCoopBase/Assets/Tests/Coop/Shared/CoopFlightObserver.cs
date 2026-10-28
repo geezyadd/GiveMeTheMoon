@@ -1,6 +1,8 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
 using System.Collections.Generic;
+using Features.FlightFieldModule.Contracts;
+using Features.FlightFieldModule.Scripts.Ore;
 using Features.GrabModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Generated;
@@ -28,8 +30,34 @@ namespace Tests.Coop.Shared {
             CaptureSonar(observation, destination);
             CaptureHaze(observation);
             CaptureHeldItem(observation);
+            CaptureOre(observation, destination);
             return observation;
         }
+
+        private static void CaptureOre(CoopObservation observation, Vector3 destination) {
+            List<FieldOreDescription> ores = new List<FieldOreDescription>();
+            SessionQueries.Resolve<IFieldOreQuery>().FindAll(ores);
+            ores.Sort(CompareById);
+            FieldOreSceneModel scene = SessionQueries.Resolve<FieldOreSceneModel>();
+            GrabController hand = SessionQueries.LocalPlayer.GetComponent<GrabController>();
+            observation.OreIds = new int[ores.Count];
+            observation.OreFromDestination = new Vector3[ores.Count];
+            observation.OreShown = new bool[ores.Count];
+            for (int i = 0; i < ores.Count; i++) {
+                observation.OreIds[i] = ores[i].Id.Value;
+                observation.OreFromDestination[i] = ores[i].Center - destination;
+                bool isShown = scene.TryGetView(ores[i].Id.Value, out FieldOreView view) && view.gameObject.activeInHierarchy;
+                observation.OreShown[i] = isShown;
+                if (!ores[i].Hooker.Equals(hand.Key))
+                    continue;
+
+                observation.OwnHookedOreId = ores[i].Id.Value;
+                observation.IsOwnRopeShown = isShown && view.GetComponentInChildren<LineRenderer>(true).enabled;
+            }
+        }
+
+        private static int CompareById(FieldOreDescription first, FieldOreDescription second) =>
+            first.Id.Value.CompareTo(second.Id.Value);
 
         private static void CaptureDamage(CoopObservation observation) {
             observation.Hull = SessionQueries.Resolve<IReadOnlyShipStatsModel>().Hull;

@@ -127,12 +127,12 @@ types.
 | Module (details) | What it is |
 |---|---|
 | [ShipModule](MirrorCoopBase/Assets/Features/ShipModule/AGENTS.md) | the ship core: hull, flight, riders, slots and modules, seats and the helm, stats, world shift, the run, deck debugging |
-| [ShipImpactModule](MirrorCoopBase/Assets/Features/ShipImpactModule/AGENTS.md) | the hull's rock and balloon collisions, knockback feedback, impact shake and effects |
+| [ShipImpactModule](MirrorCoopBase/Assets/Features/ShipImpactModule/AGENTS.md) | the hull's rock collisions and catching ore, knockback feedback, impact shake and effects |
 | [ShipDamageModule](MirrorCoopBase/Assets/Features/ShipDamageModule/AGENTS.md) | module breakdowns, hull breaches, the leak, repair with the wrench and the hammer |
 | [TurretModule](MirrorCoopBase/Assets/Features/TurretModule/AGENTS.md) | the turret's seat station (`ShipTurretStation`) and the turret gun tiers |
-| [FlightFieldModule](MirrorCoopBase/Assets/Features/FlightFieldModule/AGENTS.md) | the flight field: generation, breakable rocks, target balloons |
+| [FlightFieldModule](MirrorCoopBase/Assets/Features/FlightFieldModule/AGENTS.md) | the flight field: generation, breakable rocks, the ore they drop |
 | [WeaponModule](MirrorCoopBase/Assets/Features/WeaponModule/AGENTS.md) | the weapon core, its network path, the client feel |
-| [HandWeaponModule](MirrorCoopBase/Assets/Features/HandWeaponModule/AGENTS.md) | weapons carried in the hand: the pistol |
+| [HandWeaponModule](MirrorCoopBase/Assets/Features/HandWeaponModule/AGENTS.md) | weapons carried in the hand: the pistol, the harpoon |
 | [SonarModule](MirrorCoopBase/Assets/Features/SonarModule/AGENTS.md) | the navigator's sonar console on the radar |
 | [SpaceHazeModule](MirrorCoopBase/Assets/Features/SpaceHazeModule/AGENTS.md) | the dark space haze: how far the crew sees by eye |
 | [DebugModule](MirrorCoopBase/Assets/Features/DebugModule/AGENTS.md) | the in-game debug window and its action registry |

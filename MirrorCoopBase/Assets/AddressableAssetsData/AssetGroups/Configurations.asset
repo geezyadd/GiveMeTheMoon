@@ -60,11 +60,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 6fd807ab88d9f504a8fdafc3ae8f87c8
-    m_Address: FieldTargetConfiguration_Default
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7870b385a0a90a743bdcf1753f29f3e6
     m_Address: PlayerLifeConfiguration_Default
     m_ReadOnly: 0
@@ -72,6 +67,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7d8121f08b647804389790fba16e4cdf
     m_Address: WeaponCatalog_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8291ee3f467d4940bf60b9f887865450
+    m_Address: SpaceHazeConfiguration_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -90,8 +90,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8fa803a207f423f4fa686888e7c51c88
+    m_Address: FieldOreCatalog_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9c1e4a6b3d0f4e8a9b2c3d4e5f607182
     m_Address: ShipFlightConfig_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a0d881f442754f33867f61b267c2695b
+    m_Address: ShipDamageConfiguration_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -105,18 +115,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: a0d881f442754f33867f61b267c2695b
-    m_Address: ShipDamageConfiguration_Default
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a9e63c1d4f0b4e8a1c2d3e4f5a6b7c8d
     m_Address: PlayerDamageConfiguration_Default
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: ab5f30df93e09bb49a8bbf02156f0871
-    m_Address: FieldTargetCatalog_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -137,6 +137,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b6c04fe845d73fa4e8c316b586722fd0
     m_Address: FieldStructureCatalog_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c0791287801d744418c663118936079c
+    m_Address: FieldOreConfiguration_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -172,11 +177,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f1c8c7c7e2a94b04e9201d8b3d54c7d6
     m_Address: FlightFieldDecorConfiguration_Default
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 8291ee3f467d4940bf60b9f887865450
-    m_Address: SpaceHazeConfiguration_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

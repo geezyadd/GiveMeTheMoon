@@ -25,6 +25,7 @@ namespace Tests.PlayMode.LoopSmoke {
         private LoopSmokeShipRunConfigOverride _configOverride;
         private LoopSmokeFieldCatalogOverride _fieldCatalogOverride;
         private LoopSmokeSonarConfigOverride _sonarConfigOverride;
+        private LoopSmokeOreConfigOverride _oreConfigOverride;
         private LoopSmokeSession _session;
         private LoopSmokeContext _context;
         private LoopSmokeCheckRegistry _checks;
@@ -37,6 +38,7 @@ namespace Tests.PlayMode.LoopSmoke {
             _configOverride = new LoopSmokeShipRunConfigOverride(LoopSmokeShipRunConfigOverride.FAST_TIMINGS_JSON);
             _fieldCatalogOverride = new LoopSmokeFieldCatalogOverride();
             _sonarConfigOverride = new LoopSmokeSonarConfigOverride();
+            _oreConfigOverride = new LoopSmokeOreConfigOverride();
             _errorLog = new LoopSmokeErrorLog();
             _steamLobby = new LoopSmokeSteamLobbySpy();
             _steamLobby.BindIntoSceneContexts();
@@ -50,6 +52,7 @@ namespace Tests.PlayMode.LoopSmoke {
             _configOverride.Dispose();
             _fieldCatalogOverride.Dispose();
             _sonarConfigOverride.Dispose();
+            _oreConfigOverride.Dispose();
             _errorLog.Dispose();
             _steamLobby.Dispose();
         }

@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd147ba8f6b4c6546a1c88fc963dbf93, type: 3}
+  m_Name: FieldOre_Core
+  m_EditorClassIdentifier: 
+  _id: ore_core
+  _prefab: {fileID: 6230799893854798426, guid: b1b18c4cda12403449cb40183888e7df, type: 3}
+  _price: 60
+  _lifetimeSeconds: 40
+  _spawnWeight: 0.5
+  _radiusMeters: 1.65

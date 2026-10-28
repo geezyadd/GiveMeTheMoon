@@ -9,7 +9,7 @@ namespace Features.SpaceHazeModule.Scripts.Rendering {
     // The backdrop a hazed thing fades into: the sky and every opaque thing that lies wholly past the backdrop
     // distance (the planets, a far station), drawn again for the camera into a texture of its own. The things are
     // picked by a culling of their own whose near plane stands at the backdrop distance, so no layer or tag marks
-    // them and nothing nearer (rocks, balloons, the ship) gets in, whatever is added to the field later.
+    // them and nothing nearer (rocks, ore, the ship) gets in, whatever is added to the field later.
     public sealed class SpaceHazeBackdropRecorder : ISpaceHazeBackdropRecorder {
         private const string PASS_NAME = "Space Haze Backdrop";
         private const string COLOR_TEXTURE_NAME = "_SpaceHazeBackdrop";

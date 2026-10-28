@@ -17,7 +17,21 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
             if (_fieldRockDurabilityConfiguration.BreakEffect == null)
                 throw new InvalidOperationException($"{_fieldRockDurabilityConfiguration.name}: the break effect is empty.");
 
+            if (_fieldRockDurabilityConfiguration.GiantMinDiameterMeters <= _fieldRockDurabilityConfiguration.SmallMaxDiameterMeters)
+                throw new InvalidOperationException($"{_fieldRockDurabilityConfiguration.name}: the giant diameter must be above the small rock diameter.");
+
             ValidateHitPoints(_fieldRockDurabilityConfiguration.HitPointsByDiameter);
+            ValidateOreDrop(_fieldRockDurabilityConfiguration.SmallRockOre, nameof(_fieldRockDurabilityConfiguration.SmallRockOre));
+            ValidateOreDrop(_fieldRockDurabilityConfiguration.BigRockOre, nameof(_fieldRockDurabilityConfiguration.BigRockOre));
+            ValidateOreDrop(_fieldRockDurabilityConfiguration.GiantRockOre, nameof(_fieldRockDurabilityConfiguration.GiantRockOre));
+        }
+
+        private void ValidateOreDrop(FieldOreDrop drop, string dropName) {
+            if (drop == null)
+                throw new InvalidOperationException($"{_fieldRockDurabilityConfiguration.name}: {dropName} is empty.");
+
+            if (drop.MinCount < 1 || drop.MaxCount < drop.MinCount)
+                throw new InvalidOperationException($"{_fieldRockDurabilityConfiguration.name}: {dropName} must drop at least 1 piece and at most no fewer than its least ({drop.MinCount}..{drop.MaxCount}).");
         }
 
         private void ValidateHitPoints(AnimationCurve hitPointsByDiameter) {

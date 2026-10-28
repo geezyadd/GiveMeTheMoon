@@ -57,9 +57,6 @@ MonoBehaviour:
   - _name: BrokenRocks
     _typeName: List<FieldRockId>
     _defaultValue: 
-  - _name: Targets
-    _typeName: List<FieldTargetEntry>
-    _defaultValue: 
-  - _name: PoppedTargets
-    _typeName: List<FieldTargetId>
+  - _name: Ores
+    _typeName: List<FieldOreEntry>
     _defaultValue: 

@@ -7,6 +7,8 @@ using Features.HandWeaponModule.Scripts;
 using Features.ShopModule.Scripts.Configurations;
 using Features.WeaponModule.Scripts.Definitions;
 using Features.WeaponModule.Scripts.Feel;
+using Features.WeaponModule.Scripts.Parts.Delivery;
+using Features.WeaponModule.Scripts.Parts.Effects;
 using Features.WeaponModule.Scripts.Parts.FireModes;
 using Mirror;
 using NUnit.Framework;
@@ -14,10 +16,14 @@ using UnityEngine;
 using Zenject;
 
 namespace Features.HandWeaponModule.Editor.Tests {
-    // Guards the hand weapons the shop sells as data: every item can be held and fires a catalog weapon, and the
-    // pistol keeps its rules: one strong shot that breaks a small rock or pops any balloon, then a 2 s cooldown.
+    // Guards the hand weapons the shop sells as data: every item can be held and fires a catalog weapon, the pistol
+    // keeps its rules (one strong shot that breaks a small rock, then a 2 s cooldown) and the harpoon throws a rope
+    // that hooks and pulls, reaches 60-80 m and does not break before its own range.
     public sealed class HandWeaponShopGuardTests {
         private const string PISTOL_ID = "pistol";
+        private const string HARPOON_ID = "harpoon";
+        private const float HARPOON_MIN_RANGE_METERS = 60f;
+        private const float HARPOON_MAX_RANGE_METERS = 80f;
         private const float PISTOL_COOLDOWN_SECONDS = 2f;
         private const float FRAME_SECONDS = 0.05f;
         private const float EARLY_PRESS_SECONDS = 1.5f;
@@ -83,13 +89,22 @@ namespace Features.HandWeaponModule.Editor.Tests {
         }
 
         [Test]
-        public void WhenPistolHits_ThenOneShotPopsAnyBalloon() {
-            FieldTargetCatalog targets = AddressableConfigurationLoader.Load<FieldTargetCatalog>(Address.Configurations.FieldTargetCatalog_Default);
-            float damage = FindPistol().Weapon.DamagePerHit;
+        public void WhenHarpoonIsRead_ThenItThrowsOneRopePerPressThatHooksAndPulls() {
+            WeaponDefinition weapon = FindHandWeapon(HARPOON_ID).Weapon;
 
-            string[] tooStrong = targets.Targets.Where(target => target.HitPoints > damage).Select(target => target.Id).ToArray();
+            Assert.IsInstanceOf<SingleShotFireModeDefinition>(weapon.FireMode, "The harpoon does not throw one rope per press.");
+            Assert.IsInstanceOf<RopeDeliveryDefinition>(weapon.Delivery, "The harpoon does not throw a rope.");
+            Assert.IsTrue(weapon.HitEffects.Any(effect => effect is HookAndPullHitEffect), "The harpoon's rope does not hook and pull.");
+        }
 
-            Assert.IsEmpty(tooStrong, $"One pistol shot does not pop: {string.Join(", ", tooStrong)}");
+        [Test]
+        public void WhenHarpoonIsRead_ThenItReachesBetween60And80MetersAndItsRopeHoldsThere() {
+            WeaponDefinition weapon = FindHandWeapon(HARPOON_ID).Weapon;
+            HookAndPullHitEffect pull = weapon.HitEffects.OfType<HookAndPullHitEffect>().Single();
+
+            Assert.That(weapon.RangeMeters, Is.InRange(HARPOON_MIN_RANGE_METERS, HARPOON_MAX_RANGE_METERS), "The harpoon's range is outside 60-80 m.");
+            Assert.GreaterOrEqual(pull.MaxRopeMeters, weapon.RangeMeters, "The rope breaks before the harpoon's own range.");
+            Assert.Greater(pull.PullSpeedMetersPerSecond, 0f, "The rope does not pull.");
         }
 
         private IWeaponFireMode CreatePistolFireMode() {
@@ -99,10 +114,13 @@ namespace Features.HandWeaponModule.Editor.Tests {
             return weapon.FireMode.CreateFireMode(weapon.ShotsPerSecond);
         }
 
-        private HandWeaponDefinition FindPistol() {
-            HandWeaponDefinition pistol = _shopCatalog.HandWeapons.FirstOrDefault(handWeapon => handWeapon.Id == PISTOL_ID);
-            Assert.IsNotNull(pistol, $"{_shopCatalog.name} does not sell the pistol.");
-            return pistol;
+        private HandWeaponDefinition FindPistol() =>
+            FindHandWeapon(PISTOL_ID);
+
+        private HandWeaponDefinition FindHandWeapon(string id) {
+            HandWeaponDefinition found = _shopCatalog.HandWeapons.FirstOrDefault(handWeapon => handWeapon.Id == id);
+            Assert.IsNotNull(found, $"{_shopCatalog.name} does not sell '{id}'.");
+            return found;
         }
 
         private static void Run(IWeaponFireMode fireMode, bool isTriggerHeld, float seconds) {

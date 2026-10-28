@@ -3,8 +3,9 @@ using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Configuration {
     // How the rocks of the flight field break: which count as small (the rest and every rock of a recipe marked
-    // always large count as large), how many hit points a breakable rock has, how a weapon hit on a rock looks and what
-    // a break looks like. Whether a rock breaks at all is its recipe's flag.
+    // always large count as large), how many hit points a breakable rock has, how a weapon hit on a rock looks, what
+    // a break looks like and what ore a broken rock drops by its size (small, big, giant). Whether a rock breaks at all
+    // is its recipe's flag.
     [CreateAssetMenu(menuName = "Game/Flight Field/Rock Durability Configuration", fileName = "FieldRockDurabilityConfiguration_Default")]
     public sealed class FieldRockDurabilityConfiguration : ScriptableObject {
         [Tooltip("A rock up to this diameter, meters, is small; a bigger one is large.")]
@@ -21,6 +22,14 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [SerializeField, ColorUsage(false, true)] private Color _hitFlashEmission = new(0.9f, 0.55f, 0.3f);
         [Tooltip("How far a struck rock shakes at the start of the feedback, as a share of its size.")]
         [SerializeField, Range(0f, 0.2f)] private float _hitShakeShare = 0.02f;
+        [Tooltip("A large rock from this diameter, meters, is a giant for its ore drop.")]
+        [SerializeField, Min(0f)] private float _giantMinDiameterMeters = 150f;
+        [Tooltip("What a broken small rock drops.")]
+        [SerializeField] private FieldOreDrop _smallRockOre = new(0.35f, 1, 1);
+        [Tooltip("What a broken big (large, not giant) rock drops.")]
+        [SerializeField] private FieldOreDrop _bigRockOre = new(0.8f, 1, 3);
+        [Tooltip("What a broken giant drops (the game's giants are unbreakable today).")]
+        [SerializeField] private FieldOreDrop _giantRockOre = new(1f, 3, 5);
 
         public float SmallMaxDiameterMeters => _smallMaxDiameterMeters;
         public FieldRockBreakEffect BreakEffect => _breakEffect;
@@ -29,5 +38,9 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public float HitFeedbackSeconds => _hitFeedbackSeconds;
         public Color HitFlashEmission => _hitFlashEmission;
         public float HitShakeShare => _hitShakeShare;
+        public float GiantMinDiameterMeters => _giantMinDiameterMeters;
+        public FieldOreDrop SmallRockOre => _smallRockOre;
+        public FieldOreDrop BigRockOre => _bigRockOre;
+        public FieldOreDrop GiantRockOre => _giantRockOre;
     }
 }

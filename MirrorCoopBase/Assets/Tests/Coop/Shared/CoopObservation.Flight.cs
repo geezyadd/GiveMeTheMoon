@@ -31,13 +31,21 @@ namespace Tests.Coop.Shared {
         public string ReleaseProblems;
         public float WalkedMeters;
         public string Screenshot;
+        // The ore of the field as this peer has it, sorted by id: its place from the flight's destination, whether this
+        // peer shows it, the piece this player's own rope pulls (0 = none) and whether this peer draws that rope.
+        public int[] OreIds;
+        public Vector3[] OreFromDestination;
+        public bool[] OreShown;
+        public int OwnHookedOreId;
+        public bool IsOwnRopeShown;
 
         public string DescribeFlight() =>
             $"{Step}: ship from destination {ShipFromDestination} yaw {ShipYaw:0.0}, throttle holder '{ThrottleHolderKey}', "
             + $"hull {Hull:0.0}, broken [{Join(BrokenSockets)}], breaches [{Join(OpenBreaches)}], "
             + $"sonar marks [{Join(SonarMarks)}] markers {SonarMarkerCount}, station marker {IsStationMarkerShown}, "
             + $"haze {IsHazeEnabled} {HazeClearMeters:0}-{HazeHiddenMeters:0} m, impacts [{Join(ImpactKinds)}] shaken {ShakenImpacts}, "
-            + $"held #{HeldItemId} dropped #{DroppedItemId}, riding {IsRiding} seated {IsSeated}, release problems '{ReleaseProblems}', walked {WalkedMeters:0.00} m";
+            + $"held #{HeldItemId} dropped #{DroppedItemId}, riding {IsRiding} seated {IsSeated}, release problems '{ReleaseProblems}', walked {WalkedMeters:0.00} m, "
+            + $"ore [{string.Join(LIST_SEPARATOR, OreIds ?? Array.Empty<int>())}] own rope on {OwnHookedOreId} shown {IsOwnRopeShown}";
 
         private static string Join(string[] values) =>
             string.Join(LIST_SEPARATOR, values ?? Array.Empty<string>());

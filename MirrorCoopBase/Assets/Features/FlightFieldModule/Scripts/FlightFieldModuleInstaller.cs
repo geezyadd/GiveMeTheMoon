@@ -8,12 +8,12 @@ using Features.FlightFieldModule.Scripts.Generation.Obstacles;
 using Features.FlightFieldModule.Scripts.Generation.Placement;
 using Features.FlightFieldModule.Scripts.Generation.Steps;
 using Features.FlightFieldModule.Scripts.Network;
+using Features.FlightFieldModule.Scripts.Ore;
 using Features.FlightFieldModule.Scripts.Requests;
 using Features.FlightFieldModule.Scripts.Rocks;
 using Features.FlightFieldModule.Scripts.Scene;
 using Features.FlightFieldModule.Scripts.Server;
 using Features.FlightFieldModule.Scripts.Structures;
-using Features.FlightFieldModule.Scripts.Targets;
 using Features.MatrixModule.Scripts.MatrixFactory;
 using Zenject;
 
@@ -26,8 +26,8 @@ namespace Features.FlightFieldModule.Scripts {
             Container.BindInterfacesTo<FlightFieldDecorConfigurationValidator>().AsSingle();
             Container.BindInterfacesTo<FieldVolumeConfigurationValidator>().AsSingle();
             Container.BindInterfacesTo<FieldRockDurabilityConfigurationValidator>().AsSingle();
-            Container.BindInterfacesTo<FieldTargetCatalogValidator>().AsSingle();
-            Container.BindInterfacesTo<FieldTargetConfigurationValidator>().AsSingle();
+            Container.BindInterfacesTo<FieldOreCatalogValidator>().AsSingle();
+            Container.BindInterfacesTo<FieldOreConfigurationValidator>().AsSingle();
             Container.Bind<IMatrixFactory>().To<MatrixFactory>().AsSingle();
             Container.Bind<IFieldRandomFactory>().To<FieldRandomFactory>().AsSingle();
             Container.Bind<IFieldFootprintReader>().To<FieldFootprintReader>().AsSingle();
@@ -46,7 +46,7 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldProfileLookup>().To<FieldProfileLookup>().AsSingle();
             InstallLiveField();
             InstallRocks();
-            InstallTargets();
+            InstallOre();
             InstallDecor();
         }
 
@@ -76,27 +76,31 @@ namespace Features.FlightFieldModule.Scripts {
 #endif
         }
 
-        // The target balloons of the live field: the server finds, damages and pops them from the field data (once per
-        // balloon, one event), every peer builds the ones near its camera from their own pool, makes them weapon
-        // targets, hides a popped one and plays its pop.
-        private void InstallTargets() {
-            Container.Bind<IFieldTargetCountRule>().To<FieldTargetCountRule>().AsSingle();
-            Container.Bind<IFieldTargetRockClearance>().To<FieldTargetRockClearance>().AsSingle();
-            Container.BindInterfacesTo<LiveFieldPoppedTargets>().AsSingle();
-            Container.Bind<IFieldTargetFieldSource>().To<ServerFieldTargetFieldSource>().AsSingle();
-            Container.Bind<IFieldTargetQuery>().To<FieldTargetQuery>().AsSingle();
-            Container.Bind<IPeerFieldTargetQuery>().To<PeerFieldTargetQuery>().AsSingle();
-            Container.BindInterfacesTo<FieldTargetPopper>().AsSingle();
-            Container.BindInterfacesTo<FieldTargetDamageService>().AsSingle();
-            Container.Bind<IFieldTargetWeaponIds>().To<FieldTargetWeaponIds>().AsSingle();
-            Container.Bind<FieldTargetWeaponTarget>().AsSingle();
-            Container.BindInterfacesTo<FieldTargetWeaponTargetSystem>().AsSingle();
-            Container.Bind<IFieldTargetSceneBuilder>().To<FieldTargetSceneBuilder>().AsSingle().WithArguments(new FieldStructurePool());
-            Container.BindInterfacesTo<FieldTargetBuildSystem>().AsSingle();
-            Container.Bind<IFieldTargetPopEffectPool>().To<FieldTargetPopEffectPool>().AsSingle();
-            Container.BindInterfacesTo<FieldTargetPopViewSystem>().AsSingle();
+        // The ore of broken rocks in the live field: the server drops it, hooks it on a rope, pulls it in, takes it in
+        // at the ship (once per piece, one event) and lets it go at its end of life; every peer places and shows it
+        // from the synced list with its own pool and draws the ropes.
+        private void InstallOre() {
+            Container.BindInterfacesTo<LiveFieldOres>().AsSingle();
+            Container.Bind<IFieldOreClock>().To<NetworkFieldOreClock>().AsSingle();
+            Container.Bind<IFieldOreMotion>().To<FieldOreMotion>().AsSingle();
+            Container.Bind<IFieldOreLifetimeRule>().To<FieldOreLifetimeRule>().AsSingle();
+            Container.Bind<IFieldOreQuery>().To<FieldOreQuery>().AsSingle();
+            Container.Bind<IFieldOreSpawner>().To<FieldOreSpawner>().AsSingle();
+            Container.Bind<IFieldOreDropRule>().To<FieldOreDropRule>().AsSingle();
+            Container.Bind<IFieldOreDropService>().To<FieldOreDropService>().AsSingle();
+            Container.BindInterfacesTo<FieldOreDropSystem>().AsSingle();
+            Container.Bind<IFieldOreHooks>().To<FieldOreHookService>().AsSingle();
+            Container.BindInterfacesTo<FieldOreCollector>().AsSingle();
+            Container.Bind<IFieldOreRopeService>().To<FieldOreRopeService>().AsSingle();
+            Container.Bind<IFieldOreExpiryService>().To<FieldOreExpiryService>().AsSingle();
+            Container.BindInterfacesTo<FieldOreServerSystem>().AsSingle();
+            Container.Bind<IFieldOreWeaponIds>().To<FieldOreWeaponIds>().AsSingle();
+            Container.Bind<FieldOreWeaponTarget>().AsSingle();
+            Container.BindInterfacesTo<FieldOreWeaponTargetSystem>().AsSingle();
+            Container.Bind<IFieldOreSceneBuilder>().To<FieldOreSceneBuilder>().AsSingle().WithArguments(new FieldStructurePool());
+            Container.BindInterfacesTo<FieldOreBuildSystem>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Container.BindInterfacesTo<FieldTargetPoppedLogSystem>().AsSingle();
+            Container.BindInterfacesTo<FieldOreDropDebugSystem>().AsSingle();
 #endif
         }
 
@@ -143,7 +147,6 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldGenerationStep>().To<FieldObstacleGiantStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldObstacleDebrisStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldBalanceMetricStep>().AsSingle();
-            Container.Bind<IFieldGenerationStep>().To<FieldTargetStep>().AsSingle();
         }
     }
 }

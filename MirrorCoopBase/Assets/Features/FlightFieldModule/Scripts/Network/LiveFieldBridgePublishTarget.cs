@@ -20,9 +20,6 @@ namespace Features.FlightFieldModule.Scripts.Network {
         public void AddDebrisRun(FieldDebrisRunEntry debrisRun) =>
             _bridge.ServerAddDebrisRuns(debrisRun);
 
-        public void AddTarget(FieldTargetEntry target) =>
-            _bridge.ServerAddTargets(target);
-
         public void SetState(LiveFieldState state) =>
             _bridge.ServerSetState(state);
     }

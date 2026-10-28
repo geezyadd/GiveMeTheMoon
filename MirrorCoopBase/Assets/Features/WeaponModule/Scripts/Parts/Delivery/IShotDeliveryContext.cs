@@ -7,5 +7,8 @@ namespace Features.WeaponModule.Scripts.Parts.Delivery {
         public IWeaponRandom Random { get; }
 
         public IWeaponRaycast CreateRaycast(LayerMask hitLayers);
+
+        // A ray as thick as a sphere of the radius: it strikes what passes within the radius of its line.
+        public IWeaponRaycast CreateSphereCast(LayerMask hitLayers, float radiusMeters);
     }
 }

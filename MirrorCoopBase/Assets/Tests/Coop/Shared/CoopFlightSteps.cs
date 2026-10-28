@@ -7,6 +7,7 @@ namespace Tests.Coop.Shared {
         public const string SCENARIO_DECK_ITEMS = "deck-items";
         public const string SCENARIO_NAVIGATION_VIEW = "navigation-view";
         public const string SCENARIO_ROCKS_AND_HULL_LOSS = "rocks-and-hull-loss";
+        public const string SCENARIO_HARPOON = "harpoon";
 
         // Throttle and helm.
         public const string COMMAND_REPORT_STOPPED = "report-stopped";
@@ -53,6 +54,14 @@ namespace Tests.Coop.Shared {
         public const string WATCHING = "watching";
         public const string IMPACTS = "impacts";
         public const string FREE_IN_LOBBY = "free-in-lobby";
+
+        // Ore and the harpoon.
+        public const string COMMAND_REPORT_ORE = "report-ore";
+        public const string ORE_SEEN = "ore-seen";
+        public const string COMMAND_THROW_HARPOON = "throw-harpoon";
+        public const string HARPOON_HOOKED = "harpoon-hooked";
+        public const string COMMAND_REPORT_DELIVERY = "report-delivery";
+        public const string ORE_DELIVERED = "ore-delivered";
 
         public const string CLIENT_SCREENSHOT_PREFIX = "client-";
         public const string SCREENSHOT_EXTENSION = ".png";

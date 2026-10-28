@@ -7,5 +7,8 @@ namespace Features.WeaponModule.Scripts.Shooting {
 
         public IWeaponRaycast CreateRaycast(LayerMask hitLayers) =>
             new PhysicsWeaponRaycast(hitLayers);
+
+        public IWeaponRaycast CreateSphereCast(LayerMask hitLayers, float radiusMeters) =>
+            new PhysicsWeaponRaycast(hitLayers, radiusMeters);
     }
 }

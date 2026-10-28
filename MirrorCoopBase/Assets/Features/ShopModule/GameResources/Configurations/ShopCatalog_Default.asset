@@ -25,3 +25,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: aa4d74bdd38e01542ba2467b08b7b45e, type: 2}
   _handWeapons:
   - {fileID: 11400000, guid: b3dc1f15d90741941b2188e2a94c0d7b, type: 2}
+  - {fileID: 11400000, guid: 27fd8d7400be82449b38d71a32b4e854, type: 2}

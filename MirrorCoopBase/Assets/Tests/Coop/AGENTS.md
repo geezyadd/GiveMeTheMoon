@@ -67,7 +67,7 @@ the editor is the host, a Windows development build of the game is the client. O
   loop tests, the coop host test and the client build (no NUnit there); the host side reuses `LoopSmokeSession`,
   `LoopSmokeFlight` and `LoopSmokeShipRunConfigOverride`.
 ## Coop flight tests (the client flies and navigates)
-Four host tests in `Tests/Coop/Host/`, one scenario each, the client doing the action and the host checking it; each
+Five host tests in `Tests/Coop/Host/`, one scenario each, the client doing the action and the host checking it; each
 starts its own client build process with its own `-scenario` and takes about 1.5-2.5 min. **Run one test class per
 Test Runner run** (`-Filter CoopClientThrottleAndHelmTest`, ...): the fast-timings config override needs a fresh
 `ProjectContext`, so a second test in the same play session fails in its SetUp ("ProjectContext exists before the test").
@@ -96,6 +96,14 @@ Test Runner run** (`-Filter CoopClientThrottleAndHelmTest`, ...): the fast-timin
   inside a small rock's data sphere and clear of its contact sphere gives no impact on either peer and no new damage.
   Then the hull is destroyed in that cruise: host and client are back in the lobby, free of the ship and walking
   (`Tests.Shared.PlayerReleaseProbe`). Client screenshot: `client-rock-impact`.
+- `CoopClientHarpoonTest` (`harpoon`, `CoopHarpoonClient`): in the first cruise the host breaks rocks until one drops
+  ore (`LoopSmokeOreCheck.BreakRocksUntilOreCoroutine`) and puts the ship beside it; the client has the same piece,
+  shows it, at the host's place within 1.5 m (measured 0.16 m). The host puts the harpoon in the client's hand (the
+  purchase is `LoopSmokeOreCheck`'s); the client aims through the look input and clicks `Fire` until its own rope hooks
+  a piece; the server names the client as the hooker, the host draws the client's rope, the piece reaches the ship once
+  and the crew balance grows by its price on both peers (about 25 s). Client screenshots: `client-ore-seen`,
+  `client-harpoon-rope`. The ore fields of an observation are `OreIds`, `OreFromDestination`, `OreShown`,
+  `OwnHookedOreId`, `IsOwnRopeShown` (`CoopFlightObserver`).
 - Shared parts: `CoopFlightHostHarness` (host, client process, reports, commands, finish), `CoopScenarioClientBot` (the client's base:
   join, board, wait for commands, report, screenshots, finish), `CoopClientScenarios` (scenario name → bot), step and
   command names in `CoopFlightSteps`, the extra observed fields in `CoopObservation.Flight.cs` / `CoopFlightObserver`.
