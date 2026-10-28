@@ -8,8 +8,9 @@ its bites and its look. Read the [root AGENTS.md](../../../../AGENTS.md) first. 
 
 ## Assembly
 `Features.BugModule` (layer 6; references: GameCoreModule.Contracts, FieldAgentModule, Ship, ShipDamageModule,
-WeaponModule.Contracts, SonarModule.Contracts, DebugModule.Contracts, EffectPoolModule, NetworkModel, Mirror, Zenject,
-`Unity.Animation.Rigging` (package `com.unity.animation.rigging` 1.3.1)). Its own module rather than more code in
+WeaponModule.Contracts, SonarModule.Contracts, DebugModule.Contracts, EffectPoolModule, NetworkModel, Mirror, Zenject; the
+tail rig's components (package `com.unity.animation.rigging` 1.3.1) live only on the prefab, so no script references
+the rigging assembly). Its own module rather than more code in
 FieldAgentModule: the base stays free of the ship damage, the weapons, the sonar and the rigging package, and later
 creatures (drones, the nest) sit beside it the same way. Installed by `BugModuleInstaller` in `GlobalSceneInstaller`;
 `BugServerModel` and `BugRandomSpawnModel` in `DataInstaller`; `BugConfiguration` in `ConfigurationInstaller`

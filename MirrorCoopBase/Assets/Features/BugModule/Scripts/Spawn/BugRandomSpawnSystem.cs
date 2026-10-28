@@ -36,7 +36,7 @@ namespace Features.BugModule.Scripts.Spawn {
 
         public void Tick() {
             ShipBase ship = _shipRunBindingModel.Ship;
-            if (NetworkServer.active == false || ship == null || ship.IsFlying == false) {
+            if (IsOffTheFlight(ship)) {
                 _sinceRoll = 0f;
                 return;
             }
@@ -49,5 +49,9 @@ namespace Features.BugModule.Scripts.Spawn {
             if (_bugRandomSpawnRule.IsGroupComing(_bugRandomSpawnModel.IsEnabled, Random.value, _fieldAgentCargoTargets.Items.Count > 0))
                 _bugSpawnService.ServerSpawnGroup(_bugRandomSpawnRule.CalculateGroupSize(Random.value), _spawned);
         }
+
+        // Only the server rolls, and only while the run's ship flies.
+        private static bool IsOffTheFlight(ShipBase ship) =>
+            NetworkServer.active == false || ship == null || ship.IsFlying == false;
     }
 }

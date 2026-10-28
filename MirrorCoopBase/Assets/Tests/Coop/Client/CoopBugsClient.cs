@@ -97,12 +97,19 @@ namespace Tests.Coop.Client {
             shown.CollectShownIds(_shownIds);
             int tails = 0;
             foreach (int id in _shownIds) {
-                bool isBug = shown.TryGetView(id, out FieldAgentView view) && view.TryGetComponent(out BugBodyView _);
-                if (isBug && view.TryGetComponent(out RigBuilder rig) && rig.enabled && rig.layers.Count > 0 && rig.layers[0].rig.isActiveAndEnabled)
+                if (shown.TryGetView(id, out FieldAgentView view) && HasRunningTailRig(view))
                     tails++;
             }
 
             return tails;
+        }
+
+        // A bug look whose tail rig is built and evaluating.
+        private static bool HasRunningTailRig(FieldAgentView view) {
+            if (view.TryGetComponent(out BugBodyView _) == false || view.TryGetComponent(out RigBuilder rig) == false)
+                return false;
+
+            return rig.enabled && rig.layers.Count > 0 && rig.layers[0].rig.isActiveAndEnabled;
         }
 
         private static void KeepAiming(Vector3 point) {

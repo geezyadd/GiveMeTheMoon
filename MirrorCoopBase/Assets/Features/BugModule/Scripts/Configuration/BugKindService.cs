@@ -31,6 +31,6 @@ namespace Features.BugModule.Scripts.Configuration {
             kindIndex < _fieldAgentConfiguration.Profiles.Count && IsBugProfile(_fieldAgentConfiguration.Profiles[kindIndex]);
 
         private bool IsBugProfile(FieldAgentProfile profile) =>
-            profile != null && profile.Id == _bugConfiguration.Profile.Id;
+            profile.Id == _bugConfiguration.Profile.Id;
     }
 }

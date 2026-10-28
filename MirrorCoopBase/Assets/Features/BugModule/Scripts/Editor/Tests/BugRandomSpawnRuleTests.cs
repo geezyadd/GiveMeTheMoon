@@ -1,3 +1,5 @@
+using Features.AddressablesConstantGeneratorModule.EditorLoading;
+using Features.AddressablesConstantsGenerator.Generated;
 using Features.BugModule.Scripts.Configuration;
 using Features.BugModule.Scripts.Spawn;
 using NUnit.Framework;
@@ -15,7 +17,6 @@ namespace Features.BugModule.Scripts.Editor.Tests {
         private const float HIGHEST_SHARE = 0.9999f;
         private const float RARE_CHANCE = 0.5f;
         private const float NO_BOOST = 1f;
-        private const string DEFAULT_CONFIGURATION_PATH = "Assets/Features/BugModule/GameResources/Configurations/BugConfiguration_Default.asset";
 
         private BugConfiguration _configuration;
         private BugRandomSpawnRule _rule;
@@ -48,7 +49,7 @@ namespace Features.BugModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenTheGameRunsWithTheDefaultConfiguration_ThenRandomSpawnsAreOnAndRare() {
-            BugConfiguration defaults = AssetDatabase.LoadAssetAtPath<BugConfiguration>(DEFAULT_CONFIGURATION_PATH);
+            BugConfiguration defaults = AddressableConfigurationLoader.Load<BugConfiguration>(Address.Configurations.BugConfiguration_Default);
 
             Assert.IsTrue(defaults.IsRandomSpawnEnabled);
             Assert.Less(defaults.RandomSpawnChance, RARE_CHANCE);
