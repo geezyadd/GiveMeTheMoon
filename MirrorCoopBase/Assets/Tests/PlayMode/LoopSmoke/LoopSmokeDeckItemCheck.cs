@@ -36,6 +36,9 @@ namespace Tests.PlayMode.LoopSmoke {
         private const float FAR_AWAY = 100f;
         private const int GRAB_ROUNDS = 3;
         private const float GRAB_RETRY_SECONDS = 1f;
+        private const float OTHER_FLOOR_HEIGHT = 1.5f;
+        private const float ITEM_APPROACH_DISTANCE = 1.6f;
+        private const float STAND_HEIGHT = 0.8f;
 
         private readonly LoopSmokeContext _context;
         private Grabbable _stationItem;
@@ -52,7 +55,9 @@ namespace Tests.PlayMode.LoopSmoke {
 
         [LoopSmokeStep(LoopSmokePhase.BeforeTakeoff, RUN, FLIGHT, 10)]
         public IEnumerator DropOneItemAndCarryAnotherCoroutine() {
-            Grabbable[] items = FindLooseBoxItems(Ship);
+            // Delivered modules only: a tool from the deck rack is too small to stay on a banking deck.
+            Grabbable[] items = null;
+            yield return LoopSmokeItemDelivery.DeliverModulesCoroutine(Ship, 3, delivered => items = delivered);
             Assert.GreaterOrEqual(items.Length, 2, "Fewer than two loose items to drop on the deck at the station.");
             yield return DropOnDeckByHandCoroutine(Ship, items, OnStationItemDropped);
             try {
@@ -162,9 +167,15 @@ namespace Tests.PlayMode.LoopSmoke {
 
         private static IEnumerator GrabFirstUnderCrosshairCoroutine(Grabbable[] candidates, Grabbable skipped, List<string> missed, Action<Grabbable> grabbed) {
             foreach (Grabbable candidate in candidates) {
-                if (candidate == skipped || IsLooseBoxItem(candidate) == false)
+                if (candidate == skipped)
                     continue;
 
+                if (IsLooseBoxItem(candidate) == false) {
+                    missed.Add($"{(candidate != null ? $"{candidate.name} at {candidate.transform.position} is not free" : "a destroyed item")}");
+                    continue;
+                }
+
+                yield return StandOnItemFloorCoroutine(candidate);
                 yield return LoopSmokeHandCheck.AimAtCoroutine(Box(candidate).bounds.center);
                 Grabbable target = Interaction.Target.Grabbable;
                 if (target == null || target == skipped || IsLooseBoxItem(target) == false) {
@@ -177,6 +188,17 @@ namespace Tests.PlayMode.LoopSmoke {
                 grabbed(target);
                 yield break;
             }
+        }
+
+        // An item delivered at the kiosk lies on the pad, below the deck: the player steps down to its floor first, as
+        // the camera cannot tilt that steeply.
+        private static IEnumerator StandOnItemFloorCoroutine(Grabbable item) {
+            Vector3 itemPosition = item.transform.position;
+            if (Mathf.Abs(itemPosition.y - Player.transform.position.y) < OTHER_FLOOR_HEIGHT)
+                yield break;
+
+            Vector3 forward = Vector3.ProjectOnPlane(Player.transform.forward, Vector3.up).normalized;
+            yield return LoopSmokeKiosk.StandAtCoroutine(itemPosition - forward * ITEM_APPROACH_DISTANCE + Vector3.up * STAND_HEIGHT);
         }
 
         private static string DescribeMiss(Grabbable candidate, Grabbable target) {
