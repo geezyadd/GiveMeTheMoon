@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62c0532608a6b7c4f8380f7a5c550175, type: 3}
+  m_Name: FieldAgentConfiguration_Default
+  m_EditorClassIdentifier: 
+  _profiles:
+  - {fileID: 11400000, guid: 9e12450e687b27a4cbe6e76ddc072e42, type: 2}
+  _seekWeight: 1
+  _avoidanceWeight: 1.5
+  _separationWeight: 1.2
+  _rockQuerySeconds: 0.25
+  _rockQueryMarginMeters: 1
+  _rockQueryIntervalMinShare: 0.75
+  _rockQueryIntervalSpreadSteps: 8
+  _rockQueryIntervalStepShare: 0.0625
+  _sendRate: 12
+  _interpolationDelaySeconds: 0.25
+  _frameBufferSize: 6
+  _deckNavMeshAnchor: {x: 0, y: -20000, z: 0}
+  _deckSampleMeters: 3
+  _deckRepathSeconds: 1
+  _deckRepathMeters: 0.5
+  _deckCornerMeters: 0.1
+  _spawnMinMeters: 90
+  _spawnMaxMeters: 220
+  _spawnHeightSpreadMeters: 30
+  _spawnTries: 64
+  _spawnHazeMarginMeters: 30
+  _spawnRockClearance: 3
+  _viewpointEyeHeight: 1.6
+  _groupScatterMeters: 5
+  _debugFlockSize: 20
+  _debugSeekArriveMeters: 26
+  _debugOrbitRadius: 18
+  _debugOrbitHeight: 5
+  _debugOrbitSpeedShare: 0.6
+  _debugOrbitLeadDegrees: 25
+  _debugDeckPauseSeconds: 1.5
+  _debugDeckArriveMeters: 0.35
+  _debugDeckLandingPoint: {x: 0, y: 0.3, z: -5}
+  _debugModuleStandOffMeters: 1.2

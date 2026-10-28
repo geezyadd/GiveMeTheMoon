@@ -110,6 +110,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a6caa554ef013ab4fa36a2d2a3aa98fc
+    m_Address: FieldAgentConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a818313b2919db44d8ced6b58d83c4e3
     m_Address: ShipHullConfiguration_Default
     m_ReadOnly: 0

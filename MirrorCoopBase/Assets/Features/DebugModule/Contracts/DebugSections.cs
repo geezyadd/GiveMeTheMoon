@@ -7,5 +7,6 @@ namespace Features.DebugModule.Contracts {
         public const string PLAYER = "Player";
         public const string SHOP = "Shop";
         public const string VIEW = "View";
+        public const string AGENTS = "Agents";
     }
 }
