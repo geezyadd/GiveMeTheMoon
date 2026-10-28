@@ -66,11 +66,17 @@ through the seat's use command, aims it with the station's test hook (`ShipTurre
 `DebugHoldTrigger`, editor / development only) until the server has accepted 5 hits on the dummy, then
 `LoopSmokeRockShootCheck` brings its own target (the ship is put beside the nearest small breakable rocks in turn
 until one is in reach and clear sight of the turret, and put back afterwards) and fires until it breaks (in the broken list,
-hidden on the host, `RockDestroyed` once with cause `Weapon`, the host's key and `minigun`), then `LoopSmokeTargetCheck`
-puts the ship beside the nearest target balloon in clear sight and fires until it pops, and stands up again; then the
-ship is put before another balloon and flies into it (the real hull check). Each balloon is in the synced popped list,
-hidden on the host, `TargetPopped` fired once (Weapon by the host with `minigun` / `ShipCollision`) and the synced crew
-balance grew by the rewards; after that landing the popped list and the balloons are gone.
+hidden on the host, `RockDestroyed` once with cause `Weapon`, the host's key and `minigun`), and stands up again.
+`LoopSmokeOreCheck` (run 2 flight 1; replaced the balloon check `LoopSmokeTargetCheck` on 2026-10-28): at that station
+the host buys the harpoon at the kiosk through the real aim and the window and picks it up by hand; in that cruise it
+breaks the rocks nearest to the ship (the debug break, as a bullet does) until one drops ore, the piece is in the live
+field and shown on the host, the ship is put 30 m beside it, the host aims the camera through the look input and clicks
+`Fire` through the input service until its rope hooks the piece (the server names the host, the host draws the rope),
+the piece reaches the ship once and the synced balance grows by exactly the delivered prices; then a second rock's ore
+nobody picks up is gone from the field and the screen at its end of life (`LoopSmokeOreConfigOverride` binds a copy of
+`FieldOreCatalog` whose kinds live 8 s). The host drops the harpoon and the test removes it in that cruise (the first
+landing of run 2 must spawn what run 1's did). Screenshots in `Temp/LoopSmoke`: `ore-drop`, `ore-rope`, `ore-delivered`
+(the screen) and `view-ore-*` (a 1920 x 1080 photo from a test camera beside the player's view, no HUD).
 `LoopSmokeTurretTierCheck` (run 2): at the station before flight 3 (ahead of the deck item check) the host buys the
 light machine gun at the kiosk through the real aim and the window (`LoopSmokeKiosk`: buy one entry, walk away, pick
 the delivered item up by hand; money from the debug window when short), takes the minigun off through the socket's use
@@ -103,7 +109,7 @@ landing both are physics bodies again (not kinematic), at rest on the deck and c
 the gap between the item box's lowest corner and the deck surface under it in ship space (`Tests.Shared.ShipDeckItemRest`),
 within 5 cm. `LoopSmokeStationMarkerCheck` (run 2 cruise 5): the debug window's "Show station: off" clicked as a
 player does turns the own station marker on, the level camera turned toward the station through the look input shows
-it over the station with its distance, turned away on the screen's edge, and "Show station: on" takes it off again. The test timeout is 240 s (a run takes about 170 s). The shared steps live in helpers both loop tests use:
+it over the station with its distance, turned away on the screen's edge, and "Show station: on" takes it off again. The test timeout is 300 s (was 240 s; a run takes about 230-250 s since the ore check of 2026-10-28). The shared steps live in helpers both loop tests use:
 `LoopSmokeSession` (menu, Host, lobby, Start, all dead -> lobby, Leave; waits record the run phases),
 `LoopSmokeFlight` (engines, boarding, the launch (the throttle lever at Full through the debug window's "Throttle = N",
 `IShipThrottleDebug`; a check can launch the next flight its own way with `LaunchNextFlightBy`), the phases of a loop with the field checks and the checks after
@@ -123,7 +129,7 @@ line per step, nothing else:
 - `order`: the steps of one slot run one after the other, lower first; two steps with the same order in a slot fail
   the test at its start, so pick a free number (the existing steps use multiples of 10; the first cruise of run 1:
   sonar 10, hull 20, rock break 30, rock impacts 40, repair 50; the turret cruise of run 2: dummy 10, rock shot 20,
-  balloon shot 30, stand up 40, fly-in 50).
+  stand up 40; the first cruise of run 2: crew invite 10, ore and harpoon 20).
 - A step takes no arguments and returns `IEnumerator` or `void`. Its class has a public constructor taking
   `LoopSmokeContext` (session, flight helper, field check, Steam lobby spy) or an empty one; it is made at its first
   step and kept for the whole test, so its steps share state (resolve scene services at a step if they cross runs).

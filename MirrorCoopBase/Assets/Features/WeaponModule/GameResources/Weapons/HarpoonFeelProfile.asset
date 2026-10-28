@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 381258ecf36952741bb9ce75fe56e051, type: 3}
+  m_Name: HarpoonFeelProfile
+  m_EditorClassIdentifier: 
+  _barrelSpinDegreesPerSecond: 0
+  _muzzleFlashColor: {r: 1, g: 0.85, b: 0.55, a: 0.7}
+  _muzzleFlashSize: 0.14
+  _muzzleFlashFlicker: 0.1
+  _muzzleFlashSeconds: 0.035
+  _muzzleLightIntensity: 1.5
+  _muzzleLightRange: 2.5
+  _casingPoolSize: 0
+  _casingLifetimeSeconds: 6
+  _casingFadeSeconds: 1
+  _casingEjectDirection: {x: 1, y: 0.75, z: -0.15}
+  _casingEjectSpeed: 2.6
+  _casingEjectSpeedVariation: 0.4
+  _casingEjectSpreadDegrees: 18
+  _casingSpinDegreesPerSecond: 900
+  _casingSpinMinShare: 0.5
+  _casingSpinMaxShare: 1.5
+  _casingBounciness: 0.35
+  _casingFloorFriction: 0.55
+  _casingRestSpeed: 0.5
+  _casingRestHeight: 0.01
+  _casingPileJitter: 0.02
+  _recoilPositionNoiseMeters: 0
+  _recoilRotationNoiseDegrees: 0
+  _recoilNoiseFrequency: 22
+  _recoilSettleSeconds: 0.18
+  _recoilKickMeters: 0.04
+  _recoilKickDegrees: 5
+  _fireShake: {fileID: 0}
+  _nearImpactShake: {fileID: 11400000, guid: 8e2e2948c5694d84ba42a9dad7b1f7d3, type: 2}
+  _nearImpactDistanceMeters: 30
+  _shotShake: {fileID: 11400000, guid: 8c8c1dc5c807aed48b1511ab7f342fbc, type: 2}
+  _tracerEveryNthShot: 1
+  _tracerSpeedMetersPerSecond: 400
+  _tracerWidthMeters: 0.12
+  _tracerLengthMeters: 6
+  _tracerPoolSize: 4
+  _impactSparkCount: 12
+  _impactSparkSpeed: 7
+  _impactDebrisCount: 5
+  _impactDebrisSpeed: 4
+  _impactSprayLean: 0.85
+  _impactMinSpeedShare: 0.4
+  _impactDustDriftSpeed: 0.6
+  _impactDustSizeMeters: 1.8
+  _impactFlashSizeMeters: 2.6
+  _impactFlashSeconds: 0.07
+  _impactFlashMinSizeShare: 0.7
+  _targetFlashSeconds: 0.08
+  _ropeOutSpeedMetersPerSecond: 140
+  _ropeReturnSpeedMetersPerSecond: 110
+  _ropeHoldSeconds: 0.35

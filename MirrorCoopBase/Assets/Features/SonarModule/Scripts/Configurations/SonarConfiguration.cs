@@ -40,8 +40,6 @@ namespace Features.SonarModule.Scripts.Configurations {
         [SerializeField] private SonarContactKind _bigRockKind;
         [Tooltip("A patch of smaller debris rocks.")]
         [SerializeField] private SonarContactKind _debrisKind;
-        [Tooltip("The balloons by their reward: a balloon is the kind of the highest tier its reward reaches.")]
-        [SerializeField] private SonarTargetTier[] _targetTiers = Array.Empty<SonarTargetTier>();
         [SerializeField] private float _bigRockMinDiameterMeters = 40f;
         [Tooltip("Small rocks are counted in square cells of this size; a cell with enough of them is one debris contact.")]
         [SerializeField] private float _debrisCellMeters = 120f;
@@ -63,7 +61,6 @@ namespace Features.SonarModule.Scripts.Configurations {
         public SonarContactKind LargeRockKind => _largeRockKind;
         public SonarContactKind BigRockKind => _bigRockKind;
         public SonarContactKind DebrisKind => _debrisKind;
-        public IReadOnlyList<SonarTargetTier> TargetTiers => _targetTiers;
         public float BigRockMinDiameterMeters => _bigRockMinDiameterMeters;
         public float DebrisCellMeters => _debrisCellMeters;
         public int DebrisMinRocks => _debrisMinRocks;

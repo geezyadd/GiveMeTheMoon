@@ -20,8 +20,7 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldRouteCellEntry> RouteCells { get; }
         public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldDebrisRunEntry> DebrisRuns { get; }
         public IReadOnlyList<global::Features.FlightFieldModule.Contracts.FieldRockId> BrokenRocks { get; }
-        public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry> Targets { get; }
-        public IReadOnlyList<global::Features.FlightFieldModule.Contracts.FieldTargetId> PoppedTargets { get; }
+        public IReadOnlyList<global::Features.FlightFieldModule.Scripts.Network.FieldOreEntry> Ores { get; }
         public bool IsAvailable { get; }
 
         public event Action OnNumberChanged;
@@ -57,16 +56,11 @@ namespace Features.FlightFieldModule.Scripts.Network.Generated {
         public event Action<int, global::Features.FlightFieldModule.Contracts.FieldRockId> OnBrokenRocksSet;
         public event Action OnBrokenRocksCleared;
         public event Action OnBrokenRocksChanged;
-        public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry> OnTargetsAdded;
-        public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry> OnTargetsRemoved;
-        public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldTargetEntry> OnTargetsSet;
-        public event Action OnTargetsCleared;
-        public event Action OnTargetsChanged;
-        public event Action<int, global::Features.FlightFieldModule.Contracts.FieldTargetId> OnPoppedTargetsAdded;
-        public event Action<int, global::Features.FlightFieldModule.Contracts.FieldTargetId> OnPoppedTargetsRemoved;
-        public event Action<int, global::Features.FlightFieldModule.Contracts.FieldTargetId> OnPoppedTargetsSet;
-        public event Action OnPoppedTargetsCleared;
-        public event Action OnPoppedTargetsChanged;
+        public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldOreEntry> OnOresAdded;
+        public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldOreEntry> OnOresRemoved;
+        public event Action<int, global::Features.FlightFieldModule.Scripts.Network.FieldOreEntry> OnOresSet;
+        public event Action OnOresCleared;
+        public event Action OnOresChanged;
         public event Action OnChanged;
         public event Action OnAvailableChanged;
     }

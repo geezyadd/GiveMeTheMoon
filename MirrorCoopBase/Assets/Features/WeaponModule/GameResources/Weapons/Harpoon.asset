@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b605cd8debde17c4994371d03cc65001, type: 3}
+  m_Name: Harpoon
+  m_EditorClassIdentifier: 
+  _id: harpoon
+  _displayName: Harpoon
+  _shotsPerSecond: 0.6666667
+  _damagePerHit: 0
+  _rangeMeters: 70
+  _fireMode:
+    rid: 3002219331932913744
+  _delivery:
+    rid: 3002219331932913745
+  _hitEffects:
+  - rid: 3002219331932913746
+  _feelProfile: {fileID: 11400000, guid: 87532dfb152813341aa1a399aec19817, type: 2}
+  references:
+    version: 2
+    RefIds:
+    - rid: 3002219331932913744
+      type: {class: SingleShotFireModeDefinition, ns: Features.WeaponModule.Scripts.Parts.FireModes, asm: Features.WeaponModule}
+      data: 
+    - rid: 3002219331932913745
+      type: {class: RopeDeliveryDefinition, ns: Features.WeaponModule.Scripts.Parts.Delivery, asm: Features.WeaponModule}
+      data:
+        _catchRadiusMeters: 1.5
+        _hitLayers:
+          serializedVersion: 2
+          m_Bits: 256
+    - rid: 3002219331932913746
+      type: {class: HookAndPullHitEffect, ns: Features.WeaponModule.Scripts.Parts.Effects, asm: Features.WeaponModule}
+      data:
+        _pullSpeedMetersPerSecond: 22
+        _maxRopeMeters: 80

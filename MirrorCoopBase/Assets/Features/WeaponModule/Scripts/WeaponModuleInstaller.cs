@@ -1,3 +1,4 @@
+using Features.WeaponModule.Scripts.Anchors;
 using Features.WeaponModule.Scripts.Hits;
 using Features.WeaponModule.Scripts.Shooting;
 using Features.WeaponModule.Scripts.Targets;
@@ -12,6 +13,7 @@ namespace Features.WeaponModule.Scripts {
             Container.Bind<IWeaponHitRule>().To<WeaponHitRule>().AsSingle();
             Container.Bind<IWeaponHitService>().To<WeaponHitService>().AsSingle();
             Container.BindInterfacesTo<WeaponTargetRegistry>().AsSingle();
+            Container.BindInterfacesTo<WeaponHolderAnchorRegistry>().AsSingle();
             Container.BindInterfacesTo<PhysicsShotDeliveryContext>().AsSingle();
             Container.Bind<IWeaponShooterFactory>().To<WeaponShooterFactory>().AsSingle();
             Container.Bind<IWeaponCatalogIndexService>().To<WeaponCatalogIndexService>().AsSingle();

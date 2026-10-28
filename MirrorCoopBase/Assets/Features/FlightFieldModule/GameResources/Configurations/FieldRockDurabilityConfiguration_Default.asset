@@ -60,3 +60,16 @@ MonoBehaviour:
   _hitFeedbackSeconds: 0.09
   _hitFlashEmission: {r: 0.9, g: 0.55, b: 0.3, a: 1}
   _hitShakeShare: 0.02
+  _giantMinDiameterMeters: 150
+  _smallRockOre:
+    _chance: 0.35
+    _minCount: 1
+    _maxCount: 1
+  _bigRockOre:
+    _chance: 0.8
+    _minCount: 1
+    _maxCount: 3
+  _giantRockOre:
+    _chance: 1
+    _minCount: 3
+    _maxCount: 5

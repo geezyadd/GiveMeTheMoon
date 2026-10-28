@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Features.AddressablesConstantGeneratorModule.EditorLoading;
 using Features.AddressablesConstantsGenerator.Generated;
-using Features.FlightFieldModule.Scripts.Targets;
 using Features.ShopModule.Scripts.Configurations;
 using Features.StagePresetModule.Data;
 using Features.StagePresetModule.Scripts.Configurations;
@@ -33,7 +32,7 @@ namespace Features.StagePresetModule.Editor.Tests {
             _stagePresetSelectionModel = new StagePresetSelectionModel();
             _stagePresetSelectionService = new StagePresetSelectionService(_stagePresetCatalog, _stagePresetSelectionModel);
             _fieldProfileDebug = new RecordingFieldProfileDebug();
-            _stagePresetApplier = new StagePresetApplier(_stagePresetSelectionService, new StagePresetSocketResolver(), _fieldProfileDebug, _stagePresetCatalog, _walletConfiguration, new FieldTargetCountScaleModel());
+            _stagePresetApplier = new StagePresetApplier(_stagePresetSelectionService, new StagePresetSocketResolver(), _fieldProfileDebug, _stagePresetCatalog, _walletConfiguration);
         }
 
         [TearDown]
@@ -111,7 +110,7 @@ namespace Features.StagePresetModule.Editor.Tests {
             StagePresetTestAssets.SetFieldProfile(preset, PROFILE_ID);
             StagePresetSelectionService service = new StagePresetSelectionService(Remember(StagePresetTestAssets.CreateCatalog(preset)), _stagePresetSelectionModel);
             service.Select(preset.Id);
-            return new StagePresetApplier(service, new StagePresetSocketResolver(), _fieldProfileDebug, _stagePresetCatalog, _walletConfiguration, new FieldTargetCountScaleModel());
+            return new StagePresetApplier(service, new StagePresetSocketResolver(), _fieldProfileDebug, _stagePresetCatalog, _walletConfiguration);
         }
 
         private T Remember<T>(T created) where T : Object {

@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d515f51a45f3804994dd0211f758ee3, type: 3}
+  m_Name: HarpoonHandWeapon
+  m_EditorClassIdentifier: 
+  _id: harpoon
+  _displayName: Harpoon
+  _icon: {fileID: 0}
+  _description: 'A hand harpoon. Throws a rope at glowing ore from broken rocks and
+    pulls it to the ship: ore that reaches the ship pays the crew. Reaches 70 m,
+    1.5 s to reel in. Grab it and press the left mouse button.'
+  _price: 120
+  _itemPrefab: {fileID: 2192727742419377178, guid: 015d682b64e233440a52bdae2b79a120, type: 3}
+  _weapon: {fileID: 11400000, guid: a7818133e6f4ed54e8edfefeb759962b, type: 2}
+  _minTriggerReportSeconds: 0.25
+  _crosshairLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  _viewOffset: {x: 0.18, y: -0.17, z: 0.38}
+  _handOffset: {x: 0.55, y: -0.05, z: -0.15}

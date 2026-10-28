@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Features.FlightFieldModule.Scripts.Configuration;
-using Features.FlightFieldModule.Scripts.Targets;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Configurations;
 using Features.ShopModule.Scripts.Core;
@@ -13,8 +11,7 @@ using Features.FlightFieldModule.Scripts.Requests;
 
 namespace Features.StagePresetModule.Scripts.Systems {
     // The server's one place that turns the selected stage preset into the run: start loop, modules through the
-    // sockets' normal install path, starting balance, station drops, field profile, the target balloon count scale of
-    // its FieldTargetPresetBlock. No preset: a normal run.
+    // sockets' normal install path, starting balance, station drops, field profile. No preset: a normal run.
     public sealed class StagePresetApplier : IShipRunStage, IWalletStartingBalanceSource {
         private const int NORMAL_START_LOOP_INDEX = 0;
         private const string INSTALL_FAILED_FORMAT = "Stage preset '{0}': module '{1}' cannot be installed in socket '{2}' (it holds '{3}').";
@@ -23,7 +20,6 @@ namespace Features.StagePresetModule.Scripts.Systems {
         private readonly IStagePresetSocketResolver _stagePresetSocketResolver;
         private readonly StagePresetCatalog _stagePresetCatalog;
         private readonly WalletConfiguration _walletConfiguration;
-        private readonly IFieldTargetCountScaleWriter _fieldTargetCountScaleWriter;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private readonly IFieldProfileDebug _fieldProfileDebug;
 #endif
@@ -44,8 +40,7 @@ namespace Features.StagePresetModule.Scripts.Systems {
             IFieldProfileDebug fieldProfileDebug,
 #endif
             StagePresetCatalog stagePresetCatalog,
-            WalletConfiguration walletConfiguration,
-            IFieldTargetCountScaleWriter fieldTargetCountScaleWriter) {
+            WalletConfiguration walletConfiguration) {
             _stagePresetSelectionService = stagePresetSelectionService;
             _stagePresetSocketResolver = stagePresetSocketResolver;
             _stagePresetCatalog = stagePresetCatalog;
@@ -53,7 +48,6 @@ namespace Features.StagePresetModule.Scripts.Systems {
             _fieldProfileDebug = fieldProfileDebug;
 #endif
             _walletConfiguration = walletConfiguration;
-            _fieldTargetCountScaleWriter = fieldTargetCountScaleWriter;
         }
 
         public void ServerPrepareShip(ShipBase ship) {
@@ -63,9 +57,6 @@ namespace Features.StagePresetModule.Scripts.Systems {
             IReadOnlyList<ShipSocket> sockets = _stagePresetSocketResolver.ResolveSockets(preset, ship.Sockets);
             for (int i = 0; i < sockets.Count; i++)
                 InstallModule(preset, preset.Modules[i].Module, sockets[i]);
-
-            if (_stagePresetSelectionService.TryGetSelectedExtension(out FieldTargetPresetBlock targets))
-                _fieldTargetCountScaleWriter.SetCountScale(targets.CountScale);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (preset.HasFieldProfile)
@@ -79,7 +70,6 @@ namespace Features.StagePresetModule.Scripts.Systems {
                 _fieldProfileDebug.DebugClearProfile();
 #endif
             _stagePresetSelectionService.Clear();
-            _fieldTargetCountScaleWriter.Reset();
         }
 
         // A socket that already holds the module (its starting module, e.g. the helm) keeps it.

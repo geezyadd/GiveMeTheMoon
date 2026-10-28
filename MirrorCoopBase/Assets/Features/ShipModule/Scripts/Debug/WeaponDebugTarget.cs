@@ -9,7 +9,7 @@ namespace Features.ShipModule.Scripts.Debug {
     // A floating test dummy for weapons, spawned from the debug window in editor / development builds (WeaponDebugTargetSystem).
     // It keeps its place in front of the ship and sways from side to side, counts the hits the server accepted and
     // flashes on each one on every peer. Its prefab is registered with Mirror at runtime (WeaponDebugTargetPrefabSystem).
-    public sealed class WeaponDebugTarget : NetworkBehaviour, IWeaponTarget, IWeaponTargetCollider {
+    public sealed class WeaponDebugTarget : NetworkBehaviour, IWeaponDamageTarget, IWeaponTargetCollider {
         // Debug targets keep to their own id range, clear of the field rocks' ids.
         private const ulong TARGET_ID_BASE = 0xDEB0000000000000UL;
         private const string HITS_FORMAT = "{0}";

@@ -2,7 +2,7 @@ using Features.WeaponModule.Scripts.Parts.Delivery;
 using Features.WeaponModule.Scripts.Parts.Feel;
 
 namespace Features.WeaponModule.Editor.Tests {
-    public sealed class RecordingWeaponFeel : IWeaponFeel {
+    public sealed class RecordingWeaponFeel : IWeaponFeel, IContinuousFireFeel {
         public bool IsFiring { get; private set; }
         public int Shots { get; private set; }
 

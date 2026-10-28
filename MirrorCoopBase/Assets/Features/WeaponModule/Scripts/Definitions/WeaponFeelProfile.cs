@@ -91,6 +91,14 @@ namespace Features.WeaponModule.Scripts.Definitions {
         [SerializeField, Range(0f, 1f)] private float _impactFlashMinSizeShare;
         [SerializeField, Min(0f)] private float _targetFlashSeconds;
 
+        [Header("Rope")]
+        [Tooltip("How fast a rope's tip flies out to where the shot ended, meters per second.")]
+        [SerializeField, Min(0f)] private float _ropeOutSpeedMetersPerSecond;
+        [Tooltip("How fast a rope that hooked nothing is reeled back in, meters per second.")]
+        [SerializeField, Min(0f)] private float _ropeReturnSpeedMetersPerSecond;
+        [Tooltip("How long a rope that reached a target stays there before it is reeled in, seconds; the hooked target draws its own rope from then on.")]
+        [SerializeField, Min(0f)] private float _ropeHoldSeconds;
+
         public float BarrelSpinDegreesPerSecond => _barrelSpinDegreesPerSecond;
         public Color MuzzleFlashColor => _muzzleFlashColor;
         public float MuzzleFlashSize => _muzzleFlashSize;
@@ -140,5 +148,8 @@ namespace Features.WeaponModule.Scripts.Definitions {
         public float ImpactFlashSeconds => _impactFlashSeconds;
         public float ImpactFlashMinSizeShare => _impactFlashMinSizeShare;
         public float TargetFlashSeconds => _targetFlashSeconds;
+        public float RopeOutSpeedMetersPerSecond => _ropeOutSpeedMetersPerSecond;
+        public float RopeReturnSpeedMetersPerSecond => _ropeReturnSpeedMetersPerSecond;
+        public float RopeHoldSeconds => _ropeHoldSeconds;
     }
 }
