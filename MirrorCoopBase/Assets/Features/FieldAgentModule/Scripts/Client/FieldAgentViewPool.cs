@@ -26,7 +26,7 @@ namespace Features.FieldAgentModule.Scripts.Client {
 
         public FieldAgentView Take(byte kindIndex, int agentId) {
             FieldAgentProfile profile = _fieldAgentConfiguration.Profiles[kindIndex];
-            FieldAgentView view = TryTakeFree(kindIndex, out FieldAgentView free) ? free : Object.Instantiate(profile.ViewPrefab, ReadRoot());
+            FieldAgentView view = TryTakeFree(kindIndex, out FieldAgentView free) ? free : Object.Instantiate(profile.ViewPrefab, GetOrCreateRoot());
             view.Begin(profile, agentId);
             return view;
         }
@@ -59,7 +59,7 @@ namespace Features.FieldAgentModule.Scripts.Client {
             return false;
         }
 
-        private Transform ReadRoot() {
+        private Transform GetOrCreateRoot() {
             if (_root == null)
                 _root = new GameObject(ROOT_NAME).transform;
 

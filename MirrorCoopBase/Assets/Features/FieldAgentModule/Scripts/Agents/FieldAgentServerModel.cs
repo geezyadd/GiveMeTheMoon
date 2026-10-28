@@ -91,11 +91,6 @@ namespace Features.FieldAgentModule.Scripts.Agents {
             _hasShipSample = true;
         }
 
-        public void ForgetShip() {
-            _hasShipSample = false;
-            ShipVelocity = Vector3.zero;
-        }
-
         // Flight positions and world-anchored behaviours move with the world; ship-space agents stay where they are.
         public void ShiftWorld(Vector3 delta) {
             LastShipPosition += delta;

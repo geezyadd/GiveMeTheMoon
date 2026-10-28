@@ -97,7 +97,7 @@ namespace Features.FieldAgentModule.Scripts.Server {
 
             _sinceBatch = 0f;
             _fieldAgentBatchPublishService.Publish(_fieldAgentServerModel);
-            _fieldAgentDiagnosticsModel.RecordBatch(_fieldAgentServerModel.Count);
+            _fieldAgentDiagnosticsModel.RecordBatch();
         }
     }
 }

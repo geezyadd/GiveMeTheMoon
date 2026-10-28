@@ -13,10 +13,6 @@ namespace Features.FieldAgentModule.Scripts.Steering {
     // starts the landing once the agent is at its approach point above the deck.
     public sealed class FieldAgentFlightStepService : IFieldAgentFlightStepService {
         private const float MIN_SPEED_SQR = 0.01f;
-        private const float QUERY_MARGIN = 1f;
-        private const float INTERVAL_MIN_SHARE = 0.75f;
-        private const int INTERVAL_SPREAD_STEPS = 8;
-        private const float INTERVAL_STEP_SHARE = 0.0625f;
 
         private readonly IFieldRockQuery _fieldRockQuery;
         private readonly IFieldAgentSteering _fieldAgentSteering;
@@ -98,8 +94,8 @@ namespace Features.FieldAgentModule.Scripts.Steering {
             ref FieldAgentState state = ref model.GetState(index);
             FieldAgentRockCache cache = model.GetRockCache(index);
             cache.AddAge(deltaTime);
-            float interval = _fieldAgentConfiguration.RockQuerySeconds * (INTERVAL_MIN_SHARE + (state.Id % INTERVAL_SPREAD_STEPS) * INTERVAL_STEP_SHARE);
-            float reach = _fieldAgentRockAvoidance.CalculateLookAheadMeters(state.Velocity, profile) + profile.Radius + profile.RockClearance + QUERY_MARGIN;
+            float interval = CalculateQueryInterval(state.Id);
+            float reach = _fieldAgentRockAvoidance.CalculateLookAheadMeters(state.Velocity, profile) + profile.Radius + profile.RockClearance + _fieldAgentConfiguration.RockQueryMarginMeters;
             bool isStale = cache.Age >= interval || Vector3.Distance(state.Position, cache.Center) + reach > cache.Radius;
             if (isStale == false)
                 return cache.Rocks;
@@ -108,6 +104,11 @@ namespace Features.FieldAgentModule.Scripts.Steering {
             _fieldRockQuery.FindInSphere(state.Position, radius, cache.Rocks);
             cache.Refill(state.Position, radius);
             return cache.Rocks;
+        }
+
+        private float CalculateQueryInterval(int agentId) {
+            float spread = agentId % _fieldAgentConfiguration.RockQueryIntervalSpreadSteps * _fieldAgentConfiguration.RockQueryIntervalStepShare;
+            return _fieldAgentConfiguration.RockQuerySeconds * (_fieldAgentConfiguration.RockQueryIntervalMinShare + spread);
         }
 
         private static Vector3 CalculateTarget(FieldAgentGoal goal, in FieldAgentShipFrame ship, FieldAgentProfile profile) {

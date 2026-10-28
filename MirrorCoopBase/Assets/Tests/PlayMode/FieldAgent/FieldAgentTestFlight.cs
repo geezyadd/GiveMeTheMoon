@@ -99,33 +99,14 @@ namespace Tests.PlayMode.FieldAgent {
         public void SetThrottle(float position) =>
             SessionQueries.Resolve<IShipThrottleDebug>().DebugSetThrottle(position);
 
-        public string DescribeAgent(int id) {
-            if (Control.TryGetAgent(id, out FieldAgentState state) == false)
-                return $"agent {id} gone";
-
-            Control.TryGetWorldPosition(id, out Vector3 world);
-            return $"agent {id} {state.Mode} {Vector3.Distance(world, Ship.transform.position):0.0} m from the ship, speed {state.Velocity.magnitude:0.0}, finished {state.IsBehaviourFinished}";
-        }
-
         public void FaceAwayFromStation() =>
             Ship.FlightControlDebug.DebugFace(Ship.transform.position - Session.Model.TransitDestination);
 
         // Every flying agent's sphere against the rock spheres of the server's field data.
         public void CheckRocks(IReadOnlyList<int> ids) {
             foreach (int id in ids) {
-                if (Control.TryGetAgent(id, out FieldAgentState state) == false || state.Mode != FieldAgentMode.Flight)
-                    continue;
-
-                Rocks.FindInSphere(state.Position, Profile.Radius + Profile.RockClearance + Profile.MinLookAheadMeters, _touching);
-                foreach (FieldRockDescription rock in _touching) {
-                    _rocksNear.Add(rock.Id);
-                    float gap = Vector3.Distance(state.Position, rock.Center) - rock.Radius - Profile.Radius;
-                    if (gap >= 0f)
-                        continue;
-
-                    RockHits++;
-                    FirstRockHit ??= $"agent {id} at {state.Position} is {-gap:0.00} m inside rock {rock.Id} ({rock.Diameter:0.0} m)";
-                }
+                if (Control.TryGetAgent(id, out FieldAgentState state) && state.Mode == FieldAgentMode.Flight)
+                    CheckAgentRocks(id, state);
             }
         }
 
@@ -135,6 +116,19 @@ namespace Tests.PlayMode.FieldAgent {
             ScreenCapture.CaptureScreenshot(Path.Combine(folder, fileName));
             yield return null;
             yield return null;
+        }
+
+        private void CheckAgentRocks(int id, in FieldAgentState state) {
+            Rocks.FindInSphere(state.Position, Profile.Radius + Profile.RockClearance + Profile.MinLookAheadMeters, _touching);
+            foreach (FieldRockDescription rock in _touching) {
+                _rocksNear.Add(rock.Id);
+                float gap = Vector3.Distance(state.Position, rock.Center) - rock.Radius - Profile.Radius;
+                if (gap >= 0f)
+                    continue;
+
+                RockHits++;
+                FirstRockHit ??= $"agent {id} at {state.Position} is {-gap:0.00} m inside rock {rock.Id} ({rock.Diameter:0.0} m)";
+            }
         }
 
         private bool IsCruising() =>

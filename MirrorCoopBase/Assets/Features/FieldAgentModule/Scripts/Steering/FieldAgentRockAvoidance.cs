@@ -65,7 +65,7 @@ namespace Features.FieldAgentModule.Scripts.Steering {
                 return CalculateEscape(outward, distance, reach, rock.Radius + profile.Radius, profile.MaxSpeed);
 
             float gap = distance - reach;
-            if (direction == Vector3.zero || gap > lookAhead || IsCourseClear(position, direction, rock.Center, reach))
+            if (IsRockOffCourse(position, direction, rock.Center, gap, lookAhead, reach))
                 return Vector3.zero;
 
             Vector3 tangent = direction - outward * Vector3.Dot(direction, outward);
@@ -73,6 +73,9 @@ namespace Features.FieldAgentModule.Scripts.Steering {
             float urgency = 1f - Mathf.Clamp01(gap / lookAhead);
             return (tangent - direction) * (profile.MaxSpeed * urgency);
         }
+
+        private static bool IsRockOffCourse(Vector3 position, Vector3 direction, Vector3 center, float gap, float lookAhead, float reach) =>
+            direction == Vector3.zero || gap > lookAhead || IsCourseClear(position, direction, center, reach);
 
         private static bool IsCourseClear(Vector3 position, Vector3 direction, Vector3 center, float reach) {
             Vector3 toCenter = center - position;

@@ -9,7 +9,8 @@ module's description here, not in the root file.
 `Features.FieldAgentModule` (layer 5; references: GameCoreModule.Contracts, FlightFieldModule.Contracts,
 DebugModule.Contracts, NetworkModel, Mirror, Zenject, ShipModule, SpaceHazeModule). Installed by
 `FieldAgentModuleInstaller` in `GlobalSceneInstaller`; the models (`FieldAgentsModelInstaller`,
-`FieldAgentServerModel`, `FieldAgentDiagnosticsModel`) in `DataInstaller`; `FieldAgentConfiguration` in
+`FieldAgentServerModel`, `FieldAgentDiagnosticsModel`, `FieldAgentShownModel`; in editor / development builds
+`FieldAgentFlockDebugModel`, `FieldAgentDeckTripDebugModel`) in `DataInstaller`; `FieldAgentConfiguration` in
 `ConfigurationInstaller`. Tests: `Features.FieldAgentModule.Editor.Tests`. No `.Contracts` assembly yet: the features
 built on it (bugs, the nest, parcel theft) sit above it and reference it directly; `IFieldAgentControl`,
 `IFieldAgentBehaviour` and `IFieldAgentGroupSpawnService` are their API.
@@ -17,7 +18,7 @@ built on it (bugs, the nest, parcel theft) sit above it and reference it directl
 ## Key places
 | What | Where |
 |---|---|
-| Data | `FieldAgentConfiguration_Default` (Addressables `Configurations`; checked at startup by `FieldAgentConfigurationValidator`): the kinds, steering weights, rock query interval, send rate, interpolation delay, deck NavMesh anchor, hidden spawn, debug flock. A kind is one `FieldAgentProfile` asset (`GameResources/Configurations/`): flight limits (max speed, acceleration, turn rate), radius, rock look-ahead and clearance, separation, wander, deck walk speed, landing / take-off timings, the view feel and the view prefab. The kind number on the network is the profile's index in the list, so only append. One kind now: `test_agent` (`GameResources/Prefabs/TestAgent.prefab`, primitives only) |
+| Data | `FieldAgentConfiguration_Default` (Addressables `Configurations`; checked at startup by `FieldAgentConfigurationValidator`): the kinds, steering weights, rock query interval (with its margin and the per-id spread), send rate, interpolation delay, deck NavMesh anchor, hidden spawn, debug flock. A kind is one `FieldAgentProfile` asset (`GameResources/Configurations/`): flight limits (max speed, acceleration, turn rate), radius, rock look-ahead and clearance, separation, wander, deck walk speed, landing / take-off timings, the view feel and the view prefab. The kind number on the network is the profile's index in the list, so only append. One kind now: `test_agent` (`GameResources/Prefabs/TestAgent.prefab`, primitives only) |
 | Server state | `Agents/FieldAgentServerModel`: parallel arrays (`FieldAgentState` struct, `IFieldAgentBehaviour`, `FieldAgentDeckPath`, `FieldAgentRockCache`) kept in id order; no object per agent in the scene. `FieldAgentState.Position` / `Velocity` / `Rotation` are world values in `Flight` and ship-local values in `Landing`, `Deck`, `TakingOff` (`FieldAgentMode`) |
 | The tick | `Server/FieldAgentSimulationSystem` (server, `ITickable`): one pass over every agent by its mode (`FieldAgentFlightStepService`, `FieldAgentDeckStepService`, `FieldAgentTransitionService`), the cost into `FieldAgentDiagnosticsModel`, and a batch every 1 / `SendRate` s (`FieldAgentBatchPublishService`). No bound ship (lobby, menu) = no agents |
 | Flight steering | `Steering/`: seek with arrival (`FieldAgentSteering`) + rock avoidance (`FieldAgentRockAvoidance`) + separation (`FieldAgentSeparation`, a plain pass over the flying agents) + Perlin wander (`FieldAgentWander`), clamped to the max speed, then `Vector3.RotateTowards` limits turn rate and acceleration. A goal in ship space (the ship, the orbit, a deck point) also gets the ship's velocity: the max speed is against the ship, so agents keep up with a ship in cruise |
@@ -28,11 +29,11 @@ built on it (bugs, the nest, parcel theft) sit above it and reference it directl
 | World shift | `Server/FieldAgentWorldShiftSystem` (`IWorldShiftFollower`): flying agents and world-anchored behaviours move, rock caches are dropped; ship-space agents ride the ship. Clients shift their kept batches (`FieldAgentClientSystem` -> `FieldAgentFrameBuffer.Shift`) |
 | Hidden spawn | `Spawn/FieldAgentHiddenSpawnService`: seeded candidates on a shell (`SpawnMinMeters`..`SpawnMaxMeters`) round a centre, clear of rocks; first a point a rock sphere hides from every player view (the line from the view to the point crosses the sphere), else a point past the haze's `HiddenMeters` (SpaceHaze) from every view. Views: `FieldAgentPlayerViewpointSource` (every connection's player + eye height; the camera itself is not synced). `FieldAgentGroupSpawnService` spawns a group round one hidden point |
 | Network | One synced model `FieldAgents` (generated from `NetworkModelModule/GameResources/Definitions/FieldAgents.asset`, Shared, field `Frame`): a `FieldAgentFrame` (sequence, server network time, `FieldAgentSnapshot[]` sorted by id: id, kind, mode, position, Mirror-compressed rotation; 22 B per agent). Bridge `Network/FieldAgentSync` on the ship's `PoseSync` network identity. No NetworkIdentity or NetworkTransform per agent. A joining player gets the agents with the current frame |
-| Client view | `Client/FieldAgentClientSystem` (every peer with a client): keeps the last `FrameBufferSize` batches (`FieldAgentFrameBuffer`), shows each agent `InterpolationDelaySeconds` (0.25 s) behind the server's network time between two batches (lerp / slerp while the mode stays, else the newer pose; no extrapolation), ship-space agents on this peer's own ship. Looks from `FieldAgentViewPool` (per kind). `FieldAgentView` + `FieldAgentViewFeel`: bank on turns, pitch with acceleration and a light bob, local only |
-| Debug | Debug window → Agents (host with a ship): "Spawn test agents (N)" (default 20; `FieldAgentFlockDebugSystem`: hidden spawn, seek the ship, orbit when arrived), "Remove all field agents", "Land an agent on the deck" (`FieldAgentDeckTripDebugSystem`: one agent lands by the stern, walks to the helm, stands, walks back, takes off, orbits). Public for the tests: `IFieldAgentFlockDebug`, `IFieldAgentDeckTripDebug`, `IFieldAgentShownAgents` |
+| Client view | `Client/FieldAgentClientSystem` (every peer with a client) keeps the last `FrameBufferSize` batches (`FieldAgentFrameBuffer`) and the shown looks in `FieldAgentShownModel` (also `IFieldAgentShownAgents`, what a player sees), shows each agent `InterpolationDelaySeconds` (0.25 s) behind the server's network time between two batches (lerp / slerp while the mode stays, else the newer pose; no extrapolation), ship-space agents on this peer's own ship. Looks from `FieldAgentViewPool` (per kind). `FieldAgentView` + `FieldAgentViewFeel`: bank on turns, pitch with acceleration and a light bob, local only |
+| Debug | Debug window → Agents (host with a ship): "Spawn test agents (N)" (default 20; `FieldAgentFlockDebugSystem`: hidden spawn, seek the ship, orbit when arrived), "Remove all field agents", "Land an agent on the deck" (`FieldAgentDeckTripDebugSystem`: one agent lands by the stern, walks to the helm, stands, walks back, takes off, orbits); availability from the ship's `IShipDebugActionConditions`. Their state lives in `FieldAgentFlockDebugModel` / `FieldAgentDeckTripDebugModel`; the tests read those models and `IFieldAgentShownAgents`, and call `IFieldAgentFlockDebug` / `IFieldAgentDeckTripDebug` |
 
 ## Measured (editor, host, 2026-10-28)
-- 50 agents in cruise: server tick avg 0.45-0.8 ms, max 1.4-2.5 ms (`FieldAgentDiagnosticsModel`; before the per-agent
+- 50 agents in cruise: server tick avg 0.45-0.9 ms, max 1.4-3.5 ms (`FieldAgentDiagnosticsModel`; before the per-agent
   rock cache it was 3.8 ms: the field query is the cost).
 - Batch: 1 011 B for 50 agents (payload) x ~11-12 per second = ~11 KiB/s per client, plus Mirror's message header.
 
@@ -55,10 +56,13 @@ built on it (bugs, the nest, parcel theft) sit above it and reference it directl
   rocks), `FieldAgentFrameBufferTests` (interpolation, mode change, new / gone agents, before / after the batches,
   old batches ignored, the ring, world shift), `FieldAgentModeTransitionTests` (landing in ship space onto the deck
   point, take-off back to the world with the ship's velocity, attach asks for a landing, model removal keeps id order).
-- PlayMode `Tests/PlayMode/FieldAgent/` (host, fast loop timings; run one class per run): `FieldAgentFlockTest` (the
-  debug window's spawn button: 20 agents from a hidden point fly to the ship in a slow cruise, never inside a rock
-  sphere and without a last-resort push, orbit it, then orbit through a rock beside the stopped ship; 50 agents
-  measured; screenshots in the workspace's `.agent-orchestrator/screenshots/field-agents/`) and `FieldAgentDeckTest`
+- PlayMode `Tests/PlayMode/FieldAgent/` (host, fast loop timings; run one class per run; shared steps in
+  `FieldAgentTestFlight` and `FieldAgentFlockSteps`; screenshots in the workspace's
+  `.agent-orchestrator/screenshots/field-agents/`): `FieldAgentFlockTest` (the debug window's spawn button: 20 agents
+  from a hidden point fly to the ship in a slow cruise, never inside a rock sphere and without a last-resort push, and
+  orbit it; the host shows all of them), `FieldAgentRockOrbitTest` (the stopped ship beside a rock so the orbit runs
+  through its sphere: every agent bends round it), `FieldAgentLoadTest` (50 agents: no rock hit, the tick under 2 ms
+  on average, the batch size and rate logged) and `FieldAgentDeckTest`
   (the debug window's deck trip with the ship turning all the time: lands, walks to the helm and back on the deck
   surface on the server and as the host shows it, takes off).
 - Coop: `CoopClientFieldAgentsTest` (`field-agents`, see [Tests/Coop](../../Tests/Coop/AGENTS.md)).

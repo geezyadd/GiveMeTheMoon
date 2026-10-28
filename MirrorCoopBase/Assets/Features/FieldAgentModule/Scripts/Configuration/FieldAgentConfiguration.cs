@@ -15,6 +15,14 @@ namespace Features.FieldAgentModule.Scripts.Configuration {
         [SerializeField] private float _separationWeight = 1.2f;
         [Tooltip("A flying agent asks the field for the rocks around it about this often, seconds; between two queries it reads its cached list.")]
         [SerializeField] private float _rockQuerySeconds = 0.25f;
+        [Tooltip("Extra reach of a rock query beyond the look-ahead, radius and clearance, metres.")]
+        [SerializeField] private float _rockQueryMarginMeters = 1f;
+        [Tooltip("The shortest query interval as a share of the rock query time; agents spread from it by id.")]
+        [SerializeField] private float _rockQueryIntervalMinShare = 0.75f;
+        [Tooltip("How many interval steps the agents' ids spread over.")]
+        [SerializeField] private int _rockQueryIntervalSpreadSteps = 8;
+        [Tooltip("One interval step as a share of the rock query time.")]
+        [SerializeField] private float _rockQueryIntervalStepShare = 0.0625f;
 
         [Header("Network")]
         [Tooltip("Agent batches sent to the clients per second.")]
@@ -73,6 +81,10 @@ namespace Features.FieldAgentModule.Scripts.Configuration {
         public float AvoidanceWeight => _avoidanceWeight;
         public float SeparationWeight => _separationWeight;
         public float RockQuerySeconds => _rockQuerySeconds;
+        public float RockQueryMarginMeters => _rockQueryMarginMeters;
+        public float RockQueryIntervalMinShare => _rockQueryIntervalMinShare;
+        public int RockQueryIntervalSpreadSteps => _rockQueryIntervalSpreadSteps;
+        public float RockQueryIntervalStepShare => _rockQueryIntervalStepShare;
         public float SendRate => _sendRate;
         public float InterpolationDelaySeconds => _interpolationDelaySeconds;
         public int FrameBufferSize => _frameBufferSize;

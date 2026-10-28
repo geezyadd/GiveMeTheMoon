@@ -40,13 +40,8 @@ namespace Features.FieldAgentModule.Scripts.Client {
 
         // A floating-origin shift: the flying agents of every kept batch move with the world.
         public void Shift(Vector3 delta) {
-            for (int k = 0; k < Count; k++) {
-                FieldAgentBufferedFrame frame = GetFrame(k);
-                for (int i = 0; i < frame.Count; i++) {
-                    if (frame.Agents[i].Mode == (byte)FieldAgentMode.Flight)
-                        frame.Agents[i].Position += delta;
-                }
-            }
+            for (int k = 0; k < Count; k++)
+                ShiftFrame(GetFrame(k), delta);
         }
 
         public void Sample(double renderTime, List<FieldAgentPose> results) {
@@ -78,6 +73,13 @@ namespace Features.FieldAgentModule.Scripts.Client {
 
         private FieldAgentBufferedFrame GetFrame(int chronologicalIndex) =>
             _frames[(_start + chronologicalIndex) % _frames.Length];
+
+        private static void ShiftFrame(FieldAgentBufferedFrame frame, Vector3 delta) {
+            for (int i = 0; i < frame.Count; i++) {
+                if (frame.Agents[i].Mode == (byte)FieldAgentMode.Flight)
+                    frame.Agents[i].Position += delta;
+            }
+        }
 
         private static bool IsNotNewer(in FieldAgentFrame frame, FieldAgentBufferedFrame newest) =>
             frame.Sequence <= newest.Sequence || frame.ServerTime <= newest.ServerTime;

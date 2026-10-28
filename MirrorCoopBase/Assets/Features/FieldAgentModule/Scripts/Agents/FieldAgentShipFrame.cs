@@ -24,9 +24,6 @@ namespace Features.FieldAgentModule.Scripts.Agents {
         public Vector3 ToWorldDirection(Vector3 shipLocal) =>
             Rotation * shipLocal;
 
-        public Vector3 ToShipDirection(Vector3 world) =>
-            Quaternion.Inverse(Rotation) * world;
-
         public Quaternion ToWorldRotation(Quaternion shipLocal) =>
             Rotation * shipLocal;
 

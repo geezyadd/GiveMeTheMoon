@@ -32,7 +32,7 @@ namespace Tests.PlayMode.FieldAgent {
         private const float SHOWN_DELAY_SECONDS = 0.4f;
 
         private FieldAgentTestFlight _flight;
-        private IFieldAgentDeckTripDebug _trip;
+        private FieldAgentDeckTripDebugModel _trip;
         private readonly HashSet<FieldAgentDeckTripStage> _stages = new();
         private float _turnOnDeck;
         private float _lastYaw;
@@ -52,7 +52,7 @@ namespace Tests.PlayMode.FieldAgent {
             LogAssert.ignoreFailingMessages = true;
             yield return _flight.FlyIntoEndlessCruiseCoroutine();
             _flight.Ship.FlightControlDebug.SetDebugSteer(true, TURNING_STEER);
-            _trip = SessionQueries.Resolve<IFieldAgentDeckTripDebug>();
+            _trip = SessionQueries.Resolve<FieldAgentDeckTripDebugModel>();
 
             yield return _flight.ClickDebugActionCoroutine(TRIP_LABEL);
             Assert.AreEqual(FieldAgentDeckTripStage.FlyingIn, _trip.Stage, "The debug button did not start the deck trip.");

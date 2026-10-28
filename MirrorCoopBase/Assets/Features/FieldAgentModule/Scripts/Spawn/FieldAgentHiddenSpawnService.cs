@@ -15,7 +15,6 @@ namespace Features.FieldAgentModule.Scripts.Spawn {
         private readonly IFieldRockQuery _fieldRockQuery;
         private readonly FieldAgentConfiguration _fieldAgentConfiguration;
         private readonly SpaceHazeConfiguration _spaceHazeConfiguration;
-        private readonly List<FieldRockDescription> _rocks = new();
 
         public FieldAgentHiddenSpawnService(IFieldRockQuery fieldRockQuery, FieldAgentConfiguration fieldAgentConfiguration, SpaceHazeConfiguration spaceHazeConfiguration) {
             _fieldRockQuery = fieldRockQuery;
@@ -58,9 +57,11 @@ namespace Features.FieldAgentModule.Scripts.Spawn {
             return true;
         }
 
+        // Spawning is a cold path: each query fills a list of its own.
         public bool IsClearOfRocks(Vector3 point) {
-            _fieldRockQuery.FindInSphere(point, _fieldAgentConfiguration.SpawnRockClearance, _rocks);
-            return _rocks.Count == 0;
+            List<FieldRockDescription> rocks = new();
+            _fieldRockQuery.FindInSphere(point, _fieldAgentConfiguration.SpawnRockClearance, rocks);
+            return rocks.Count == 0;
         }
 
         private bool TryFindOnShell(Vector3 center, float minMeters, float maxMeters, System.Random random, IReadOnlyList<Vector3> viewpoints, Func<Vector3, IReadOnlyList<Vector3>, bool> isHidden, out Vector3 point) {
@@ -88,9 +89,10 @@ namespace Features.FieldAgentModule.Scripts.Spawn {
             if (length < MIN_SEGMENT)
                 return false;
 
-            _fieldRockQuery.FindInSphere(viewpoint + segment * 0.5f, length * 0.5f, _rocks);
-            for (int i = 0; i < _rocks.Count; i++) {
-                if (IsCrossing(viewpoint, point, segment / length, length, _rocks[i]))
+            List<FieldRockDescription> rocks = new();
+            _fieldRockQuery.FindInSphere(viewpoint + segment * 0.5f, length * 0.5f, rocks);
+            for (int i = 0; i < rocks.Count; i++) {
+                if (IsCrossing(viewpoint, point, segment / length, length, rocks[i]))
                     return true;
             }
 

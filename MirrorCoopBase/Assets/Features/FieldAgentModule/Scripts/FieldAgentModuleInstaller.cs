@@ -32,7 +32,6 @@ namespace Features.FieldAgentModule.Scripts {
             Container.BindInterfacesTo<FieldAgentViewPool>().AsSingle();
             Container.BindInterfacesTo<FieldAgentClientSystem>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Container.Bind<Debug.IFieldAgentDebugConditions>().To<Debug.FieldAgentDebugConditions>().AsSingle();
             Container.BindInterfacesTo<Debug.FieldAgentFlockDebugSystem>().AsSingle();
             Container.BindInterfacesTo<Debug.FieldAgentDeckTripDebugSystem>().AsSingle();
 #endif

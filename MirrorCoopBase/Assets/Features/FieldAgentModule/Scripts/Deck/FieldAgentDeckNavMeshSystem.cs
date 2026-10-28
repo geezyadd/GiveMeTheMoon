@@ -29,7 +29,7 @@ namespace Features.FieldAgentModule.Scripts.Deck {
                 return;
 
             Remove();
-            if (ship == null || ship.DeckNavMeshData == null)
+            if (ship == null)
                 return;
 
             _instance = NavMesh.AddNavMeshData(ship.DeckNavMeshData, _fieldAgentConfiguration.DeckNavMeshAnchor, Quaternion.identity);

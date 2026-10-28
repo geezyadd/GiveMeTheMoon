@@ -82,6 +82,6 @@ namespace Features.FieldAgentModule.Scripts.Editor.Tests {
         }
 
         private int AddAgent(Vector3 position) =>
-            _model.Add(new FieldAgentState { Mode = FieldAgentMode.Flight, Position = position, Rotation = Quaternion.identity }, new IdleBehaviour(position, 0f, 0f));
+            _model.Add(new FieldAgentState { Mode = FieldAgentMode.Flight, Position = position, Rotation = Quaternion.identity }, new IdleBehaviour(position, 0f, 0f, 0f));
     }
 }

@@ -18,6 +18,10 @@ MonoBehaviour:
   _avoidanceWeight: 1.5
   _separationWeight: 1.2
   _rockQuerySeconds: 0.25
+  _rockQueryMarginMeters: 1
+  _rockQueryIntervalMinShare: 0.75
+  _rockQueryIntervalSpreadSteps: 8
+  _rockQueryIntervalStepShare: 0.0625
   _sendRate: 12
   _interpolationDelaySeconds: 0.25
   _frameBufferSize: 6

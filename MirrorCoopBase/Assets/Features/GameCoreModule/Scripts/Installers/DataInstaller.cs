@@ -4,6 +4,7 @@ using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.CrewInviteModule.Data.Generated;
 using Features.FieldAgentModule.Scripts.Agents;
+using Features.FieldAgentModule.Scripts.Client;
 using Features.FieldAgentModule.Scripts.Network.Generated;
 using Features.FlightFieldModule.Scripts.Decor;
 using Features.FlightFieldModule.Scripts.Network;
@@ -56,6 +57,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<DeadCrewModel>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.Bind<Features.ShipModule.Scripts.Debug.WeaponDebugTargetModel>().AsSingle();
+            Container.Bind<Features.FieldAgentModule.Scripts.Debug.FieldAgentFlockDebugModel>().AsSingle();
+            Container.Bind<Features.FieldAgentModule.Scripts.Debug.FieldAgentDeckTripDebugModel>().AsSingle();
 #endif
             WalletModelInstaller.Install(Container);
             PlayerLifeModelInstaller.Install(Container);
@@ -82,6 +85,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             FieldAgentsModelInstaller.Install(Container);
             Container.Bind<FieldAgentServerModel>().AsSingle();
             Container.Bind<FieldAgentDiagnosticsModel>().AsSingle();
+            Container.BindInterfacesAndSelfTo<FieldAgentShownModel>().AsSingle();
             SonarConsoleModelInstaller.Install(Container);
             Container.Bind<SonarConsoleBindingModel>().AsSingle();
             Container.Bind<SonarScopeModel>().AsSingle();

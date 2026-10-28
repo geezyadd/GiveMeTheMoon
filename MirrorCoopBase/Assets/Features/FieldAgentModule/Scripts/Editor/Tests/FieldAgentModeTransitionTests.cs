@@ -72,7 +72,7 @@ namespace Features.FieldAgentModule.Scripts.Editor.Tests {
         public void WhenAgentsAreRemoved_ThenTheModelKeepsIdOrderAndFindsEveryOther() {
             FieldAgentServerModel model = new();
             for (int i = 0; i < 70; i++)
-                model.Add(new FieldAgentState(), new IdleBehaviour(Vector3.zero, 0f, 0f));
+                model.Add(new FieldAgentState(), new IdleBehaviour(Vector3.zero, 0f, 0f, 0f));
 
             model.TryFindIndex(10, out int index);
             model.RemoveAt(index);

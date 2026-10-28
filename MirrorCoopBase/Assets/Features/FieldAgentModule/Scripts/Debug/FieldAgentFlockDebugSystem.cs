@@ -8,6 +8,7 @@ using Features.FieldAgentModule.Scripts.Configuration;
 using Features.FieldAgentModule.Scripts.Server;
 using Features.FieldAgentModule.Scripts.Spawn;
 using Features.ShipModule.Scripts;
+using Features.ShipModule.Scripts.Debug;
 using UnityEngine;
 using Zenject;
 
@@ -25,40 +26,37 @@ namespace Features.FieldAgentModule.Scripts.Debug {
         private const string SPAWNED_LOG_FORMAT = "[FieldAgents] spawned {0} test agents, hidden by {1}";
 
         private readonly IDebugActionRegistry _debugActionRegistry;
-        private readonly IFieldAgentDebugConditions _fieldAgentDebugConditions;
+        private readonly IShipDebugActionConditions _shipDebugActionConditions;
         private readonly IFieldAgentControl _fieldAgentControl;
         private readonly IFieldAgentGroupSpawnService _fieldAgentGroupSpawnService;
         private readonly IShipRunBindingModel _shipRunBindingModel;
         private readonly FieldAgentConfiguration _fieldAgentConfiguration;
+        private readonly FieldAgentFlockDebugModel _fieldAgentFlockDebugModel;
         private readonly List<IDisposable> _registrations = new();
-        private readonly List<int> _flockIds = new();
-        private readonly List<int> _seekingIds = new();
         private readonly List<int> _spawned = new();
-        private int _spawnSeed;
+        private readonly List<int> _ids = new();
 
         public FieldAgentFlockDebugSystem(
             IDebugActionRegistry debugActionRegistry,
-            IFieldAgentDebugConditions fieldAgentDebugConditions,
+            IShipDebugActionConditions shipDebugActionConditions,
             IFieldAgentControl fieldAgentControl,
             IFieldAgentGroupSpawnService fieldAgentGroupSpawnService,
             IShipRunBindingModel shipRunBindingModel,
-            FieldAgentConfiguration fieldAgentConfiguration) {
+            FieldAgentConfiguration fieldAgentConfiguration,
+            FieldAgentFlockDebugModel fieldAgentFlockDebugModel) {
             _debugActionRegistry = debugActionRegistry;
-            _fieldAgentDebugConditions = fieldAgentDebugConditions;
+            _shipDebugActionConditions = shipDebugActionConditions;
             _fieldAgentControl = fieldAgentControl;
             _fieldAgentGroupSpawnService = fieldAgentGroupSpawnService;
             _shipRunBindingModel = shipRunBindingModel;
             _fieldAgentConfiguration = fieldAgentConfiguration;
+            _fieldAgentFlockDebugModel = fieldAgentFlockDebugModel;
         }
-
-        public IReadOnlyList<int> FlockIds => _flockIds;
-        public int OrbitingCount => _flockIds.Count - _seekingIds.Count;
-        public FieldAgentSpawnCover LastSpawnCover { get; private set; }
 
         public void Initialize() {
             DebugActionValue count = new(SPAWN_VALUE_LABEL, _fieldAgentConfiguration.DebugFlockSize);
-            _registrations.Add(_debugActionRegistry.Register(new DebugActionDefinition(DebugSections.AGENTS, SPAWN_LABEL, SPAWN_DESCRIPTION, _fieldAgentDebugConditions.ReadHostWithShipReason, count, SpawnFromWindow)));
-            _registrations.Add(_debugActionRegistry.Register(new DebugActionDefinition(DebugSections.AGENTS, REMOVE_LABEL, REMOVE_DESCRIPTION, _fieldAgentDebugConditions.ReadHostWithShipReason, DebugRemoveAll)));
+            _registrations.Add(_debugActionRegistry.Register(new DebugActionDefinition(DebugSections.AGENTS, SPAWN_LABEL, SPAWN_DESCRIPTION, _shipDebugActionConditions.ReadHostWithShipReason, count, SpawnFromWindow)));
+            _registrations.Add(_debugActionRegistry.Register(new DebugActionDefinition(DebugSections.AGENTS, REMOVE_LABEL, REMOVE_DESCRIPTION, _shipDebugActionConditions.ReadHostWithShipReason, DebugRemoveAll)));
         }
 
         public void Dispose() {
@@ -69,15 +67,10 @@ namespace Features.FieldAgentModule.Scripts.Debug {
         }
 
         public void Tick() {
-            for (int i = _flockIds.Count - 1; i >= 0; i--) {
-                if (_fieldAgentControl.TryGetAgent(_flockIds[i], out FieldAgentState _) == false) {
-                    _seekingIds.Remove(_flockIds[i]);
-                    _flockIds.RemoveAt(i);
-                }
-            }
-
-            for (int i = _seekingIds.Count - 1; i >= 0; i--)
-                StartOrbitWhenArrived(i);
+            _ids.Clear();
+            _ids.AddRange(_fieldAgentFlockDebugModel.FlockIds);
+            foreach (int id in _ids)
+                FollowAgent(id);
         }
 
         public int DebugSpawnTestFlock(int count) {
@@ -85,33 +78,37 @@ namespace Features.FieldAgentModule.Scripts.Debug {
             if (ship == null || count <= 0)
                 return 0;
 
-            LastSpawnCover = _fieldAgentGroupSpawnService.SpawnHiddenGroup(_fieldAgentConfiguration.Profiles[0], count, ship.transform.position, ++_spawnSeed, CreateSeek, _spawned);
-            _flockIds.AddRange(_spawned);
-            _seekingIds.AddRange(_spawned);
+            int seed = _fieldAgentFlockDebugModel.TakeSpawnSeed();
+            FieldAgentSpawnCover cover = _fieldAgentGroupSpawnService.SpawnHiddenGroup(_fieldAgentConfiguration.Profiles[0], count, ship.transform.position, seed, CreateSeek, _spawned);
+            _fieldAgentFlockDebugModel.AddSeekingGroup(_spawned, cover);
             return _spawned.Count;
         }
 
         public void DebugRemoveAll() {
             _fieldAgentControl.DespawnAll();
-            _flockIds.Clear();
-            _seekingIds.Clear();
+            _fieldAgentFlockDebugModel.Clear();
         }
 
-        private void StartOrbitWhenArrived(int seekingIndex) {
-            int id = _seekingIds[seekingIndex];
-            if (_fieldAgentControl.TryGetAgent(id, out FieldAgentState state) == false || state.IsBehaviourFinished == false)
+        // A gone agent leaves the flock; a seeking one that reached the ship starts to orbit it.
+        private void FollowAgent(int id) {
+            if (_fieldAgentControl.TryGetAgent(id, out FieldAgentState state) == false) {
+                _fieldAgentFlockDebugModel.Forget(id);
+                return;
+            }
+
+            if (state.IsBehaviourFinished == false || _fieldAgentFlockDebugModel.IsSeeking(id) == false)
                 return;
 
             float lead = (id & 1) == 0 ? _fieldAgentConfiguration.DebugOrbitLeadDegrees : -_fieldAgentConfiguration.DebugOrbitLeadDegrees;
             _fieldAgentControl.SetBehaviour(id, new OrbitBehaviour(_fieldAgentConfiguration.DebugOrbitRadius, _fieldAgentConfiguration.DebugOrbitHeight, _fieldAgentConfiguration.DebugOrbitSpeedShare, lead));
-            _seekingIds.RemoveAt(seekingIndex);
+            _fieldAgentFlockDebugModel.MarkOrbiting(id);
         }
 
         private IFieldAgentBehaviour CreateSeek() =>
             new SeekBehaviour(Vector3.up * _fieldAgentConfiguration.DebugOrbitHeight, true, _fieldAgentConfiguration.DebugSeekArriveMeters, FULL_SPEED);
 
         private void SpawnFromWindow(float count) =>
-            UnityEngine.Debug.Log(string.Format(SPAWNED_LOG_FORMAT, DebugSpawnTestFlock(Mathf.RoundToInt(count)), LastSpawnCover));
+            UnityEngine.Debug.Log(string.Format(SPAWNED_LOG_FORMAT, DebugSpawnTestFlock(Mathf.RoundToInt(count)), _fieldAgentFlockDebugModel.LastSpawnCover));
     }
 }
 #endif

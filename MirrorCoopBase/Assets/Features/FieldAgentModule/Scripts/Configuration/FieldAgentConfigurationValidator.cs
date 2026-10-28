@@ -18,6 +18,11 @@ namespace Features.FieldAgentModule.Scripts.Configuration {
         public void Initialize() {
             ValidateProfiles();
             ValidatePositive(_fieldAgentConfiguration.SendRate, nameof(FieldAgentConfiguration.SendRate));
+            ValidatePositive(_fieldAgentConfiguration.RockQuerySeconds, nameof(FieldAgentConfiguration.RockQuerySeconds));
+            ValidatePositive(_fieldAgentConfiguration.RockQueryMarginMeters, nameof(FieldAgentConfiguration.RockQueryMarginMeters));
+            ValidatePositive(_fieldAgentConfiguration.RockQueryIntervalMinShare, nameof(FieldAgentConfiguration.RockQueryIntervalMinShare));
+            ValidatePositive(_fieldAgentConfiguration.RockQueryIntervalSpreadSteps, nameof(FieldAgentConfiguration.RockQueryIntervalSpreadSteps));
+            ValidatePositive(_fieldAgentConfiguration.RockQueryIntervalStepShare, nameof(FieldAgentConfiguration.RockQueryIntervalStepShare));
             ValidatePositive(_fieldAgentConfiguration.InterpolationDelaySeconds, nameof(FieldAgentConfiguration.InterpolationDelaySeconds));
             ValidatePositive(_fieldAgentConfiguration.DeckSampleMeters, nameof(FieldAgentConfiguration.DeckSampleMeters));
             ValidatePositive(_fieldAgentConfiguration.SpawnTries, nameof(FieldAgentConfiguration.SpawnTries));

@@ -14,7 +14,6 @@ namespace Features.FieldAgentModule.Scripts.Spawn {
         private readonly IFieldAgentViewpointSource _fieldAgentViewpointSource;
         private readonly IFieldAgentControl _fieldAgentControl;
         private readonly FieldAgentConfiguration _fieldAgentConfiguration;
-        private readonly List<Vector3> _viewpoints = new();
 
         public FieldAgentGroupSpawnService(
             IFieldAgentHiddenSpawnService fieldAgentHiddenSpawnService,
@@ -29,21 +28,22 @@ namespace Features.FieldAgentModule.Scripts.Spawn {
 
         public FieldAgentSpawnCover SpawnHiddenGroup(FieldAgentProfile profile, int count, Vector3 center, int seed, Func<IFieldAgentBehaviour> createBehaviour, List<int> spawnedIds) {
             spawnedIds.Clear();
-            _fieldAgentViewpointSource.CollectViewpoints(_viewpoints);
-            if (_fieldAgentHiddenSpawnService.TryFindHiddenPoint(center, _viewpoints, seed, out Vector3 point, out FieldAgentSpawnCover cover) == false)
+            List<Vector3> viewpoints = new();
+            _fieldAgentViewpointSource.CollectViewpoints(viewpoints);
+            if (_fieldAgentHiddenSpawnService.TryFindHiddenPoint(center, viewpoints, seed, out Vector3 point, out FieldAgentSpawnCover cover) == false)
                 return FieldAgentSpawnCover.None;
 
             System.Random random = new(seed);
             for (int i = 0; i < count; i++)
-                spawnedIds.Add(_fieldAgentControl.Spawn(profile, CreateScatteredPoint(point, random), createBehaviour()));
+                spawnedIds.Add(_fieldAgentControl.Spawn(profile, CreateScatteredPoint(point, viewpoints, random), createBehaviour()));
 
             return cover;
         }
 
-        private Vector3 CreateScatteredPoint(Vector3 point, System.Random random) {
+        private Vector3 CreateScatteredPoint(Vector3 point, IReadOnlyList<Vector3> viewpoints, System.Random random) {
             Vector3 offset = new((float)random.NextDouble() * 2f - 1f, (float)random.NextDouble() * 2f - 1f, (float)random.NextDouble() * 2f - 1f);
             Vector3 scattered = point + offset * _fieldAgentConfiguration.GroupScatterMeters;
-            bool isUsable = _fieldAgentHiddenSpawnService.IsClearOfRocks(scattered) && _fieldAgentHiddenSpawnService.IsHidden(scattered, _viewpoints);
+            bool isUsable = _fieldAgentHiddenSpawnService.IsClearOfRocks(scattered) && _fieldAgentHiddenSpawnService.IsHidden(scattered, viewpoints);
             return isUsable ? scattered : point;
         }
     }

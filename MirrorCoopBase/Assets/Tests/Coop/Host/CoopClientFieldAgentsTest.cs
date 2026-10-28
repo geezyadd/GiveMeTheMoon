@@ -60,7 +60,7 @@ namespace Tests.Coop.Host {
             DebugWindowClicking clicking = new();
             yield return clicking.ClickCoroutine(DebugSections.AGENTS, SPAWN_LABEL);
             Assert.IsNull(clicking.Failure, $"Debug window \"{SPAWN_LABEL}\": {clicking.Failure}.");
-            IFieldAgentFlockDebug flock = SessionQueries.Resolve<IFieldAgentFlockDebug>();
+            FieldAgentFlockDebugModel flock = SessionQueries.Resolve<FieldAgentFlockDebugModel>();
             Assert.AreEqual(CoopFlightSteps.FIELD_AGENT_COUNT, flock.FlockIds.Count, "The host's debug button did not spawn the flock.");
             yield return _host.WaitForCoroutine(() => flock.OrbitingCount == CoopFlightSteps.FIELD_AGENT_COUNT, "the flock orbiting the ship");
         }

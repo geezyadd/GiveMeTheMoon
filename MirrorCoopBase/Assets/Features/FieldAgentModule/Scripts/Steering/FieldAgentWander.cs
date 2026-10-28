@@ -9,11 +9,11 @@ namespace Features.FieldAgentModule.Scripts.Steering {
         private const float AXIS_OFFSET_Z = 67.3f;
 
         public Vector3 CalculateWander(float noisePhase, float time, FieldAgentProfile profile) {
-            float t = time * profile.NoiseFrequency;
+            float noiseTime = time * profile.NoiseFrequency;
             Vector3 noise = new(
-                Mathf.PerlinNoise(t, noisePhase) * 2f - 1f,
-                Mathf.PerlinNoise(t + AXIS_OFFSET_Y, noisePhase) * 2f - 1f,
-                Mathf.PerlinNoise(t + AXIS_OFFSET_Z, noisePhase) * 2f - 1f);
+                Mathf.PerlinNoise(noiseTime, noisePhase) * 2f - 1f,
+                Mathf.PerlinNoise(noiseTime + AXIS_OFFSET_Y, noisePhase) * 2f - 1f,
+                Mathf.PerlinNoise(noiseTime + AXIS_OFFSET_Z, noisePhase) * 2f - 1f);
             return noise * (profile.NoiseStrength * profile.MaxSpeed);
         }
     }
