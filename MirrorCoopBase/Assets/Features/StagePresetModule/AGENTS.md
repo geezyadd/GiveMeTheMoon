@@ -13,11 +13,10 @@ large engines, the radar and the minigun, 1 500) and Late (loop 9, the same modu
 Everyone sees "Preset: <name>" under the balance; the choice ends with the run. The panel shows only in editor and
 development builds (release: `StagePresetCatalog._isPickerShownInReleaseBuilds`). A new preset is a new `StagePreset`
 asset in `StagePresetCatalog_Default`: modules from the `ModuleCatalog`, socket ids of `ShipPlatform` (`engine-left`,
-`engine-right`, `radar`, `control`, `turret-front`). A system that needs its own preset setting (hull HP, balloon density, ...) puts a
+`engine-right`, `radar`, `control`, `turret-front`). A system that needs its own preset setting (hull HP, ore drops, ...) puts a
 ScriptableObject block into a preset's extensions and reads it with
-`IStagePresetSelectionService.TryGetSelectedExtension<T>`; the preset core does not know the block. The target balloons
-do so: `FieldTargetPresetBlock` (`GameResources/Presets/Extensions/`) scales the balloon count, read by
-`StagePresetApplier`.
+`IStagePresetSelectionService.TryGetSelectedExtension<T>`; the preset core does not know the block. No preset has a
+block now: the balloon count block (`FieldTargetPresetBlock`) went with the target balloons on 2026-10-28.
 
 ## Key places
 | What | Where |

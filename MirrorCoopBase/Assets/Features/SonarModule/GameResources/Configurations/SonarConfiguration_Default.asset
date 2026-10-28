@@ -26,21 +26,11 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0d73de613562993449c922c389c3e8ad, type: 2}
   - {fileID: 11400000, guid: 770e0337d1fc4a06bb40b6dfad8d2ba6, type: 2}
   - {fileID: 11400000, guid: 860a193a0261fec4d93c2118dccc9ce7, type: 2}
-  - {fileID: 11400000, guid: 5e946e5f004057046b015d272e17ee1d, type: 2}
-  - {fileID: 11400000, guid: 52c0fe82f51b41f4a03770a495ab1f85, type: 2}
-  - {fileID: 11400000, guid: 008833d17a864379b98297238cd5052b, type: 2}
   - {fileID: 11400000, guid: 71d4dbf7791a43249aa861f027ce4dc2, type: 2}
   _stationKind: {fileID: 11400000, guid: c9e6921bf57271343a9ada775a0ad1b0, type: 2}
   _largeRockKind: {fileID: 11400000, guid: 0d73de613562993449c922c389c3e8ad, type: 2}
   _bigRockKind: {fileID: 11400000, guid: 770e0337d1fc4a06bb40b6dfad8d2ba6, type: 2}
   _debrisKind: {fileID: 11400000, guid: 860a193a0261fec4d93c2118dccc9ce7, type: 2}
-  _targetTiers:
-  - _minReward: 0
-    _kind: {fileID: 11400000, guid: 5e946e5f004057046b015d272e17ee1d, type: 2}
-  - _minReward: 50
-    _kind: {fileID: 11400000, guid: 52c0fe82f51b41f4a03770a495ab1f85, type: 2}
-  - _minReward: 200
-    _kind: {fileID: 11400000, guid: 008833d17a864379b98297238cd5052b, type: 2}
   _bigRockMinDiameterMeters: 40
   _debrisCellMeters: 100
   _debrisMinRocks: 3

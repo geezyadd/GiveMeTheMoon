@@ -13,7 +13,7 @@ namespace Features.ShipImpactModule.Scripts {
             Container.BindInterfacesTo<ShipHullStepTracker>().AsSingle();
             Container.BindInterfacesTo<ComponentRegistry<ShipImpactSync>>().AsSingle();
             Container.BindInterfacesTo<ShipRockCollisionSystem>().AsSingle();
-            Container.BindInterfacesTo<ShipFieldTargetCollisionSystem>().AsSingle();
+            Container.BindInterfacesTo<ShipOreCatchSystem>().AsSingle();
             Container.BindInterfacesTo<ShipImpactEventBus>().AsSingle();
             Container.BindInterfacesTo<ShipServerImpactEventBus>().AsSingle();
             Container.BindInterfacesTo<ShipRockImpactFeelSource>().AsSingle();

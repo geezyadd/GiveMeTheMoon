@@ -31,5 +31,4 @@ MonoBehaviour:
     _module: {fileID: 11400000, guid: 089ec9b0656ec2b4ea21f7977ff29111, type: 2}
   _startingBalance: 1500
   _areStationDropsEnabled: 0
-  _extensions:
-  - {fileID: 11400000, guid: 51b654f1b809507438727736d4014180, type: 2}
+  _extensions: []

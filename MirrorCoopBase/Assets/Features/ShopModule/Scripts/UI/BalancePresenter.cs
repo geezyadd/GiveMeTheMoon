@@ -3,7 +3,7 @@ using Features.ShopModule.Scripts.Configurations;
 using Features.ShopModule.Scripts.Generated;
 
 namespace Features.ShopModule.Scripts.UI {
-    // The crew balance; a rise (income, such as a popped target balloon) flashes it.
+    // The crew balance; a rise (income, such as ore that reached the ship) flashes it.
     public sealed class BalancePresenter : PresenterBehaviour<BalanceViewBase> {
         private readonly IReadOnlyWalletModel _walletModel;
         private readonly WalletConfiguration _walletConfiguration;

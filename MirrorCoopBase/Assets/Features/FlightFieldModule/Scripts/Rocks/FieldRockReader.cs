@@ -12,8 +12,8 @@ namespace Features.FlightFieldModule.Scripts.Rocks {
     // IFieldDebrisLayout), so a rock's id, middle and diameter match the rock every peer shows. Field space: x across
     // the field, y up from the flight plane, z along it; the frame turns it into the world.
     public sealed class FieldRockReader : IFieldRockReader {
-        // Reused per thread: the server's queries run every physics step and allocate nothing, and the generation
-        // thread reads rocks too (the target balloon step), at the same time as the main thread or another generation.
+        // Reused per thread: the server's queries run every physics step and allocate nothing, and a generation thread
+        // may read rocks at the same time as the main thread or another generation.
         [ThreadStatic] private static List<FieldClusterRockPose> _clusterRocks;
         [ThreadStatic] private static List<FieldDebrisSpot> _spots;
 

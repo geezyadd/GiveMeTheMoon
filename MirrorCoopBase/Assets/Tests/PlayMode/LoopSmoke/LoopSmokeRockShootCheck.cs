@@ -21,7 +21,7 @@ namespace Tests.PlayMode.LoopSmoke {
     // for the mouse) and holds the trigger until the server breaks the rock. The rock is in the synced broken list,
     // hidden on the host, and RockDestroyed fired once for it as a Weapon break by the host with the minigun.
     // The check brings its own target instead of hoping the field has one in sight: it puts the ship beside the nearest
-    // small rocks of the field in turn (the debug move of the balloon shot) until one is in reach and clear sight of
+    // small rocks of the field in turn (a debug move of the ship) until one is in reach and clear sight of
     // the turret, and puts the ship back afterwards.
     public sealed class LoopSmokeRockShootCheck {
         private const string MINIGUN_ID = "minigun";
@@ -65,7 +65,7 @@ namespace Tests.PlayMode.LoopSmoke {
             _playerIdentityService = SessionQueries.Resolve<IPlayerIdentityService>();
         }
 
-        // After the turret check sat the host down; before the balloon shot.
+        // After the turret check sat the host down; before the host stands up.
         [LoopSmokeStep(LoopSmokePhase.InCruise, 2, 2, 20)]
         public IEnumerator ShootNearestSmallRockCoroutine() {
             ShipBase ship = _session.Ship;

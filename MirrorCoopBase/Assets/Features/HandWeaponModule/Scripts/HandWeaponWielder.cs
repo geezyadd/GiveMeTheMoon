@@ -3,6 +3,7 @@ using Features.CameraModule.Scripts.Services;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts.Generated;
+using Features.WeaponModule.Scripts.Anchors;
 using Features.WeaponModule.Scripts.Definitions;
 using Features.WeaponModule.Scripts.Network;
 using Features.WeaponModule.Scripts.Parts.Delivery;
@@ -15,8 +16,8 @@ namespace Features.HandWeaponModule.Scripts {
     // A player's hand as the holder of the weapon in it, on every peer. While the hand holds a hand weapon item: on
     // the server the player holds that weapon, so its hit reports are accepted; on the owner's peer the fire button is
     // the trigger, the shot goes from the muzzle to where the crosshair points and the HUD shows the cooldown; every
-    // other peer replays the shots from the synced trigger and aim. Everything ends when the item leaves the hand or
-    // is gone.
+    // other peer replays the shots from the synced trigger and aim. On every peer the weapon is an anchor of its
+    // player (a rope starts there). Everything ends when the item leaves the hand or is gone.
     public sealed class HandWeaponWielder : MonoBehaviour {
         [SerializeField] private GrabController _grab;
         [SerializeField] private WeaponHolderSync _weaponSync;
@@ -25,6 +26,7 @@ namespace Features.HandWeaponModule.Scripts {
         private IWeaponCatalogIndexService _weaponCatalogIndexService;
         private IGameCameraService _gameCameraService;
         private IShotDeliveryContext _shotDeliveryContext;
+        private IWeaponHolderAnchorRegistry _weaponHolderAnchorRegistry;
         private HeldWeaponReadinessModel _heldWeaponReadinessModel;
         private HandWeaponOwnerInput _ownerInput;
         private HandWeaponPoseDriver _poseDriver;
@@ -39,6 +41,7 @@ namespace Features.HandWeaponModule.Scripts {
         private bool _isOwner;
         private bool _isServerHolding;
         private bool _isSentTriggerHeld;
+        private bool _isAnchorRegistered;
 
         [Inject]
         private void InjectDependencies(
@@ -50,11 +53,13 @@ namespace Features.HandWeaponModule.Scripts {
             IGameCameraService gameCameraService,
             GameCameraModel gameCameraModel,
             IShotDeliveryContext shotDeliveryContext,
+            IWeaponHolderAnchorRegistry weaponHolderAnchorRegistry,
             HeldWeaponReadinessModel heldWeaponReadinessModel) {
             _weaponShooterFactory = weaponShooterFactory;
             _weaponCatalogIndexService = weaponCatalogIndexService;
             _gameCameraService = gameCameraService;
             _shotDeliveryContext = shotDeliveryContext;
+            _weaponHolderAnchorRegistry = weaponHolderAnchorRegistry;
             _heldWeaponReadinessModel = heldWeaponReadinessModel;
             _ownerInput = new HandWeaponOwnerInput(inputService, cursorModel, playerControlBlockModel);
             _poseDriver = new HandWeaponPoseDriver(gameCameraService, gameCameraModel);
@@ -107,9 +112,11 @@ namespace Features.HandWeaponModule.Scripts {
                 : new ShownShotOutcomes(item.Feel);
             _shooter = _weaponShooterFactory.Create(weapon, item.Feel, outcomes);
             _poseDriver.Begin(item, _grab.ArmPoint, _holder, _isOwner);
+            RegisterAnchor(weapon);
         }
 
         private void EndHolding() {
+            UnregisterAnchor();
             _poseDriver.End();
             if (_isOwner)
                 EndOwnerControl();
@@ -122,6 +129,22 @@ namespace Features.HandWeaponModule.Scripts {
             _item = null;
             _holder = null;
             _shooter = null;
+        }
+
+        // A player whose key has not arrived yet holds no anchor: nothing can be hooked by it.
+        private void RegisterAnchor(WeaponDefinition weapon) {
+            if (_grab.Key.IsEmpty)
+                return;
+
+            _weaponHolderAnchorRegistry.Register(_grab.Key, weapon.Id, _holder);
+            _isAnchorRegistered = true;
+        }
+
+        private void UnregisterAnchor() {
+            if (_isAnchorRegistered)
+                _weaponHolderAnchorRegistry.Unregister(_grab.Key);
+
+            _isAnchorRegistered = false;
         }
 
         private void BeginOwnerControl(int weaponIndex) {

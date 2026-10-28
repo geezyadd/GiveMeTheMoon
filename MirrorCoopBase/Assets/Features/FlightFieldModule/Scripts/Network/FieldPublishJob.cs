@@ -5,8 +5,7 @@ using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Network {
     // One field on its way into the live field model, in batches: placements, then routes, then route cells, then
-    // debris runs (one per row stretch of debris cells of one kind and density), then target balloons, at most
-    // the batch size of entries per batch, and the scalar state with the field number alone in the last batch, so a
+    // debris runs (one per row stretch of debris cells of one kind and density), at most the batch size of entries per batch, and the scalar state with the field number alone in the last batch, so a
     // peer reacting to the new number finds complete lists. A long field is tens of kilobytes; one batch per Mirror
     // delta keeps every delta below the transport's message limit.
     public sealed class FieldPublishJob {
@@ -14,7 +13,6 @@ namespace Features.FlightFieldModule.Scripts.Network {
         private readonly List<FieldRouteEntry> _routes = new();
         private readonly List<FieldRouteCellEntry> _routeCells = new();
         private readonly List<FieldDebrisRunEntry> _debrisRuns = new();
-        private readonly List<FieldTargetEntry> _targets = new();
         private readonly int _entriesPerBatch;
 
         private LiveFieldState _state;
@@ -22,7 +20,6 @@ namespace Features.FlightFieldModule.Scripts.Network {
         private int _nextRoute;
         private int _nextRouteCell;
         private int _nextDebrisRun;
-        private int _nextTarget;
 
         public bool IsDone { get; private set; }
 
@@ -35,8 +32,6 @@ namespace Features.FlightFieldModule.Scripts.Network {
                 AddRoute(route);
 
             AddDebrisRuns(field);
-            foreach (FieldTargetPlacement target in field.Targets)
-                _targets.Add(new FieldTargetEntry { KindId = target.KindId, FieldPosition = target.FieldPosition });
 
             _state = new LiveFieldState {
                 Number = number,
@@ -76,11 +71,6 @@ namespace Features.FlightFieldModule.Scripts.Network {
 
             while (budget > 0 && _nextDebrisRun < _debrisRuns.Count) {
                 target.AddDebrisRun(_debrisRuns[_nextDebrisRun++]);
-                budget--;
-            }
-
-            while (budget > 0 && _nextTarget < _targets.Count) {
-                target.AddTarget(_targets[_nextTarget++]);
                 budget--;
             }
 

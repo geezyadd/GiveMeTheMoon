@@ -59,10 +59,6 @@ namespace Features.WeaponModule.Scripts.Feel {
         public void SetViewOwned(bool isViewOwned) =>
             _isViewOwned = isViewOwned;
 
-        // A single-shot gun shows only its shots: nothing lasts while the trigger is held.
-        public void PresentFiring(bool isFiring, float readiness) {
-        }
-
         public void PresentShot(in WeaponShotOutcome outcome) {
             _shots++;
             _recoilKick.Kick();

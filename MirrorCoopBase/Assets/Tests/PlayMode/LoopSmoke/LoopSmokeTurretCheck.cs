@@ -14,7 +14,7 @@ namespace Tests.PlayMode.LoopSmoke {
     // The minigun turret: installed at a station, then in cruise the host sits down through the seat's use command,
     // aims the turret at the debug dummy (the station's test hook stands in for the mouse) and holds the trigger
     // until the server has accepted hits on the dummy. The seated host then shoots a field rock
-    // (LoopSmokeRockShootCheck) and a target balloon (LoopSmokeTargetCheck), and stands up again.
+    // (LoopSmokeRockShootCheck) and stands up again.
     public sealed class LoopSmokeTurretCheck {
         private const string MINIGUN_MODULE_ID = "minigun";
         private const string MINIGUN_SCREENSHOT = "turret-tier2-minigun.png";
@@ -73,7 +73,7 @@ namespace Tests.PlayMode.LoopSmoke {
             targets.DebugDespawnTarget();
         }
 
-        // After the rock and the balloon shot.
+        // After the rock shot.
         [LoopSmokeStep(LoopSmokePhase.InCruise, 2, 2, 40)]
         public IEnumerator StandUpCoroutine() {
             ShipTurretStation station = FindSeatedStation(_session.Ship);

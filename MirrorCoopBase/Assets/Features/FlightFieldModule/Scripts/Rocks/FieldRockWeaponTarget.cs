@@ -4,7 +4,7 @@ using Features.WeaponModule.Contracts;
 namespace Features.FlightFieldModule.Scripts.Rocks {
     // Server: the field rock a reported hit names, as the weapon hit path sees it. One instance serves every rock: the
     // hit path aims it at a rock and uses it within the same call, so a hit allocates nothing.
-    public sealed class FieldRockWeaponTarget : IWeaponTarget {
+    public sealed class FieldRockWeaponTarget : IWeaponDamageTarget {
         private readonly IFieldRockQuery _fieldRockQuery;
         private readonly IFieldRockDamageService _fieldRockDamageService;
 

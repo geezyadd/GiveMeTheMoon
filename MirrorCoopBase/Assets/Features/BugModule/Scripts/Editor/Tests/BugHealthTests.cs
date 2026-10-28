@@ -53,7 +53,7 @@ namespace Features.BugModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenMinigunHitsLeaveHealth_ThenTheBugStaysAlive() {
-            IWeaponTarget target = AimAtBug();
+            IWeaponDamageTarget target = AimAtBug();
             for (int i = 0; i < MINIGUN_HITS_LEAVING_ONE; i++)
                 target.ServerReceiveHit(CreateHit(MINIGUN_DAMAGE));
 
@@ -65,7 +65,7 @@ namespace Features.BugModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenTheHealthReachesZero_ThenTheBugIsKilledOnceAndIsNoLongerAlive() {
-            IWeaponTarget target = AimAtBug();
+            IWeaponDamageTarget target = AimAtBug();
             for (int i = 0; i < MINIGUN_HITS_TO_KILL; i++)
                 target.ServerReceiveHit(CreateHit(MINIGUN_DAMAGE));
 
@@ -83,9 +83,9 @@ namespace Features.BugModule.Scripts.Editor.Tests {
             Assert.AreEqual(0, _model.Count);
         }
 
-        private IWeaponTarget AimAtBug() {
+        private IWeaponDamageTarget AimAtBug() {
             Assert.IsTrue(_targets.TryGetTarget(_ids.GetTargetId(BUG_ID), out IWeaponTarget target));
-            return target;
+            return (IWeaponDamageTarget)target;
         }
 
         private WeaponHit CreateHit(float damage) =>

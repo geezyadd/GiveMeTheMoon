@@ -30,12 +30,12 @@ namespace Features.SonarModule.Scripts.Installers {
 #endif
         }
 
-        // A new family of contacts (targets, enemies) is one more ISonarContactSource binding here.
+        // A new family of contacts (enemies) is one more ISonarContactSource binding here. Field ore is not a contact:
+        // it would only clutter the scope.
         private void InstallContacts() {
             Container.Bind<IRockSonarContactIds>().To<RockSonarContactIds>().AsSingle();
             Container.Bind<ISonarContactSource>().To<RockSonarContactSource>().AsSingle();
             Container.BindInterfacesTo<StationSonarContactSource>().AsSingle();
-            Container.Bind<ISonarContactSource>().To<TargetSonarContactSource>().AsSingle();
             Container.BindInterfacesTo<RadarSonarCondition>().AsSingle();
             Container.Bind<ISonarContactService>().To<SonarContactService>().AsSingle();
         }

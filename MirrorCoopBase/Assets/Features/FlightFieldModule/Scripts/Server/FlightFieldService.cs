@@ -5,7 +5,7 @@ using Features.FlightFieldModule.Scripts.Model;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Requests;
 using Features.FlightFieldModule.Scripts.Rocks;
-using Features.FlightFieldModule.Scripts.Targets;
+using Features.FlightFieldModule.Scripts.Ore;
 using Features.GameCoreModule.Contracts;
 using Mirror;
 using UnityEngine;
@@ -13,7 +13,7 @@ using UnityEngine;
 namespace Features.FlightFieldModule.Scripts.Server {
     // The server's operations on the flight field: generate one for a launch, publish it, take it down; a world shift
     // moves the field's origin and its Mirror objects. FlightFieldLaunchSystem drives them over a flight. The broken
-    // rocks and the popped target balloons belong to one field: a new field or taking it down forgets them.
+    // rocks and the ore of the broken rocks belong to one field: a new field or taking it down forgets them.
     // A long flight's field takes over 100 ms to generate, so generation runs on a worker thread (it touches no Unity
     // object).
     public sealed class FlightFieldService : IFlightFieldService, IWorldShiftFollower {
@@ -23,18 +23,18 @@ namespace Features.FlightFieldModule.Scripts.Server {
         private readonly IFlightFieldPublisher _flightFieldPublisher;
         private readonly IFieldNetworkedStructures _fieldNetworkedStructures;
         private readonly List<IFieldRockReset> _fieldRockResets;
-        private readonly List<IFieldTargetReset> _fieldTargetResets;
+        private readonly List<IFieldOreReset> _fieldOreResets;
 
         public FlightFieldService(IFieldRequestFactory fieldRequestFactory, IFlightFieldGenerator flightFieldGenerator, FlightFieldServerModel flightFieldServerModel,
                                   IFlightFieldPublisher flightFieldPublisher, IFieldNetworkedStructures fieldNetworkedStructures, List<IFieldRockReset> fieldRockResets,
-                                  List<IFieldTargetReset> fieldTargetResets) {
+                                  List<IFieldOreReset> fieldOreResets) {
             _fieldRequestFactory = fieldRequestFactory;
             _flightFieldGenerator = flightFieldGenerator;
             _flightFieldServerModel = flightFieldServerModel;
             _flightFieldPublisher = flightFieldPublisher;
             _fieldNetworkedStructures = fieldNetworkedStructures;
             _fieldRockResets = fieldRockResets;
-            _fieldTargetResets = fieldTargetResets;
+            _fieldOreResets = fieldOreResets;
         }
 
         public Task<FlightField> ServerStartGeneration(FlightLaunch launch) {
@@ -80,13 +80,13 @@ namespace Features.FlightFieldModule.Scripts.Server {
             _flightFieldPublisher.ShiftOrigin(delta);
         }
 
-        // The broken and popped lists and the damage taken belong to one field.
+        // The broken list, the damage taken and the ore belong to one field.
         private void ResetFieldContent() {
             foreach (IFieldRockReset fieldRockReset in _fieldRockResets)
                 fieldRockReset.ServerReset();
 
-            foreach (IFieldTargetReset fieldTargetReset in _fieldTargetResets)
-                fieldTargetReset.ServerReset();
+            foreach (IFieldOreReset fieldOreReset in _fieldOreResets)
+                fieldOreReset.ServerReset();
         }
     }
 }

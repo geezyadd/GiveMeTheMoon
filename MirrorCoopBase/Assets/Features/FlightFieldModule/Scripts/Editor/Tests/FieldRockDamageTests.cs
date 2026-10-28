@@ -175,8 +175,9 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
             Assert.IsEmpty(registry.Targets, "The rocks must not register one by one.");
             Assert.IsTrue(targets.TryGetTarget(targetIds.GetTargetId(rock.Id), out IWeaponTarget target));
             Assert.IsTrue(target.IsAlive);
+            IWeaponDamageTarget damageTarget = (IWeaponDamageTarget)target;
             for (int i = 0; i < Mathf.CeilToInt(rig.HitPoints.GetHitPoints(rock)); i++)
-                target.ServerReceiveHit(CreateHit(rock.Center));
+                damageTarget.ServerReceiveHit(CreateHit(rock.Center));
 
             Assert.IsTrue(rig.BrokenRocks.IsBroken(rock.Id));
             Assert.IsFalse(target.IsAlive, "A broken rock is still a live target.");

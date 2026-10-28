@@ -14,6 +14,10 @@ namespace Features.NetworkModelModule.Scripts {
         protected TModel Bound =>
             _bound;
 
+        // The player this bridge belongs to, on every peer once it started (empty before).
+        public PlayerKey Key =>
+            _key;
+
         protected bool SuppressModelWrites =>
             _suppress;
 
