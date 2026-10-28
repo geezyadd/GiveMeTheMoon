@@ -24,6 +24,9 @@ namespace Tests.Shared {
         private const float REST_HOLD_SECONDS = 0.5f;
         private const float REST_TIMEOUT_SECONDS = 8f;
         private const float SERVER_CATCH_UP_SECONDS = 0.5f;
+        private const float OTHER_FLOOR_HEIGHT = 1.5f;
+        private const float STAND_HEIGHT = 0.8f;
+        private const float STAND_SETTLE_SECONDS = 1f;
 
         private readonly WaitForSeconds _serverCatchUp = new WaitForSeconds(SERVER_CATCH_UP_SECONDS);
 
@@ -129,10 +132,16 @@ namespace Tests.Shared {
             Rigidbody body = Player.GetComponent<CharacterMovableBase>().Body;
             Vector3 forward = Vector3.ProjectOnPlane(Player.transform.forward, Vector3.up).normalized;
             Vector3 stand = target - forward * AIM_DISTANCE;
-            stand.y = body.position.y;
+            // An item delivered at the kiosk lies on the pad, below the deck: the camera cannot tilt that steeply, so the
+            // player steps down to its floor and lands there first.
+            bool isOtherFloor = Mathf.Abs(target.y - body.position.y) > OTHER_FLOOR_HEIGHT;
+            stand.y = isOtherFloor ? target.y + STAND_HEIGHT : body.position.y;
             body.position = stand;
             body.transform.position = stand;
             body.linearVelocity = Vector3.zero;
+            if (isOtherFloor)
+                yield return new WaitForSeconds(STAND_SETTLE_SECONDS);
+
             // A client's grab is checked against its position on the server, which arrives a moment later.
             yield return _serverCatchUp;
 

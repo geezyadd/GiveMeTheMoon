@@ -448,6 +448,7 @@ namespace Tests.Coop.Host {
 
         private IEnumerator DropItemOnDeckCoroutine() {
             BeginStep("host drops an item on the deck");
+            yield return LoopSmokeItemDelivery.DeliverModulesCoroutine(Ship, 1);
             Grabbable[] items = LoopSmokeDeckItemCheck.FindLooseBoxItems(Ship);
             Assert.IsNotEmpty(items, "No loose item at the first station to drop on the deck.");
             yield return LoopSmokeDeckItemCheck.DropOnDeckByHandCoroutine(Ship, items, OnDeckItemDropped);

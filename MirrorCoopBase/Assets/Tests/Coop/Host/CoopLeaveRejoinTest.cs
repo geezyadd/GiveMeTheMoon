@@ -58,6 +58,7 @@ namespace Tests.Coop.Host {
         [UnityTest, Timeout(TEST_TIMEOUT_MS)]
         public IEnumerator WhenClientLeavesInFlightHoldingAnItem_AndRejoinsAtNextStation_ThenTheItemLiesOnTheDeckAndTheHandIsEmpty() {
             yield return StartRunWithClientCoroutine();
+            yield return LoopSmokeItemDelivery.DeliverModulesCoroutine(_host.Ship, 1);
             Grabbable item = GiveClientAnItem();
             yield return _host.CommandCoroutine(_client, CoopConnectionCommands.REPORT);
             Assert.AreEqual(item.netId, _client.LastReport.RunState.HeldItemNetId, "The client does not see the given item in its hand.");
@@ -120,7 +121,7 @@ namespace Tests.Coop.Host {
             _host.AssertNoErrors(_client);
         }
 
-        // Test setup: the nearest free tool of the deck rack goes straight into the client's hand on the server.
+        // Test setup: the nearest free item (delivered at the kiosk) goes straight into the client's hand on the server.
         private Grabbable GiveClientAnItem() {
             Grabbable item = LoopSmokeDeckItemCheck.FindLooseBoxItems(_host.Ship)[0];
             Assert.IsTrue(ClientRider().GetComponent<GrabController>().ServerGive(item), $"The {item.name} could not be put into the client's hand.");

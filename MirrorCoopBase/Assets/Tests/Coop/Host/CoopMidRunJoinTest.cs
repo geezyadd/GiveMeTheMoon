@@ -67,6 +67,7 @@ namespace Tests.Coop.Host {
         private IEnumerator ChangeSharedStateAtStationCoroutine() {
             _host.BeginStep("change the shared state at the station");
             yield return LoopSmokeDebugMoneyGrant.GrantThroughDebugWindowCoroutine();
+            yield return LoopSmokeItemDelivery.DeliverModulesCoroutine(_host.Ship, 1);
             yield return LoopSmokeDeckItemCheck.DropOnDeckByHandCoroutine(_host.Ship, LoopSmokeDeckItemCheck.FindLooseBoxItems(_host.Ship), item => _deckItem = item);
             SessionQueries.Resolve<IShipHullDebug>().DebugDamage(HULL_DAMAGE);
             IShipDamageDebug damage = SessionQueries.Resolve<IShipDamageDebug>();
