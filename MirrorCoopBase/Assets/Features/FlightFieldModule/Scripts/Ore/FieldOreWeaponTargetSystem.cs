@@ -11,10 +11,10 @@ namespace Features.FlightFieldModule.Scripts.Ore {
         private readonly IFieldOreWeaponIds _fieldOreWeaponIds;
         private readonly FieldOreWeaponTarget _fieldOreWeaponTarget;
 
-        public FieldOreWeaponTargetSystem(IWeaponTargetRegistry weaponTargetRegistry, IFieldOreWeaponIds fieldOreWeaponIds, FieldOreWeaponTarget fieldOreWeaponTarget) {
+        public FieldOreWeaponTargetSystem(IWeaponTargetRegistry weaponTargetRegistry, IFieldOreWeaponIds fieldOreWeaponIds, IInstantiator instantiator) {
             _weaponTargetRegistry = weaponTargetRegistry;
             _fieldOreWeaponIds = fieldOreWeaponIds;
-            _fieldOreWeaponTarget = fieldOreWeaponTarget;
+            _fieldOreWeaponTarget = instantiator.Instantiate<FieldOreWeaponTarget>();
         }
 
         public void Initialize() =>

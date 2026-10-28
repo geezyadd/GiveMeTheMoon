@@ -101,7 +101,9 @@ namespace Tests.Coop.Host {
                 yield return _host.WaitForReportCoroutine(CoopFlightSteps.HARPOON_HOOKED, () => hasSeenClientRope |= IsClientRopeShown(clientKey));
                 int hooked = _host.LastReport.OwnHookedOreId;
                 Assert.Greater(hooked, 0, $"The client reports no piece on its rope: {_host.LastReport.DescribeFlight()}");
-                yield return _host.WaitForCoroutine(() => WatchForDelivery(clientKey, hooked, ref hasSeenClientRope), $"ore {hooked} on the client's rope at the ship");
+                float deliveryDeadline = Time.realtimeSinceStartup + DELIVERY_TIMEOUT_SECONDS;
+                yield return _host.WaitForCoroutine(() => WatchForDelivery(clientKey, hooked, ref hasSeenClientRope) || Time.realtimeSinceStartup > deliveryDeadline, $"ore {hooked} on the client's rope at the ship");
+                Assert.IsTrue(_collected.Any(collected => collected.Id.Value == hooked), $"Ore {hooked} on the client's rope did not reach the ship within {DELIVERY_TIMEOUT_SECONDS} s.");
                 Assert.IsTrue(hasSeenClientRope, "The host never drew the client's rope.");
                 Assert.AreEqual(1, _collected.Count(collected => collected.Id.Value == hooked), $"Ore {hooked} reached the ship more than once.");
                 FieldOreCollected delivery = _collected.First(collected => collected.Id.Value == hooked);

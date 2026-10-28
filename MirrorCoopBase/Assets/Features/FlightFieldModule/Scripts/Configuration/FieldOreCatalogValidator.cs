@@ -37,8 +37,17 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
             if (ore.Prefab == null)
                 throw new InvalidOperationException($"{ore.name}: the ore has no prefab.");
 
-            if (ore.RadiusMeters <= 0f || ore.Price <= 0 || ore.LifetimeSeconds <= 0f || ore.Weight < 0f)
-                throw new InvalidOperationException($"{ore.name}: radius {ore.RadiusMeters}, price {ore.Price} and lifetime {ore.LifetimeSeconds} must be above 0, spawn weight {ore.Weight} not below.");
+            if (ore.RadiusMeters <= 0f)
+                throw new InvalidOperationException($"{ore.name}: the radius must be above 0, not {ore.RadiusMeters}.");
+
+            if (ore.Price <= 0)
+                throw new InvalidOperationException($"{ore.name}: the price must be above 0, not {ore.Price}.");
+
+            if (ore.LifetimeSeconds <= 0f)
+                throw new InvalidOperationException($"{ore.name}: the lifetime must be above 0, not {ore.LifetimeSeconds}.");
+
+            if (ore.Weight < 0f)
+                throw new InvalidOperationException($"{ore.name}: the spawn weight must not be below 0, not {ore.Weight}.");
         }
     }
 }

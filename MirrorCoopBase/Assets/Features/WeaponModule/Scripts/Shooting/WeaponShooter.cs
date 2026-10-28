@@ -14,6 +14,7 @@ namespace Features.WeaponModule.Scripts.Shooting {
         private readonly IWeaponFireMode _fireMode;
         private readonly IShotDelivery _delivery;
         private readonly IWeaponFeel _feel;
+        private readonly IContinuousFireFeel _continuousFireFeel;
         private readonly IShotOutcomeReceiver _outcomeReceiver;
 
         public bool IsFiring => _fireMode.IsFiring;
@@ -29,12 +30,15 @@ namespace Features.WeaponModule.Scripts.Shooting {
             _fireMode = fireMode;
             _delivery = delivery;
             _feel = feel;
+            _continuousFireFeel = feel as IContinuousFireFeel;
             _outcomeReceiver = outcomeReceiver;
         }
 
         public void Advance(IWeaponHolder holder, float deltaTime) {
             int shots = _fireMode.Advance(holder.IsTriggerHeld, deltaTime);
-            _feel.PresentFiring(_fireMode.IsFiring, _fireMode.Readiness);
+            if (_continuousFireFeel != null)
+                _continuousFireFeel.PresentFiring(_fireMode.IsFiring, _fireMode.Readiness);
+
             for (int i = 0; i < shots; i++)
                 Fire(holder);
         }

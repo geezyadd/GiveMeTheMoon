@@ -95,7 +95,6 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldOreExpiryService>().To<FieldOreExpiryService>().AsSingle();
             Container.BindInterfacesTo<FieldOreServerSystem>().AsSingle();
             Container.Bind<IFieldOreWeaponIds>().To<FieldOreWeaponIds>().AsSingle();
-            Container.Bind<FieldOreWeaponTarget>().AsSingle();
             Container.BindInterfacesTo<FieldOreWeaponTargetSystem>().AsSingle();
             Container.Bind<IFieldOreSceneBuilder>().To<FieldOreSceneBuilder>().AsSingle().WithArguments(new FieldStructurePool());
             Container.BindInterfacesTo<FieldOreBuildSystem>().AsSingle();

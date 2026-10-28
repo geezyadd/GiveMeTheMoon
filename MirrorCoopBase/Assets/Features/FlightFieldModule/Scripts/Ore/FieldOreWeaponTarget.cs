@@ -4,8 +4,8 @@ using Features.WeaponModule.Contracts;
 namespace Features.FlightFieldModule.Scripts.Ore {
     // Server: the piece of ore a reported hit names, as the weapon hit path sees it. One instance serves every piece:
     // the hit path aims it at a piece and uses it within the same call, so a hit allocates nothing. A rope hooks it;
-    // a bullet does nothing to it (ore does not break).
-    public sealed class FieldOreWeaponTarget : IWeaponTarget, IWeaponPullTarget {
+    // it takes no damage (ore does not break), so a bullet does nothing to it.
+    public sealed class FieldOreWeaponTarget : IWeaponPullTarget {
         private readonly IFieldOreQuery _fieldOreQuery;
         private readonly IFieldOreHooks _fieldOreHooks;
 
@@ -20,9 +20,6 @@ namespace Features.FlightFieldModule.Scripts.Ore {
 
         public void AimAt(FieldOreId id) =>
             _id = id;
-
-        public void ServerReceiveHit(in WeaponHit hit) {
-        }
 
         public void ServerReceivePull(in WeaponHit hit, in WeaponPull pull) =>
             _fieldOreHooks.ServerHook(_id, hit.Shooter, hit.WeaponId, hit.Point, pull);

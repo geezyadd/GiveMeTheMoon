@@ -9,6 +9,9 @@ namespace Features.FlightFieldModule.Scripts.Ore {
     public sealed class FieldOreView : MonoBehaviour, IWeaponTargetCollider {
         private const string EMISSION_COLOR = "_EmissionColor";
         private const int ROPE_POINT_COUNT = 2;
+        // No share is shown yet: the first Show always applies.
+        private const float NOT_SHOWN_SHARE = -1f;
+        private const float FULL_SHARE = 1f;
 
         private static readonly int _emissionColorId = Shader.PropertyToID(EMISSION_COLOR);
 
@@ -20,7 +23,7 @@ namespace Features.FlightFieldModule.Scripts.Ore {
         private MaterialPropertyBlock _propertyBlock;
         private Color[] _emissions;
         private float _spinDegreesPerSecond;
-        private float _shownShare = -1f;
+        private float _shownShare = NOT_SHOWN_SHARE;
 
         public ulong TargetId { get; private set; }
 
@@ -48,7 +51,7 @@ namespace Features.FlightFieldModule.Scripts.Ore {
             TargetId = 0;
             _collider.enabled = false;
             HideRope();
-            Show(1f);
+            Show(FULL_SHARE);
         }
 
         // The piece shrinks and dims together as it fades.

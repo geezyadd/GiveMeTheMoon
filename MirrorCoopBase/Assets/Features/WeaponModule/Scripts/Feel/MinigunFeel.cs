@@ -1,6 +1,7 @@
 using Features.CameraModule.Contracts;
 using Features.WeaponModule.Scripts.Definitions;
 using Features.WeaponModule.Scripts.Parts.Delivery;
+using Features.WeaponModule.Scripts.Parts.Feel;
 using UnityEngine;
 using Zenject;
 
@@ -9,7 +10,7 @@ namespace Features.WeaponModule.Scripts.Feel {
     // flash per shot, a stream of casings, recoil jitter, the holder's camera shake, tracers and impact bursts. Every
     // effect comes from a pool made at Bind, so continuous fire allocates nothing. The holder drives it every frame with
     // Advance.
-    public sealed class MinigunFeel : MonoBehaviour, IWeaponFeelPresenter {
+    public sealed class MinigunFeel : MonoBehaviour, IWeaponFeelPresenter, IContinuousFireFeel {
         private const string EFFECTS_ROOT_NAME = "WeaponFeelEffects";
 
         [SerializeField] private Transform _barrels;

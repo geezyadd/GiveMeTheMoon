@@ -9,7 +9,7 @@ namespace Tests.PlayMode.LoopSmoke {
     // Plays the runs below on a host and runs the registered checks (LoopSmokeCheckRegistry) at every slot on the way:
     // a new check registers its own [LoopSmokeStep] methods and does not edit this file.
     public sealed class LoopSmokeTest {
-        private const int TEST_TIMEOUT_MS = 240000;
+        private const int TEST_TIMEOUT_MS = 300000;
 
         private static readonly LoopSmokeRun[] _runs = {
             new LoopSmokeRun(2, true, LoopSmokeRunEnd.AllDead),

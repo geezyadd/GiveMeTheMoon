@@ -31,7 +31,7 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
                 throw new InvalidOperationException($"{_fieldRockDurabilityConfiguration.name}: {dropName} is empty.");
 
             if (drop.MinCount < 1 || drop.MaxCount < drop.MinCount)
-                throw new InvalidOperationException($"{_fieldRockDurabilityConfiguration.name}: {dropName} must drop at least 1 piece and at most no fewer than its least ({drop.MinCount}..{drop.MaxCount}).");
+                throw new InvalidOperationException($"{_fieldRockDurabilityConfiguration.name}: {dropName} must drop at least 1 piece and its most must not be below its fewest ({drop.MinCount}..{drop.MaxCount}).");
         }
 
         private void ValidateHitPoints(AnimationCurve hitPointsByDiameter) {

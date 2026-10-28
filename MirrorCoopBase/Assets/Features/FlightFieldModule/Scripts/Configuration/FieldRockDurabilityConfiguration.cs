@@ -23,13 +23,13 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [Tooltip("How far a struck rock shakes at the start of the feedback, as a share of its size.")]
         [SerializeField, Range(0f, 0.2f)] private float _hitShakeShare = 0.02f;
         [Tooltip("A large rock from this diameter, meters, is a giant for its ore drop.")]
-        [SerializeField, Min(0f)] private float _giantMinDiameterMeters = 150f;
+        [SerializeField, Min(0f)] private float _giantMinDiameterMeters;
         [Tooltip("What a broken small rock drops.")]
-        [SerializeField] private FieldOreDrop _smallRockOre = new(0.35f, 1, 1);
+        [SerializeField] private FieldOreDrop _smallRockOre;
         [Tooltip("What a broken big (large, not giant) rock drops.")]
-        [SerializeField] private FieldOreDrop _bigRockOre = new(0.8f, 1, 3);
+        [SerializeField] private FieldOreDrop _bigRockOre;
         [Tooltip("What a broken giant drops (the game's giants are unbreakable today).")]
-        [SerializeField] private FieldOreDrop _giantRockOre = new(1f, 3, 5);
+        [SerializeField] private FieldOreDrop _giantRockOre;
 
         public float SmallMaxDiameterMeters => _smallMaxDiameterMeters;
         public FieldRockBreakEffect BreakEffect => _breakEffect;

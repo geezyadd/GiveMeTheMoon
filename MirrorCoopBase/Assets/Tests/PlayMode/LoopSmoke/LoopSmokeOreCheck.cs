@@ -1,5 +1,4 @@
 #if UNITY_INCLUDE_TESTS
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -105,9 +104,10 @@ namespace Tests.PlayMode.LoopSmoke {
                 CameraLookDriver.DebugPitchOverride = true;
                 yield return BreakRocksUntilOreCoroutine();
                 yield return PullOreInCoroutine(_dropped[0]);
-                yield return _flight.PutShipBackCoroutine(start);
+                yield return PutShipBackFacingDestinationCoroutine(start);
                 yield return BreakRocksUntilOreCoroutine();
                 yield return WaitForOreToRunOutCoroutine();
+                _flight.FaceDestination();
             } finally {
                 CameraLookDriver.DebugPitchOverride = false;
                 CameraLookDriver.DebugPitch = 0f;
@@ -122,8 +122,17 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         private static void RemoveDroppedHarpoon() {
-            foreach (HandWeaponItem item in UnityEngine.Object.FindObjectsByType<HandWeaponItem>(FindObjectsSortMode.None))
+            foreach (HandWeaponItem item in Object.FindObjectsByType<HandWeaponItem>(FindObjectsSortMode.None))
                 NetworkServer.Destroy(item.gameObject);
+        }
+
+        // The debug move back lands in the flight's next step: the heading to the destination is taken from there, or
+        // the ship would fly on across the field and never reach the station of this short test flight.
+        private IEnumerator PutShipBackFacingDestinationCoroutine(Vector3 start) {
+            yield return _flight.PutShipBackCoroutine(start);
+            yield return new WaitForFixedUpdate();
+            yield return null;
+            _flight.FaceDestination();
         }
 
         // Breaks the rock nearest to the ship, then the next, until one drops ore that is still out in the field (also
@@ -226,7 +235,7 @@ namespace Tests.PlayMode.LoopSmoke {
             photo.targetTexture = target;
             photo.Render();
             photo.targetTexture = null;
-            UnityEngine.Object.Destroy(photo.gameObject);
+            Object.Destroy(photo.gameObject);
             RenderTexture previousActive = RenderTexture.active;
             RenderTexture.active = target;
             Texture2D picture = new Texture2D(VIEW_SCREENSHOT_WIDTH, VIEW_SCREENSHOT_HEIGHT, TextureFormat.RGB24, false);
@@ -237,7 +246,7 @@ namespace Tests.PlayMode.LoopSmoke {
             string folder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", SCREENSHOT_FOLDER));
             Directory.CreateDirectory(folder);
             File.WriteAllBytes(Path.Combine(folder, VIEW_SCREENSHOT_PREFIX + fileName), picture.EncodeToPNG());
-            UnityEngine.Object.Destroy(picture);
+            Object.Destroy(picture);
         }
 
         // Turns the view through the look input (yaw) and the test pitch until its centre ray points at the drifting piece.

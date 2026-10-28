@@ -6,12 +6,13 @@ using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Generation;
 using Features.FlightFieldModule.Scripts.Ore;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 namespace Features.FlightFieldModule.Scripts.Editor.Tests {
     // What a broken rock drops: a small, a big and a giant rock by their own chance and count from the rock
-    // configuration (the defaults of a fresh one: small 35 % one piece, big 80 % one to three, giant always three to
-    // five), and the shipped catalog and configurations pass their startup checks.
+    // configuration (a test one: small 35 % one piece, big 80 % one to three, giant from 150 m always three to five),
+    // and the shipped catalog and configurations pass their startup checks.
     public sealed class FieldOreDropTests {
         private const float SMALL_DIAMETER = 20f;
         private const float BIG_DIAMETER = 80f;
@@ -21,6 +22,13 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         private const float LAST_COUNT_ROLL = 0.999f;
         private const int SEED = 5;
         private const int DROP_COUNT = 6;
+        private const float SMALL_MAX_DIAMETER = 35f;
+        private const float GIANT_MIN_DIAMETER = 150f;
+        private const float SMALL_CHANCE = 0.35f;
+        private const float BIG_CHANCE = 0.8f;
+        private const int BIG_MOST = 3;
+        private const int GIANT_FEWEST = 3;
+        private const int GIANT_MOST = 5;
 
         private FieldRockDurabilityConfiguration _durability;
         private FieldOreDropRule _rule;
@@ -28,6 +36,13 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
         [SetUp]
         public void SetUp() {
             _durability = ScriptableObject.CreateInstance<FieldRockDurabilityConfiguration>();
+            SerializedObject durability = new SerializedObject(_durability);
+            durability.FindProperty("_smallMaxDiameterMeters").floatValue = SMALL_MAX_DIAMETER;
+            durability.FindProperty("_giantMinDiameterMeters").floatValue = GIANT_MIN_DIAMETER;
+            SetDrop(durability.FindProperty("_smallRockOre"), SMALL_CHANCE, 1, 1);
+            SetDrop(durability.FindProperty("_bigRockOre"), BIG_CHANCE, 1, BIG_MOST);
+            SetDrop(durability.FindProperty("_giantRockOre"), 1f, GIANT_FEWEST, GIANT_MOST);
+            durability.ApplyModifiedPropertiesWithoutUndo();
             _rule = new FieldOreDropRule(_durability);
         }
 
@@ -103,6 +118,12 @@ namespace Features.FlightFieldModule.Scripts.Editor.Tests {
                 rig.Query.TryGetOre(pieces[i].Id, out FieldOreDescription later);
                 Assert.Greater(Vector3.Distance(later.Center, center), Vector3.Distance(pieces[i].Center, center), "A piece does not drift away from the break.");
             }
+        }
+
+        private static void SetDrop(SerializedProperty drop, float chance, int fewest, int most) {
+            drop.FindPropertyRelative("_chance").floatValue = chance;
+            drop.FindPropertyRelative("_minCount").intValue = fewest;
+            drop.FindPropertyRelative("_maxCount").intValue = most;
         }
 
         private static FieldRockDescription CreateRock(float diameter, FieldRockSize size) =>
