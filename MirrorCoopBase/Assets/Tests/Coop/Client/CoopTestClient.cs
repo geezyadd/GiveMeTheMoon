@@ -76,6 +76,11 @@ namespace Tests.Coop.Client {
         }
 
         private IEnumerator RunScenarioCoroutine() {
+            if (CoopWeaponsEconomyClientScenarios.TryCreate(_arguments.Scenario, this, _exchange, _arguments.ExchangeDirectory, out IEnumerator scenario)) {
+                yield return scenario;
+                yield break;
+            }
+
             if (_arguments.Scenario != CoopTestSteps.SCENARIO_LEAVE_AND_REJOIN)
                 yield return FailCoroutine($"Unknown scenario {_arguments.Scenario}.");
 
@@ -95,7 +100,7 @@ namespace Tests.Coop.Client {
             yield return FinishCoroutine();
         }
 
-        private IEnumerator JoinLobbyCoroutine() {
+        internal IEnumerator JoinLobbyCoroutine() {
             yield return WaitForCoroutine(SessionQueries.IsMenuReady, "the menu");
             JoinThroughMenu();
             yield return WaitForCoroutine(CoopSessionActions.IsClientInLobby, "the host's lobby");
@@ -304,7 +309,7 @@ namespace Tests.Coop.Client {
             SessionQueries.Resolve<IReadOnlyShipRunModel>();
 
         // pause: what to wait between checks; null checks every frame.
-        private IEnumerator WaitForCoroutine(Func<bool> condition, string target, YieldInstruction pause = null) {
+        internal IEnumerator WaitForCoroutine(Func<bool> condition, string target, YieldInstruction pause = null) {
             float deadline = Time.realtimeSinceStartup + STEP_TIMEOUT_SECONDS;
             while (condition() == false) {
                 if (Time.realtimeSinceStartup > deadline)
@@ -315,7 +320,7 @@ namespace Tests.Coop.Client {
         }
 
         // Reports the failure and quits; never returns, so no later step reports anything.
-        private IEnumerator FailCoroutine(string message) {
+        internal IEnumerator FailCoroutine(string message) {
             CoopObservation observation = CoopObserver.CaptureStep(CoopTestSteps.FAILED);
             observation.Message = message;
             observation.Errors = CollectErrors();
@@ -326,10 +331,10 @@ namespace Tests.Coop.Client {
                 yield return null;
         }
 
-        private string[] CollectErrors() =>
+        internal string[] CollectErrors() =>
             _errorLog.Count == 0 ? Array.Empty<string>() : new[] { _errorLog.Describe() };
 
-        private void Report(CoopObservation observation) {
+        internal void Report(CoopObservation observation) {
             if (_hasFailed)
                 return;
 

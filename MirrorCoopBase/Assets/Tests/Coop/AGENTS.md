@@ -141,3 +141,30 @@ Short tests of joining, leaving, crashing and quitting, each its own class in `H
   contacts), so a late joiner can only get an empty list; a client that spawns the ship in flight cannot happen (a join
   in flight is turned away). All client processes share one `PlayerPrefs` client id, so a second client gets the key
   `client:<id>#2` (real players have their own ids).
+
+## Economy and weapons tests (`CoopEconomyTest`, `CoopWeaponsTest`)
+Two more host tests in `Tests/Coop/Host/`, each with its own client process (scenarios `economy` / `weapons`, one
+command-driven client bot: `CoopWeaponsEconomyClientScenarios` takes the host's commands in order through
+`CoopTestExchange.ReadCommandsFrom`, does each through the real input path and reports what its own peer sees;
+`CoopWeaponsEconomyObserver` adds loose module items, condition, hull, popped balloons, broken rocks, hand and hold
+progress to the observation, compared by `CoopWeaponsEconomyComparison`). Shared host steps: `CoopEconomyHostHarness`.
+Run one test per run (`-Filter CoopEconomyTest`, then `-Filter CoopWeaponsTest`): two coop tests in one run share the
+ProjectContext and the second cannot bind its config override. Each takes about 75 s plus the client build.
+- **Economy** (normal run, 300 at the start): at the kiosk (aim + E, the window's buttons clicked through the event
+  system, the list wheeled to the row) the client is refused a rocket engine (button off, a purchase sent anyway is
+  refused, no item), buys a propeller, tops the wallet up with the debug window's "+1000", buys a rocket engine, the
+  light machine gun, the wrench and the pistol, is refused the heavy gun; installs the gun (turret socket by its use
+  command, TurretModule's known limit), the engine and the propeller by aim (flight speed changes on both peers); the
+  host breaks the engine and opens a breach (debug), the client repairs with its bought wrench and the rack's hammer by
+  holding E (the host sees the client's `HoldProgress` run on the server); both ride loop 1; the next station drops no
+  module. GameScene places 10 loose modules at the start station (not a station drop): counted the same on both peers.
+- **Weapons**: the pistol (put in the client's hand by the host) fires at the dummy, a click within the cooldown fires
+  nothing, the host sees the pistol at the client's side, its trigger and a tracer; each turret tier fires at the dummy
+  from the seat through the look input and the fire button for 2 s after its first hit: the host sees trigger and
+  tracers, the accepted hits keep to the tier's rate (about 12 / 40 / 8 in 2 s), the minigun lands the most, hit reports
+  never exceed the network ticks (`CoopWeaponCommandCounter`; trigger / aim updates stay at about 20/s for every tier,
+  so the fire is replayed, not sent per bullet). In the cruise (ship stopped by the debug throttle) the client breaks a
+  small rock and pops a balloon with the heavy gun, sees a balloon the ship flies into, and breaks a rock and pops a
+  balloon with the pistol: each once, by the client's key and weapon, paid once, gone on both peers. A pistol target the
+  client cannot see or misses three times is reported back (`target-blocked`) and the host picks the next one.
+- Client screenshots (`client-*.png`) are copied to `Temp/CoopClient/` after every run.
