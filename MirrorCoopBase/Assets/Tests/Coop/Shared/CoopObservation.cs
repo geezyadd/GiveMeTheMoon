@@ -6,7 +6,7 @@ namespace Tests.Coop.Shared {
     // What one side sees at a step of the scenario: a line of the client's report, or the host's own view to compare it
     // with. Public fields for JsonUtility.
     [Serializable]
-    public sealed class CoopObservation {
+    public sealed partial class CoopObservation {
         public const string LIST_SEPARATOR = ", ";
 
         public string Step;
