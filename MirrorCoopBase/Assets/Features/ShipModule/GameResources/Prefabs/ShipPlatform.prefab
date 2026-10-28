@@ -11984,6 +11984,7 @@ GameObject:
   - component: {fileID: 7916488841181173115}
   - component: {fileID: 824932481742100716}
   - component: {fileID: 198381502159145907}
+  - component: {fileID: 619426529679152205}
   m_Layer: 0
   m_Name: PoseSync
   m_TagString: Untagged
@@ -12110,6 +12111,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2dd696a021294c54e9db3a280292ca3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+--- !u!114 &619426529679152205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7916488841181173114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b8a299c461fed14cbc0820dc1daaea7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   syncDirection: 0

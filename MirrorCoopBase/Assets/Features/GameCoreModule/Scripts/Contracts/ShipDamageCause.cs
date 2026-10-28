@@ -4,6 +4,8 @@ namespace Features.GameCoreModule.Contracts {
         Debug = 1,
         Collision = 2,
         // An open hull breach slowly losing HP.
-        HullLeak = 3
+        HullLeak = 3,
+        // A creature sitting on the ship and gnawing it (a bug).
+        Gnaw = 4
     }
 }

@@ -118,7 +118,7 @@ types.
   5. `Features.ShipImpactModule`, `Features.ShipDamageModule`, `Features.TurretModule`, `Features.PlayerLifeModule`,
      `Features.LobbyModule` (Ship, Grab, GameFlow, Mvp, Connection), `Features.FieldAgentModule`.
   6. `Features.StagePresetModule`, `Features.ShopModule`, `Features.TooltipModule`, `Features.CrewInviteModule`,
-     `Features.SonarModule`.
+     `Features.SonarModule`, `Features.BugModule`.
   7. Composition root: `Features.GameCoreModule`, `Features.BootstrapersModule` (Contracts, GameFlow, SceneLoader).
   Every feature module's tests are a test assembly `Features.<Module>.Editor.Tests` (and `Game.Connection.Editor.Tests`,
   `NetworkModelModule.Editor.Tests`); its file says what they cover.
@@ -132,6 +132,7 @@ types.
 | [TurretModule](MirrorCoopBase/Assets/Features/TurretModule/AGENTS.md) | the turret's seat station (`ShipTurretStation`) and the turret gun tiers |
 | [FlightFieldModule](MirrorCoopBase/Assets/Features/FlightFieldModule/AGENTS.md) | the flight field: generation, breakable rocks, the ore they drop |
 | [FieldAgentModule](MirrorCoopBase/Assets/Features/FieldAgentModule/AGENTS.md) | flying field agents (base of bugs and future creatures): server steering round rocks, deck walking on the ship's NavMesh, hidden spawn, one batched synced model, pooled views |
+| [BugModule](MirrorCoopBase/Assets/Features/BugModule/AGENTS.md) | the basic bugs, the first enemy prototype on the field agents: they come from behind rocks, grab a cargo or land and gnaw the ship (hull, breakdowns, breaches), die to the pistol and the turret; a tail on Animation Rigging |
 | [WeaponModule](MirrorCoopBase/Assets/Features/WeaponModule/AGENTS.md) | the weapon core, its network path, the client feel |
 | [HandWeaponModule](MirrorCoopBase/Assets/Features/HandWeaponModule/AGENTS.md) | weapons carried in the hand: the pistol, the harpoon |
 | [SonarModule](MirrorCoopBase/Assets/Features/SonarModule/AGENTS.md) | the navigator's sonar console on the radar |

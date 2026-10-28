@@ -1,3 +1,4 @@
+using Features.FieldAgentModule.Scripts.Cargo;
 using Features.FieldAgentModule.Scripts.Client;
 using Features.FieldAgentModule.Scripts.Configuration;
 using Features.FieldAgentModule.Scripts.Deck;
@@ -26,6 +27,7 @@ namespace Features.FieldAgentModule.Scripts {
             Container.Bind<IFieldAgentHiddenSpawnService>().To<FieldAgentHiddenSpawnService>().AsSingle();
             Container.Bind<IFieldAgentViewpointSource>().To<FieldAgentPlayerViewpointSource>().AsSingle();
             Container.Bind<IFieldAgentGroupSpawnService>().To<FieldAgentGroupSpawnService>().AsSingle();
+            Container.BindInterfacesTo<FieldAgentCargoTargetRegistry>().AsSingle();
             Container.BindInterfacesTo<FieldAgentDeckNavMeshSystem>().AsSingle();
             Container.BindInterfacesTo<FieldAgentSimulationSystem>().AsSingle();
             Container.BindInterfacesTo<FieldAgentWorldShiftSystem>().AsSingle();

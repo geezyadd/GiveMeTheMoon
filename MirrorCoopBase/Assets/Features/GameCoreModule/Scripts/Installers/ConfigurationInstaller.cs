@@ -1,6 +1,7 @@
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
+using Features.BugModule.Scripts.Configuration;
 using Features.FieldAgentModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Structures;
@@ -60,6 +61,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<FieldOreCatalog>(Address.Configurations.FieldOreCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FieldOreConfiguration>(Address.Configurations.FieldOreConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FieldAgentConfiguration>(Address.Configurations.FieldAgentConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<BugConfiguration>(Address.Configurations.BugConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<StagePresetCatalog>(Address.Configurations.StagePresetCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WeaponCatalog>(Address.Configurations.WeaponCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WeaponHitRuleConfiguration>(Address.Configurations.WeaponHitRuleConfiguration_Default).AsSingle();

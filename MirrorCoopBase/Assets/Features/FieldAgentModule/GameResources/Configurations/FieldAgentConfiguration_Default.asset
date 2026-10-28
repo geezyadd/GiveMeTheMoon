@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _profiles:
   - {fileID: 11400000, guid: 9e12450e687b27a4cbe6e76ddc072e42, type: 2}
+  - {fileID: 11400000, guid: db6ebb4d60f4d39479ee740fbf0a9afa, type: 2}
   _seekWeight: 1
   _avoidanceWeight: 1.5
   _separationWeight: 1.2

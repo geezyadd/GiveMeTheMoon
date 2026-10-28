@@ -26,6 +26,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0d73de613562993449c922c389c3e8ad, type: 2}
   - {fileID: 11400000, guid: 770e0337d1fc4a06bb40b6dfad8d2ba6, type: 2}
   - {fileID: 11400000, guid: 860a193a0261fec4d93c2118dccc9ce7, type: 2}
+  - {fileID: 11400000, guid: 71d4dbf7791a43249aa861f027ce4dc2, type: 2}
   _stationKind: {fileID: 11400000, guid: c9e6921bf57271343a9ada775a0ad1b0, type: 2}
   _largeRockKind: {fileID: 11400000, guid: 0d73de613562993449c922c389c3e8ad, type: 2}
   _bigRockKind: {fileID: 11400000, guid: 770e0337d1fc4a06bb40b6dfad8d2ba6, type: 2}

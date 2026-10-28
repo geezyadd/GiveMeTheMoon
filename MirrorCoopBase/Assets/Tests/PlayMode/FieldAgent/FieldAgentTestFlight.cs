@@ -60,12 +60,16 @@ namespace Tests.PlayMode.FieldAgent {
             _steamLobby.Dispose();
         }
 
-        public IEnumerator FlyIntoEndlessCruiseCoroutine() {
+        // atStation: a step at the station before boarding (buying something at the kiosk), none by default.
+        public IEnumerator FlyIntoEndlessCruiseCoroutine(Func<LoopSmokeFlight, IEnumerator> atStation = null) {
             yield return Session.EnterLobbyAsHostCoroutine();
             yield return Session.StartGameCoroutine();
             _configOverride.AssertBound();
             _flight = new LoopSmokeFlight(Session, new LoopSmokeFieldCheck(ProjectContext.Instance.Container));
             _flight.InstallRequiredEngines();
+            if (atStation != null)
+                yield return atStation(_flight);
+
             yield return _flight.BoardPlayerCoroutine();
             Control = SessionQueries.Resolve<IFieldAgentControl>();
             Rocks = SessionQueries.Resolve<IFieldRockQuery>();
@@ -90,9 +94,9 @@ namespace Tests.PlayMode.FieldAgent {
             Assert.AreEqual(0, _errorLog.Count, $"Errors were logged:\n{_errorLog.Describe()}");
         }
 
-        public IEnumerator ClickDebugActionCoroutine(string label) {
+        public IEnumerator ClickDebugActionCoroutine(string label, string value = null) {
             DebugWindowClicking clicking = new();
-            yield return clicking.ClickCoroutine(DebugSections.AGENTS, label);
+            yield return clicking.ClickCoroutine(DebugSections.AGENTS, label, value);
             Assert.IsNull(clicking.Failure, $"Debug window \"{label}\": {clicking.Failure}.");
         }
 
