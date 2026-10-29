@@ -8,7 +8,8 @@ The station shop kiosk, the crew wallet and buying back a dead crewmate. Read th
 ## Loop status
 - the only income is the ore of broken rocks pulled in with the harpoon or flown into (see "Ore" in [FlightFieldModule](../FlightFieldModule/AGENTS.md):
   12 / 25 / 60 per piece, about 18 on average, a good flight about 10-14 pieces, 150-250; the target balloons were removed on
-  2026-10-28); the rest is the
+  2026-10-28) and the delivery parcels ([ParcelModule](../ParcelModule/AGENTS.md): 350-550 paid through `ServerEarn` when
+  the ship lands at the parcel's station with it on board); the rest is the
   starting balance (`WalletConfiguration`, 300 for a normal run since 2026-10-26, was 1 000 000; a stage preset brings
   its own); there are no free station drops in a normal run, so engines and guns are bought;
 - debug money: the debug window's Shop → "+1000" (`ShopDebugMoneySystem`, editor / development builds, any player)

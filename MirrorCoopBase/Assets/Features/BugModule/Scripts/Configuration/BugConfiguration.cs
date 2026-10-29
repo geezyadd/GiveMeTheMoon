@@ -58,8 +58,8 @@ namespace Features.BugModule.Scripts.Configuration {
         [Header("Cargo")]
         [Tooltip("How close to a cargo on board the bug grabs it, metres.")]
         [SerializeField, Min(0.1f)] private float _cargoGrabMeters = 1.5f;
-        [Tooltip("The share of the top speed a bug carrying a cargo flies with.")]
-        [SerializeField, Range(0.05f, 1f)] private float _carrySpeedShare = 0.6f;
+        [Tooltip("The share of the top speed a bug carrying a cargo flies with: below the ship's cruise speed (8 m/s at flight speed 1), so the crew can chase it down.")]
+        [SerializeField, Range(0.05f, 1f)] private float _carrySpeedShare = 0.35f;
         [Tooltip("A bug with a cargo flies this far away from the ship and is gone, metres.")]
         [SerializeField, Min(1f)] private float _carryAwayMeters = 400f;
         [Tooltip("How close to the carry-away point counts as gone, metres.")]

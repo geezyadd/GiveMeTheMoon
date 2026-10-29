@@ -5,7 +5,7 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace Tests.PlayMode.Bug {
-    // A stand-in parcel for the bug tests (the parcel itself comes later): a small crate on the deck, a child of the
+    // A stand-in cargo for the bug tests, apart from the real parcel: a small crate on the deck, a child of the
     // ship until a bug takes it, then it hangs under its carrier; it records being taken and let go.
     public sealed class BugTestCargo : IFieldAgentCargoTarget, IDisposable {
         private const float CRATE_METERS = 0.6f;
@@ -33,7 +33,7 @@ namespace Tests.PlayMode.Bug {
                 Object.Destroy(_crate);
         }
 
-        public void ServerTake() {
+        public void ServerTake(int carrierAgentId) {
             IsTaken = true;
             _crate.transform.SetParent(null, true);
         }

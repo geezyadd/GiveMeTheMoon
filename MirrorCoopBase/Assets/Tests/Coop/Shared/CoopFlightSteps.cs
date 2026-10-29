@@ -10,6 +10,7 @@ namespace Tests.Coop.Shared {
         public const string SCENARIO_HARPOON = "harpoon";
         public const string SCENARIO_FIELD_AGENTS = "field-agents";
         public const string SCENARIO_BUGS = "bugs";
+        public const string SCENARIO_PARCEL = "parcel";
         public const string SCENARIO_OVERBOARD = "overboard";
 
         // Throttle and helm.
@@ -75,6 +76,13 @@ namespace Tests.Coop.Shared {
         public const string BUG_SHOT = "bug-shot";
         public const int BUG_COUNT = 3;
 
+        // Parcel: the client takes a parcel at the stand and puts it on the deck; a bug the host sends steals it in cruise.
+        public const string COMMAND_TAKE_PARCEL = "take-parcel";
+        public const string PARCEL_TAKEN = "parcel-taken";
+        public const string COMMAND_REPORT_THEFT = "report-theft";
+        public const string PARCEL_STOLEN = "parcel-stolen";
+        public const string COMMAND_REPORT_DRIFT = "report-drift";
+        public const string PARCEL_DRIFTING = "parcel-drifting";
         // Overboard.
         public const string COMMAND_THROW_OVERBOARD = "throw-overboard";
         public const string THROWN_OVERBOARD = "thrown-overboard";

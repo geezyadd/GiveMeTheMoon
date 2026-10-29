@@ -85,11 +85,15 @@ namespace Tests.PlayMode.FieldAgent {
             yield return new WaitForSeconds(TURN_AWAY_SECONDS);
         }
 
-        public IEnumerator LandAndLeaveCoroutine() {
+        // atStation: a check at the station the ship landed at, before leaving (none by default).
+        public IEnumerator LandAndLeaveCoroutine(Func<IEnumerator> atStation = null) {
             Ship.FlightControlDebug.SetDebugSteer(false, 0f);
             SetThrottle(FULL_THROTTLE);
             _flight.FaceDestination();
             yield return Session.WaitForCoroutine(IsBackInBuild, LANDING_TIMEOUT_SECONDS, "Build after the landing");
+            if (atStation != null)
+                yield return atStation();
+
             yield return Session.LeaveToMenuCoroutine();
             Assert.AreEqual(0, _errorLog.Count, $"Errors were logged:\n{_errorLog.Describe()}");
         }
