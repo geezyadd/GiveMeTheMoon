@@ -1,4 +1,5 @@
 using Features.CameraModule.Scripts.Models;
+using Features.CharacterMovableModule.Scripts.Models;
 using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts.Generated;
 using NUnit.Framework;
@@ -20,7 +21,7 @@ namespace Features.TurretModule.Scripts.Editor.Tests {
             _inputService = new InputService(_inputActions);
             _cursorModel = new CursorModel();
             _hoveredInteractableModel = new HoveredInteractableModel();
-            _ownerInput = new TurretOwnerInput(_inputService, _cursorModel, _hoveredInteractableModel);
+            _ownerInput = new TurretOwnerInput(_inputService, _cursorModel, _hoveredInteractableModel, new PlayerControlBlockModel());
             _ownerInput.Listen();
         }
 

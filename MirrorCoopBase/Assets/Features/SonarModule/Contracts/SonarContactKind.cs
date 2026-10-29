@@ -17,6 +17,10 @@ namespace Features.SonarModule.Contracts {
         [SerializeField] private bool _isMarkable = true;
         [Tooltip("Shown on the scope's edge when it lies beyond the sonar range (the station), instead of not at all.")]
         [SerializeField] private bool _isShownBeyondRange;
+        [Tooltip("Pulses of the blip per second on the scope (a point of interest draws the eye); 0 = a steady blip.")]
+        [SerializeField, Min(0f)] private float _pulsesPerSecond;
+        [Tooltip("How much bigger the blip grows at the top of a pulse, as a share of its size.")]
+        [SerializeField, Min(0f)] private float _pulseGrowShare;
 
         public string Id => _id;
         public string DisplayName => _displayName;
@@ -26,5 +30,7 @@ namespace Features.SonarModule.Contracts {
         public float MarkSeconds => _markSeconds;
         public bool IsMarkable => _isMarkable;
         public bool IsShownBeyondRange => _isShownBeyondRange;
+        public float PulsesPerSecond => _pulsesPerSecond;
+        public float PulseGrowShare => _pulseGrowShare;
     }
 }

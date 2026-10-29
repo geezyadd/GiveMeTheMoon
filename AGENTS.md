@@ -107,7 +107,7 @@ types.
      `Features.CrewInviteModule.Data`, `Features.StagePresetModule.Data`, `Features.FlightFieldModule.Contracts`,
      `Features.WeaponModule.Contracts`, `Features.CameraModule.Contracts`, `Features.EffectPoolModule` (no references),
      `Features.DebugModule.Contracts`, `Features.SonarModule.Contracts`, `Features.SonarModule.Data`,
-     `Features.SpaceHazeModule.Data`; third-party
+     `Features.SpaceHazeModule.Data`, `Features.CutsceneModule.Contracts`; third-party
      `QuickOutline` also has its own asmdef (the unused `Mini Mapa(Radar)` pack was deleted on 2026-10-25).
   2. `Features.CharacterMovableModule` (Contracts, CameraModule.Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
@@ -118,8 +118,9 @@ types.
   5. `Features.ShipImpactModule`, `Features.ShipDamageModule`, `Features.TurretModule`, `Features.PlayerLifeModule`,
      `Features.LobbyModule` (Ship, Grab, GameFlow, Mvp, Connection), `Features.FieldAgentModule`.
   6. `Features.StagePresetModule`, `Features.ShopModule`, `Features.TooltipModule`, `Features.CrewInviteModule`,
-     `Features.SonarModule`, `Features.BugModule`.
-  7. Composition root: `Features.GameCoreModule`, `Features.BootstrapersModule` (Contracts, GameFlow, SceneLoader).
+     `Features.SonarModule`, `Features.BugModule`, `Features.CutsceneModule`.
+  7. `Features.PointOfInterestModule`.
+  8. Composition root: `Features.GameCoreModule`, `Features.BootstrapersModule` (Contracts, GameFlow, SceneLoader).
   Every feature module's tests are a test assembly `Features.<Module>.Editor.Tests` (and `Game.Connection.Editor.Tests`,
   `NetworkModelModule.Editor.Tests`); its file says what they cover.
 
@@ -133,6 +134,8 @@ types.
 | [FlightFieldModule](MirrorCoopBase/Assets/Features/FlightFieldModule/AGENTS.md) | the flight field: generation, breakable rocks, the ore they drop |
 | [FieldAgentModule](MirrorCoopBase/Assets/Features/FieldAgentModule/AGENTS.md) | flying field agents (base of bugs and future creatures): server steering round rocks, deck walking on the ship's NavMesh, hidden spawn, one batched synced model, pooled views |
 | [BugModule](MirrorCoopBase/Assets/Features/BugModule/AGENTS.md) | the basic bugs, the first enemy prototype on the field agents: they come from behind rocks, grab a cargo or land and gnaw the ship (hull, breakdowns, breaches), die to the pistol and the turret; a tail on Animation Rigging |
+| [PointOfInterestModule](MirrorCoopBase/Assets/Features/PointOfInterestModule/AGENTS.md) | points of interest off the course: bright on the sonar, a zone whose content starts once (the bug nest: bugs fly out, an optional entry cutscene), a reward container that pays the crew once |
+| [CutsceneModule](MirrorCoopBase/Assets/Features/CutsceneModule/AGENTS.md) | short shared cutscenes: the server starts one, every player's camera plays the same shots at the same time (controls blocked, HUD hidden), Space skips it for everyone |
 | [WeaponModule](MirrorCoopBase/Assets/Features/WeaponModule/AGENTS.md) | the weapon core, its network path, the client feel |
 | [HandWeaponModule](MirrorCoopBase/Assets/Features/HandWeaponModule/AGENTS.md) | weapons carried in the hand: the pistol, the harpoon |
 | [SonarModule](MirrorCoopBase/Assets/Features/SonarModule/AGENTS.md) | the navigator's sonar console on the radar |

@@ -1,15 +1,17 @@
 using Features.CameraModule.Scripts.Models;
+using Features.CharacterMovableModule.Scripts.Models;
 using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts.Generated;
 using UnityEngine;
 
 namespace Features.TurretModule.Scripts {
     // The seated owner's controls of a turret: look turns it, the fire button is the trigger, the interact button
-    // stands up. A window with a free cursor takes the controls away.
+    // stands up. A window with a free cursor or a player control block (a cutscene) takes the controls away.
     public sealed class TurretOwnerInput {
         private readonly IInputService _inputService;
         private readonly CursorModel _cursorModel;
         private readonly HoveredInteractableModel _hoveredInteractableModel;
+        private readonly PlayerControlBlockModel _playerControlBlockModel;
 
         private Vector2 _pendingLook;
         private bool _isFirePressed;
@@ -18,10 +20,12 @@ namespace Features.TurretModule.Scripts {
 
         public bool IsFireHeld => _isFirePressed && IsControlFree();
 
-        public TurretOwnerInput(IInputService inputService, CursorModel cursorModel, HoveredInteractableModel hoveredInteractableModel) {
+        public TurretOwnerInput(IInputService inputService, CursorModel cursorModel, HoveredInteractableModel hoveredInteractableModel,
+                                PlayerControlBlockModel playerControlBlockModel) {
             _inputService = inputService;
             _cursorModel = cursorModel;
             _hoveredInteractableModel = hoveredInteractableModel;
+            _playerControlBlockModel = playerControlBlockModel;
         }
 
         public void Listen() {
@@ -63,7 +67,7 @@ namespace Features.TurretModule.Scripts {
         }
 
         private bool IsControlFree() =>
-            _cursorModel.IsFreeCursorRequested == false && Cursor.lockState == CursorLockMode.Locked;
+            _cursorModel.IsFreeCursorRequested == false && _playerControlBlockModel.IsBlocked == false && Cursor.lockState == CursorLockMode.Locked;
 
         private void HandleLook(Vector2 delta) =>
             _pendingLook += delta;

@@ -1,11 +1,13 @@
 using System;
+using Features.SonarModule.Contracts;
 using Features.SonarModule.Data;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Features.SonarModule.Scripts.UI {
     // One echo on the scope: the kind's icon in its colour as big as the contact (never smaller than the kind's
-    // icon), fading with the echo, a ring while the crew has it marked; a click asks to mark it.
+    // icon), fading with the echo, pulsing when its kind pulses, a ring while the crew has it marked; a click asks to
+    // mark it.
     public sealed class SonarBlipButton : MonoBehaviour {
         [SerializeField] private RectTransform _rect;
         [SerializeField] private Button _button;
@@ -28,7 +30,7 @@ namespace Features.SonarModule.Scripts.UI {
             _contactId = blip.ContactId;
             gameObject.SetActive(true);
             _rect.anchoredPosition = blip.ScopePosition * scopeRadiusPixels;
-            _rect.sizeDelta = Vector2.one * Mathf.Max(blip.Kind.IconPixels, blip.RadiusShare * scopeRadiusPixels * 2f);
+            _rect.sizeDelta = Vector2.one * (Mathf.Max(blip.Kind.IconPixels, blip.RadiusShare * scopeRadiusPixels * 2f) * PulseScale(blip.Kind));
             _icon.sprite = blip.Kind.Icon;
             Color color = blip.Kind.Color;
             color.a *= blip.Alpha;
@@ -40,6 +42,12 @@ namespace Features.SonarModule.Scripts.UI {
 
         public void Hide() =>
             gameObject.SetActive(false);
+
+        // A cosmetic pulse on the unscaled clock: 1 at rest, 1 + the kind's grow share at the top.
+        private static float PulseScale(SonarContactKind kind) {
+            float wave = Mathf.Sin(Time.unscaledTime * kind.PulsesPerSecond * Mathf.PI * 2f);
+            return 1f + kind.PulseGrowShare * (wave + 1f) / 2f;
+        }
 
         private void OnButtonClicked() =>
             OnClicked?.Invoke(_contactId);

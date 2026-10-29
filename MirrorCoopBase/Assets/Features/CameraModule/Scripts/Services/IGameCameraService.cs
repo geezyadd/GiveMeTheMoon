@@ -1,4 +1,5 @@
 using System;
+using Unity.Cinemachine;
 using UnityEngine;
 
 namespace Features.CameraModule.Scripts.Services {
@@ -18,6 +19,10 @@ namespace Features.CameraModule.Scripts.Services {
         void ToggleFpAndTp();
         void BeginFixedView(Transform eye);
         void EndFixedView();
+        // An outside camera (a cutscene's) takes the view over the player's cameras, blended in over the seconds;
+        // ending it blends back to the player's live camera.
+        public void BeginOverrideView(CinemachineCamera camera, float blendSeconds);
+        public void EndOverrideView(CinemachineCamera camera, float blendSeconds);
         bool TryGet(string id, out GameCamera camera);
     }
 }
