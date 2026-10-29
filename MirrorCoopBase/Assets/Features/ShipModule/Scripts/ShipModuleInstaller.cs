@@ -1,4 +1,5 @@
 using Features.ShipModule.Scripts.Hull;
+using Features.ShipModule.Scripts.Overboard;
 using Features.ShipModule.Scripts.Throttle;
 using Features.StatsModule.EntityStatsModule.Scripts.StatsEntity.Factories;
 using Zenject;
@@ -34,6 +35,7 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipPositionSource>().AsSingle();
             Container.Bind<IShipThrottleDetentRule>().To<ShipThrottleDetentRule>().AsSingle();
             Container.Bind<IShipThrottleLaunchRule>().To<ShipThrottleLaunchRule>().AsSingle();
+            InstallOverboard();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.BindInterfacesTo<Debug.DeckFeelHarness>().AsSingle();
             Container.Bind<Debug.IShipDebugActionConditions>().To<Debug.ShipDebugActionConditions>().AsSingle();
@@ -41,8 +43,21 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<Debug.ShipThrottleDebugSystem>().AsSingle();
             Container.BindInterfacesTo<Debug.WeaponDebugTargetSystem>().AsSingle();
             Container.BindInterfacesTo<Debug.WeaponDebugTargetPrefabSystem>().AsSingle();
+            Container.Bind<Debug.IShipOverboardDebugPlacement>().To<Debug.ShipOverboardDebugPlacement>().AsSingle();
+            Container.BindInterfacesTo<Debug.ShipOverboardDebugSystem>().AsSingle();
             Container.Bind<Debug.ShipStatsDebugOverlay>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
 #endif
+        }
+
+        // A player who leaves the ship in flight drifts until the ship or a rope takes it back, or the void takes it.
+        private void InstallOverboard() {
+            Container.BindInterfacesTo<ComponentRegistry<ShipOverboardRider>>().AsSingle();
+            Container.Bind<IShipOverboardRule>().To<ShipOverboardRule>().AsSingle();
+            Container.Bind<IShipOverboardWeaponIds>().To<ShipOverboardWeaponIds>().AsSingle();
+            Container.Bind<IShipOverboardQuery>().To<ShipOverboardQuery>().AsSingle();
+            Container.BindInterfacesTo<ShipOverboardEventBus>().AsSingle();
+            Container.BindInterfacesTo<ShipOverboardSystem>().AsSingle();
+            Container.BindInterfacesTo<ShipOverboardWeaponTargetSystem>().AsSingle();
         }
 
         // Editor / development builds decorate the config's flight length with the debug length the harness sets.

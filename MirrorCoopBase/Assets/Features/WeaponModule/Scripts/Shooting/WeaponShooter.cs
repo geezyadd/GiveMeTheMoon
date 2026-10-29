@@ -34,13 +34,16 @@ namespace Features.WeaponModule.Scripts.Shooting {
             _outcomeReceiver = outcomeReceiver;
         }
 
-        public void Advance(IWeaponHolder holder, float deltaTime) {
+        // Returns how many shots left the weapon in this time (a recoil that pushes its holder needs it).
+        public int Advance(IWeaponHolder holder, float deltaTime) {
             int shots = _fireMode.Advance(holder.IsTriggerHeld, deltaTime);
             if (_continuousFireFeel != null)
                 _continuousFireFeel.PresentFiring(_fireMode.IsFiring, _fireMode.Readiness);
 
             for (int i = 0; i < shots; i++)
                 Fire(holder);
+
+            return shots;
         }
 
         private void Fire(IWeaponHolder holder) =>

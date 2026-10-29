@@ -137,6 +137,20 @@ line per step, nothing else:
 Why attributes and not one list file: a list is the same shared file every feature edits; a check that registers in
 its own file merges without conflicts. To change the scenario itself (one more run or flight) edit `_runs`.
 
+## Overboard tests
+Two PlayMode tests in `Tests/PlayMode/Overboard/` on the field agent tests' host flight (`FieldAgentTestFlight`: fast
+timings, flown into an endless cruise away from the station), sharing `OverboardTestSteps`; run one class per Test
+Runner run (each needs a fresh `ProjectContext` for the config override). In a cruise at throttle 0.6 the host clicks
+the debug window's Player -> "Throw me overboard" as a player does; the server must put it overboard within 3 s, it
+drifts on its own peer, over 4 s its height changes less than 1.5 m (measured -0.2 m), the ship gets at least 5 m
+farther (measured 18 m), it does not ride and its visual tumbles.
+- `OverboardCaptureTest`: then Ship -> "Bring the ship to the drifting player": within 5 s the host rides the deck again,
+  not overboard and not drifting, and still on the deck 2 s later; the ship lands and the host leaves (no errors).
+- `OverboardLimitTest`: then the ship is moved past `MaxDistanceMeters` (test setup, the debug move): within 3 s the host
+  is dead and no longer drifts, and with nobody alive the crew goes to the lobby.
+Screenshots in the workspace's `.agent-orchestrator/screenshots/overboard/`: `overboard-1-thrown`, `overboard-2-tumble`,
+`overboard-3-back-on-deck`.
+
 ## Ride test
 The ride test `ShipRideTest` (`Assets/Tests/PlayMode/ShipRide/`, about 75 s, `-Filter ShipRide`) flies six loops on a host on the
 same fast timings, one per spot of the deck found from its geometry (`ShipRideDeckSpots`): the nose, the stern, both

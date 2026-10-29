@@ -8,7 +8,7 @@ Player life, damage, death and the spectator. Read the [root AGENTS.md](../../..
 ## Key places
 | What | Where |
 |---|---|
-| Death, damage, spectator | `Assets/Features/PlayerLifeModule/`: `PlayerLifeSystem` (life state machines, all dead → lobby), `PlayerDamageable`, `FallKillSystem`, `SpectatorSystem`, `PlayerLifeConfiguration`, `PlayerDamageConfiguration`; the debug window's Player → "Kill me" (`DebugLocalPlayerKillSystem`) kills the local player in editor / development builds |
+| Death, damage, spectator | `Assets/Features/PlayerLifeModule/`: `PlayerLifeSystem` (life state machines, all dead → lobby), `PlayerDamageable`, `FallKillSystem`, `SpectatorSystem`, `PlayerLifeConfiguration`, `PlayerDamageConfiguration`; `DriftLimitKillSystem` kills a player who drifted overboard past the limit (`IShipOverboardEvents`, `DamageType.Drift`: a normal death, buy-back at a station) and `FallKillSystem` skips a drifting player (`IShipOverboardQuery`), see "Overboard" in [ShipModule](../ShipModule/AGENTS.md); the debug window's Player → "Kill me" (`DebugLocalPlayerKillSystem`) kills the local player in editor / development builds |
 
 ## Tests
 - `Features.PlayerLifeModule.Editor.Tests`

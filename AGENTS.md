@@ -109,7 +109,7 @@ types.
      `Features.DebugModule.Contracts`, `Features.SonarModule.Contracts`, `Features.SonarModule.Data`,
      `Features.SpaceHazeModule.Data`; third-party
      `QuickOutline` also has its own asmdef (the unused `Mini Mapa(Radar)` pack was deleted on 2026-10-25).
-  2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
+  2. `Features.CharacterMovableModule` (Contracts, CameraModule.Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
      `Features.WeaponModule`, `Features.SpaceHazeModule`.
   3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`.
@@ -154,7 +154,7 @@ types.
 | [Two-player test](MirrorCoopBase/Assets/Tests/Coop/AGENTS.md) | `CoopTwoProcessTest` with a real second client process |
 | `Features.AddressablesConstantGeneratorModule` | `Address_g.cs`; editor tools and tests load a configuration at its address with `AddressableConfigurationLoader` in `Features.AddressablesConstantGeneratorModule.EditorLoading` |
 | `Features.EffectPoolModule` | `SelfDisablingEffectPool<TEffect>` over `ISelfDisablingEffect`, the pool of effects that disable themselves when over; the rock break and the rock impact effects use it |
-| `Features.CharacterMovableModule` | player movement; tests: `Features.CharacterMovableModule.Editor.Tests` |
+| [CharacterMovableModule](MirrorCoopBase/Assets/Features/CharacterMovableModule/AGENTS.md) | player movement, the drift in open space |
 
 Other modules (Menu, Lobby, Mvp, Input, Stats, GameFlow, Bootstrapers, ...) have no file yet; add one when there is
 something to describe.

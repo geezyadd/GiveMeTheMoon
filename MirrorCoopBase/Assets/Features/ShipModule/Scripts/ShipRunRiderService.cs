@@ -1,4 +1,5 @@
 using Features.ShipModule.Scripts.Generated;
+using Features.ShipModule.Scripts.Overboard;
 using Mirror;
 using UnityEngine;
 
@@ -45,6 +46,11 @@ namespace Features.ShipModule.Scripts {
 
             if (player.TryGetComponent(out ShipRider rider) == false)
                 throw new System.InvalidOperationException(player.name + " has no " + nameof(ShipRider) + ".");
+
+            if (player.TryGetComponent(out ShipOverboardRider overboardRider) == false)
+                throw new System.InvalidOperationException(player.name + " has no " + nameof(ShipOverboardRider) + ".");
+
+            overboardRider.ServerReset();
 
             ship.Seats.ServerStand(rider);
             ship.Riders.UnregisterRider(rider);

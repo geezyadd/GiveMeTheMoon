@@ -4,13 +4,14 @@ using Features.SonarModule.Contracts;
 using Features.SonarModule.Data;
 using Features.SonarModule.Data.Generated;
 using Features.SonarModule.Scripts.Core;
+using Features.SonarModule.Scripts.Sources;
 using Mirror;
 using UnityEngine;
 using Zenject;
 
 namespace Features.SonarModule.Scripts.Systems {
-    // Every peer: lays the crew's synced marks and this peer's own station marker out on its screen once per frame,
-    // after the camera moved. A mark that ran out hides at once here; the server takes it out of the model a moment
+    // Every peer: lays the crew's synced marks, every other player drifting overboard and this peer's own station
+    // marker out on its screen once per frame, after the camera moved. A mark that ran out hides at once here; the server takes it out of the model a moment
     // later.
     public sealed class SonarMarkerSystem : ILateTickable {
         private readonly IReadOnlySonarConsoleModel _sonarConsoleModel;
@@ -20,6 +21,8 @@ namespace Features.SonarModule.Scripts.Systems {
         private readonly ISonarMarkRule _sonarMarkRule;
         private readonly ISonarMarkerProjection _sonarMarkerProjection;
         private readonly ISonarStationMarkerSource _sonarStationMarkerSource;
+        private readonly IOverboardSonarContactSource _overboardSonarContactSource;
+        private readonly List<Vector3> _drifters = new List<Vector3>();
 
         private bool _hasShownMarkers;
 
@@ -30,7 +33,8 @@ namespace Features.SonarModule.Scripts.Systems {
             ISonarContactService sonarContactService,
             ISonarMarkRule sonarMarkRule,
             ISonarMarkerProjection sonarMarkerProjection,
-            ISonarStationMarkerSource sonarStationMarkerSource) {
+            ISonarStationMarkerSource sonarStationMarkerSource,
+            IOverboardSonarContactSource overboardSonarContactSource) {
             _sonarConsoleModel = sonarConsoleModel;
             _sonarMarkerScreenModel = sonarMarkerScreenModel;
             _gameCameraService = gameCameraService;
@@ -38,12 +42,15 @@ namespace Features.SonarModule.Scripts.Systems {
             _sonarMarkRule = sonarMarkRule;
             _sonarMarkerProjection = sonarMarkerProjection;
             _sonarStationMarkerSource = sonarStationMarkerSource;
+            _overboardSonarContactSource = overboardSonarContactSource;
         }
 
         public void LateTick() {
             Camera camera = _gameCameraService.OutputCamera;
             bool hasStation = _sonarStationMarkerSource.TryGetStation(out SonarContact station);
-            bool hasMarkers = camera != null && (_sonarConsoleModel.Marks.Count > 0 || hasStation);
+            _drifters.Clear();
+            _overboardSonarContactSource.CollectOtherDrifterPositions(_drifters);
+            bool hasMarkers = camera != null && (_sonarConsoleModel.Marks.Count > 0 || hasStation || _drifters.Count > 0);
             if (hasMarkers == false && _hasShownMarkers == false)
                 return;
 
@@ -67,6 +74,9 @@ namespace Features.SonarModule.Scripts.Systems {
 
             if (hasStation)
                 AddMarker(camera, station.Kind, station.Position + Vector3.up * station.Radius);
+
+            for (int i = 0; i < _drifters.Count; i++)
+                AddMarker(camera, _overboardSonarContactSource.Kind, _drifters[i]);
         }
 
         private void AddMarker(Camera camera, SonarContactKind kind, Vector3 position) {

@@ -47,7 +47,6 @@ namespace Features.ShipModule.Scripts {
 
         private const float OffsetSendSeconds = 0.05f;
         private const float OFFSET_RESEND_SQR_METERS = 0.000001f;
-        private const float MAX_RIDE_SPEED = 120f;
         private const double REMOTE_OFFSET_DELAY = 2d * OffsetSendSeconds;
 
         private bool _bound;
@@ -66,7 +65,7 @@ namespace Features.ShipModule.Scripts {
         private float _rideFloorY;
         private readonly RideVertical _vertical = new RideVertical();
         private readonly SeatStandingSpot _standingSpot = new SeatStandingSpot();
-        private Vector3 _rideVelocity;
+        private readonly WorldShiftSafeVelocity _rideVelocity = new WorldShiftSafeVelocity();
         private float _reboardAt;
         private Transform _seatPoint;
 
@@ -76,6 +75,8 @@ namespace Features.ShipModule.Scripts {
         internal ShipRideDiagnostics RideDiagnostics { get; } = new ShipRideDiagnostics();
 #endif
         public bool IsSeated => _seated;
+        // What the server knows: the owner's ride or a seat. The server's own binding may lag the owner's.
+        internal bool HasSyncedRide => _syncedRideShip != null || _seated;
         private bool IsFollowingSeatPoint => _seated && _seatPoint != null;
         public PlayerKey Key => new PlayerKey(_playerKey);
 
@@ -259,7 +260,7 @@ namespace Features.ShipModule.Scripts {
                 _rb.detectCollisions = true;
                 _rb.interpolation = _wasInterpolation;
                 if (carryVelocity && _rb.isKinematic == false)
-                    _rb.linearVelocity = _rideVelocity;
+                    _rb.linearVelocity = _rideVelocity.Velocity;
             }
 
             if (_floating != null)
@@ -347,21 +348,11 @@ namespace Features.ShipModule.Scripts {
             _standingSpot.Track(IsFollowingSeatPoint);
             Vector3 previousWorld = transform.position;
             ApplyWorldPose();
-            TrackRideVelocity(previousWorld, dt);
+            _rideVelocity.Accept(transform.position - previousWorld, dt);
             _lastPlatformPos = _platform.position;
             _lastPlatformRot = _platform.rotation;
             if (IsOffDeckEdge())
                 DropOffDeck();
-        }
-
-        private void TrackRideVelocity(Vector3 previousWorld, float dt) {
-            if (dt <= 0f)
-                return;
-
-            Vector3 velocity = (transform.position - previousWorld) / dt;
-            // An origin shift moves the ship hundreds of metres in one frame; that is not a ride velocity.
-            if (velocity.sqrMagnitude <= MAX_RIDE_SPEED * MAX_RIDE_SPEED)
-                _rideVelocity = velocity;
         }
 
         private bool IsOffDeckEdge() {

@@ -40,6 +40,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 32f130b1c4a0f9346ab31298e73cae35
+    m_Address: ShipOverboardConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3bd71940ec6f98c7431f6a0e3c7b5928
     m_Address: CameraCatalog_Default
     m_ReadOnly: 0

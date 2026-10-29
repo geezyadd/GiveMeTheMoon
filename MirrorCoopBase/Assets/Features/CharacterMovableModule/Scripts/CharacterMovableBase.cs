@@ -1,3 +1,4 @@
+using Features.CharacterMovableModule.Scripts.Drift;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.FloatingControllerModule;
 using Mirror;
@@ -14,6 +15,7 @@ namespace Features.CharacterMovableModule.Scripts {
         [SerializeField] private FloatingController _floatingController;
         [SerializeField] private Transform _rotatablePart;
         [SerializeField] private PlayerStatEntity _stats;
+        [SerializeField] private CharacterDrift _drift;
 
         [Header("Proxy Shove")]
         [SerializeField] private float _proxyReach = 0.2f;
@@ -74,7 +76,8 @@ namespace Features.CharacterMovableModule.Scripts {
                 return;
             }
 
-            if (_rb.isKinematic) {
+            // A drifting body is simulated by its drift: no walking, jumping or air gravity in open space.
+            if (_rb.isKinematic || _drift.IsDrifting) {
                 StopPushing();
                 return;
             }
