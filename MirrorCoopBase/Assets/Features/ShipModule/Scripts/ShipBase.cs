@@ -166,6 +166,11 @@ namespace Features.ShipModule.Scripts {
             return NetworkServer.active && _runService != null && _runService.ServerTryLaunch(this);
         }
 
+        // A loose item brought aboard from outside the hands (a parcel pulled in on a rope or flown into): the flying deck
+        // catches it in this frame, as an item a hand lets go of over the deck.
+        public void ServerCatchDeckItem(Grabbable grabbable) =>
+            _cargo.OnItemReleased(grabbable);
+
         internal void BeginTakeoff(
             Vector3 from,
             Vector3 hover,

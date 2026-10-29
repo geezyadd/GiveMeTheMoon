@@ -13,7 +13,9 @@ Aim, grab, use and hold-to-use interaction. Read the [root AGENTS.md](../../../.
 
 An item leaving a hand fires `HeldItemRegistry.OnItemReleased` on that peer (the flying ship's deck catches an item let
 go in flight with it), and `Grabbable.ApplyLoosePhysics` is the one place that gives an item nobody holds its physics
-(the server simulates it, a client's network body moves it); the release and the ship's deck use it.
+(the server simulates it, a client's network body moves it); the release and the ship's deck use it. `Grabbable.SetGrabBlocked` lets something other than a hand own an item for a
+while (a bug carrying the parcel off, the parcel adrift): no hand takes it (`CanBeGrabbed` is false) and the flying deck
+lets go of it as of a held item.
 
 Seats and the helm are in [ShipModule](../ShipModule/AGENTS.md).
 

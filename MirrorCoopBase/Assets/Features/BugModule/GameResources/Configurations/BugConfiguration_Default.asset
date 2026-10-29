@@ -33,7 +33,7 @@ MonoBehaviour:
   _biteStrength: 0.05
   _gnawArriveMeters: 1.2
   _cargoGrabMeters: 1.5
-  _carrySpeedShare: 0.6
+  _carrySpeedShare: 0.35
   _carryAwayMeters: 400
   _carryArriveMeters: 10
   _fleeMeters: 300

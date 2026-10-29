@@ -84,9 +84,13 @@ namespace Tests.Coop.Host {
         }
 
         // Starts the run with the required engines, boards the host and waits until the client boarded too.
-        public IEnumerator StartAndBoardCoroutine() {
+        // atStation: a step at the start station before anyone boards (none by default).
+        public IEnumerator StartAndBoardCoroutine(Func<IEnumerator> atStation = null) {
             BeginStep("start the game and board");
             yield return Session.StartGameCoroutine();
+            if (atStation != null)
+                yield return atStation();
+
             _configOverride.AssertBound();
             Flight = new LoopSmokeFlight(Session, new LoopSmokeFieldCheck(ProjectContext.Instance.Container));
             Flight.InstallRequiredEngines();

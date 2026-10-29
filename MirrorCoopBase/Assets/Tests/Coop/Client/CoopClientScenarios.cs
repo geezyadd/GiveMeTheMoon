@@ -14,7 +14,8 @@ namespace Tests.Coop.Client {
             { CoopFlightSteps.SCENARIO_ROCKS_AND_HULL_LOSS, typeof(CoopRocksAndHullLossClient) },
             { CoopFlightSteps.SCENARIO_HARPOON, typeof(CoopHarpoonClient) },
             { CoopFlightSteps.SCENARIO_FIELD_AGENTS, typeof(CoopFieldAgentsClient) },
-            { CoopFlightSteps.SCENARIO_BUGS, typeof(CoopBugsClient) }
+            { CoopFlightSteps.SCENARIO_BUGS, typeof(CoopBugsClient) },
+            { CoopFlightSteps.SCENARIO_PARCEL, typeof(CoopParcelClient) }
         };
 
         public static bool TryStart(GameObject clientObject, CoopTestArguments arguments) {

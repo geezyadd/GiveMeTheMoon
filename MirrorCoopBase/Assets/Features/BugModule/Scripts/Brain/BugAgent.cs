@@ -15,6 +15,8 @@ namespace Features.BugModule.Scripts.Brain {
         // The cargo it goes for or carries (SeekCargo, Carry).
         public IFieldAgentCargoTarget Cargo { get; private set; }
         public float SecondsToBite { get; private set; }
+        // Where its field agent was at its last step: a cargo is let go here when the agent is already gone.
+        public Vector3 LastWorldPosition { get; private set; }
 
         public bool IsDead => Health <= 0f;
 
@@ -24,6 +26,9 @@ namespace Features.BugModule.Scripts.Brain {
             Health = health;
             Stage = BugStage.Approach;
         }
+
+        public void RememberWorldPosition(Vector3 worldPosition) =>
+            LastWorldPosition = worldPosition;
 
         public void TakeDamage(float damage) =>
             Health = Mathf.Max(0f, Health - damage);

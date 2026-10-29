@@ -9,6 +9,7 @@ using Features.FieldAgentModule.Scripts;
 using Features.FlightFieldModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.Installers;
 using Features.GrabModule.Scripts;
+using Features.ParcelModule.Scripts.Installers;
 using Features.InputModule.Realization.Scripts;
 using Features.PlayerLifeModule.Scripts.Installers;
 using Features.PlayerProfileModule.Scripts;
@@ -42,6 +43,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             PlayerLifeModuleInstaller.Install(Container);
             PlayerProfileModuleInstaller.Install(Container);
             ShopModuleInstaller.Install(Container);
+            ParcelModuleInstaller.Install(Container);
             SonarModuleInstaller.Install(Container);
             SpaceHazeModuleInstaller.Install(Container);
             StagePresetModuleInstaller.Install(Container);

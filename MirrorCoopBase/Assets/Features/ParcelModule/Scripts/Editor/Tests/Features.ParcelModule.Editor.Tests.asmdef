@@ -1,0 +1,33 @@
+{
+    "name": "Features.ParcelModule.Editor.Tests",
+    "rootNamespace": "Features.ParcelModule.Scripts.Editor.Tests",
+    "references": [
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3",
+        "GUID:5e0c7a1b9d2f4c3e8a6b7d0f1e2c3a4b",
+        "GUID:c40f9fa44d5188044b62431825b54028",
+        "GUID:3b5eff428eda466ebde9ed0aa64229c5",
+        "GUID:b6dfe6b104334a39bf4687b18f26a0bf",
+        "GUID:138237ba762f4d85a503bbac4d4913e6",
+        "GUID:7c3e1a9b4d2f4e6a8b0c1d2e3f4a5b6c",
+        "GUID:30817c1a0e6d646d99c048fc403f5979",
+        "GUID:5d6793be2d204514a9702ab824c001ed",
+        "GUID:03a835aea0a645a7b43f5f0c61e8d191",
+        "GUID:5a1c0b7e3d9f4e21a6b8c4d2e0f13579"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

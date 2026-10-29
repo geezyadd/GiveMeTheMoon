@@ -67,7 +67,7 @@ the editor is the host, a Windows development build of the game is the client. O
   loop tests, the coop host test and the client build (no NUnit there); the host side reuses `LoopSmokeSession`,
   `LoopSmokeFlight` and `LoopSmokeShipRunConfigOverride`.
 ## Coop flight tests (the client flies and navigates)
-Six host tests in `Tests/Coop/Host/`, one scenario each, the client doing the action and the host checking it; each
+Eight host tests in `Tests/Coop/Host/`, one scenario each, the client doing the action and the host checking it; each
 starts its own client build process with its own `-scenario` and takes about 1.5-2.5 min. **Run one test class per
 Test Runner run** (`-Filter CoopClientThrottleAndHelmTest`, ...): the fast-timings config override needs a fresh
 `ProjectContext`, so a second test in the same play session fails in its SetUp ("ProjectContext exists before the test").
@@ -109,7 +109,14 @@ Test Runner run** (`-Filter CoopClientThrottleAndHelmTest`, ...): the fast-timin
   and the crew balance grows by its price on both peers (about 25 s). Client screenshots: `client-ore-seen`,
   `client-harpoon-rope`. The ore fields of an observation are `OreIds`, `OreFromDestination`, `OreShown`,
   `OwnHookedOreId`, `IsOwnRopeShown` (`CoopFlightObserver`).
-- Shared parts: `CoopFlightHostHarness` (host, client process, reports, commands, finish), `CoopScenarioClientBot` (the client's base:
+- `CoopClientParcelTest` (`parcel`, `CoopParcelClient`): at the start station the host makes sure the stand offers a
+  parcel (test setup: `IParcelOfferService.ServerCreateOffers` until there is one; `StartAndBoardCoroutine`'s
+  `atStation` step), the client stands before the open offer, turns its view onto it, presses E, picks the crate up
+  through the aim and lets it go on the deck near the stern; the host's server has the parcel for the next station
+  with its crate on board. In a slow cruise the host's debug window sends "A bug steals the parcel": the server names
+  the thief, the host's peer and the client both show the crate under that thief (within 3 m). About 2.5 min plus the
+  client build. Client screenshots: `client-parcel-taken`, `client-parcel-stolen`.
+- Shared parts: `CoopFlightHostHarness` (host, client process, reports, commands, finish; `StartAndBoardCoroutine` takes an optional step at the start station), `CoopScenarioClientBot` (the client's base:
   join, board, wait for commands, report, screenshots, finish), `CoopClientScenarios` (scenario name → bot), step and
   command names in `CoopFlightSteps`, the extra observed fields in `CoopObservation.Flight.cs` / `CoopFlightObserver`.
   The client's screenshots are copied to `Builds/CoopScreenshots/<test>/` (git-ignored) before a passed run's folder is
