@@ -43,6 +43,9 @@ namespace Tests.Coop.Host {
         private const int THROW_ATTEMPTS = 4;
         private const float BODY_MIDDLE_HEIGHT = 1f;
 
+        private readonly WaitForSeconds _reloadWait = new WaitForSeconds(RELOAD_WAIT_SECONDS);
+        private readonly WaitForSeconds _driftWatch = new WaitForSeconds(DRIFT_WATCH_SECONDS);
+
         private CoopFlightHostHarness _host;
 
         [SetUp]
@@ -103,7 +106,7 @@ namespace Tests.Coop.Host {
             Assert.IsTrue(client.IsOverboard, "The server does not have the thrown client overboard.");
             Assert.IsTrue(client.GetComponent<CharacterDrift>().IsDrifting, "The host does not show the client's body drifting.");
             float startHeight = _host.ClientServerPosition().y;
-            yield return new WaitForSeconds(DRIFT_WATCH_SECONDS);
+            yield return _driftWatch;
             float heightChange = _host.ClientServerPosition().y - startHeight;
             Assert.Less(Mathf.Abs(heightChange), MAX_HEIGHT_CHANGE_METERS, $"The host sees the drifting client fall or rise ({heightChange:0.00} m).");
             Assert.AreNotEqual(Quaternion.identity, client.transform.Find(TUMBLING_VISUAL).localRotation, "The host does not show the client's body tumbling.");
@@ -128,7 +131,7 @@ namespace Tests.Coop.Host {
                     yield return null;
 
                 if (IsHookedBy(client, hostKey) == false)
-                    yield return new WaitForSeconds(RELOAD_WAIT_SECONDS);
+                    yield return _reloadWait;
             }
 
             CameraLookDriver.DebugPitchOverride = false;

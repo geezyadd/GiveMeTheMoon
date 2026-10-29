@@ -4,7 +4,7 @@ The game camera and the camera shake. Read the [root AGENTS.md](../../../../AGEN
 
 ## Assembly
 - `Features.CameraModule` (layer 3; references: CharacterMovable, Contracts, CameraModule.Contracts, Input).
-- `Features.CameraModule.Contracts` (layer 1; no references): `CameraModule/Contracts/`: `ICameraShakeService`, `ICameraShakeHandle`, `CameraShakeProfile`, so the weapons and the ship shake the camera without referencing the camera module.
+- `Features.CameraModule.Contracts` (layer 1; no references): `CameraModule/Contracts/`: `ICameraShakeService`, `ICameraShakeHandle`, `CameraShakeProfile`, `ILocalViewDirectionSource` (the local view's axes, implemented by `CameraViewDirectionSource`), so the weapons and the ship shake the camera without referencing the camera module.
 
 ## Rules
 - The camera does not know about Grab: `IGameCameraService.LookApplied` fires in `PresentNow()` after

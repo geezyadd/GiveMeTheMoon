@@ -162,10 +162,12 @@ or the void takes it. Code in `ShipModule/Scripts/Overboard/`, numbers in `ShipO
   `OverboardHookVolume` (layer `FieldRock`, `ShipOverboardHookVolume` naming the player's weapon target id, tag 0xF4 +
   netId, `ShipOverboardWeaponIds`) is on while it drifts; the server's `ShipOverboardWeaponTargetSystem` answers that id
   range with one `ShipOverboardWeaponTarget` (`IWeaponPullTarget`: not its own rope, the hit within `HookReachMeters`).
-  The owner then moves at the ship's velocity plus the pull (the rope's speed, at most `MaxPullSpeedMetersPerSecond`
+  The owner then moves (`ShipOverboardPullMotion`; the ship's velocity from `WorldShiftSafeVelocity`, the frame-to-frame
+  tracker that ignores a world shift's jump, shared with the rider's ride velocity) at the ship's velocity plus the pull (the rope's speed, at most `MaxPullSpeedMetersPerSecond`
   9 m/s) toward `PullTargetHeightMeters` over the deck's middle, until the ship's volume captures it. The server lets go
   of a rope whose holder let go of the weapon or went farther than the rope (`ShipOverboardRule.IsRopeHeld`); every peer
-  draws it from the hooker's weapon anchor (`ShipOverboardRope`, child `OverboardRope`).
+  draws it from the hooker's weapon anchor (`ShipOverboardRope`, child `OverboardRope`). A ship without a deck stand
+  point throws (no silent pull to its pivot).
 - **The limit:** farther than `MaxDistanceMeters` (400 m) from the ship or longer than `MaxDriftSeconds` (240 s): the
   server ends the drift and publishes `IShipOverboardEvents.OnDriftLimitReached`; PlayerLifeModule kills the player
   (`DamageType.Drift`, a normal death and buy-back).
@@ -173,8 +175,7 @@ or the void takes it. Code in `ShipModule/Scripts/Overboard/`, numbers in `ShipO
   when the ship goes away (`ShipRiders.ReleaseAllOnLeave`). Not restored on a rejoin: a player who leaves overboard
   comes back at a deck spawn like everyone (a join in flight is refused anyway).
 - **Seen by everyone:** a "Man overboard" sonar contact and a marker on every other player's screen (SonarModule).
-- **Debug** (editor / development builds, `Debug/ShipOverboardDebugSystem` + `ShipOverboardDebugPlacement`, also
-  `IShipOverboardDebug`): Player -> "Throw me overboard" (any player riding in flight: its own peer lets go of the
+- **Debug** (editor / development builds, `Debug/ShipOverboardDebugSystem` + `ShipOverboardDebugPlacement`): Player -> "Throw me overboard" (any player riding in flight: its own peer lets go of the
   deck and puts the body `DebugThrowSideMeters` beside it, moving away), Ship -> "Bring the ship to the drifting player"
   (host: the ship is moved like a world shift until the first drifter hangs `DebugBringHeightMeters` over the deck).
 
@@ -265,5 +266,6 @@ for a confined deck and walk the player off the narrow nose of the deck, which d
   detent, a max position at Stop, the drop into a detent on release, mode names), `ShipThrottleLocalHoldTests` (send
   rate and the last position on release, lost to another holder, to the server's let go, to an unconfirmed take) and
   `ShipCruiseSpeedTests` (the acceleration limit down to 0, no limit, the ship standing still at throttle 0).
-- The overboard `ShipOverboardRuleTests` (the ship's volume beside the deck edge and over / under the deck band, going overboard only after a ride in flight and out of the volume, never at a station or when left behind, the capture after the minimum drift, the deck catch ending a drift, the distance and time limits, the rope held or broken). Play: `OverboardCaptureTest`, `OverboardLimitTest` (see [Loop tests](../../Tests/PlayMode/LoopSmoke/AGENTS.md)) and `CoopClientOverboardTest`.
+- The overboard `ShipOverboardRuleTests` (the ship's volume beside the deck edge and over / under the deck band, going overboard only after a ride in flight and out of the volume, never at a station or when left behind, the capture after the minimum drift, the deck catch ending a drift, the distance and time limits, the rope held or broken), `ShipOverboardPullMotionTests` (the pull speed on top of the ship's velocity, never past the
+  target in one step, a world shift's jump ignored by `WorldShiftSafeVelocity`). Play: `OverboardCaptureTest`, `OverboardLimitTest` (see [Loop tests](../../Tests/PlayMode/LoopSmoke/AGENTS.md)) and `CoopClientOverboardTest`.
 - The helm's and the seats' `HelmSteerTests` (the host pilot's stick, a client pilot's sent steer and its send cadence, no steer left from a pilot who stood up) and `ShipSeatRuleTests` (one occupant by key, only the key holds the seat, a rejoined player's key, a freed seat equals a never-seated one).

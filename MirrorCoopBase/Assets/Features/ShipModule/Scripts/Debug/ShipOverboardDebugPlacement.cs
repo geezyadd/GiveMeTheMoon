@@ -29,7 +29,9 @@ namespace Features.ShipModule.Scripts.Debug {
 
         // Moved like a world shift, so the move is no velocity: the drifter ends up over the deck's middle.
         public void BringShipTo(ShipBase ship, Vector3 drifterPosition) {
-            Vector3 middle = ship.DeckGeometry.TryGetDeckStandPoint(out Vector3 standPoint) ? standPoint : Vector3.zero;
+            if (ship.DeckGeometry.TryGetDeckStandPoint(out Vector3 middle) == false)
+                throw new System.InvalidOperationException(ship.name + " has no deck stand point.");
+
             Vector3 overDeck = ship.transform.TransformPoint(middle + Vector3.up * _shipOverboardConfiguration.DebugBringHeightMeters);
             ship.FlightControlDebug.DebugMove(drifterPosition - overDeck);
         }

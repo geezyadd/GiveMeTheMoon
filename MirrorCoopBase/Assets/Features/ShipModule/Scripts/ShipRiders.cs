@@ -131,8 +131,10 @@ namespace Features.ShipModule.Scripts {
                     continue;
 
                 _riders[i].ReleaseFromLeavingShip();
-                if (_riders[i].TryGetComponent(out ShipOverboardRider overboardRider))
-                    overboardRider.EndOnShipLeave();
+                if (_riders[i].TryGetComponent(out ShipOverboardRider overboardRider) == false)
+                    throw new System.InvalidOperationException(_riders[i].name + " has no " + nameof(ShipOverboardRider) + ".");
+
+                overboardRider.EndOnShipLeave();
             }
 
             _riders.Clear();

@@ -3,7 +3,7 @@
 The player's walking body at a station, its stats and the drift in open space. Read the [root AGENTS.md](../../../../AGENTS.md) first (game, rules, module map). Change this module's description here, not in the root file. Riding the flying deck is the ship's ([ShipModule](../ShipModule/AGENTS.md), "Riding the ship").
 
 ## Assembly
-`Features.CharacterMovableModule` (layer 2; references: Contracts, FloatingController, Address, Stats, Input, Mirror, Zenject).
+`Features.CharacterMovableModule` (layer 2; references: Contracts, CameraModule.Contracts (`ILocalViewDirectionSource`, the view the drift pushes along), FloatingController, Address, Stats, Input, Mirror, Zenject).
 
 ## Key places
 | What | Where |

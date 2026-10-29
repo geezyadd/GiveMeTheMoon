@@ -6,12 +6,12 @@ namespace Features.CharacterMovableModule.Scripts.Drift {
     public sealed class CharacterDriftTumble {
         private const float FULL_TURN_DEGREES = 360f;
         private const float TWO_PI = Mathf.PI * 2f;
-        private static readonly Vector3 TumbleAxis = new Vector3(1f, 0.35f, 0.6f).normalized;
+        private static readonly Vector3 _tumbleAxis = new Vector3(1f, 0.35f, 0.6f).normalized;
 
         private float _tumbleDegrees;
         private float _swingPhase;
 
-        public Quaternion BodyRotation => Quaternion.AngleAxis(_tumbleDegrees, TumbleAxis);
+        public Quaternion BodyRotation => Quaternion.AngleAxis(_tumbleDegrees, _tumbleAxis);
 
         public void Reset() {
             _tumbleDegrees = 0f;

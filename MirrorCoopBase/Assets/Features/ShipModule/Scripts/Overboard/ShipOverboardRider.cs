@@ -13,7 +13,6 @@ namespace Features.ShipModule.Scripts.Overboard {
     // and lands back on the deck through the ship's ride path; every peer shows the tumble and the volume the other
     // players' ropes hook. The drift is not restored on a rejoin: a player who leaves overboard comes back on the deck.
     public sealed class ShipOverboardRider : NetworkBehaviour {
-        private const float MAX_SHIP_SPEED = 120f;
         private const float FULL_SWAY = 1f;
 
         [SerializeField] private ShipRider _rider;
@@ -42,11 +41,11 @@ namespace Features.ShipModule.Scripts.Overboard {
         private ICameraShakeService _cameraShakeService;
         private IShipOverboardWeaponIds _shipOverboardWeaponIds;
 
+        private readonly WorldShiftSafeVelocity _shipVelocity = new WorldShiftSafeVelocity();
+        private readonly ShipOverboardPullMotion _pullMotion = new ShipOverboardPullMotion();
+
         private float _maxRopeMeters;
         private ICameraShakeHandle _viewSway;
-        private Vector3 _lastShipPosition;
-        private Vector3 _shipVelocity;
-        private bool _hasShipPosition;
 
         public bool IsOverboard => _isOverboard;
         public bool IsHooked => string.IsNullOrEmpty(_hookerKey) == false;
@@ -95,9 +94,16 @@ namespace Features.ShipModule.Scripts.Overboard {
             if (isOwned == false || _isOverboard == false)
                 return;
 
-            TrackShipVelocity(Time.deltaTime);
+            ShipBase ship = _shipClientBindingModel.Ship;
+            if (ship == null) {
+                _shipVelocity.Reset();
+                _drift.OwnerClearPull();
+                return;
+            }
+
+            _shipVelocity.Track(ship.transform.position, Time.deltaTime);
             if (IsHooked)
-                _drift.OwnerSetPullVelocity(PullVelocity());
+                _drift.OwnerSetPullVelocity(_pullMotion.Step(transform.position, PullTarget(ship), _shipVelocity.Velocity, _pullSpeed, Time.fixedDeltaTime));
             else
                 _drift.OwnerClearPull();
         }
@@ -155,39 +161,13 @@ namespace Features.ShipModule.Scripts.Overboard {
                 ShowOverboard(false);
         }
 
-        private Vector3 PullVelocity() {
-            ShipBase ship = _shipClientBindingModel.Ship;
-            if (ship == null)
-                return Vector3.zero;
-
-            Vector3 toTarget = PullTarget(ship) - transform.position;
-            float step = Mathf.Min(_pullSpeed, toTarget.magnitude / Time.fixedDeltaTime);
-            return _shipVelocity + toTarget.normalized * step;
-        }
-
+        // A ship without a deck stand point is broken data: a rope must not reel the player to its pivot.
         private Vector3 PullTarget(ShipBase ship) {
-            Vector3 middle = ship.DeckGeometry.TryGetDeckStandPoint(out Vector3 standPoint) ? standPoint : Vector3.zero;
+            if (ship.DeckGeometry.TryGetDeckStandPoint(out Vector3 middle) == false)
+                throw new System.InvalidOperationException(ship.name + " has no deck stand point.");
+
             return ship.transform.TransformPoint(middle + Vector3.up * _shipOverboardConfiguration.PullTargetHeightMeters);
         }
-
-        private void TrackShipVelocity(float deltaTime) {
-            ShipBase ship = _shipClientBindingModel.Ship;
-            if (ship == null || deltaTime <= 0f) {
-                _hasShipPosition = false;
-                return;
-            }
-
-            Vector3 position = ship.transform.position;
-            if (_hasShipPosition)
-                _shipVelocity = ShipVelocityOrLast((position - _lastShipPosition) / deltaTime);
-
-            _lastShipPosition = position;
-            _hasShipPosition = true;
-        }
-
-        // A world shift moves the ship hundreds of metres in one frame; that is no velocity.
-        private Vector3 ShipVelocityOrLast(Vector3 velocity) =>
-            velocity.sqrMagnitude <= MAX_SHIP_SPEED * MAX_SHIP_SPEED ? velocity : _shipVelocity;
 
         private void ShowOverboard(bool isOverboard) {
             _hookVolume.enabled = isOverboard && isOwned == false;
@@ -198,7 +178,7 @@ namespace Features.ShipModule.Scripts.Overboard {
             }
 
             _drift.End();
-            _hasShipPosition = false;
+            _shipVelocity.Reset();
             EndViewSway();
         }
 

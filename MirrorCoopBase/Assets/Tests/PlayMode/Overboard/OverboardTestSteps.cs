@@ -15,7 +15,7 @@ namespace Tests.PlayMode.Overboard {
     // "Throw me overboard" clicked as a player does, the drift watched (the server put the host overboard, its height
     // barely changes, the ship flies on, the body tumbles) and the screenshots in the workspace's overboard folder.
     public sealed class OverboardTestSteps {
-        public const string LOG_PREFIX = "[Overboard] ";
+        private const string LOG_PREFIX = "[Overboard] ";
 
         private const string THROW_LABEL = "Throw me overboard";
         private const string SCREENSHOT_FOLDER = "../.agent-orchestrator/screenshots/overboard";

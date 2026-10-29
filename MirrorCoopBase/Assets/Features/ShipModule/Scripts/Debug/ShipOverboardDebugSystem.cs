@@ -13,7 +13,7 @@ namespace Features.ShipModule.Scripts.Debug {
     // of the deck and puts the body beside it, so the server sees it leave the ship's volume as after a walk off the
     // edge) and Ship -> "Bring the ship to the drifting player" (host: the ship is moved like a world shift until the
     // first drifting player hangs over its deck, inside the volume that takes it back).
-    public sealed class ShipOverboardDebugSystem : IInitializable, IDisposable, IShipOverboardDebug {
+    public sealed class ShipOverboardDebugSystem : IInitializable, IDisposable {
         private const string THROW_LABEL = "Throw me overboard";
         private const string THROW_DESCRIPTION = "Lets go of the deck and puts you beside the ship in flight: you drift until the ship or a rope takes you back.";
         private const string BRING_LABEL = "Bring the ship to the drifting player";
@@ -59,12 +59,12 @@ namespace Features.ShipModule.Scripts.Debug {
             _bringRegistration.Dispose();
         }
 
-        public void DebugThrowLocalPlayer() {
+        private void DebugThrowLocalPlayer() {
             if (TryGetLocalRider(out CharacterMovableBase movable, out ShipRider rider))
                 _shipOverboardDebugPlacement.ThrowOverboard(_shipClientBindingModel.Ship, rider, movable.Body);
         }
 
-        public void DebugBringShipToDrifter() {
+        private void DebugBringShipToDrifter() {
             if (TryFindDrifter(out ShipOverboardRider drifter))
                 _shipOverboardDebugPlacement.BringShipTo(_shipRunBindingModel.Ship, drifter.Position);
         }

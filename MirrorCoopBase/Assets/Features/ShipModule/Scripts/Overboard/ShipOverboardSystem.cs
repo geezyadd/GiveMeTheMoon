@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Features.ShipModule.Scripts.Contracts;
 using Features.WeaponModule.Contracts;
@@ -50,6 +51,8 @@ namespace Features.ShipModule.Scripts.Overboard {
         private void Step(ShipBase ship, ShipOverboardRider overboardRider) {
             ShipOverboardDecision decision = _shipOverboardRule.Decide(ReadState(ship, overboardRider));
             switch (decision) {
+                case ShipOverboardDecision.None:
+                    break;
                 case ShipOverboardDecision.MarkRidden:
                     overboardRider.HasRiddenThisFlight = true;
                     break;
@@ -69,6 +72,8 @@ namespace Features.ShipModule.Scripts.Overboard {
                     overboardRider.ServerReset();
                     _shipOverboardEventPublisher.PublishDriftLimitReached(overboardRider.netIdentity);
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(decision), decision, null);
             }
 
             if (overboardRider.IsHooked && IsRopeHeld(overboardRider) == false)

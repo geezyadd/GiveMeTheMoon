@@ -109,7 +109,7 @@ types.
      `Features.DebugModule.Contracts`, `Features.SonarModule.Contracts`, `Features.SonarModule.Data`,
      `Features.SpaceHazeModule.Data`; third-party
      `QuickOutline` also has its own asmdef (the unused `Mini Mapa(Radar)` pack was deleted on 2026-10-25).
-  2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
+  2. `Features.CharacterMovableModule` (Contracts, CameraModule.Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
      `Features.WeaponModule`, `Features.SpaceHazeModule`.
   3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`.

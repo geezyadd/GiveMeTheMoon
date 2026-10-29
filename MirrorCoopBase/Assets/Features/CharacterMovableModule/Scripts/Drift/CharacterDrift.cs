@@ -1,3 +1,4 @@
+using Features.CameraModule.Contracts;
 using Features.FloatingControllerModule;
 using UnityEngine;
 using Zenject;
@@ -21,6 +22,7 @@ namespace Features.CharacterMovableModule.Scripts.Drift {
         private readonly CharacterDriftTumble _tumble = new CharacterDriftTumble();
 
         private CharacterInputBuffer _characterInputBuffer;
+        private ILocalViewDirectionSource _localViewDirectionSource;
         private CharacterDriftSettings _settings;
         private Quaternion[] _limbRestRotations;
         private Quaternion _tumbleRestRotation;
@@ -34,8 +36,10 @@ namespace Features.CharacterMovableModule.Scripts.Drift {
         public bool IsDrifting { get; private set; }
 
         [Inject]
-        private void InjectDependencies(CharacterInputBuffer characterInputBuffer) =>
+        private void InjectDependencies(CharacterInputBuffer characterInputBuffer, ILocalViewDirectionSource localViewDirectionSource) {
             _characterInputBuffer = characterInputBuffer;
+            _localViewDirectionSource = localViewDirectionSource;
+        }
 
         private void Awake() {
             _tumbleRestRotation = _tumbleRoot.localRotation;
@@ -127,12 +131,11 @@ namespace Features.CharacterMovableModule.Scripts.Drift {
             _isPulled = false;
 
         private Vector3 ReadPushDirection() {
-            Transform view = Camera.main != null ? Camera.main.transform : null;
-            Vector2 stick = _characterInputBuffer.MoveStick;
-            if (view == null || _characterInputBuffer.IsBlocked)
+            if (_characterInputBuffer.IsBlocked)
                 return Vector3.zero;
 
-            return view.forward * stick.y + view.right * stick.x;
+            Vector2 stick = _characterInputBuffer.MoveStick;
+            return _localViewDirectionSource.Forward * stick.y + _localViewDirectionSource.Right * stick.x;
         }
 
         private void ShowLimbs(bool isShown) {
