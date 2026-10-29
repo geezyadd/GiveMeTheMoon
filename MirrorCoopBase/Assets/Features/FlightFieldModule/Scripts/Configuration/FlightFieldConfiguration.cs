@@ -53,6 +53,26 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         [Tooltip("Length of the takeoff corridor past the cruise start along the takeoff heading, meters: the autopilot keeps that heading, and the pilot needs this run-out to find B on the radar and turn (run-up plus margin).")]
         [SerializeField, Min(0f)] private float _takeoffRunOutLength = 200f;
 
+        [Header("Points of interest")]
+        [Tooltip("The fewest points of interest a field gets.")]
+        [SerializeField, Min(0)] private int _pointOfInterestMinCount = 1;
+        [Tooltip("The most points of interest a field gets.")]
+        [SerializeField, Min(0)] private int _pointOfInterestMaxCount = 3;
+        [Tooltip("The least distance of a point of interest beside the straight course cruise start -> B, meters.")]
+        [SerializeField, Min(0f)] private float _pointOfInterestMinSideMeters = 250f;
+        [Tooltip("The most distance of a point of interest beside the straight course cruise start -> B, meters.")]
+        [SerializeField, Min(0f)] private float _pointOfInterestMaxSideMeters = 550f;
+        [Tooltip("Where along the course a point of interest may stand: share of the way cruise start -> B, from.")]
+        [SerializeField, Range(0f, 1f)] private float _pointOfInterestMinCourseShare = 0.2f;
+        [Tooltip("Where along the course a point of interest may stand: share of the way cruise start -> B, up to.")]
+        [SerializeField, Range(0f, 1f)] private float _pointOfInterestMaxCourseShare = 0.85f;
+        [Tooltip("Radius around a point of interest kept free of rocks in the flight plane, meters.")]
+        [SerializeField, Min(0f)] private float _pointOfInterestClearRadiusMeters = 70f;
+        [Tooltip("The least distance between two points of interest, meters.")]
+        [SerializeField, Min(0f)] private float _pointOfInterestMinSpacingMeters = 400f;
+        [Tooltip("Seeded tries per wanted point before the field settles for fewer.")]
+        [SerializeField, Min(1)] private int _pointOfInterestTriesPerPoint = 12;
+
         [Header("Routes and profiles")]
         [SerializeField] private LoopRoutes[] _routesByLoop = { new() };
         [Tooltip("Every difficulty profile a field may get; a peer resolves the profile id of a field here.")]
@@ -99,6 +119,15 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public float StationBZoneRadius => _stationBZoneRadius;
         public float TakeoffCorridorHalfWidth => _takeoffCorridorHalfWidth;
         public float TakeoffRunOutLength => _takeoffRunOutLength;
+        public int PointOfInterestMinCount => _pointOfInterestMinCount;
+        public int PointOfInterestMaxCount => _pointOfInterestMaxCount;
+        public float PointOfInterestMinSideMeters => _pointOfInterestMinSideMeters;
+        public float PointOfInterestMaxSideMeters => _pointOfInterestMaxSideMeters;
+        public float PointOfInterestMinCourseShare => _pointOfInterestMinCourseShare;
+        public float PointOfInterestMaxCourseShare => _pointOfInterestMaxCourseShare;
+        public float PointOfInterestClearRadiusMeters => _pointOfInterestClearRadiusMeters;
+        public float PointOfInterestMinSpacingMeters => _pointOfInterestMinSpacingMeters;
+        public int PointOfInterestTriesPerPoint => _pointOfInterestTriesPerPoint;
         public IReadOnlyList<LoopRoutes> RoutesByLoop => _routesByLoop;
         public IReadOnlyList<FieldDifficultyProfile> DifficultyProfiles => _difficultyProfiles;
         public FieldVolumeConfiguration Volume => _volume;

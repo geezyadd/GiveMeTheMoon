@@ -16,6 +16,10 @@ The game camera and the camera shake. Read the [root AGENTS.md](../../../../AGEN
   `LookApplied`, so a seated station's view (the turret's camera point, `BeginFixedView`) shakes too; nothing else
   turns or moves the camera for a shake.
 
+- **Outside views:** `IGameCameraService.BeginOverrideView(camera, blend)` / `EndOverrideView(camera, blend)` give a
+  `CinemachineCamera` of another module (the cutscene camera, [CutsceneModule](../CutsceneModule/AGENTS.md)) priority over
+  the player's cameras with an ease blend, and blend back to the player's live camera.
+
 - **Look lock:** while any owner holds `CameraLookLockModel` (bound in `CameraModuleInstaller`) the mouse does not turn
   the view (`CameraLookDriver` drops the look input; the cursor stays locked). The Grab module takes it while a held
   control (the throttle lever) is moved by the mouse.

@@ -12,6 +12,9 @@ namespace Features.CameraModule.Scripts.Services {
     public sealed class GameCameraService : IGameCameraService, IInitializable, IDisposable, IGameplaySession {
         private const int LivePriority = 100;
         private const int StandbyPriority = 10;
+        private const int OVERRIDE_VIEW_PRIORITY = 1000;
+        private const int ENDED_OVERRIDE_VIEW_PRIORITY = 0;
+        private const float CUT_BLEND_SECONDS = 0.001f;
         private const string ORBIT_HOLD_ANCHOR_NAME = "OrbitHoldAnchor";
 
         private readonly GameCameraModel _model;
@@ -141,15 +144,10 @@ namespace Features.CameraModule.Scripts.Services {
             if (_model.TryGet(id, out GameCamera next) == false || next == null)
                 return;
 
-            EnsureBrain();
             float blendTime = duration >= 0f
                 ? duration
                 : _catalog != null ? _catalog.DefaultBlendSeconds : 0.45f;
-            if (_brain != null) {
-                _brain.DefaultBlend = blendTime <= 0.001f
-                    ? new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.Cut, 0f)
-                    : new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, blendTime);
-            }
+            SetDefaultBlend(blendTime);
 
             foreach (GameCamera camera in _model.Cameras.Values)
                 camera.SetPriority(camera == next ? LivePriority : StandbyPriority);
@@ -179,6 +177,26 @@ namespace Features.CameraModule.Scripts.Services {
             _model.CameraIdBeforeFixedView = null;
             if (string.IsNullOrEmpty(previousId) == false)
                 BlendTo(previousId, 0f);
+        }
+
+        public void BeginOverrideView(CinemachineCamera camera, float blendSeconds) {
+            SetDefaultBlend(blendSeconds);
+            camera.Priority = OVERRIDE_VIEW_PRIORITY;
+        }
+
+        public void EndOverrideView(CinemachineCamera camera, float blendSeconds) {
+            SetDefaultBlend(blendSeconds);
+            camera.Priority = ENDED_OVERRIDE_VIEW_PRIORITY;
+        }
+
+        private void SetDefaultBlend(float blendSeconds) {
+            EnsureBrain();
+            if (_brain == null)
+                return;
+
+            _brain.DefaultBlend = blendSeconds <= CUT_BLEND_SECONDS
+                ? new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.Cut, 0f)
+                : new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, blendSeconds);
         }
 
         private void SpawnIdleCameras() {

@@ -127,6 +127,7 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldNetworkedPrefabRegistration>().To<FieldNetworkedPrefabRegistration>().AsSingle();
             Container.BindInterfacesTo<FlightFieldService>().AsSingle();
             Container.BindInterfacesTo<FlightFieldLaunchSystem>().AsSingle();
+            Container.Bind<IFieldPointOfInterestSource>().To<ServerFieldPointOfInterestSource>().AsSingle();
             Container.Bind<IFieldStructurePool>().To<FieldStructurePool>().AsSingle();
             Container.Bind<IFieldStructureSceneBuilder>().To<FieldStructureSceneBuilder>().AsSingle();
             Container.Bind<IFieldDebrisSceneBuilder>().To<FieldDebrisSceneBuilder>().AsSingle().WithArguments(new FieldStructurePool());
@@ -143,6 +144,7 @@ namespace Features.FlightFieldModule.Scripts {
             Container.Bind<IFieldGenerationStep>().To<FieldTakeoffCorridorStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldObstacleRouteStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldDensityMapStep>().AsSingle();
+            Container.Bind<IFieldGenerationStep>().To<FieldPointOfInterestStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldObstacleGiantStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldObstacleDebrisStep>().AsSingle();
             Container.Bind<IFieldGenerationStep>().To<FieldBalanceMetricStep>().AsSingle();

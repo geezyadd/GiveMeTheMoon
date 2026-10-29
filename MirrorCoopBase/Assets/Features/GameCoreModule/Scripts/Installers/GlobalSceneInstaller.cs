@@ -1,6 +1,7 @@
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts;
 using Features.CrewInviteModule.Scripts.Installers;
+using Features.CutsceneModule.Scripts;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using Features.DebugModule.Scripts.Installers;
 #endif
@@ -12,6 +13,7 @@ using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts;
 using Features.PlayerLifeModule.Scripts.Installers;
 using Features.PlayerProfileModule.Scripts;
+using Features.PointOfInterestModule.Scripts;
 using Features.ShipDamageModule.Scripts;
 using Features.ShipImpactModule.Scripts;
 using Features.ShipModule.Scripts;
@@ -43,6 +45,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             PlayerProfileModuleInstaller.Install(Container);
             ShopModuleInstaller.Install(Container);
             SonarModuleInstaller.Install(Container);
+            CutsceneModuleInstaller.Install(Container);
+            PointOfInterestModuleInstaller.Install(Container);
             SpaceHazeModuleInstaller.Install(Container);
             StagePresetModuleInstaller.Install(Container);
             TooltipModuleInstaller.Install(Container);

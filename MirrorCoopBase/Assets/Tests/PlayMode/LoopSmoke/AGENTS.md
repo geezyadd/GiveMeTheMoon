@@ -117,6 +117,14 @@ landing, messages start with "Loop N:"; at the cruise start its pilot faces the 
 `ShipBase.FlightControlDebug`, because the autopilot keeps the takeoff heading), `LoopSmokeShipRunConfigOverride` and `LoopSmokeFieldCatalogOverride` (the
 config copies) and `LoopSmokeSpawnCounts`.
 
+**Points of interest** (`LoopSmokePointOfInterestCheck`, steps in `Tests/PlayMode/PointOfInterest/PointOfInterestTestSteps`):
+in the first cruise of run 1 the host, still at the radar console, pings and finds the nearest point of interest's
+echo (`poi:<id>`) and its legend row (screenshot `sonar-point-of-interest.png`); after the repair check the debug
+window puts the ship before the nearest bug nest, the cruise flies it in, the nest starts once, the entry cutscene plays
+(controls blocked, HUD hidden, throttle at Stop) until Space skips it (`loop-cutscene-skipped.png`), the nest's bugs are
+out, the ship rams the container and the balance grows by the reward once; the bugs are removed and the ship goes back
+on its course at full throttle. Screenshots in the workspace's `.agent-orchestrator/screenshots/poi/`.
+
 **Adding a check to the loop test.** `LoopSmokeTest.cs` only plays the runs (its `_runs` list: flights per run, the
 test's rocket engines or a preset's modules, how the run ends) and does not change per feature. The checks register
 themselves: `LoopSmokeCheckRegistry` reads every method with `[LoopSmokeStep(phase, run, flight, order)]` in the
@@ -128,7 +136,8 @@ line per step, nothing else:
   flight: `LoopIndex` for runs 1 and 2, loop 10 is flight 1 of the Late run 3); `InMenu` (after Leave) takes neither.
 - `order`: the steps of one slot run one after the other, lower first; two steps with the same order in a slot fail
   the test at its start, so pick a free number (the existing steps use multiples of 10; the first cruise of run 1:
-  sonar 10, hull 20, rock break 30, rock impacts 40, repair 50; the turret cruise of run 2: dummy 10, rock shot 20,
+  sonar 10, point of interest on the sonar 15, hull 20, rock break 30, rock impacts 40, rock near pass 45, repair 50,
+  bug nest 60; the turret cruise of run 2: dummy 10, rock shot 20,
   stand up 40; the first cruise of run 2: crew invite 10, ore and harpoon 20).
 - A step takes no arguments and returns `IEnumerator` or `void`. Its class has a public constructor taking
   `LoopSmokeContext` (session, flight helper, field check, Steam lobby spy) or an empty one; it is made at its first

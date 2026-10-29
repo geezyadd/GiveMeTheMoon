@@ -44,6 +44,15 @@ namespace Features.FlightFieldModule.Scripts.Model {
             return new Vector2(Vector3.Dot(offset, Right), Vector3.Dot(offset, Forward));
         }
 
+        // Field space: x along Right, y up from the flight plane, z along Forward from Origin.
+        public Vector3 WorldToField(Vector3 point) {
+            Vector3 offset = point - Origin;
+            return new Vector3(Vector3.Dot(offset, Right), offset.y, Vector3.Dot(offset, Forward));
+        }
+
+        public Vector3 FieldToWorld(Vector3 fieldPosition) =>
+            Origin + Right * fieldPosition.x + Vector3.up * fieldPosition.y + Forward * fieldPosition.z;
+
         public Vector2Int WorldToCell(Vector3 point) {
             Vector3 offset = point - Origin;
             return new Vector2Int(Mathf.FloorToInt(Vector3.Dot(offset, Forward) / CellSize), Mathf.FloorToInt(Vector3.Dot(offset, Right) / CellSize));

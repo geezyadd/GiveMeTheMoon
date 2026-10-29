@@ -13,6 +13,8 @@ namespace Features.FlightFieldModule.Scripts.Model {
         public IMatrix<FieldCell> Cells { get; }
         public IReadOnlyList<FieldPlacement> Placements { get; }
         public IReadOnlyList<FieldRoute> Routes { get; }
+        // The middles of the points of interest in field space (FieldFrame.FieldToWorld), on the flight plane.
+        public IReadOnlyList<Vector3> PointsOfInterest { get; }
         public Vector2Int StationACell { get; }
         public Vector2Int StationBCell { get; }
         public Vector2Int CruiseStartCell { get; }
@@ -24,7 +26,7 @@ namespace Features.FlightFieldModule.Scripts.Model {
 
         public FlightField(FieldFrame frame, int seed, IMatrix<FieldCell> cells, IReadOnlyList<FieldPlacement> placements, IReadOnlyList<FieldRoute> routes,
                            Vector2Int stationACell, Vector2Int stationBCell, Vector2Int cruiseStartCell, string profileId, float difficulty,
-                           FieldDensityMap density, FieldMetrics metrics, int loopIndex) {
+                           FieldDensityMap density, FieldMetrics metrics, int loopIndex, IReadOnlyList<Vector3> pointsOfInterest) {
             Frame = frame;
             Seed = seed;
             Cells = cells;
@@ -38,6 +40,7 @@ namespace Features.FlightFieldModule.Scripts.Model {
             Density = density;
             Metrics = metrics;
             LoopIndex = loopIndex;
+            PointsOfInterest = pointsOfInterest;
         }
     }
 }

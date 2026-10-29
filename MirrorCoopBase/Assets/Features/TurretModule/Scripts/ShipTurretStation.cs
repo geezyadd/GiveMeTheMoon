@@ -1,5 +1,6 @@
 using Features.CameraModule.Scripts.Models;
 using Features.CameraModule.Scripts.Services;
+using Features.CharacterMovableModule.Scripts.Models;
 using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts.Generated;
 using Features.NetworkModelModule.Scripts;
@@ -67,6 +68,7 @@ namespace Features.TurretModule.Scripts {
             IInputService inputService,
             CursorModel cursorModel,
             HoveredInteractableModel hoveredInteractableModel,
+            PlayerControlBlockModel playerControlBlockModel,
             IGameCameraService gameCameraService,
             IWeaponShooterFactory weaponShooterFactory,
             IWeaponCatalogIndexService weaponCatalogIndexService,
@@ -75,7 +77,7 @@ namespace Features.TurretModule.Scripts {
             _weaponShooterFactory = weaponShooterFactory;
             _weaponCatalogIndexService = weaponCatalogIndexService;
             _shipModuleCondition = shipModuleCondition;
-            _ownerInput = new TurretOwnerInput(inputService, cursorModel, hoveredInteractableModel);
+            _ownerInput = new TurretOwnerInput(inputService, cursorModel, hoveredInteractableModel, playerControlBlockModel);
         }
 
         private void Awake() {

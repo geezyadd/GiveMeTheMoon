@@ -3,7 +3,7 @@
 The turret's seat station `ShipTurretStation` and its pure parts. Read the [root AGENTS.md](../../../../AGENTS.md) first (game, rules, module map). Change this module's description here, not in the root file.
 
 ## Assembly
-`Features.TurretModule` (layer 5; references: Ship, Camera, Grab, Input, NetworkModel, WeaponModule, WeaponModule.Contracts, Mirror, Zenject): the turret's seat station `ShipTurretStation` and its pure parts; it has no bindings, so no installer: its MonoBehaviours on the slot view are injected by the scene. The weapon itself is [WeaponModule](../WeaponModule/AGENTS.md); the seat and socket are [ShipModule](../ShipModule/AGENTS.md).
+`Features.TurretModule` (layer 5; references: Ship, Camera, CharacterMovable (the player control block: a cutscene keeps the gunner from aiming and firing), Grab, Input, NetworkModel, WeaponModule, WeaponModule.Contracts, Mirror, Zenject): the turret's seat station `ShipTurretStation` and its pure parts; it has no bindings, so no installer: its MonoBehaviours on the slot view are injected by the scene. The weapon itself is [WeaponModule](../WeaponModule/AGENTS.md); the seat and socket are [ShipModule](../ShipModule/AGENTS.md).
 
 ## Key places
 | What | Where |

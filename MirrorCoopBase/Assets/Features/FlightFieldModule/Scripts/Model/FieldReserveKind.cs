@@ -3,5 +3,6 @@ namespace Features.FlightFieldModule.Scripts.Model {
         None = 0,
         StationZone = 1,
         TakeoffCorridor = 2,
+        PointOfInterest = 3,
     }
 }

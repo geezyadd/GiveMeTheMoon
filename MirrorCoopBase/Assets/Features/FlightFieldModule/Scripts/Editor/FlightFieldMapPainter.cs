@@ -113,6 +113,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
                 FieldReserveKind.None => FlightFieldMapLegend.Free,
                 FieldReserveKind.StationZone => FlightFieldMapLegend.StationZone,
                 FieldReserveKind.TakeoffCorridor => FlightFieldMapLegend.TakeoffCorridor,
+                FieldReserveKind.PointOfInterest => FlightFieldMapLegend.PointOfInterest,
                 _ => throw new ArgumentOutOfRangeException(nameof(reserve), reserve, "No map color for this reserve."),
             };
 

@@ -22,6 +22,7 @@ namespace Features.FlightFieldModule.Scripts.Generation {
 
         private static FlightField CreateField(FieldGenerationContext context) =>
             new(context.Frame, context.Seed, context.Cells, context.Placements, context.Routes, context.StationACell, context.StationBCell,
-                context.CruiseStartCell, context.Profile.Id, context.Difficulty, context.Density, context.Metrics, context.Request.LoopIndex);
+                context.CruiseStartCell, context.Profile.Id, context.Difficulty, context.Density, context.Metrics, context.Request.LoopIndex,
+                context.PointsOfInterest);
     }
 }

@@ -1,0 +1,27 @@
+{
+    "name": "Features.CutsceneModule.Editor.Tests",
+    "rootNamespace": "Features.CutsceneModule.Scripts.Editor.Tests",
+    "references": [
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3",
+        "GUID:c7a1e5d2b3f44c8e9a0b1c2d3e4f5061",
+        "GUID:c7a1e5d2b3f44c8e9a0b1c2d3e4f5062",
+        "GUID:5d6793be2d204514a9702ab824c001ed",
+        "GUID:03a835aea0a645a7b43f5f0c61e8d191"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
