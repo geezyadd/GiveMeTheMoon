@@ -20,12 +20,11 @@ namespace Features.ParcelModule.Scripts.Editor.Tests {
         public void WhenTheShipArrivesAtTheDestination_AndTheParcelIsNotOnBoard_ThenItIsLost() =>
             Assert.AreEqual(ParcelSettlement.Lose, _rule.Decide(CreateEntry(ParcelState.Loose), DESTINATION, false));
 
-        [Test]
-        public void WhenTheShipArrivesAtTheDestination_AndABugStillCarriesTheParcel_ThenItIsLost() {
-            Assert.AreEqual(ParcelSettlement.Lose, _rule.Decide(CreateEntry(ParcelState.Carried), DESTINATION, true));
-            Assert.AreEqual(ParcelSettlement.Lose, _rule.Decide(CreateEntry(ParcelState.Drifting), DESTINATION, true));
-            Assert.AreEqual(ParcelSettlement.Lose, _rule.Decide(CreateEntry(ParcelState.Pulled), DESTINATION, true));
-        }
+        [TestCase(ParcelState.Carried)]
+        [TestCase(ParcelState.Drifting)]
+        [TestCase(ParcelState.Pulled)]
+        public void WhenTheShipArrivesAtTheDestination_AndTheParcelDoesNotLieLoose_ThenItIsLost(ParcelState state) =>
+            Assert.AreEqual(ParcelSettlement.Lose, _rule.Decide(CreateEntry(state), DESTINATION, true));
 
         [Test]
         public void WhenTheShipStandsAtAnEarlierStation_ThenTheParcelWaits() =>

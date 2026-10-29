@@ -27,6 +27,7 @@ namespace Features.ParcelModule.Scripts.Systems {
         private int _settledLoop = NO_STATION;
         private int _standLoop = NO_STATION;
         private bool _hasShip;
+        private bool _isWrecked;
 
         public ParcelStationSystem(
             IReadOnlyShipRunModel shipRunModel,
@@ -69,8 +70,12 @@ namespace Features.ParcelModule.Scripts.Systems {
             }
 
             _hasShip = true;
-            if (_shipRunModel.Phase == ShipRunPhase.Wreck) {
-                LoseEverything();
+            bool wasWrecked = _isWrecked;
+            _isWrecked = _shipRunModel.Phase == ShipRunPhase.Wreck;
+            if (_isWrecked) {
+                if (wasWrecked == false)
+                    LoseEverything();
+
                 return;
             }
 

@@ -1,11 +1,13 @@
 #if UNITY_INCLUDE_TESTS
 using System.Collections;
 using System.Globalization;
+using Features.BugModule.Scripts.Brain;
 using Features.DebugModule.Contracts;
 using Features.FieldAgentModule.Scripts.Client;
 using Features.ParcelModule.Data;
 using Features.ParcelModule.Data.Generated;
 using Features.ParcelModule.Scripts.Services;
+using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Debug;
 using Mirror;
 using NUnit.Framework;
@@ -18,7 +20,7 @@ namespace Tests.Coop.Host {
     // The real client process takes a parcel at the start station's delivery stand with E and puts its crate on the
     // deck: the host's server and peer have the parcel and its crate on board. In a slow cruise the host's debug window
     // sends a bug to steal it: the server names the thief, the host's peer and the client's both show the crate hanging
-    // under it.
+    // under it. The thief removed well away from the ship, the crate drifts and collides again on the client.
     [PrebuildSetup("Tests.Coop.Editor.CoopClientBuild")]
     public sealed class CoopClientParcelTest {
         private const int TEST_TIMEOUT_MS = 300000;
@@ -29,6 +31,8 @@ namespace Tests.Coop.Host {
         private const float FULL_THROTTLE = 1f;
         private const float CRATE_UNDER_THIEF_METERS = 3f;
         private const char MESSAGE_SEPARATOR = ' ';
+        private const float DRIFT_TIMEOUT_SECONDS = 5f;
+        private const float THIEF_AWAY_METERS = 20f;
 
         private CoopFlightHostHarness _host;
         private uint _parcelNetId;
@@ -55,7 +59,7 @@ namespace Tests.Coop.Host {
             yield return _host.WaitForTurnDoneCoroutine();
             SessionQueries.Resolve<IShipThrottleDebug>().DebugSetThrottle(CRUISE_THROTTLE);
             yield return BugStealsParcelCoroutine();
-            yield return ClickCoroutine(REMOVE_LABEL);
+            yield return ThiefGoneCoroutine();
             _host.Flight.FaceDestination();
             SessionQueries.Resolve<IShipThrottleDebug>().DebugSetThrottle(FULL_THROTTLE);
             yield return _host.WaitForLandingCoroutine(LOOP);
@@ -98,6 +102,37 @@ namespace Tests.Coop.Host {
             Assert.AreEqual(thief, int.Parse(parts[1], CultureInfo.InvariantCulture), "The client shows another thief than the server's.");
             Assert.Less(float.Parse(parts[2], CultureInfo.InvariantCulture), CRATE_UNDER_THIEF_METERS, "The client does not show the crate under its thief.");
             Debug.Log($"[CoopTest] both peers show parcel {_parcelNetId} under thief {thief}; client screenshot {_host.LastReport.Screenshot}");
+        }
+
+        private IEnumerator ThiefGoneCoroutine() {
+            _host.BeginStep("the thief is removed, the crate drifts");
+            // Removed right beside the ship, the thief would drop the crate where the ship flies into it at once.
+            yield return _host.WaitForCoroutine(IsThiefAway, $"the thief {THIEF_AWAY_METERS} m away from the ship");
+            string before = DescribeParcels();
+            yield return ClickCoroutine(REMOVE_LABEL);
+            float deadline = Time.time + DRIFT_TIMEOUT_SECONDS;
+            while (Parcels.Entries.Count != 1 || Parcels.Entries[0].State != ParcelState.Drifting) {
+                Assert.IsTrue(Time.time <= deadline, $"The parcel does not drift on the server {DRIFT_TIMEOUT_SECONDS} s after its thief was removed: before {before}, now {DescribeParcels()}.");
+                yield return null;
+            }
+
+            yield return _host.CommandAndWaitCoroutine(CoopFlightSteps.COMMAND_REPORT_DRIFT, CoopFlightSteps.PARCEL_DRIFTING);
+            Assert.AreEqual(bool.TrueString, _host.LastReport.Message, "The drifting crate does not collide on the client after its thief let it go.");
+        }
+
+        private bool IsThiefAway() =>
+            NetworkServer.spawned.TryGetValue(_parcelNetId, out NetworkIdentity crate)
+            && Vector3.Distance(crate.transform.position, _host.Ship.transform.position) > THIEF_AWAY_METERS;
+
+        private static string DescribeParcels() {
+            string parcels = $"{SessionQueries.Resolve<BugServerModel>().Count} bugs;";
+            foreach (ParcelEntry entry in Parcels.Entries) {
+                parcels += $" {entry.NetId}:{entry.State}";
+                if (NetworkServer.spawned.TryGetValue(entry.NetId, out NetworkIdentity crate))
+                    parcels += $" {Vector3.Distance(crate.transform.position, SessionQueries.Resolve<IShipRunBindingModel>().Ship.transform.position):0.0} m from the ship";
+            }
+
+            return parcels;
         }
 
         private bool IsShownUnderThief(int thief) =>

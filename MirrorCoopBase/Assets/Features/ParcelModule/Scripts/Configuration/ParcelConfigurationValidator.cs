@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Features.ParcelModule.Scripts.Rules;
 using Zenject;
 
@@ -29,8 +30,8 @@ namespace Features.ParcelModule.Scripts.Configuration {
         }
 
         private void CheckOfferCounts() {
-            float[] weights = _parcelConfiguration.OfferCountWeights;
-            if (weights.Length == 0 || weights.Length > ParcelOfferRule.MAX_OFFERS + 1)
+            IReadOnlyList<float> weights = _parcelConfiguration.OfferCountWeights;
+            if (weights.Count == 0 || weights.Count > ParcelOfferRule.MAX_OFFERS + 1)
                 Fail($"{nameof(ParcelConfiguration.OfferCountWeights)} must weigh 0..{ParcelOfferRule.MAX_OFFERS} offers.");
 
             float total = 0f;

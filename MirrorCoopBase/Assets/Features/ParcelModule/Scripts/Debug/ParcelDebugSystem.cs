@@ -1,6 +1,7 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
 using Features.DebugModule.Contracts;
+using Features.ParcelModule.Scripts.Configuration;
 using Features.ParcelModule.Scripts.Rules;
 using Features.ParcelModule.Scripts.Server;
 using Features.ParcelModule.Scripts.Services;
@@ -17,7 +18,6 @@ namespace Features.ParcelModule.Scripts.Debug {
         private const string GIVE_LABEL = "Give the ship a parcel";
         private const string GIVE_DESCRIPTION = "A parcel for the next station lands on the deck: bugs go for it in flight, delivered it pays at the next station.";
         private const string NO_DECK_POINT_REASON = "The deck has no stand point.";
-        private const float DROP_HEIGHT_METERS = 1f;
         private const float REWARD_ROLL = 0.5f;
 
         private readonly IDebugActionRegistry _debugActionRegistry;
@@ -26,6 +26,7 @@ namespace Features.ParcelModule.Scripts.Debug {
         private readonly IReadOnlyShipRunModel _shipRunModel;
         private readonly IParcelCrateService _parcelCrateService;
         private readonly IParcelOfferRule _parcelOfferRule;
+        private readonly ParcelConfiguration _parcelConfiguration;
 
         private IDisposable _giveRegistration;
 
@@ -35,13 +36,15 @@ namespace Features.ParcelModule.Scripts.Debug {
             IShipRunBindingModel shipRunBindingModel,
             IReadOnlyShipRunModel shipRunModel,
             IParcelCrateService parcelCrateService,
-            IParcelOfferRule parcelOfferRule) {
+            IParcelOfferRule parcelOfferRule,
+            ParcelConfiguration parcelConfiguration) {
             _debugActionRegistry = debugActionRegistry;
             _shipDebugActionConditions = shipDebugActionConditions;
             _shipRunBindingModel = shipRunBindingModel;
             _shipRunModel = shipRunModel;
             _parcelCrateService = parcelCrateService;
             _parcelOfferRule = parcelOfferRule;
+            _parcelConfiguration = parcelConfiguration;
         }
 
         public void Initialize() =>
@@ -63,7 +66,7 @@ namespace Features.ParcelModule.Scripts.Debug {
             if (ship.DeckGeometry.TryGetDeckStandPoint(out Vector3 standPoint) == false)
                 return;
 
-            Vector3 position = ship.transform.TransformPoint(standPoint + Vector3.up * DROP_HEIGHT_METERS);
+            Vector3 position = ship.transform.TransformPoint(standPoint + Vector3.up * _parcelConfiguration.DeckDropHeightMeters);
             ParcelServerRecord record = _parcelCrateService.ServerSpawn(position, ship.transform.rotation, _parcelOfferRule.CalculateReward(REWARD_ROLL), _shipRunModel.LoopIndex + 1);
             if (ship.IsFlying)
                 ship.ServerCatchDeckItem(record.Crate.Grabbable);

@@ -50,20 +50,27 @@ namespace Features.ParcelModule.Scripts.Editor.Tests {
             Assert.IsTrue(_rule.IsLost(ParcelState.Carried, NEAR, CARRY_SECONDS + MARGIN, ON_DECK));
 
         [Test]
-        public void WhenAParcelDriftsPastItsTimeOrTooFar_ThenItIsLost() {
+        public void WhenAParcelDriftsNearWithinItsTime_ThenItIsNotLost() =>
             Assert.IsFalse(_rule.IsLost(ParcelState.Drifting, NEAR, DRIFT_SECONDS - MARGIN, ON_DECK));
+
+        [Test]
+        public void WhenAParcelDriftsPastItsTime_ThenItIsLost() =>
             Assert.IsTrue(_rule.IsLost(ParcelState.Drifting, NEAR, DRIFT_SECONDS + MARGIN, ON_DECK));
+
+        [Test]
+        public void WhenAParcelDriftsTooFar_ThenItIsLost() =>
             Assert.IsTrue(_rule.IsLost(ParcelState.Drifting, LOSE_METERS + MARGIN, SHORT, ON_DECK));
-        }
 
         [Test]
         public void WhenAParcelIsOnARope_ThenItIsNeverLostByItself() =>
             Assert.IsFalse(_rule.IsLost(ParcelState.Pulled, LOSE_METERS + MARGIN, CARRY_SECONDS + DRIFT_SECONDS, -FALL_METERS - MARGIN));
 
         [Test]
-        public void WhenALooseCrateFallsFarBelowTheDeck_ThenItWentOverboard() {
+        public void WhenALooseCrateIsFarAndLongButNotFarBelowTheDeck_ThenItIsNotLost() =>
             Assert.IsFalse(_rule.IsLost(ParcelState.Loose, LOSE_METERS + MARGIN, CARRY_SECONDS + MARGIN, -FALL_METERS + MARGIN));
+
+        [Test]
+        public void WhenALooseCrateFallsFarBelowTheDeck_ThenItWentOverboard() =>
             Assert.IsTrue(_rule.IsLost(ParcelState.Loose, NEAR, SHORT, -FALL_METERS - MARGIN));
-        }
     }
 }

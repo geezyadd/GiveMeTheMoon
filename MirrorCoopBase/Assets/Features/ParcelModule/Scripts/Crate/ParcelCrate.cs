@@ -46,6 +46,15 @@ namespace Features.ParcelModule.Scripts.Crate {
         public void SetNetworkBodySynced(bool isSynced) =>
             _networkBody.enabled = isSynced;
 
+        // Every peer with a client, when the thief's look stops carrying it: a client gets back the loose item's physics its
+        // hold took (collisions, the network body); the server's own state change already gave it its physics.
+        public void ReleaseFromThiefView() {
+            if (_identity.isServer)
+                _networkBody.enabled = true;
+            else
+                _grabbable.ApplyLoosePhysics();
+        }
+
         public void SetStrikable(bool isStrikable) =>
             _strikeTrigger.enabled = isStrikable;
 

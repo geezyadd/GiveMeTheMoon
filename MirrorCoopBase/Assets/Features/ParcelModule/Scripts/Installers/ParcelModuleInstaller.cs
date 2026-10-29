@@ -1,6 +1,5 @@
 using Features.ParcelModule.Scripts.Configuration;
 using Features.ParcelModule.Scripts.Rules;
-using Features.ParcelModule.Scripts.Server;
 using Features.ParcelModule.Scripts.Services;
 using Features.ParcelModule.Scripts.Sonar;
 using Features.ParcelModule.Scripts.Systems;
@@ -24,7 +23,6 @@ namespace Features.ParcelModule.Scripts.Installers {
             Container.Bind<IParcelOfferService>().To<ParcelOfferService>().AsSingle();
             Container.Bind<IParcelStandService>().To<ParcelStandService>().AsSingle();
             Container.Bind<IParcelStandSpawnService>().To<ParcelStandSpawnService>().AsSingle();
-            Container.Bind<ParcelPullTarget>().AsSingle();
             Container.Bind<ISonarContactSource>().To<ParcelSonarContactSource>().AsSingle();
             Container.BindInterfacesTo<ParcelWeaponTargetSystem>().AsSingle();
             Container.BindInterfacesTo<ParcelStationSystem>().AsSingle();

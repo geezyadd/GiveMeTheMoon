@@ -1,3 +1,4 @@
+using System;
 using Features.FieldAgentModule.Scripts.Cargo;
 using Features.ParcelModule.Data;
 using Features.ParcelModule.Scripts.Configuration;
@@ -11,6 +12,8 @@ namespace Features.ParcelModule.Scripts.Services {
     public sealed class ParcelTheftService : IParcelTheftService {
         private const float MIN_AWAY_SQR = 0.01f;
         private const int NO_CARRIER = 0;
+        private const string NO_SHIP_ERROR = "Parcel {0} is a bugs' cargo target with no ship bound on the server.";
+        private const string NO_CRATE_ERROR = "Parcel {0} is a bugs' cargo target without its crate.";
 
         private readonly ParcelServerModel _parcelServerModel;
         private readonly IParcelEntryService _parcelEntryService;
@@ -42,10 +45,14 @@ namespace Features.ParcelModule.Scripts.Services {
             return record.Crate.Grabbable.CanBeGrabbed && _parcelAboardService.IsAboard(record.Crate.Position, ship);
         }
 
+        // Asked only of a registered cargo target: it is registered while its crate lies free on the flying ship's deck.
         public Vector3 GetShipLocalPosition(uint netId) {
             ShipBase ship = _shipRunBindingModel.Ship;
-            if (ship == null || _parcelServerModel.TryGet(netId, out ParcelServerRecord record) == false || record.Crate == null)
-                return Vector3.zero;
+            if (ship == null)
+                throw new InvalidOperationException(string.Format(NO_SHIP_ERROR, netId));
+
+            if (_parcelServerModel.TryGet(netId, out ParcelServerRecord record) == false || record.Crate == null)
+                throw new InvalidOperationException(string.Format(NO_CRATE_ERROR, netId));
 
             return ship.transform.InverseTransformPoint(record.Crate.Position);
         }

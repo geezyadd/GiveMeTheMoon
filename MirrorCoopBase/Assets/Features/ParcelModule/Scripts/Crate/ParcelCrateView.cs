@@ -55,8 +55,8 @@ namespace Features.ParcelModule.Scripts.Crate {
             _crate.SetStrikable(state == ParcelState.Drifting);
             if (state == ParcelState.Carried)
                 _crate.SetNetworkBodySynced(false);
-            else if (wasCarried && state != ParcelState.Loose)
-                _crate.SetNetworkBodySynced(true);
+            else if (wasCarried)
+                _crate.ReleaseFromThiefView();
         }
 
         private void FollowThief(int carrierAgentId) {

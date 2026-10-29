@@ -114,7 +114,9 @@ Test Runner run** (`-Filter CoopClientThrottleAndHelmTest`, ...): the fast-timin
   `atStation` step), the client stands before the open offer, turns its view onto it, presses E, picks the crate up
   through the aim and lets it go on the deck near the stern; the host's server has the parcel for the next station
   with its crate on board. In a slow cruise the host's debug window sends "A bug steals the parcel": the server names
-  the thief, the host's peer and the client both show the crate under that thief (within 3 m). About 2.5 min plus the
+  the thief, the host's peer and the client both show the crate under that thief (within 3 m); once the thief is 20 m out
+  the host removes all field agents, the crate drifts on the server and collides again on the client (its body had been
+  held kinematic without collisions under the thief's look). About 2.5 min plus the
   client build. Client screenshots: `client-parcel-taken`, `client-parcel-stolen`.
 - Shared parts: `CoopFlightHostHarness` (host, client process, reports, commands, finish; `StartAndBoardCoroutine` takes an optional step at the start station), `CoopScenarioClientBot` (the client's base:
   join, board, wait for commands, report, screenshots, finish), `CoopClientScenarios` (scenario name → bot), step and

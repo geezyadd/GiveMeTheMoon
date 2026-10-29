@@ -11,10 +11,10 @@ namespace Features.ParcelModule.Scripts.Systems {
         private readonly IParcelWeaponIds _parcelWeaponIds;
         private readonly ParcelPullTarget _parcelPullTarget;
 
-        public ParcelWeaponTargetSystem(IWeaponTargetRegistry weaponTargetRegistry, IParcelWeaponIds parcelWeaponIds, ParcelPullTarget parcelPullTarget) {
+        public ParcelWeaponTargetSystem(IWeaponTargetRegistry weaponTargetRegistry, IParcelWeaponIds parcelWeaponIds, IInstantiator instantiator) {
             _weaponTargetRegistry = weaponTargetRegistry;
             _parcelWeaponIds = parcelWeaponIds;
-            _parcelPullTarget = parcelPullTarget;
+            _parcelPullTarget = instantiator.Instantiate<ParcelPullTarget>();
         }
 
         public void Initialize() =>

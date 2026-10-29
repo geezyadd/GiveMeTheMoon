@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Features.ParcelModule.Scripts.Configuration;
 using UnityEngine;
 
@@ -12,19 +13,19 @@ namespace Features.ParcelModule.Scripts.Rules {
             _parcelConfiguration = parcelConfiguration;
 
         public int CalculateOfferCount(float roll) {
-            float[] weights = _parcelConfiguration.OfferCountWeights;
+            IReadOnlyList<float> weights = _parcelConfiguration.OfferCountWeights;
             float total = 0f;
             foreach (float weight in weights)
                 total += weight;
 
             float left = Mathf.Clamp01(roll) * total;
-            for (int count = 0; count < weights.Length; count++) {
+            for (int count = 0; count < weights.Count; count++) {
                 left -= weights[count];
                 if (left < 0f)
                     return count;
             }
 
-            return weights.Length - 1;
+            return weights.Count - 1;
         }
 
         public long CalculateReward(float roll) {

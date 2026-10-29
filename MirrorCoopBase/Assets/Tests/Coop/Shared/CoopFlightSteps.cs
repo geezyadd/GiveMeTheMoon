@@ -80,6 +80,8 @@ namespace Tests.Coop.Shared {
         public const string PARCEL_TAKEN = "parcel-taken";
         public const string COMMAND_REPORT_THEFT = "report-theft";
         public const string PARCEL_STOLEN = "parcel-stolen";
+        public const string COMMAND_REPORT_DRIFT = "report-drift";
+        public const string PARCEL_DRIFTING = "parcel-drifting";
 
         public const string CLIENT_SCREENSHOT_PREFIX = "client-";
         public const string SCREENSHOT_EXTENSION = ".png";

@@ -18,7 +18,8 @@ namespace Tests.Coop.Client {
     // The client takes a parcel (scenario parcel): at the start station, on the host's command, it stands before an
     // open offer of the delivery stand, turns its view onto it through the look input and presses E, picks the crate up
     // through the aim and lets it go on the deck near the stern; in the cruise, on the host's command, it waits until
-    // its own peer shows the parcel stolen (Carried in its synced model) with the crate hanging under the thief it shows.
+    // its own peer shows the parcel stolen (Carried in its synced model) with the crate hanging under the thief it shows;
+    // once the thief is gone it reports whether the drifting crate collides again on its peer.
     public sealed class CoopParcelClient : CoopScenarioClientBot {
         private const int LOOP = 1;
         private const string OFFER_NAME_PREFIX = "Offer";
@@ -48,6 +49,7 @@ namespace Tests.Coop.Client {
             CameraLookDriver.DebugPitch = 0f;
             yield return WaitForCruiseCoroutine(LOOP);
             yield return ReportTheftCoroutine();
+            yield return ReportDriftCoroutine();
             yield return WaitForLandingCoroutine(LOOP);
         }
 
@@ -104,6 +106,16 @@ namespace Tests.Coop.Client {
             CoopObservation observation = CoopFlightObserver.CaptureFlight(CoopFlightSteps.PARCEL_STOLEN);
             observation.Message = string.Format(CultureInfo.InvariantCulture, STOLEN_FORMAT, _parcelNetId, thief, gap);
             observation.Screenshot = screenshot;
+            Report(observation);
+        }
+
+        // The thief's look held the crate kinematic and out of the physics on this peer; drifting, it collides again.
+        private IEnumerator ReportDriftCoroutine() {
+            yield return WaitForCommandCoroutine(CoopFlightSteps.COMMAND_REPORT_DRIFT);
+            yield return WaitForCoroutine(() => Parcels.Entries.Count == 1 && Parcels.Entries[0].State == ParcelState.Drifting, "the parcel drifting after its thief");
+            yield return Settle;
+            CoopObservation observation = CoopFlightObserver.CaptureFlight(CoopFlightSteps.PARCEL_DRIFTING);
+            observation.Message = TryFindCrate(out ParcelCrate crate) && crate.GetComponent<Rigidbody>().detectCollisions ? bool.TrueString : bool.FalseString;
             Report(observation);
         }
 

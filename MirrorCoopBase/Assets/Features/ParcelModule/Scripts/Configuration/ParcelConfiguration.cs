@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Features.ParcelModule.Scripts.Crate;
 using Features.ParcelModule.Scripts.Stand;
 using Features.SonarModule.Contracts;
@@ -65,7 +66,7 @@ namespace Features.ParcelModule.Scripts.Configuration {
         public ParcelStand StandPrefab => _standPrefab;
         public Vector3 StandPadOffset => _standPadOffset;
         public SonarContactKind StolenSonarKind => _stolenSonarKind;
-        public float[] OfferCountWeights => _offerCountWeights;
+        public IReadOnlyList<float> OfferCountWeights => _offerCountWeights;
         public int MinReward => _minReward;
         public int MaxReward => _maxReward;
         public int RewardStep => _rewardStep;
