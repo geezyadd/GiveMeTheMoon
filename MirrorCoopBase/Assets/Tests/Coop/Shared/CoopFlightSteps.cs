@@ -11,6 +11,7 @@ namespace Tests.Coop.Shared {
         public const string SCENARIO_FIELD_AGENTS = "field-agents";
         public const string SCENARIO_BUGS = "bugs";
         public const string SCENARIO_PARCEL = "parcel";
+        public const string SCENARIO_OVERBOARD = "overboard";
 
         // Throttle and helm.
         public const string COMMAND_REPORT_STOPPED = "report-stopped";
@@ -82,6 +83,15 @@ namespace Tests.Coop.Shared {
         public const string PARCEL_STOLEN = "parcel-stolen";
         public const string COMMAND_REPORT_DRIFT = "report-drift";
         public const string PARCEL_DRIFTING = "parcel-drifting";
+        // Overboard.
+        public const string COMMAND_THROW_OVERBOARD = "throw-overboard";
+        public const string THROWN_OVERBOARD = "thrown-overboard";
+        public const string COMMAND_REPORT_BACK_ON_DECK = "report-back-on-deck";
+        public const string BACK_ON_DECK = "back-on-deck";
+        public const string COMMAND_THROW_OVERBOARD_AGAIN = "throw-overboard-again";
+        public const string THROWN_OVERBOARD_AGAIN = "thrown-overboard-again";
+        public const string COMMAND_REPORT_PULLED_ON_DECK = "report-pulled-on-deck";
+        public const string PULLED_ON_DECK = "pulled-on-deck";
 
         public const string CLIENT_SCREENSHOT_PREFIX = "client-";
         public const string SCREENSHOT_EXTENSION = ".png";

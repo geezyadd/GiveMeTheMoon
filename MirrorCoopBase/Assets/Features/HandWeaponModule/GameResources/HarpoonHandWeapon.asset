@@ -27,3 +27,4 @@ MonoBehaviour:
     m_Bits: 256
   _viewOffset: {x: 0.18, y: -0.17, z: 0.38}
   _handOffset: {x: 0.55, y: -0.05, z: -0.15}
+  _driftRecoilMetersPerSecond: 0
