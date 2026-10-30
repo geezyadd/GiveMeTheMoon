@@ -123,14 +123,16 @@ namespace Features.CutsceneModule.Scripts.Client {
 
         private void ResolveFocuses(IReadOnlyList<CutsceneShot> shots) {
             _focuses.Clear();
-            foreach (CutsceneShot shot in shots)
+            for (int i = 0; i < shots.Count; i++) {
+                CutsceneShot shot = shots[i];
                 _focuses.Add(shot.Kind == CutsceneShotKind.FollowTarget && TryFindTarget(shot.TargetId, out Vector3 target) ? target : shot.Focus);
+            }
         }
 
         private bool TryFindTarget(string targetId, out Vector3 position) {
             position = Vector3.zero;
-            foreach (ICutsceneTargetSource source in _cutsceneTargetSources) {
-                if (source.TryGetTargetPosition(targetId, out position))
+            for (int i = 0; i < _cutsceneTargetSources.Count; i++) {
+                if (_cutsceneTargetSources[i].TryGetTargetPosition(targetId, out position))
                     return true;
             }
 

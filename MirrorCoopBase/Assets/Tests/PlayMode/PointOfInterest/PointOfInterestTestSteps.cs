@@ -27,10 +27,8 @@ namespace Tests.PlayMode.PointOfInterest {
     // jump input), the bugs counted, the reward container rammed and the synced balance checked; screenshots in the
     // workspace's poi folder.
     public sealed class PointOfInterestTestSteps {
-        public const string LOG_PREFIX = "[PointOfInterest] ";
-
+        private const string LOG_PREFIX = "[PointOfInterest] ";
         private const string MOVE_LABEL = "Move the ship to the nearest point of interest";
-        private const string TEST_CUTSCENE_LABEL = "Play a test cutscene";
         private const string SCREENSHOT_FOLDER = "../.agent-orchestrator/screenshots/poi";
         private const float POINTS_TIMEOUT_SECONDS = 15f;
         private const float ENTRY_TIMEOUT_SECONDS = 30f;
@@ -109,15 +107,6 @@ namespace Tests.PlayMode.PointOfInterest {
             Debug.Log($"{LOG_PREFIX}the cutscene played {Time.time - startedAt:0.0} s{(isSkipped ? " (skipped)" : string.Empty)}");
             Assert.IsFalse(SessionQueries.Resolve<PlayerControlBlockModel>().IsBlocked, "Cutscene: the controls are still blocked after it.");
             Assert.AreEqual(WindowStatus.Showed, HudStatus(), "Cutscene: the HUD did not come back.");
-        }
-
-        // The debug window's test cutscene, skipped with Space at once.
-        public IEnumerator PlayAndSkipTestCutsceneCoroutine() {
-            CutsceneLocalModel cutscene = SessionQueries.Resolve<CutsceneLocalModel>();
-            yield return ClickCoroutine(DebugSections.VIEW, TEST_CUTSCENE_LABEL);
-            yield return _session.WaitForCoroutine(() => cutscene.IsPlaying, CUTSCENE_START_TIMEOUT_SECONDS, "Cutscene: the test cutscene started");
-            SessionQueries.Resolve<IInputService>().Jump.Performed?.Invoke();
-            yield return _session.WaitForCoroutine(() => !cutscene.IsPlaying, SKIP_TIMEOUT_SECONDS, "Cutscene: the test cutscene skipped with Space");
         }
 
         public void AssertBugsCameOut() {

@@ -58,12 +58,11 @@ namespace Features.PointOfInterestModule.Scripts.Debug {
             _registrations.Clear();
         }
 
-        public bool DebugMoveShipToNearest(out int pointId) {
+        public bool TryDebugMoveShipToNearest(out int pointId) {
+            pointId = 0;
             ShipBase ship = _shipRunBindingModel.Ship;
-            if (!TryFindNearest(ship.transform.position, IsStanding, out PointOfInterestEntry point)) {
-                pointId = 0;
+            if (!TryFindNearest(ship.transform.position, IsStanding, out PointOfInterestEntry point))
                 return false;
-            }
 
             pointId = point.Id;
             Vector3 towardPoint = FlatDirection(point.Position - ship.transform.position, ship.transform.forward);
@@ -89,7 +88,7 @@ namespace Features.PointOfInterestModule.Scripts.Debug {
             _shipDebugActionConditions.ReadHostInFlightReason() ?? (HasPoint(IsDormant) ? null : NO_DORMANT_POINT_REASON);
 
         private void MoveFromWindow() =>
-            DebugMoveShipToNearest(out _);
+            TryDebugMoveShipToNearest(out _);
 
         private void TriggerFromWindow() =>
             DebugTriggerNearest(out _);

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Features.BugModule.Scripts.Spawn;
 using Features.CutsceneModule.Contracts;
@@ -43,9 +44,10 @@ namespace Features.PointOfInterestModule.Scripts.Content {
             _bugNestConfiguration = bugNestConfiguration;
         }
 
-        // The ship stands in the zone right now: the server checks the zone against it.
         public void ServerEnter(in PointOfInterestEntry point) {
-            _shipPositionSource.TryGetShipPosition(out Vector3 shipPosition);
+            if (!_shipPositionSource.TryGetShipPosition(out Vector3 shipPosition))
+                throw new InvalidOperationException($"Point of interest {point.Id} started with no ship: the zone is checked against the ship.");
+
             _bugSpawnService.ServerSpawnGroupAt(_bugNestConfiguration.BugCount, BehindNest(point.Position, shipPosition), _spawnedIds);
             if (!_bugNestConfiguration.PlayEntryCutscene)
                 return;

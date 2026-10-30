@@ -46,7 +46,6 @@ DebugModule.Contracts, NetworkModel, Mirror, Zenject). Installed by `PointOfInte
 - PlayMode `Tests/PlayMode/PointOfInterest/PointOfInterestNestTest` (host, the field agent tests' fast flight; screenshots
   in the workspace's `.agent-orchestrator/screenshots/poi/`): the debug window's move, the zone entered by the cruise,
   the entry cutscene (controls blocked, HUD hidden, throttle at Stop, ends by itself), the nest's bugs out, the
-  container shot open with the pistol through the fire input, the balance up by the reward once; the debug test
-  cutscene skipped with Space.
+  container shot open with the pistol through the fire input, the balance up by the reward once.
 - Loop test: `LoopSmokePointOfInterestCheck` (see [Tests/PlayMode/LoopSmoke](../../Tests/PlayMode/LoopSmoke/AGENTS.md)).
 - Coop: `CoopClientPointOfInterestTest` (see [Tests/Coop](../../Tests/Coop/AGENTS.md)).

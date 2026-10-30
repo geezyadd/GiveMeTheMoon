@@ -20,7 +20,7 @@ namespace Tests.PlayMode.PointOfInterest {
     // outside the nearest bug nest's zone and the cruise flies it in: the nest starts once, the ship's throttle goes to
     // Stop and the entry cutscene plays (controls blocked, HUD hidden) and ends by itself, the nest's bugs are out; the
     // host shoots the reward container open with the pistol through the fire input and the synced balance grows by the
-    // reward once. Then the debug window's test cutscene is skipped with Space.
+    // reward once.
     public sealed class PointOfInterestNestTest {
         private const int TEST_TIMEOUT_MS = 300000;
         private const string PISTOL_ID = "pistol";
@@ -66,7 +66,6 @@ namespace Tests.PlayMode.PointOfInterest {
             Assert.AreEqual(PointOfInterestState.Triggered, _steps.StateOf(pointId), "Points of interest: the nest did not stay started after its cutscene.");
 
             yield return ShootContainerOpenCoroutine(pointId);
-            yield return _steps.PlayAndSkipTestCutsceneCoroutine();
 
             yield return _flight.ClickDebugActionCoroutine("Remove all field agents");
             yield return PutShipBackCoroutine(cruiseStart);

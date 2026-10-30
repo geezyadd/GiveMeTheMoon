@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Features.PointOfInterestModule.Scripts.Configuration;
@@ -46,8 +47,8 @@ namespace Features.PointOfInterestModule.Scripts.Sonar {
 
         private static bool TryParsePointId(string contactId, out int pointId) {
             pointId = 0;
-            return contactId != null && contactId.StartsWith(CONTACT_PREFIX)
-                && int.TryParse(contactId.Substring(CONTACT_PREFIX.Length), NumberStyles.Integer, CultureInfo.InvariantCulture, out pointId);
+            return contactId != null && contactId.StartsWith(CONTACT_PREFIX, StringComparison.Ordinal)
+                && int.TryParse(contactId.AsSpan(CONTACT_PREFIX.Length), NumberStyles.Integer, CultureInfo.InvariantCulture, out pointId);
         }
 
         private SonarContact CreateContact(in PointOfInterestEntry point) =>

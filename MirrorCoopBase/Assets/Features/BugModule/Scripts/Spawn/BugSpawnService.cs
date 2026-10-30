@@ -63,10 +63,7 @@ namespace Features.BugModule.Scripts.Spawn {
                 return;
 
             FieldAgentProfile profile = _fieldAgentConfiguration.Profiles[kindIndex];
-            System.Random random = new(_bugServerModel.TakeSpawnSeed());
-            for (int i = 0; i < count; i++)
-                spawnedIds.Add(_fieldAgentControl.Spawn(profile, point + CreateScatter(random), CreateFirstApproach()));
-
+            _fieldAgentGroupSpawnService.SpawnGroupAt(profile, count, point, _bugServerModel.TakeSpawnSeed(), CreateFirstApproach, spawnedIds);
             AddGroup(ship.transform, spawnedIds);
         }
 
@@ -77,11 +74,6 @@ namespace Features.BugModule.Scripts.Spawn {
             float centerDegrees = CalculateBearingDegrees(ship, spawnedIds[0]);
             for (int i = 0; i < spawnedIds.Count; i++)
                 AddBug(spawnedIds[i], centerDegrees + CalculateSpreadDegrees(i, spawnedIds.Count));
-        }
-
-        private Vector3 CreateScatter(System.Random random) {
-            Vector3 offset = new((float)random.NextDouble() * 2f - 1f, (float)random.NextDouble() * 2f - 1f, (float)random.NextDouble() * 2f - 1f);
-            return offset * _fieldAgentConfiguration.GroupScatterMeters;
         }
 
         private void AddBug(int id, float approachAngleDegrees) {

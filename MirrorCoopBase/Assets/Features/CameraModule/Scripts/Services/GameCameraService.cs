@@ -191,9 +191,6 @@ namespace Features.CameraModule.Scripts.Services {
 
         private void SetDefaultBlend(float blendSeconds) {
             EnsureBrain();
-            if (_brain == null)
-                return;
-
             _brain.DefaultBlend = blendSeconds <= CUT_BLEND_SECONDS
                 ? new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.Cut, 0f)
                 : new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, blendSeconds);

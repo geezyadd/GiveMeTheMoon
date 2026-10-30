@@ -40,5 +40,7 @@ here, not in the root file.
 - `Features.CutsceneModule.Editor.Tests` (`CutscenePlaybackTests`: a playback starts once and ends at the end of its
   shots, a skip or a new sequence ends it, the camera starts at the player's view and ends a shot at its point looking at
   its focus, a moved follow target is looked at).
-- PlayMode: `PointOfInterestNestTest` and `LoopSmokePointOfInterestCheck` play the bug nest's entry cutscene (controls
-  blocked, HUD hidden, it ends by itself, Space skips it) and the debug test cutscene (skipped with Space).
+- PlayMode `Tests/PlayMode/Cutscene/CutsceneSkipTest` (host, the field agent tests' fast flight): the debug window's
+  test cutscene plays with the controls blocked and the HUD hidden, Space skips it and gives both back.
+  `PointOfInterestNestTest`, `LoopSmokePointOfInterestCheck` and `CoopClientPointOfInterestTest` play the bug nest's
+  entry cutscene (ends by itself, Space skips it, a client starts it at the host's network time).

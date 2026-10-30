@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 
 namespace Features.PointOfInterestModule.Scripts.Content {
@@ -9,8 +10,8 @@ namespace Features.PointOfInterestModule.Scripts.Content {
 
         public bool TryGetPointId(string targetId, out int pointId) {
             pointId = 0;
-            return targetId != null && targetId.StartsWith(PREFIX)
-                && int.TryParse(targetId.Substring(PREFIX.Length), NumberStyles.Integer, CultureInfo.InvariantCulture, out pointId);
+            return targetId != null && targetId.StartsWith(PREFIX, StringComparison.Ordinal)
+                && int.TryParse(targetId.AsSpan(PREFIX.Length), NumberStyles.Integer, CultureInfo.InvariantCulture, out pointId);
         }
     }
 }
