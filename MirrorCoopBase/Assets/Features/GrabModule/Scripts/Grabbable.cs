@@ -13,10 +13,11 @@ namespace Features.GrabModule.Scripts {
 
         private Transform _holdPoint;
         private bool _isHeld;
+        private bool _isGrabBlocked;
 
         internal event Action<Grabbable> Stopped;
 
-        public bool CanBeGrabbed => _isHeld == false;
+        public bool CanBeGrabbed => _isHeld == false && _isGrabBlocked == false;
 
         public override void OnStopServer() =>
             Stopped?.Invoke(this);
@@ -40,6 +41,14 @@ namespace Features.GrabModule.Scripts {
 
             if (_networkBody != null)
                 _networkBody.enabled = true;
+        }
+
+        // Something other than a hand owns the item for a while (a bug carries the parcel off): no hand takes it and the
+        // flying deck lets go of it, as of an item in a hand. The owner moves it and gives it its physics back.
+        public void SetGrabBlocked(bool isBlocked) {
+            _isGrabBlocked = isBlocked;
+            if (isBlocked)
+                SetHovered(false);
         }
 
         internal void SetHovered(bool hovered) {

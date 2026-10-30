@@ -3,6 +3,7 @@ using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.CutsceneModule.Scripts.Configuration;
 using Features.BugModule.Scripts.Configuration;
+using Features.ParcelModule.Scripts.Configuration;
 using Features.FieldAgentModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Structures;
@@ -69,6 +70,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<CutsceneConfiguration>(Address.Configurations.CutsceneConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<PointOfInterestConfiguration>(Address.Configurations.PointOfInterestConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<BugNestConfiguration>(Address.Configurations.BugNestConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ParcelConfiguration>(Address.Configurations.ParcelConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<StagePresetCatalog>(Address.Configurations.StagePresetCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WeaponCatalog>(Address.Configurations.WeaponCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WeaponHitRuleConfiguration>(Address.Configurations.WeaponHitRuleConfiguration_Default).AsSingle();

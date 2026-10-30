@@ -48,6 +48,7 @@ namespace Features.BugModule.Scripts.Brain {
         }
 
         public void ServerStep(BugAgent bug, in FieldAgentState state, ShipBase ship, float deltaTime) {
+            bug.RememberWorldPosition(state.IsInShipSpace ? ship.transform.TransformPoint(state.Position) : state.Position);
             if (ship.IsFlying == false && IsStillAtTheShip(bug)) {
                 Leave(bug, state);
                 return;
@@ -78,6 +79,11 @@ namespace Features.BugModule.Scripts.Brain {
             }
         }
 
+        public void ServerGoForCargo(BugAgent bug, IFieldAgentCargoTarget cargo) {
+            bug.GoForCargo(cargo);
+            _fieldAgentControl.SetBehaviour(bug.Id, _bugBehaviourFactory.CreateSeekCargo(cargo));
+        }
+
         private void StepSeekCargo(BugAgent bug, in FieldAgentState state, ShipBase ship) {
             if (bug.Cargo.IsTaken) {
                 ChooseTarget(bug, state, ship);
@@ -87,7 +93,7 @@ namespace Features.BugModule.Scripts.Brain {
             if (state.IsBehaviourFinished == false)
                 return;
 
-            bug.Cargo.ServerTake();
+            bug.Cargo.ServerTake(bug.Id);
             bug.CarryCargo();
             _fieldAgentControl.SetBehaviour(bug.Id, _bugBehaviourFactory.CreateCarry(bug.Cargo, CalculateCarryDestination(state, ship)));
         }
@@ -110,8 +116,7 @@ namespace Features.BugModule.Scripts.Brain {
             Vector3 shipLocal = state.IsInShipSpace ? state.Position : ship.transform.InverseTransformPoint(state.Position);
             BugTarget target = _bugTargetRule.Choose(_fieldAgentCargoTargets.Items, CollectShipLocalSpots(ship), shipLocal);
             if (target.Kind == BugTargetKind.Cargo) {
-                bug.GoForCargo(target.Cargo);
-                _fieldAgentControl.SetBehaviour(bug.Id, _bugBehaviourFactory.CreateSeekCargo(target.Cargo));
+                ServerGoForCargo(bug, target.Cargo);
                 return;
             }
 

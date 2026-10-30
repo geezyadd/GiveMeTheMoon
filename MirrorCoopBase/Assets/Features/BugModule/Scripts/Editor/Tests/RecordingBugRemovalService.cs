@@ -22,5 +22,11 @@ namespace Features.BugModule.Scripts.Editor.Tests {
             Gone.Add(bugId);
             _bugServerModel.Remove(bugId);
         }
+
+        public void ServerForgetVanished(int bugId) =>
+            _bugServerModel.Remove(bugId);
+
+        public void ServerForgetAll() =>
+            _bugServerModel.Clear();
     }
 }

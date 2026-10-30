@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.BugModule.Scripts.Health;
 using Features.FieldAgentModule.Scripts.Agents;
 using Features.FieldAgentModule.Scripts.Server;
 using Features.ShipModule.Scripts;
@@ -8,19 +9,26 @@ using Zenject;
 
 namespace Features.BugModule.Scripts.Brain {
     // Server, every frame: every bug's mind takes its step; a bug whose field agent is gone (all agents removed) leaves
-    // the bug model, and every bug goes with the run's ship or the server.
+    // the bug model, and every bug goes with the run's ship or the server; either way a carried cargo is let go.
     public sealed class BugBrainSystem : ITickable {
         private readonly BugServerModel _bugServerModel;
         private readonly IFieldAgentControl _fieldAgentControl;
         private readonly IShipRunBindingModel _shipRunBindingModel;
         private readonly IBugBrainService _bugBrainService;
+        private readonly IBugRemovalService _bugRemovalService;
         private readonly List<int> _ids = new();
 
-        public BugBrainSystem(BugServerModel bugServerModel, IFieldAgentControl fieldAgentControl, IShipRunBindingModel shipRunBindingModel, IBugBrainService bugBrainService) {
+        public BugBrainSystem(
+            BugServerModel bugServerModel,
+            IFieldAgentControl fieldAgentControl,
+            IShipRunBindingModel shipRunBindingModel,
+            IBugBrainService bugBrainService,
+            IBugRemovalService bugRemovalService) {
             _bugServerModel = bugServerModel;
             _fieldAgentControl = fieldAgentControl;
             _shipRunBindingModel = shipRunBindingModel;
             _bugBrainService = bugBrainService;
+            _bugRemovalService = bugRemovalService;
         }
 
         public void Tick() {
@@ -29,7 +37,7 @@ namespace Features.BugModule.Scripts.Brain {
 
             ShipBase ship = _shipRunBindingModel.Ship;
             if (NetworkServer.active == false || ship == null) {
-                _bugServerModel.Clear();
+                _bugRemovalService.ServerForgetAll();
                 return;
             }
 
@@ -44,7 +52,7 @@ namespace Features.BugModule.Scripts.Brain {
                 return;
 
             if (_fieldAgentControl.TryGetAgent(id, out FieldAgentState state) == false) {
-                _bugServerModel.Remove(id);
+                _bugRemovalService.ServerForgetVanished(id);
                 return;
             }
 

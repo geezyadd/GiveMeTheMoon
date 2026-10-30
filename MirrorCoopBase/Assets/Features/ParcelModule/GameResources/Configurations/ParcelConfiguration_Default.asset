@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2dcb6348f4415943bdb8610955e23b9, type: 3}
+  m_Name: ParcelConfiguration_Default
+  m_EditorClassIdentifier: 
+  _cratePrefab: {fileID: 1575309765771395951, guid: fe87c7b4b1beb7146af0c3e6fc696e1f, type: 3}
+  _standPrefab: {fileID: 4238550343718752031, guid: b73719184fe640a48ab99591a0c6bdc9, type: 3}
+  _standPadOffset: {x: 7.5, y: 0.4, z: 3.5}
+  _stolenSonarKind: {fileID: 11400000, guid: c8f1cdf91ebe38f41a6f7b5f620cc926, type: 2}
+  _offerCountWeights:
+  - 0.15
+  - 0.45
+  - 0.4
+  _minReward: 350
+  _maxReward: 550
+  _rewardStep: 10
+  _standShipMaxMeters: 80
+  _aboardMaxHeightMeters: 6
+  _aboardBelowMeters: 1
+  _fallLoseMeters: 30
+  _carrierHangMeters: 0.7
+  _loseDistanceMeters: 250
+  _loseCarrySeconds: 75
+  _driftSpeed: 1.2
+  _loseDriftSeconds: 60
+  _flyIntoMarginMeters: 1.5
+  _flyIntoBelowMeters: 3
+  _pullArriveMeters: 2.5
+  _hitPointToleranceMeters: 1.5
+  _deckDropHeightMeters: 1
