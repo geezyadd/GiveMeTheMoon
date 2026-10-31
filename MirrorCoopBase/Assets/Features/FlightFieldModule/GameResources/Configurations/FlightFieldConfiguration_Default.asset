@@ -21,6 +21,15 @@ MonoBehaviour:
   _stationBZoneRadius: 100
   _takeoffCorridorHalfWidth: 60
   _takeoffRunOutLength: 200
+  _pointOfInterestMinCount: 1
+  _pointOfInterestMaxCount: 3
+  _pointOfInterestMinSideMeters: 250
+  _pointOfInterestMaxSideMeters: 550
+  _pointOfInterestMinCourseShare: 0.2
+  _pointOfInterestMaxCourseShare: 0.85
+  _pointOfInterestClearRadiusMeters: 70
+  _pointOfInterestMinSpacingMeters: 400
+  _pointOfInterestTriesPerPoint: 12
   _routesByLoop:
   - _fromLoop: 0
     _routeDifficulties:

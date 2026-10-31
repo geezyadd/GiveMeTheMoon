@@ -4,7 +4,7 @@ using Zenject;
 
 namespace Features.FlightFieldModule.Scripts.Configuration {
     // The one startup check of the flight field configuration: routes for loop 0 on, every loop entry with a profile of
-    // the configuration's list; release radii not below their build radii.
+    // the configuration's list; release radii not below their build radii; the point of interest ranges in order.
     public sealed class FlightFieldConfigurationValidator : IInitializable {
         private readonly FlightFieldConfiguration _flightFieldConfiguration;
 
@@ -14,6 +14,19 @@ namespace Features.FlightFieldModule.Scripts.Configuration {
         public void Initialize() {
             ValidateRoutes();
             ValidateStreaming();
+            ValidatePointsOfInterest();
+        }
+
+        private void ValidatePointsOfInterest() {
+            FlightFieldConfiguration configuration = _flightFieldConfiguration;
+            if (configuration.PointOfInterestMaxCount < configuration.PointOfInterestMinCount)
+                throw new InvalidOperationException($"{configuration.name}: the most points of interest ({configuration.PointOfInterestMaxCount}) are fewer than the fewest ({configuration.PointOfInterestMinCount}).");
+
+            if (configuration.PointOfInterestMaxSideMeters < configuration.PointOfInterestMinSideMeters)
+                throw new InvalidOperationException($"{configuration.name}: the point of interest side range ({configuration.PointOfInterestMinSideMeters}..{configuration.PointOfInterestMaxSideMeters} m) is reversed.");
+
+            if (configuration.PointOfInterestMaxCourseShare < configuration.PointOfInterestMinCourseShare)
+                throw new InvalidOperationException($"{configuration.name}: the point of interest course share range ({configuration.PointOfInterestMinCourseShare}..{configuration.PointOfInterestMaxCourseShare}) is reversed.");
         }
 
         private void ValidateStreaming() {

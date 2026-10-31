@@ -129,6 +129,7 @@ namespace Features.FlightFieldModule.Scripts.Editor {
             DrawLegendEntry(FlightFieldMapLegend.Debris, "Debris");
             DrawLegendEntry(FlightFieldMapLegend.StationZone, "Station zone");
             DrawLegendEntry(FlightFieldMapLegend.TakeoffCorridor, "Takeoff");
+            DrawLegendEntry(FlightFieldMapLegend.PointOfInterest, "Point of interest");
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.BeginHorizontal();
             DrawLegendEntry(FlightFieldMapLegend.Centerline, "Main line");

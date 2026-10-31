@@ -35,6 +35,7 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<ShipPositionSource>().AsSingle();
             Container.Bind<IShipThrottleDetentRule>().To<ShipThrottleDetentRule>().AsSingle();
             Container.Bind<IShipThrottleLaunchRule>().To<ShipThrottleLaunchRule>().AsSingle();
+            Container.Bind<IShipThrottleStop>().To<ShipThrottleStop>().AsSingle();
             InstallOverboard();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.BindInterfacesTo<Debug.DeckFeelHarness>().AsSingle();

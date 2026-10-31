@@ -94,6 +94,7 @@ the scene's sceneId still matches). Code in `ShipModule/Scripts/Throttle/`, numb
   `ShipThrottleDisplay` tilts the handle from `StopAngle` to `FullAngle`: the holder's own hand at once, others the
   synced value eased over `RemoteSmoothSeconds`. The hover tooltip (`ShipThrottleTooltipProvider` in TooltipModule)
   names the mode and percent and, at a station, how to take off or why the ship cannot.
+- **Stop for a cutscene:** `IShipThrottleStop.ServerStop` (`ShipThrottleStop`) puts the handle at Stop and lets its holder go, as a landing does (`ShipThrottleLever.ServerReset`): the cruise eases to a halt at its acceleration and the crew pushes the lever again to fly on (the bug nest's entry cutscene uses it).
 - **Debug:** the debug window's Ship → "Throttle = N" (`ShipThrottleDebugSystem` / `IShipThrottleDebug`, host) moves it
   as a push would; the loop tests launch through it.
 

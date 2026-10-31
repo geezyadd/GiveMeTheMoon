@@ -12,6 +12,7 @@ namespace Tests.Coop.Shared {
         public const string SCENARIO_BUGS = "bugs";
         public const string SCENARIO_PARCEL = "parcel";
         public const string SCENARIO_OVERBOARD = "overboard";
+        public const string SCENARIO_POINT_OF_INTEREST = "point-of-interest";
 
         // Throttle and helm.
         public const string COMMAND_REPORT_STOPPED = "report-stopped";
@@ -76,6 +77,15 @@ namespace Tests.Coop.Shared {
         public const string BUG_SHOT = "bug-shot";
         public const int BUG_COUNT = 3;
 
+        // Points of interest: the client sees the field's points, plays the bug nest's entry cutscene with the host and
+        // sees the payout.
+        public const string COMMAND_REPORT_POINTS = "report-points";
+        public const string POINTS_SEEN = "points-seen";
+        public const string COMMAND_WATCH_CUTSCENE = "watch-cutscene";
+        public const string CUTSCENE_WATCHED = "cutscene-watched";
+        public const string COMMAND_REPORT_PAYOUT = "report-payout";
+        public const string PAYOUT_SEEN = "payout-seen";
+
         // Parcel: the client takes a parcel at the stand and puts it on the deck; a bug the host sends steals it in cruise.
         public const string COMMAND_TAKE_PARCEL = "take-parcel";
         public const string PARCEL_TAKEN = "parcel-taken";
@@ -83,6 +93,7 @@ namespace Tests.Coop.Shared {
         public const string PARCEL_STOLEN = "parcel-stolen";
         public const string COMMAND_REPORT_DRIFT = "report-drift";
         public const string PARCEL_DRIFTING = "parcel-drifting";
+
         // Overboard.
         public const string COMMAND_THROW_OVERBOARD = "throw-overboard";
         public const string THROWN_OVERBOARD = "thrown-overboard";

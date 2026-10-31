@@ -15,8 +15,18 @@ MonoBehaviour:
   m_GroupName: Configurations
   m_GUID: ab9a7d689b0bacb49943f2e9296cf1b7
   m_SerializeEntries:
+  - m_GUID: 0cdc2c989e41e98489e34f7e72ecd7c5
+    m_Address: PointOfInterestConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1031f99418004324d91778747116c3c4
     m_Address: SonarConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1261e0ce84273c24f9da6d97e84a02f2
+    m_Address: BugNestConfiguration_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -67,6 +77,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 66a552acdb76dac4b866b6e4f06b1d97
     m_Address: WeaponHitRuleConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6937689ddc12f7444acd7b1cfdd74d93
+    m_Address: CutsceneConfiguration_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

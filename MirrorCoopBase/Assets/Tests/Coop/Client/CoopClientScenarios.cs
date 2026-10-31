@@ -16,7 +16,8 @@ namespace Tests.Coop.Client {
             { CoopFlightSteps.SCENARIO_FIELD_AGENTS, typeof(CoopFieldAgentsClient) },
             { CoopFlightSteps.SCENARIO_BUGS, typeof(CoopBugsClient) },
             { CoopFlightSteps.SCENARIO_PARCEL, typeof(CoopParcelClient) },
-            { CoopFlightSteps.SCENARIO_OVERBOARD, typeof(CoopOverboardClient) }
+            { CoopFlightSteps.SCENARIO_OVERBOARD, typeof(CoopOverboardClient) },
+            { CoopFlightSteps.SCENARIO_POINT_OF_INTEREST, typeof(CoopPointOfInterestClient) }
         };
 
         public static bool TryStart(GameObject clientObject, CoopTestArguments arguments) {

@@ -1,6 +1,7 @@
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
+using Features.CutsceneModule.Scripts.Configuration;
 using Features.BugModule.Scripts.Configuration;
 using Features.ParcelModule.Scripts.Configuration;
 using Features.FieldAgentModule.Scripts.Configuration;
@@ -10,6 +11,7 @@ using Features.GrabModule.Scripts;
 using Features.LobbyModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
 using Features.PlayerProfileModule.Scripts;
+using Features.PointOfInterestModule.Scripts.Configuration;
 using Features.ShipDamageModule.Scripts.Damage;
 using Features.ShipImpactModule.Scripts;
 using Features.ShipModule.Scripts;
@@ -65,6 +67,9 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<FieldOreConfiguration>(Address.Configurations.FieldOreConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FieldAgentConfiguration>(Address.Configurations.FieldAgentConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<BugConfiguration>(Address.Configurations.BugConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<CutsceneConfiguration>(Address.Configurations.CutsceneConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<PointOfInterestConfiguration>(Address.Configurations.PointOfInterestConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<BugNestConfiguration>(Address.Configurations.BugNestConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ParcelConfiguration>(Address.Configurations.ParcelConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<StagePresetCatalog>(Address.Configurations.StagePresetCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WeaponCatalog>(Address.Configurations.WeaponCatalog_Default).AsSingle();

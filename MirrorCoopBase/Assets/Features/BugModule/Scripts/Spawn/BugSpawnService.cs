@@ -52,14 +52,28 @@ namespace Features.BugModule.Scripts.Spawn {
 
             FieldAgentProfile profile = _fieldAgentConfiguration.Profiles[kindIndex];
             FieldAgentSpawnCover cover = _fieldAgentGroupSpawnService.SpawnHiddenGroup(profile, count, ship.transform.position, _bugServerModel.TakeSpawnSeed(), CreateFirstApproach, spawnedIds);
-            if (spawnedIds.Count == 0)
-                return cover;
+            AddGroup(ship.transform, spawnedIds);
+            return cover;
+        }
 
-            float centerDegrees = CalculateBearingDegrees(ship.transform, spawnedIds[0]);
+        public void ServerSpawnGroupAt(int count, Vector3 point, List<int> spawnedIds) {
+            spawnedIds.Clear();
+            ShipBase ship = _shipRunBindingModel.Ship;
+            if (ship == null || count <= 0 || _bugKindService.TryGetKindIndex(out byte kindIndex) == false)
+                return;
+
+            FieldAgentProfile profile = _fieldAgentConfiguration.Profiles[kindIndex];
+            _fieldAgentGroupSpawnService.SpawnGroupAt(profile, count, point, _bugServerModel.TakeSpawnSeed(), CreateFirstApproach, spawnedIds);
+            AddGroup(ship.transform, spawnedIds);
+        }
+
+        private void AddGroup(Transform ship, List<int> spawnedIds) {
+            if (spawnedIds.Count == 0)
+                return;
+
+            float centerDegrees = CalculateBearingDegrees(ship, spawnedIds[0]);
             for (int i = 0; i < spawnedIds.Count; i++)
                 AddBug(spawnedIds[i], centerDegrees + CalculateSpreadDegrees(i, spawnedIds.Count));
-
-            return cover;
         }
 
         private void AddBug(int id, float approachAngleDegrees) {
