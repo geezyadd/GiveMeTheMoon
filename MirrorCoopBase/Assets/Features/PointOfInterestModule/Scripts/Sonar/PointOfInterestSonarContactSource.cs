@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Globalization;
 using Features.PointOfInterestModule.Scripts.Configuration;
 using Features.PointOfInterestModule.Scripts.Network;
 using Features.SonarModule.Contracts;
@@ -45,14 +43,11 @@ namespace Features.PointOfInterestModule.Scripts.Sonar {
             return true;
         }
 
-        private static bool TryParsePointId(string contactId, out int pointId) {
-            pointId = 0;
-            return contactId != null && contactId.StartsWith(CONTACT_PREFIX, StringComparison.Ordinal)
-                && int.TryParse(contactId.AsSpan(CONTACT_PREFIX.Length), NumberStyles.Integer, CultureInfo.InvariantCulture, out pointId);
-        }
+        private static bool TryParsePointId(string contactId, out int pointId) =>
+            PrefixedPointId.TryParse(contactId, CONTACT_PREFIX, out pointId);
 
         private SonarContact CreateContact(in PointOfInterestEntry point) =>
-            new(CONTACT_PREFIX + point.Id.ToString(CultureInfo.InvariantCulture), _pointOfInterestConfiguration.SonarKind, point.Position,
+            new(PrefixedPointId.Create(CONTACT_PREFIX, point.Id), _pointOfInterestConfiguration.SonarKind, point.Position,
                 _pointOfInterestContentCatalog.GetRequired(point.ContentId).ContainerRadiusMeters);
     }
 }

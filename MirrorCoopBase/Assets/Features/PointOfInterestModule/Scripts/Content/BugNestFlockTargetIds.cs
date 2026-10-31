@@ -1,17 +1,11 @@
-using System;
-using System.Globalization;
-
 namespace Features.PointOfInterestModule.Scripts.Content {
     public sealed class BugNestFlockTargetIds : IBugNestFlockTargetIds {
         private const string PREFIX = "nest-flock:";
 
         public string GetTargetId(int pointId) =>
-            PREFIX + pointId.ToString(CultureInfo.InvariantCulture);
+            PrefixedPointId.Create(PREFIX, pointId);
 
-        public bool TryGetPointId(string targetId, out int pointId) {
-            pointId = 0;
-            return targetId != null && targetId.StartsWith(PREFIX, StringComparison.Ordinal)
-                && int.TryParse(targetId.AsSpan(PREFIX.Length), NumberStyles.Integer, CultureInfo.InvariantCulture, out pointId);
-        }
+        public bool TryGetPointId(string targetId, out int pointId) =>
+            PrefixedPointId.TryParse(targetId, PREFIX, out pointId);
     }
 }
