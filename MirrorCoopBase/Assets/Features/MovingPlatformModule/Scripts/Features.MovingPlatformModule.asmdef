@@ -1,0 +1,17 @@
+{
+    "name": "Features.MovingPlatformModule",
+    "rootNamespace": "Features.MovingPlatformModule",
+    "references": [
+        "GUID:30817c1a0e6d646d99c048fc403f5979",
+        "GUID:1f74e8c7b4c74b6ab22be0bd160a9a17"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
