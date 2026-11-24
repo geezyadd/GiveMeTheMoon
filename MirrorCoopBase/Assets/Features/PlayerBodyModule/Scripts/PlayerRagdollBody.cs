@@ -26,8 +26,9 @@ namespace Features.PlayerBodyModule {
         private const string ForwardParameter = "Forward";
         private const float AnimatorDamping = 0.125f;
         private const float IdleCutoff = 0.125f;
-        // The capsule found farther than this from where it was put last step was moved by someone else: a teleport.
-        private const float TeleportDistance = 1f;
+        // While the ragdoll leads, only it moves the capsule, and the capsule ends each step exactly where it was put.
+        // Found farther than this from there, someone else moved it (a respawn, a map change, a world shift).
+        private const float TeleportDistance = 0.01f;
 
         [SerializeField] private CharacterMovableBase _movable;
         [SerializeField] private Rigidbody _capsule;

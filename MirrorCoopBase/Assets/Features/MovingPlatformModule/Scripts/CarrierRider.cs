@@ -43,6 +43,12 @@ namespace Features.MovingPlatformModule {
         public void SetCopyCarrier(ICarrier carrier) =>
             _copyCarrier = carrier;
 
+        public void DropCarrier() {
+            _carrier = null;
+            _copyCarrier = null;
+            _addedCarry = Vector3.zero;
+        }
+
         [Inject]
         private void Construct(CameraCarryTurnModel cameraCarryTurnModel) =>
             _cameraCarryTurnModel = cameraCarryTurnModel;

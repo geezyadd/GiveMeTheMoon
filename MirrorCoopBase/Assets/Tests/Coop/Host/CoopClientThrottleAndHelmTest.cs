@@ -172,7 +172,7 @@ namespace Tests.Coop.Host {
             _host.BeginStep("client stands up from the helm");
             yield return _host.CommandAndWaitCoroutine(CoopFlightSteps.COMMAND_STAND_UP, CoopFlightSteps.STOOD_UP);
             Assert.IsFalse(_host.LastReport.IsSeated, "The client still sees itself seated after its jump.");
-            Assert.IsTrue(_host.LastReport.IsRiding, "The client does not ride the ship after standing up.");
+            Assert.IsTrue(_host.LastReport.IsAboard, "The client is not aboard the ship after standing up.");
             Assert.IsFalse(_host.ClientRider().IsSeated, "The client's rider is still seated on the server.");
             Assert.IsFalse(CoopHelm.FindSocket(Ship).HasOccupant, "The helm is still taken after the client stood up.");
             Assert.IsFalse(CoopHelm.FindStation(Ship).HasPilot, "The host's helm station still has a pilot after the client stood up.");

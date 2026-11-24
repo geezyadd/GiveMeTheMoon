@@ -36,6 +36,13 @@ namespace Features.ActiveRagdollModule {
         public void SetCopyCarrier(ICarrier carrier) =>
             _copyCarrier = carrier;
 
+        // The body was put somewhere else: the carrier is forgotten without giving its speed back.
+        public void DropCarrier() {
+            Carrier = null;
+            _copyCarrier = null;
+            Array.Clear(_addedCarry, 0, _addedCarry.Length);
+        }
+
         private void Awake() {
             _body = GetComponent<RagdollBody>();
             _ground = GetComponent<RagdollGroundSensor>();

@@ -39,49 +39,15 @@ namespace Game.Connection
             _spawn.Clear();
         }
 
+        // Every player goes to the map's spawn on every peer: each owner moves its own body, the copies follow it.
         public void TeleportEverybody()
         {
             Pose pose = GetSpawnPose();
             foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
             {
-                if (conn.identity == null)
-                    continue;
-
-                NetworkServer.SendToReady(new TeleportMessage
-                {
-                    netId = conn.identity.netId,
-                    position = pose.position,
-                    rotation = pose.rotation
-                });
+                if (conn.identity != null && conn.identity.TryGetComponent(out IPlayerBodyPlacement placement))
+                    placement.ServerPlace(pose);
             }
-        }
-
-        public static void OnTeleportMessage(TeleportMessage msg)
-        {
-            if (!NetworkClient.spawned.TryGetValue(msg.netId, out NetworkIdentity identity) || identity == null)
-                return;
-
-            ApplyTeleport(identity.transform, msg.position, msg.rotation);
-        }
-
-        private static void ApplyTeleport(Transform target, Vector3 position, Quaternion rotation)
-        {
-            CharacterController controller = target.GetComponent<CharacterController>();
-            if (controller != null)
-                controller.enabled = false;
-
-            Rigidbody rigidbody = target.GetComponent<Rigidbody>();
-            if (rigidbody != null)
-            {
-                rigidbody.position = position;
-                rigidbody.rotation = rotation;
-                rigidbody.StopIfDynamic();
-            }
-
-            target.SetPositionAndRotation(position, rotation);
-
-            if (controller != null)
-                controller.enabled = true;
         }
     }
 }

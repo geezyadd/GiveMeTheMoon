@@ -127,7 +127,7 @@ types.
 ## Module map
 | Module (details) | What it is |
 |---|---|
-| [ShipModule](MirrorCoopBase/Assets/Features/ShipModule/AGENTS.md) | the ship core: hull, flight, riders, slots and modules, seats and the helm, stats, world shift, the run, deck debugging |
+| [ShipModule](MirrorCoopBase/Assets/Features/ShipModule/AGENTS.md) | the ship core: hull, flight, the ship as a carrier of the bodies on its deck, seats (the only binding) and the helm, slots and modules, stats, world shift, the run, deck debugging |
 | [ShipImpactModule](MirrorCoopBase/Assets/Features/ShipImpactModule/AGENTS.md) | the hull's rock and balloon collisions, knockback feedback, impact shake and effects |
 | [ShipDamageModule](MirrorCoopBase/Assets/Features/ShipDamageModule/AGENTS.md) | module breakdowns, hull breaches, the leak, repair with the wrench and the hammer |
 | [TurretModule](MirrorCoopBase/Assets/Features/TurretModule/AGENTS.md) | the turret's seat station (`ShipTurretStation`) and the turret gun tiers |
@@ -136,10 +136,10 @@ types.
 | [HandWeaponModule](MirrorCoopBase/Assets/Features/HandWeaponModule/AGENTS.md) | weapons carried in the hand: the pistol |
 | [SonarModule](MirrorCoopBase/Assets/Features/SonarModule/AGENTS.md) | the navigator's sonar console on the radar |
 | [SpaceHazeModule](MirrorCoopBase/Assets/Features/SpaceHazeModule/AGENTS.md) | the dark space haze: how far the crew sees by eye |
-| [PlayerReplicaModule](MirrorCoopBase/Assets/Features/PlayerReplicaModule/AGENTS.md) | player body sync by state and input: packet stream, soft correction of the copies (being built) |
+| [PlayerReplicaModule](MirrorCoopBase/Assets/Features/PlayerReplicaModule/AGENTS.md) | player body sync by state and input, the only one: packet stream, simulated copies with soft correction, carriers, the server's moves of a body |
 | [ActiveRagdollModule](MirrorCoopBase/Assets/Features/ActiveRagdollModule/AGENTS.md) | physical bodies that follow an animation, for any creature (being built) |
 | [PlayerBodyModule](MirrorCoopBase/Assets/Features/PlayerBodyModule/AGENTS.md) | the body the player walks with: the player's own body is the active ragdoll pushed by the movement (being built) |
-| [MovingPlatformModule](MirrorCoopBase/Assets/Features/MovingPlatformModule/AGENTS.md) | moving platforms: the lobby's test platform flying around a circle, its start / stop button |
+| [MovingPlatformModule](MirrorCoopBase/Assets/Features/MovingPlatformModule/AGENTS.md) | riding moving carriers (`CarrierRider`, used by the ship's deck too) and the lobby's test platform flying around a circle, its start / stop button |
 | [DebugModule](MirrorCoopBase/Assets/Features/DebugModule/AGENTS.md) | the in-game debug window and its action registry |
 | [StagePresetModule](MirrorCoopBase/Assets/Features/StagePresetModule/AGENTS.md) | playtest stage presets |
 | [ShopModule](MirrorCoopBase/Assets/Features/ShopModule/AGENTS.md) | the station shop, the crew wallet, buying back a dead crewmate |
@@ -157,7 +157,7 @@ types.
 | [Two-player test](MirrorCoopBase/Assets/Tests/Coop/AGENTS.md) | `CoopTwoProcessTest` with a real second client process |
 | `Features.AddressablesConstantGeneratorModule` | `Address_g.cs`; editor tools and tests load a configuration at its address with `AddressableConfigurationLoader` in `Features.AddressablesConstantGeneratorModule.EditorLoading` |
 | `Features.EffectPoolModule` | `SelfDisablingEffectPool<TEffect>` over `ISelfDisablingEffect`, the pool of effects that disable themselves when over; the rock break and the rock impact effects use it |
-| `Features.CharacterMovableModule` | player movement; it pushes an `IMovableBody` (`CapsuleMovableBody`: the player's rigidbody, floating controller and carrier rider by default, another body through `CharacterMovableBase.SetDrivenBody`; `DrivenBody`, `ActiveControls` and `ShownLookYaw` are what the network copy and the body's owner read; `IsHeld`, set by a ship ride or seat, stops the walk and makes a non-capsule body follow the capsule); the body simulation takes its controls through `IMovementControls` (`KeyboardMovementControls`: keyboard and camera for the player's own body; a state packet source for remote copies comes with PlayerReplicaModule); tests: `Features.CharacterMovableModule.Editor.Tests` |
+| `Features.CharacterMovableModule` | player movement; it pushes an `IMovableBody` (`CapsuleMovableBody`: the player's rigidbody, floating controller and carrier rider by default, another body through `CharacterMovableBase.SetDrivenBody`; `DrivenBody`, `ActiveControls` and `ShownLookYaw` are what the network copy and the body's owner read; `IsHeld`, set by a ship seat, stops the walk and makes a non-capsule body follow the capsule); the body simulation takes its controls through `IMovementControls` (`KeyboardMovementControls`: keyboard and camera for the player's own body; `PacketMovementControls` in PlayerReplicaModule for remote copies); tests: `Features.CharacterMovableModule.Editor.Tests` |
 
 Other modules (Menu, Lobby, Mvp, Input, Stats, GameFlow, Bootstrapers, ...) have no file yet; add one when there is
 something to describe.

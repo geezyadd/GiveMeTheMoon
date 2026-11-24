@@ -143,7 +143,7 @@ namespace Tests.PlayMode.ShipRide {
         private void AssertRiding(string flight, string moment) {
             Vector3 player = LocalPlayer.transform.position;
             Assert.IsFalse(LocalPlayer.GetComponent<IDamageable>().IsDead, $"{flight}: the player died {moment}.");
-            Assert.IsTrue(LocalPlayer.GetComponent<ShipRider>().IsRiding, $"{flight}: the player is not riding {moment}: {_spots.Describe(player)}.");
+            Assert.IsTrue(SessionQueries.IsAboard(LocalPlayer), $"{flight}: the player is not aboard {moment}: {_spots.Describe(player)}.");
             Assert.IsTrue(_spots.IsOnDeck(player), $"{flight}: the player is off the deck {moment}: {_spots.Describe(player)}.");
         }
 

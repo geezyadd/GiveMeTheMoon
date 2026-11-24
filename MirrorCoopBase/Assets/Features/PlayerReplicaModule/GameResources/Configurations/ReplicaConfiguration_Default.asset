@@ -16,6 +16,7 @@ MonoBehaviour:
   _restingPacketRate: 5
   _restingSpeed: 0.05
   _copyDelaySeconds: 0.1
+  _placementWaitSeconds: 1
   _visualCatchUpThreshold: 0.05
   _visualCatchUpMaxDistance: 10
   _visualCatchUpSeconds: 0.1

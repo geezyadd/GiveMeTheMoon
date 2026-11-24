@@ -4,9 +4,10 @@ Read the [root AGENTS.md](../../../../AGENTS.md) first (game, rules, module map)
 here, not in the root file.
 
 ## Status
-A test platform for walking and jumping on something that moves, before the ship's deck works that way. The player's
-own body rides it (`CarrierRider`), and so do other players' copies: their packets are in the platform's axes and a
-copy rides its own copy of the platform (see [PlayerReplicaModule](../PlayerReplicaModule/AGENTS.md)).
+Riding carriers, and a test platform for walking and jumping on something that moves. The ship's flying deck is a
+carrier too (`ShipCarrier`, see "Riding the ship" in [ShipModule](../ShipModule/AGENTS.md)). The player's own body
+rides a carrier (`CarrierRider`), and so do other players' copies: their packets are in the carrier's axes and a copy
+rides its own copy of the carrier (see [PlayerReplicaModule](../PlayerReplicaModule/AGENTS.md)).
 
 ## Assembly
 `Features.MovingPlatformModule` (layer 4; references Mirror, Zenject, `GrabModule`, `CameraModule`,
@@ -20,7 +21,8 @@ copy rides its own copy of the platform (see [PlayerReplicaModule](../PlayerRepl
   and the relative velocity is turned with the carrier; at the next step's start the addition is taken off, so the
   spring and the movement see the velocity relative to the carrier. Boarding takes the carrier's point velocity off,
   leaving gives it back. The local player's camera gets the turn of the carrier as drawn each frame
-  (`ICarrier.DrawnRotation`) through `CameraCarryTurnModel`. A step longer than 5 m is not carried.
+  (`ICarrier.DrawnRotation`) through `CameraCarryTurnModel`. A step longer than 5 m is not carried. A body the server
+  moves elsewhere (`IPlayerBodyPlacement.ServerPlace`) drops its carrier without its speed (`DropCarrier`).
 - `CirclingPlatform` (`ICarrier`, runs before the riders): flies around a circle and faces along its way; its carrier
   id is its `netId`, `Holds` is the box over it (6 m up, 0.3 m past the edges) in its pose of the last step, where the bodies on it
   stand (in this step's pose a fast platform's trailing edge dropped a jumping body). Synced: running or not, and the angle and server

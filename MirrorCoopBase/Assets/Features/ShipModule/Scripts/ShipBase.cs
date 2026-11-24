@@ -1,8 +1,10 @@
 using Features.CharacterMovableModule.Scripts.Models;
+using Features.FloatingControllerModule;
 using Features.GameCoreModule.Contracts;
 using Features.GrabModule.Scripts;
 using Features.ShipModule.Scripts.Generated;
 using Features.ShipModule.Scripts.Hull;
+using Features.ShipModule.Scripts.Riding;
 using Features.ShipModule.Scripts.Throttle;
 using Game.Connection;
 using Mirror;
@@ -34,7 +36,7 @@ namespace Features.ShipModule.Scripts {
         private ShipModules _modules;
         private ShipHullStat _hull;
         private ShipRiders _riders;
-        private ShipDeckRideRule _rideRule;
+        private ShipCarrier _carrier;
         private ShipSeats _seats;
         private ShipSteering _steering;
         private ShipFlightControl _flightControl;
@@ -54,8 +56,6 @@ namespace Features.ShipModule.Scripts {
         public Transform Destination => _destination;
         public bool IsFlying => _flying;
         internal BoxCollider RideVolume => _rideVolume;
-        internal bool ConfinesRidersToDeck => _flightSettings.ConfineRidersToDeck;
-        internal float ReboardDelaySeconds => _flightSettings.ReboardDelaySeconds;
         internal NetworkIdentity NetIdentity => _poseSync.netIdentity;
         public ShipSocket[] Sockets => _sockets;
         internal ShipSocketsSync SocketStates => _socketStates;
@@ -63,7 +63,8 @@ namespace Features.ShipModule.Scripts {
         internal IShipModules Modules => _modules;
         internal IShipHullStat Hull => _hull;
         public IShipRiders Riders => _riders;
-        internal IShipDeckRideRule RideRule => _rideRule;
+        // The ship as the carrier of the bodies on its deck.
+        internal ICarrier Carrier => _carrier;
         internal IShipSeats Seats => _seats;
         internal IShipFlightControl FlightControl => _flightControl;
         internal IShipDeckCargo Cargo => _cargo;
@@ -73,7 +74,6 @@ namespace Features.ShipModule.Scripts {
         public IShipKnockback Knockback => _flightControl;
         internal ShipThrottleLever Throttle => _throttle;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        internal IShipRidersDebug RidersDebug => _riders;
         // Public for the loop tests: their pilot faces the ship to the destination, as a crew does by radar.
         public IShipFlightControlDebug FlightControlDebug => _flightControl;
 #endif
@@ -125,8 +125,8 @@ namespace Features.ShipModule.Scripts {
             ShipStatSheet statSheet = new ShipStatSheet(_stats);
             _modules = new ShipModules(_sockets, statSheet, _statsSync, _conditionSync, ReadStatsConfiguration);
             _hull = new ShipHullStat(statSheet, _modules);
-            _rideRule = new ShipDeckRideRule(_deckGeometry, ReadFlightSettings);
-            _riders = new ShipRiders(this, _rideRule, ReadCharacterMovables, ReadRiderKeys);
+            _carrier = GetComponent<ShipCarrier>();
+            _riders = new ShipRiders(this, ReadCharacterMovables, ReadRiderKeys);
             _seats = new ShipSeats(this, _sockets, _riders);
             _steering = new ShipSteering(_sockets);
             _flightControl = new ShipFlightControl(ReadFlightSettings, _modules, _steering, ReadThrottle);
@@ -187,7 +187,6 @@ namespace Features.ShipModule.Scripts {
             if (_poseSync != null)
                 _poseSync.ServerSetFlying(true);
 
-            _riders.BoardRidersOverDeck();
             _cargo.ServerBoardDeckItems();
         }
 
@@ -275,8 +274,6 @@ namespace Features.ShipModule.Scripts {
             // A client's ship is moved on physics steps in flight (ClientFlightStep) and drawn between them.
             if (_body != null)
                 _body.interpolation = flying ? RigidbodyInterpolation.Interpolate : RigidbodyInterpolation.None;
-            if (flying)
-                _riders.BoardRidersOverDeck();
         }
 
         internal void ServerApplyWorldShift(Vector3 delta) {
@@ -379,8 +376,6 @@ namespace Features.ShipModule.Scripts {
 
             _cargo.Follow(NetworkServer.active);
             _riders.FollowRiders(Time.deltaTime);
-            if (_flying)
-                _riders.CatchDeckRiders();
         }
 
         internal Vector3 ToShipLocal(Vector3 worldPosition) =>

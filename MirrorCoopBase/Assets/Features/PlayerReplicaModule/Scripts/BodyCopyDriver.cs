@@ -1,86 +1,84 @@
 using Features.PlayerReplicaModule.Configuration;
 using Features.PlayerReplicaModule.Correction;
-using Features.PlayerReplicaModule.Models;
 using Features.PlayerReplicaModule.Packets;
 using Features.PlayerReplicaModule.Receiving;
 using Features.PlayerReplicaModule.Visual;
 using Features.CharacterMovableModule.Scripts;
 using Features.CharacterMovableModule.Scripts.Body;
 using Features.FloatingControllerModule;
-using Mirror;
 using UnityEngine;
 using Zenject;
 
 namespace Features.PlayerReplicaModule {
-    // On a peer that does not own this player, while the sync mode says so: turns the player into a simulated copy.
-    // The old network body steps aside, the body becomes dynamic, and the float spring and the movement run on it from
-    // the owner's controls. The copy lives a little in the past (the copy delay): each packet becomes current when the
-    // show time reaches its stamp, so the controls and the position the copy is pulled to belong to the same moment
-    // and a copy stops where its owner stopped. After each physics step it is pulled toward the current packet: a share
-    // of the position error (gentle, with a dead zone, while the owner presses no walk key), the velocity reconciled
-    // once per packet, a snap past the snap distance. The target is moved ahead along the packet's velocity only while
-    // the owner walks. The look follows the current packet too. A jump of the body is hidden by ReplicaVisualLag. While a
-    // ride or a seat holds the body (kinematic), the copy leaves it alone.
+    // On a peer that does not own this player: turns the player into a simulated copy. Until the first packet the body
+    // is held still (kinematic) where it spawned; then it becomes dynamic, and the float spring and the movement run on
+    // it from the owner's controls. The copy lives a little in the past (the copy delay): each packet becomes current
+    // when the show time reaches its stamp, so the controls and the position the copy is pulled to belong to the same
+    // moment and a copy stops where its owner stopped. After each physics step it is pulled toward the current packet: a
+    // share of the position error (gentle, with a dead zone, while the owner presses no walk key), the velocity
+    // reconciled once per packet, a snap past the snap distance. The target is moved ahead along the packet's velocity
+    // only while the owner walks. The look follows the current packet too. A jump of the body is hidden by
+    // ReplicaVisualLag. While a seat holds the body (kinematic, no collisions), the copy leaves it alone.
+    // When the server moves the body (BodyStateChannel.OnPlaced), the copy is held at the new place until the owner's
+    // first packet sent after the move (PlacementFence) and starts over from it.
     // A packet sent on a carrier (a moving platform) is read in this peer's copy of that carrier (CopyCarrierFrame): the
     // copy rides it (ICarrierRider), its target is the owner's spot on it, and the walk and look follow its heading.
     // Runs after the float probe and before the movement (execution order): a packet's controls and the reconciled
     // velocity are in place before the movement computes this step's drive, so a stop reaches the copy on the very
     // step it is due. All of it happens before the physics step moves the body.
     // The copy is read and corrected through the body the movement drives (the capsule, or the ragdoll once it wakes
-    // for the copy), and rides through that body's rider; taking over from the old network body is done on the capsule.
+    // for the copy), and rides through that body's rider; holding and taking over are done on the capsule.
     [DefaultExecutionOrder(-50)]
     public sealed class BodyCopyDriver : MonoBehaviour {
         [SerializeField] private BodyStateChannel _channel;
         [SerializeField] private CharacterMovableBase _movable;
         [SerializeField] private FloatingController _floatingController;
-        [SerializeField] private NetworkRigidbodyUnreliable _networkBody;
         [SerializeField] private ReplicaVisualLag _visualLag;
 
         private readonly PacketMovementControls _input = new();
         private readonly PacketDelayBuffer _delayBuffer = new();
         private readonly GroundMismatchTimer _groundTimer = new();
         private readonly CopyCarrierFrame _carrierFrame = new();
+        private readonly PlacementFence _placementFence = new();
 
         private ICarrierRider _copyRider;
         private ReplicaConfiguration _configuration;
-        private ReplicaModeModel _modeModel;
         private bool _isDriving;
         private bool _isSimulating;
+        private bool _holdsBody;
         private bool _hasReconciled;
         private ushort _reconciledSequence;
 
         [Inject]
-        private void Construct(ReplicaConfiguration configuration, ReplicaModeModel modeModel) {
+        private void Construct(ReplicaConfiguration configuration) =>
             _configuration = configuration;
-            _modeModel = modeModel;
-        }
 
         // Whether this peer simulates the body as a copy right now (the body is dynamic and driven by packets).
         public bool IsSimulating => _isSimulating;
 
-        private void OnEnable() =>
+        private void OnEnable() {
             _channel.OnPacketAccepted += OnPacketAccepted;
+            _channel.OnPlaced += OnPlaced;
+        }
 
-        private void OnDisable() =>
+        private void OnDisable() {
             _channel.OnPacketAccepted -= OnPacketAccepted;
+            _channel.OnPlaced -= OnPlaced;
+        }
 
         private void FixedUpdate() {
-            if (_channel.isOwned || _configuration == null || _modeModel == null)
+            if (_channel.isOwned || _configuration == null)
                 return;
 
             Rigidbody capsule = _movable.Body;
-            if (_modeModel.SimulatesCopies == false || _channel.HasLatest == false) {
-                if (_isDriving && _movable.DrivenBody.IsKinematic == false)
-                    Release();
-                return;
+            if (_isDriving == false) {
+                if (CanTakeOver(capsule) == false) {
+                    HoldStill(capsule);
+                    return;
+                }
+
+                TakeOver(capsule);
             }
-
-            if (_isDriving == false && TryTakeOver(capsule) == false)
-                return;
-
-            // A ride that ended gives the old network body back; the copy keeps it silent.
-            if (_networkBody != null && _networkBody.enabled)
-                _networkBody.enabled = false;
 
             double showTime = BodyStateChannel.ReadServerNow() - _configuration.CopyDelaySeconds;
             if (_delayBuffer.Advance(showTime))
@@ -120,17 +118,30 @@ namespace Features.PlayerReplicaModule {
                 _delayBuffer.Add(packet);
         }
 
-        // The old network body makes a copy kinematic; a ride or a seat does too, but silences that body first. Only the
-        // old network body's hold is taken over: a ridden copy is waited for.
-        private bool TryTakeOver(Rigidbody capsule) {
-            bool heldByRideOrSeat = capsule.isKinematic && (_networkBody == null || _networkBody.enabled == false);
-            if (heldByRideOrSeat)
+        // A copy starts from a packet the owner sent after the last move of the body. A body held by a seat
+        // (kinematic, collisions off) is waited for; one this driver holds still is taken.
+        private bool CanTakeOver(Rigidbody body) {
+            if (_channel.HasLatest == false)
                 return false;
 
-            if (_networkBody != null)
-                _networkBody.enabled = false;
+            if (_placementFence.Blocks(_channel.Latest.PlaceCount, Time.timeAsDouble, _configuration.PlacementWaitSeconds))
+                return false;
 
-            capsule.isKinematic = false;
+            return body.isKinematic == false || _holdsBody && body.detectCollisions;
+        }
+
+        // Not driven yet (no packet, or waiting after a move): a dynamic body would fall or drift on its own.
+        private void HoldStill(Rigidbody body) {
+            if (body.isKinematic)
+                return;
+
+            body.isKinematic = true;
+            _holdsBody = true;
+        }
+
+        private void TakeOver(Rigidbody body) {
+            body.isKinematic = false;
+            _holdsBody = false;
             BodyStatePacket packet = _channel.Latest;
             _delayBuffer.Restart(packet);
             _input.Reset();
@@ -140,16 +151,19 @@ namespace Features.PlayerReplicaModule {
             _carrierFrame.Resolve(packet.CarrierId);
             Snap(_movable.DrivenBody, _carrierFrame.ToWorldPoint(packet.RelativePosition),
                 _carrierFrame.ToWorldDirection(packet.RelativeVelocity), false);
-            return true;
         }
 
-        private void Release() {
-            StopSimulating();
-            if (_networkBody != null)
-                _networkBody.enabled = true;
+        // The server moved the body: it waits at the new place for the owner's packets from after the move.
+        private void OnPlaced(byte placeCount) {
+            if (_channel.isOwned)
+                return;
 
+            _placementFence.Begin(placeCount, Time.timeAsDouble);
+            if (_isDriving == false)
+                return;
+
+            StopSimulating();
             _delayBuffer.Clear();
-            _movable.ClearRemoteLook();
             _isDriving = false;
         }
 
@@ -199,7 +213,9 @@ namespace Features.PlayerReplicaModule {
 
             _groundTimer.Tick(packet.Has(BodyStateFlags.Grounded), _movable.IsSupported, Time.fixedDeltaTime);
             bool isStuck = _groundTimer.IsStuck(settings.GroundMismatchSeconds);
-            PositionCorrectionStep step = PositionCorrection.Compute(target - body.Position, ownerSteers, isStuck, settings);
+            Vector3 error = target - body.Position;
+            _channel.ReceiveStats.RecordError(error.magnitude, Time.unscaledTimeAsDouble);
+            PositionCorrectionStep step = PositionCorrection.Compute(error, ownerSteers, isStuck, settings);
             if (step.IsSnap) {
                 Snap(body, target, ownerVelocity, true);
                 return;

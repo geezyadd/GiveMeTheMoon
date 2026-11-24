@@ -39,7 +39,6 @@ namespace Features.ShipModule.Scripts {
             Container.Bind<Debug.IShipDebugActionConditions>().To<Debug.ShipDebugActionConditions>().AsSingle();
             Container.BindInterfacesTo<Debug.ShipHullDebugSystem>().AsSingle();
             Container.BindInterfacesTo<Debug.ShipThrottleDebugSystem>().AsSingle();
-            Container.BindInterfacesTo<Debug.DeckRideModeDebugSystem>().AsSingle();
             Container.BindInterfacesTo<Debug.WeaponDebugTargetSystem>().AsSingle();
             Container.BindInterfacesTo<Debug.WeaponDebugTargetPrefabSystem>().AsSingle();
             Container.Bind<Debug.ShipStatsDebugOverlay>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();

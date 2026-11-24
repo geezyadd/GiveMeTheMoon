@@ -351,7 +351,7 @@ namespace Features.ShipModule.Scripts.Debug {
             Status = "measure-" + label;
             if (_measureReady == false) {
                 if (_warmup <= 0) {
-                    StandOnDeck(cruise);
+                    StandOnDeck();
                     _input.BeginScripted();
                     _input.SetScripted(Vector2.zero, false, false);
                     if (_cameras.ActiveId != cameraId)
@@ -540,7 +540,7 @@ namespace Features.ShipModule.Scripts.Debug {
             // Back to the stand point before each walk and the jumps: the deck is shorter than a sprint, and an unbound
             // player or a rider in flight walks off its edge.
             if (_measureStep <= 4)
-                StandOnDeck(_model.Phase != ShipRunPhase.Build);
+                StandOnDeck();
 
             return _measureStep > 7;
         }
@@ -586,7 +586,8 @@ namespace Features.ShipModule.Scripts.Debug {
             int shifts = _worldShift.WorldShiftCount;
             int gc = GC.CollectionCount(0);
             int index = _player.Count - 1;
-            float poseDrift = (_player[index] - _rider.DebugLocalOffset).magnitude;
+            // How far the drawn player is from its physics body, in the ship's axes (the interpolation's lag).
+            float poseDrift = (_player[index] - _ship.transform.InverseTransformPoint(_rider.GetComponent<Rigidbody>().position)).magnitude;
             _events.Add(new FrameEvents(
                 Time.frameCount,
                 _ship.ConsumeFixedSteps(),
@@ -1065,16 +1066,10 @@ namespace Features.ShipModule.Scripts.Debug {
                 return;
             }
 
-            if (_rider.IsRiding == false) {
-                PlaceRiderOnDeck();
-                _ship.RidersDebug.DebugBindRider(_rider);
-            }
-
-            if (_rider.IsRiding == false)
-                return;
+            PlaceRiderOnDeck();
 
             _input.BeginScripted();
-            Note("Client riding in Build. players=" + UnityEngine.Object.FindObjectsByType<ShipRider>(FindObjectsSortMode.None).Length);
+            Note("Client on the deck in Build. players=" + UnityEngine.Object.FindObjectsByType<ShipRider>(FindObjectsSortMode.None).Length);
             Enter(20);
         }
 
@@ -1103,8 +1098,8 @@ namespace Features.ShipModule.Scripts.Debug {
                 return;
             }
 
-            if (_rider.IsRiding == false) {
-                Fail("client player is not riding in cruise");
+            if (_ship.Riders.IsAboard(_rider) == false) {
+                Fail("client player is not aboard in cruise");
                 return;
             }
 
@@ -1170,24 +1165,10 @@ namespace Features.ShipModule.Scripts.Debug {
             body.linearVelocity = Vector3.zero;
         }
 
-        private void StandOnDeck(bool ride) {
-            if (ride == false) {
-                if (_rider.IsRiding == false)
-                    PlaceRiderOnDeck();
-
-                return;
-            }
-
-            if (_rider.IsRiding == false) {
+        // The player stands on the deck as a physical body; in flight the ship carries it (no binding any more).
+        private void StandOnDeck() {
+            if (_rider.IsRiding == false)
                 PlaceRiderOnDeck();
-                _ship.RidersDebug.DebugBindRider(_rider);
-                return;
-            }
-
-            if (_ship.DeckGeometry.TryGetDeckStandPoint(out Vector3 local) == false)
-                return;
-
-            _rider.DebugSetLocalOffset(local);
         }
 
         private void SpawnDeckItem() {

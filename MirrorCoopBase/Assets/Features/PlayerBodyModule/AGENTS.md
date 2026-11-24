@@ -28,8 +28,9 @@ is bound. Editor code in `Features.PlayerBodyModule.Editor`.
     not loaded). The ragdoll hands walking, falling and jumping to the movement (`UsesPlainGravityInAir`, no
     horizontal or air drag). The capsule turns kinematic, loses its hover and every collider of its own
     (`CapsuleColliders`, kept off each step: a revive turns them on again, and a capsule following the ragdoll with
-    colliders shoves it away) and follows the root limb each physics step; a capsule found over 1 m from where it
-    was put was teleported (spawn, map change), and the ragdoll is moved by the same offset and stopped.
+    colliders shoves it away) and follows the root limb each physics step; a capsule found over 1 cm from where it
+    was put was moved by someone else (a server placement or world shift through `BodyStateChannel`, a spawn), and
+    the ragdoll is moved by the same offset and stopped.
   - Held (`CharacterMovableBase.IsHeld`: a seat or a ride places the capsule): the capsule leads. When the hold
     starts, the ragdoll is put on the capsule's spot once, horizontally (the seat places the capsule once a frame on
     the carrier as drawn, `ICarrier.DrawnPosition` / `DrawnRotation`, so the spot is read in the drawn pose and put in

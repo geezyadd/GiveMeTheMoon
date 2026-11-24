@@ -69,7 +69,7 @@ namespace Tests.Coop.Client {
             CoopObservation observation = CoopFlightObserver.CaptureFlight(CoopFlightSteps.IMPACTS);
             observation.ImpactKinds = _impactKinds.ToArray();
             observation.ShakenImpacts = _shakenImpacts;
-            observation.IsRiding = Player.GetComponent<ShipRider>().IsRiding;
+            observation.IsAboard = SessionQueries.IsAboard(Player);
             observation.Screenshot = _screenshot;
             Report(observation);
         }

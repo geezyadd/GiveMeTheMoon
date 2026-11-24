@@ -1,4 +1,3 @@
-using Features.PlayerReplicaModule.Models;
 using Features.CameraModule.Scripts.Models;
 using Features.CameraModule.Scripts.Shake;
 using Features.PlayerLifeModule.Scripts.Spectator;
@@ -34,7 +33,6 @@ using Zenject;
 namespace Features.GameCoreModule.Scripts.Installers {
     public sealed class DataInstaller : Installer<DataInstaller> {
         public override void InstallBindings() {
-            Container.Bind<ReplicaModeModel>().AsSingle();
             Container.Bind<ConnectionSessionModel>().AsSingle();
             Container.Bind<ConnectionSpawnModel>().AsSingle();
             Container.Bind<ConnectionNetworkEvents>().AsSingle();
@@ -55,7 +53,6 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<SpectatorModel>().AsSingle();
             Container.Bind<ShopVisitModel>().AsSingle();
             Container.Bind<DeadCrewModel>().AsSingle();
-            Container.Bind<Features.ShipModule.Scripts.Riding.DeckRideModeModel>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.Bind<Features.ShipModule.Scripts.Debug.WeaponDebugTargetModel>().AsSingle();
 #endif

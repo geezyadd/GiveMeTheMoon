@@ -48,7 +48,7 @@ namespace Tests.Coop.Host {
             yield return _host.WaitForCoroutine(_second.IsGone, $"{_second.Name}'s connection gone on the server");
             yield return _host.CommandCoroutine(_first, CoopConnectionCommands.REPORT);
             AssertUnaffected(_first, CREW_OF_TWO, "after the other client left in flight");
-            Assert.IsTrue(_first.LastReport.RunState.IsRiding, $"{_first.Name} stopped riding when the other client left.");
+            Assert.IsTrue(_first.LastReport.RunState.IsAboard, $"{_first.Name} is not aboard any more after the other client left.");
             _host.Flight.FaceDestination();
 
             yield return _host.LandCoroutine(1);
