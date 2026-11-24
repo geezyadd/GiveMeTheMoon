@@ -1,3 +1,4 @@
+using Features.MvpModule;
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.PlayerReplicaModule.Configuration;
 using Features.CameraModule.Scripts;
@@ -54,6 +55,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<SpaceHazeConfiguration>(Address.Configurations.SpaceHazeConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ReplicaConfiguration>(Address.Configurations.ReplicaConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<CameraCatalog>(Address.Configurations.CameraCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<WindowsRootConfiguration>(
+                Address.Configurations.WindowsRootConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FieldStructureCatalog>(Address.Configurations.FieldStructureCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default).AsSingle();

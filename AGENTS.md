@@ -78,7 +78,8 @@ types.
 - DI: **Zenject**. Installers are in `Assets/Features/GameCoreModule/Scripts/Installers/`, configs come from
   Addressables (`ConfigurationInstaller`).
 - UI: in-house MVP (`Assets/Features/MvpModule/`): `WindowBehaviour`, `ViewBehaviour`,
-  `PresenterBehaviour<TView>`, windows are registered in `WindowsModuleInstaller`.
+  `PresenterBehaviour<TView>`, windows are registered in `WindowsModuleInstaller`; the windows' canvas and the UI event system come from the prefabs in
+  `WindowsRootConfiguration` (`MvpModule/GameResources`), not from components added in code.
 - Input: New Input System and the generated `IInputService` wrapper
   (`Assets/Features/InputModule/Realization/`). The code is generated; do not edit it by hand.
 - **Debug actions: never add a debug hotkey.** A debug / cheat action is registered in `IDebugActionRegistry`
