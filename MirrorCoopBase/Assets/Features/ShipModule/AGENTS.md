@@ -107,6 +107,10 @@ takeoff or catches it over the deck any more: the player who stands on the deck 
 because the float probe stands on the deck, and one who jumps or walks off the edge simply falls. A player counts as
 aboard (`IShipRiders.IsAboard`, `IsLocalPlayerAboard`, used by the impact camera shake and the tests) when it is bound
 to a seat of this ship or its `ICarrierRider.Carrier` is this ship's `ShipCarrier` (`ShipBase.Carrier`).
+Not done yet, postponed to the ragdoll work: the ship's inertia on the bodies (a turn or a speed change carries them
+exactly, nobody is thrown), the ship's hit impulses on players and players pushing players. How smooth a client's copy
+stays on the flying deck with a bad link is checked by `CoopClientDeckWalkLagTest` (see
+[Tests/Coop](../../Tests/Coop/AGENTS.md)).
 
 **The ship as a carrier.** `Riding/ShipCarrier` (`ICarrier`, on the ship's root, runs first in each physics step)
 calls `ShipBase.ServerFlightStep`: the server's flight is stepped once per physics step with the physics step time, and
