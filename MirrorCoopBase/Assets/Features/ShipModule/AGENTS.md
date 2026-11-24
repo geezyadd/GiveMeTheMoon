@@ -100,7 +100,13 @@ the scene's sceneId still matches). Code in `ShipModule/Scripts/Throttle/`, numb
 ## Riding the ship
 **Riding the ship.** In flight a player on the deck is not moved by physics: `ShipRider` binds it to the ship
 (kinematic, collisions off) at a ship-local offset, and the owner walks and jumps in that offset. Each peer binds only
-its own player; the others follow the owner's synced offset. When and how a player gets bound:
+its own player; the others follow the owner's synced offset. `ShipRider` is the network side and the order of a
+frame; the work is in `Scripts/Riding/`: `ShipRideBody` (binding the body: kinematic, no collisions, interpolation or
+spring, own network body silent, placed at the offset; releasing gives it back), `ShipDeckWalk` (the owner's walk along
+the camera in deck space and the vertical: spring, jump, air gravity via `RideVertical`), `ShipRideOffsetStream` (the
+standing offset sent every 0.05 s and played back late on the other peers) and `ShipSeatRide` (a moving seat point, the
+standing spot when getting up). The deck walk and the offset stream are what a carrier-based deck (`ICarrier`, see
+MovingPlatformModule) will replace for standing riders; seats keep the binding. When and how a player gets bound:
 - at takeoff (`ShipBase.BeginTakeoff` on the server, `ShipBase.OnClientFlightChanged(true)` on a client)
   `ShipRiders.BoardRidersOverDeck` boards every player over the deck, from the nose to the stern: at most
   `BoardingEdgeTolerance` (0.5 m) outside the walk boxes and `BoardingMinHeight`..`BoardingMaxHeight` (-0.5..6 m) above the

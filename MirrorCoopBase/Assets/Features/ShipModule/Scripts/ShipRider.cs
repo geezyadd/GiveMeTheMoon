@@ -7,11 +7,15 @@ using Features.NetworkModelModule.Scripts;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using Features.ShipModule.Scripts.Debug;
 #endif
+using Features.ShipModule.Scripts.Riding;
 using Mirror;
 using UnityEngine;
 using Zenject;
 
 namespace Features.ShipModule.Scripts {
+    // A player's ride on a ship: the network side (the synced offset, ship, seat and key, the commands) and the order of
+    // a frame. The work is in Riding/: the body bound to the deck (ShipRideBody), the owner's walk and vertical on the
+    // deck (ShipDeckWalk), the standing offset over the network (ShipRideOffsetStream) and the seat (ShipSeatRide).
     public sealed class ShipRider : NetworkBehaviour {
         [SerializeField] private Rigidbody _rb;
         [SerializeField] private FloatingController _floating;
@@ -40,35 +44,22 @@ namespace Features.ShipModule.Scripts {
         [SyncVar]
         private string _playerKey;
 
-        private CharacterInputBuffer _input;
-        private IGameCameraService _cameras;
+        private const float MAX_RIDE_SPEED = 120f;
+
         private IPlayerIdentityService _playerIdentityService;
         private ShipRiderKeyModel _shipRiderKeyModel;
 
-        private const float OffsetSendSeconds = 0.05f;
-        private const float OFFSET_RESEND_SQR_METERS = 0.000001f;
-        private const float MAX_RIDE_SPEED = 120f;
-        private const double REMOTE_OFFSET_DELAY = 2d * OffsetSendSeconds;
+        private ShipRideBody _body;
+        private ShipDeckWalk _deckWalk;
+        private readonly ShipRideOffsetStream _offsetStream = new ShipRideOffsetStream();
+        private readonly ShipSeatRide _seatRide = new ShipSeatRide();
 
         private bool _bound;
         private Vector3 _localOffset;
-        private readonly RideOffsetBuffer _remoteOffsets = new RideOffsetBuffer(OffsetSendSeconds);
-        private bool _jumpHeldPrev;
-        private Vector3 _lastPlatformPos;
-        private Quaternion _lastPlatformRot = Quaternion.identity;
         private ShipBase _ship;
         private Transform _platform;
-        private bool _wasKinematic;
-        private RigidbodyInterpolation _wasInterpolation;
-        private bool _netBodyWasEnabled;
-        private float _nextOffsetSend;
-        private float _rideRestY;
-        private float _rideFloorY;
-        private readonly RideVertical _vertical = new RideVertical();
-        private readonly SeatStandingSpot _standingSpot = new SeatStandingSpot();
         private Vector3 _rideVelocity;
         private float _reboardAt;
-        private Transform _seatPoint;
 
         internal Vector3 DebugLocalOffset => _localOffset;
         public bool IsRiding => _bound;
@@ -76,8 +67,11 @@ namespace Features.ShipModule.Scripts {
         internal ShipRideDiagnostics RideDiagnostics { get; } = new ShipRideDiagnostics();
 #endif
         public bool IsSeated => _seated;
-        private bool IsFollowingSeatPoint => _seated && _seatPoint != null;
+        private bool IsFollowingSeatPoint => _seatRide.IsFollowingSeatPoint(_seated);
         public PlayerKey Key => new PlayerKey(_playerKey);
+
+        private void Awake() =>
+            EnsureParts();
 
         [Inject]
         private void InjectDependencies(
@@ -85,8 +79,8 @@ namespace Features.ShipModule.Scripts {
             IGameCameraService gameCameraService,
             IPlayerIdentityService playerIdentityService,
             ShipRiderKeyModel shipRiderKeyModel) {
-            _input = characterInputBuffer;
-            _cameras = gameCameraService;
+            EnsureParts();
+            _deckWalk.SetInput(characterInputBuffer, gameCameraService);
             _playerIdentityService = playerIdentityService;
             _shipRiderKeyModel = shipRiderKeyModel;
         }
@@ -151,34 +145,18 @@ namespace Features.ShipModule.Scripts {
             Quaternion toLocal = Quaternion.Inverse(_platform.rotation);
             float localVerticalSpeed = (toLocal * _rb.linearVelocity).y;
             _localOffset = localOffset;
-            _rideRestY = ResolveRideRestY();
-            _rideFloorY = ResolveRideFloorY();
-            _jumpHeldPrev = _input.JumpHeld;
-            ResetVertical(isOwned && _localOffset.y > _rideRestY ? localVerticalSpeed : 0f);
-            _remoteOffsets.Reset(_syncedOffsetTime, _localOffset);
-            _lastPlatformPos = _platform.position;
-            _lastPlatformRot = _platform.rotation;
+            _deckWalk.Begin(ship.DeckGeometry, _localOffset, localVerticalSpeed, isOwned);
+            _offsetStream.Reset(_syncedOffsetTime, _localOffset);
+            _deckWalk.TrackPlatformRotation(_platform.rotation);
             _bound = true;
-            _wasKinematic = _rb.isKinematic;
-            _wasInterpolation = _rb.interpolation;
-            _rb.StopIfDynamic();
-            _rb.isKinematic = true;
-            _rb.detectCollisions = false;
-            _rb.interpolation = RigidbodyInterpolation.None;
-            if (transform.parent != null)
-                transform.SetParent(null, true);
-
-            ApplyWorldPose();
-
-            if (_floating != null)
-                _floating.HoverEnabled = false;
+            _body.Attach(_platform, _localOffset);
 
             if (isOwned) {
                 _syncedLocalOffset = _localOffset;
                 CmdBeginRide(_localOffset, NetworkTime.time, ship.NetIdentity);
             }
 
-            SilenceNetworkBody();
+            _body.SilenceNetworkBody();
         }
 
         private void BindRemote(ShipBase ship) {
@@ -197,11 +175,11 @@ namespace Features.ShipModule.Scripts {
         internal void DebugSetLocalOffset(Vector3 localOffset) {
             _localOffset = localOffset;
             ResetVertical(0f);
-            _remoteOffsets.Reset(NetworkTime.time, localOffset);
+            _offsetStream.Reset(NetworkTime.time, localOffset);
             if (_platform == null)
                 return;
 
-            ApplyWorldPose();
+            _body.PlaceAt(_platform, _localOffset);
         }
 
         // Server-authoritative release (landing, wreck, stand up at a station, walking off the deck): every peer releases
@@ -241,31 +219,16 @@ namespace Features.ShipModule.Scripts {
                 return;
 
             // The ship may have been snapped (origin shift at the station) since the last Follow.
-            ApplyWorldPose();
+            _body.PlaceAt(_platform, _localOffset);
             if (carryVelocity)
                 _reboardAt = Time.time + _ship.ReboardDelaySeconds;
             _bound = false;
-            Transform released = transform;
-            Vector3 worldPosition = released.position;
-            Quaternion worldRotation = released.rotation;
-            released.SetParent(null, true);
-            released.SetPositionAndRotation(worldPosition, worldRotation);
             _platform = null;
             if (isServer)
                 _seated = false;
 
-            if (_rb != null) {
-                _rb.isKinematic = _wasKinematic;
-                _rb.detectCollisions = true;
-                _rb.interpolation = _wasInterpolation;
-                if (carryVelocity && _rb.isKinematic == false)
-                    _rb.linearVelocity = _rideVelocity;
-            }
-
-            if (_floating != null)
-                _floating.HoverEnabled = true;
-
-            RestoreNetworkBody();
+            _body.Detach(carryVelocity, _rideVelocity);
+            _body.RestoreNetworkBody();
             if (isOwned && NetworkClient.ready)
                 CmdEndRide();
         }
@@ -300,12 +263,10 @@ namespace Features.ShipModule.Scripts {
         // A seat station whose seat point moves with it (a turret's yaw) has the seated rider follow that point on
         // every peer, from the aim that peer shows; no offset is sent while seated.
         public void FollowSeatPoint(Transform seatPoint) =>
-            _seatPoint = seatPoint;
+            _seatRide.FollowSeatPoint(seatPoint);
 
-        public void StopFollowingSeatPoint(Transform seatPoint) {
-            if (ReferenceEquals(_seatPoint, seatPoint))
-                _seatPoint = null;
-        }
+        public void StopFollowingSeatPoint(Transform seatPoint) =>
+            _seatRide.StopFollowingSeatPoint(seatPoint);
 
         // A moving seat point (a turret's) leaves the rider away from the offset it sat down at: the others stand it up
         // where the server saw it.
@@ -315,7 +276,7 @@ namespace Features.ShipModule.Scripts {
         }
 
         private bool TryMoveToStandingSpot() {
-            if (_bound == false || _standingSpot.TryResolve(_localOffset, _ship.DeckGeometry, _deckInset, out Vector3 standingOffset) == false)
+            if (_bound == false || _seatRide.TryResolveStandingSpot(_localOffset, _ship.DeckGeometry, _deckInset, out Vector3 standingOffset) == false)
                 return false;
 
             _localOffset = standingOffset;
@@ -326,32 +287,37 @@ namespace Features.ShipModule.Scripts {
             if (_bound == false || _platform == null)
                 return;
 
-            if (isOwned) {
-                bool jumped = ConsumeJumpPress();
-                _vertical.ReadInput(_input.JumpHeld, dt);
-                if (_seated) {
-                    // The press that stands the rider up must not jump right after.
-                    _vertical.DropQueuedJump();
-                    if (jumped)
-                        CmdStand();
-                }
-                else {
-                    ApplyOwnedWalk(dt);
-                    SimulateRideVertical(dt);
-                    SendOffsetIfNeeded();
-                }
-            }
+            if (isOwned)
+                FollowOwnedInput(dt);
 
             Vector3 next = RideOffset();
             _localOffset = next;
-            _standingSpot.Track(IsFollowingSeatPoint);
+            _seatRide.Track(IsFollowingSeatPoint);
             Vector3 previousWorld = transform.position;
-            ApplyWorldPose();
+            _body.PlaceAt(_platform, _localOffset);
             TrackRideVelocity(previousWorld, dt);
-            _lastPlatformPos = _platform.position;
-            _lastPlatformRot = _platform.rotation;
+            _deckWalk.TrackPlatformRotation(_platform.rotation);
             if (IsOffDeckEdge())
                 DropOffDeck();
+        }
+
+        // The owner's frame: a jump press stands a seated rider up; a standing one walks, falls and jumps on the deck
+        // and sends its offset.
+        private void FollowOwnedInput(float dt) {
+            bool jumped = _deckWalk.ConsumeJumpPress();
+            _deckWalk.ReadVerticalInput(dt);
+            if (_seated) {
+                // The press that stands the rider up must not jump right after.
+                _deckWalk.DropQueuedJump();
+                if (jumped)
+                    CmdStand();
+                return;
+            }
+
+            if (_deckWalk.Walk(ref _localOffset, _ship, dt))
+                SendOffsetIfNeeded();
+            _deckWalk.SimulateVertical(ref _localOffset, dt);
+            SendOffsetIfNeeded();
         }
 
         private void TrackRideVelocity(Vector3 previousWorld, float dt) {
@@ -390,84 +356,31 @@ namespace Features.ShipModule.Scripts {
 
         private void SnapToSyncedOffset() {
             _localOffset = _syncedLocalOffset;
-            _remoteOffsets.Reset(_syncedOffsetTime, _syncedLocalOffset);
-        }
-
-        private void ApplyWorldPose() {
-            if (_platform == null)
-                return;
-
-            Vector3 world = _platform.TransformPoint(_localOffset);
-            Quaternion rotation = _platform.rotation;
-            transform.SetPositionAndRotation(world, rotation);
-            if (_rb == null)
-                return;
-
-            _rb.StopIfDynamic();
-            _rb.isKinematic = true;
-            _rb.interpolation = RigidbodyInterpolation.None;
-            _rb.position = world;
-            _rb.rotation = rotation;
-        }
-
-        private bool ConsumeJumpPress() {
-            bool pressed = _input != null && _input.JumpHeld && _jumpHeldPrev == false;
-            _jumpHeldPrev = _input != null && _input.JumpHeld;
-            return pressed;
-        }
-
-        private void ApplyOwnedWalk(float dt) {
-            if (_input == null || dt <= 0f)
-                return;
-
-            Vector3 localMove = DeckPlanar(_input.MoveStick) * CurrentSpeed() * dt;
-            _localOffset.x += localMove.x;
-            _localOffset.z += localMove.z;
-            if (_ship.ConfinesRidersToDeck || _ship.IsFlying == false)
-                _ship.DeckGeometry.ClampDeckWalk(ref _localOffset, _deckInset);
-
-            SendOffsetIfNeeded();
-        }
-
-        // The station hover spring, jump and air gravity in ship space, from this player's own float and stats.
-        private void SimulateRideVertical(float dt) {
-            if (dt <= 0f)
-                return;
-
-            RideVerticalFrame frame = new RideVerticalFrame(
-                _floating.Spring,
-                JumpTuning.Read(_stats),
-                _rideRestY,
-                _rideFloorY,
-                Physics.gravity.y,
-                Time.fixedDeltaTime);
-            _localOffset.y = _vertical.Advance(_localOffset.y, dt, frame);
+            _offsetStream.Reset(_syncedOffsetTime, _syncedLocalOffset);
         }
 
         private void ResetVertical(float velocity) =>
-            _vertical.Reset(
-                _localOffset.y,
-                velocity,
-                _input.JumpHeld,
-                JumpTuning.Read(_stats).ExtraAirJumps);
+            _deckWalk.Reset(_localOffset.y, velocity);
 
         private void SendOffsetIfNeeded() {
-            if (Time.unscaledTime < _nextOffsetSend)
-                return;
-
-            _nextOffsetSend = Time.unscaledTime + OffsetSendSeconds;
-            if ((_syncedLocalOffset - _localOffset).sqrMagnitude > OFFSET_RESEND_SQR_METERS)
+            if (_offsetStream.ShouldSend(_syncedLocalOffset, _localOffset))
                 CmdSetRideOffset(_localOffset, NetworkTime.time);
         }
 
         private Vector3 RideOffset() {
             if (IsFollowingSeatPoint)
-                return Quaternion.Inverse(_platform.rotation) * (_seatPoint.position - _platform.position);
+                return _seatRide.SeatPointOffset(_platform);
 
             if (isOwned || _seated)
                 return _localOffset;
 
-            return _remoteOffsets.Sample(NetworkTime.time - REMOTE_OFFSET_DELAY);
+            return _offsetStream.Sample(NetworkTime.time);
+        }
+
+        // Zenject may inject before or after Awake: whichever comes first makes the parts, the other keeps them.
+        private void EnsureParts() {
+            _body ??= new ShipRideBody(transform, _rb, _floating, _netBody);
+            _deckWalk ??= new ShipDeckWalk(_floating, _stats, _walkSpeed, _sprintSpeed, _deckInset);
         }
 
         private void OnSyncedOffsetChanged(Vector3 previous, Vector3 current) {
@@ -480,7 +393,7 @@ namespace Features.ShipModule.Scripts {
                 return;
             }
 
-            _remoteOffsets.Add(_syncedOffsetTime, current);
+            _offsetStream.Add(_syncedOffsetTime, current);
         }
 
         // Standing up must not blend back to the offset from before the seat.
@@ -509,51 +422,6 @@ namespace Features.ShipModule.Scripts {
 
             if (current.TryGetComponent(out ShipPoseSync poseSync) && poseSync.Ship != null)
                 BindRemote(poseSync.Ship);
-        }
-
-        private float ResolveRideRestY() {
-            if (_floating == null || _ship.DeckGeometry.TryGetDeckSurfaceY(_localOffset, out float deckSurfaceY) == false)
-                return _localOffset.y;
-
-            return deckSurfaceY + _floating.StandHeight;
-        }
-
-        // The rider collider stands on the deck: the spring may sag the rider down to here, never lower.
-        private float ResolveRideFloorY() =>
-            _rideRestY - _floating.StandHeight + _floating.ContactHeight;
-
-        private float CurrentSpeed() {
-            if (_input != null && _input.SprintHeld)
-                return _sprintSpeed;
-
-            return _walkSpeed;
-        }
-
-        // Walk direction in ship space, flattened on the deck plane: flattening on the world horizontal bends the
-        // walk while the ship banks. The camera was presented last frame with the ship at _lastPlatformRot.
-        private Vector3 DeckPlanar(Vector2 stick) {
-            if (stick.sqrMagnitude < 0.0001f)
-                return Vector3.zero;
-
-            Transform cameraTransform = _cameras != null && _cameras.OutputCamera != null
-                ? _cameras.OutputCamera.transform
-                : null;
-            if (cameraTransform == null)
-                return new Vector3(stick.x, 0f, stick.y);
-
-            Quaternion toDeck = Quaternion.Inverse(_lastPlatformRot);
-            Vector3 forward = toDeck * cameraTransform.forward;
-            Vector3 right = toDeck * cameraTransform.right;
-            forward.y = 0f;
-            right.y = 0f;
-            if (forward.sqrMagnitude < 0.0001f || right.sqrMagnitude < 0.0001f)
-                return new Vector3(stick.x, 0f, stick.y);
-
-            Vector3 local = forward.normalized * stick.y + right.normalized * stick.x;
-            if (local.sqrMagnitude > 1f)
-                local.Normalize();
-
-            return local;
         }
 
         [Command]
@@ -595,21 +463,6 @@ namespace Features.ShipModule.Scripts {
         private void CmdStand() {
             if (_ship != null)
                 _ship.Seats.ServerStand(this);
-        }
-
-        private void SilenceNetworkBody() {
-            if (_netBody == null)
-                return;
-
-            _netBodyWasEnabled = _netBody.enabled;
-            _netBody.enabled = false;
-        }
-
-        private void RestoreNetworkBody() {
-            if (_netBody == null)
-                return;
-
-            _netBody.enabled = _netBodyWasEnabled;
         }
     }
 }
