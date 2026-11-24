@@ -12,6 +12,7 @@ namespace Features.CameraModule.Scripts {
         private readonly CameraCatalog _catalog;
         private readonly CursorModel _cursorModel;
         private readonly CameraLookLockModel _cameraLookLockModel;
+        private readonly CameraCarryTurnModel _cameraCarryTurnModel;
 
         public static bool DebugPitchOverride;
         public static float DebugPitch;
@@ -30,12 +31,14 @@ namespace Features.CameraModule.Scripts {
             GameCameraModel model,
             CameraCatalog catalog,
             CursorModel cursorModel,
-            CameraLookLockModel cameraLookLockModel) {
+            CameraLookLockModel cameraLookLockModel,
+            CameraCarryTurnModel cameraCarryTurnModel) {
             _input = input;
             _model = model;
             _catalog = catalog;
             _cursorModel = cursorModel;
             _cameraLookLockModel = cameraLookLockModel;
+            _cameraCarryTurnModel = cameraCarryTurnModel;
         }
 
         public void Initialize() {
@@ -82,6 +85,10 @@ namespace Features.CameraModule.Scripts {
                 _pendingLook = Vector2.zero;
                 _orbitFollow = follow;
             }
+
+            // The rig's yaw is local to the player, who does not turn: the carrier's turn is added to it, so the view
+            // turns with the platform the player stands on.
+            _yaw = Mathf.Repeat(_yaw + _cameraCarryTurnModel.TakeTurn() + 180f, 360f) - 180f;
 
             if (_model.FixedViewEye != null) {
                 _pendingLook = Vector2.zero;

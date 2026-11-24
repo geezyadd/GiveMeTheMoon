@@ -3,6 +3,7 @@
     "rootNamespace": "Features.MovingPlatformModule.Editor.Tests",
     "references": [
         "GUID:e0d9c8f9ba594709af4460df1fc7ea09",
+        "GUID:fdd0b9d0874240ecb4326459ad87a585",
         "GUID:27619889b8ba8c24980f49ee34dbb44a",
         "GUID:0acc523941302664db1f4e527237feb3"
     ],

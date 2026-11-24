@@ -27,11 +27,15 @@ namespace Features.FloatingControllerModule {
         [SerializeField] private bool _pushSupportBody = true;
 
         private RaycastHit _supportHit;
+        private Collider _carrierLookupCollider;
+        private ICarrier _carrierLookup;
         private Vector3 _supportNormal = Vector3.up;
         private bool _hasSupport;
         private float _lockoutLeft;
 
         public bool HasSupport => _hasSupport && _lockoutLeft <= 0f;
+        // The moving carrier under the body (on the support's object or a parent of it), or null on still ground.
+        public ICarrier SupportCarrier => HasSupport ? _carrierLookup : null;
         public Vector3 SupportNormal => _supportNormal;
         public bool HoverEnabled { get; set; } = true;
         // On a peer that does not own the body: probe and hover anyway, because this peer simulates a copy of it.
@@ -108,6 +112,16 @@ namespace Features.FloatingControllerModule {
 
             _hasSupport = true;
             _supportNormal = _supportHit.normal;
+            LookUpCarrier(_supportHit.collider);
+        }
+
+        // Cached per collider: the probe asks every physics step and mostly hits the same support.
+        private void LookUpCarrier(Collider support) {
+            if (support == _carrierLookupCollider)
+                return;
+
+            _carrierLookupCollider = support;
+            _carrierLookup = support.GetComponentInParent<ICarrier>();
         }
 
         private void HoldClearance() {
@@ -119,7 +133,9 @@ namespace Features.FloatingControllerModule {
             if (HoverSpring.Holds(spring, velocity.y) == false)
                 return;
 
-            Vector3 supportVelocity = _supportHit.rigidbody != null
+            // A body on a carrier moves with it by its rider and keeps a velocity relative to it, so the carrier's own
+            // motion is no closing speed.
+            Vector3 supportVelocity = _supportHit.rigidbody != null && _carrierLookup == null
                 ? _supportHit.rigidbody.linearVelocity
                 : Vector3.zero;
             float closingSpeed = Vector3.Dot(Vector3.up, velocity - supportVelocity);

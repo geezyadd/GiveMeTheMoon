@@ -64,6 +64,8 @@ GameObject:
   - component: {fileID: 8419845104136634501}
   - component: {fileID: 8419845104136634502}
   - component: {fileID: 8419845104136634503}
+  - component: {fileID: 8419845104136634506}
+  - component: {fileID: 8419845104136634507}
   m_Layer: 0
   m_Name: DummyPlayer
   m_TagString: Untagged
@@ -1033,3 +1035,31 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _visualRoot: {fileID: 8419845104136634505}
+--- !u!114 &8419845104136634506
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d8f9601a387448f808b6623aba42c4c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _body: {fileID: 7148192738405830123}
+  _floatingController: {fileID: 5109845104136634491}
+  _identity: {fileID: 8912313244057681703}
+--- !u!114 &8419845104136634507
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf48500d57b446d194bd601ed2ac110d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _rider: {fileID: 8419845104136634506}
