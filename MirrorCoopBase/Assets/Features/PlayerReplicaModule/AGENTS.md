@@ -26,8 +26,9 @@ Rare events (death, seat, platform change, hits) go reliably and apply at once.
 Being built in steps on `demo/platform-sync`, in the lobby first (the still world as the only platform); the ship deck
 comes later. Done: the pure math, the packet stream and the simulated copies behind a per-peer debug toggle ("Player
 sync: old / new", `ReplicaModeModel`, new by default). The old way stays one press away: copies follow
-`NetworkRigidbodyUnreliable`; riders always follow `ShipRider`. Not done yet: the ship deck as a moving platform,
-removing the proxy shove.
+`NetworkRigidbodyUnreliable`; riders always follow `ShipRider`. Carriers: on a moving carrier (`ICarrier`, the lobby
+test platform) the packet is in the carrier's axes and copies ride their own copy of it. Not done yet: the ship deck
+as a carrier, removing the proxy shove.
 
 Known limits of the toggle: on the host, the new mode silences the old network body of the other players, so a third
 player in the old mode sees them stand still (two players are fine). Switching to the old mode while a copy rides waits
@@ -47,6 +48,10 @@ until the ride ends.
   stats). A body that turns kinematic (ride, seat) is left alone until it is dynamic again; a copy held by a ride
   when the mode is switched on is taken over only after the ride. The server's copy pushes items by contact, so the
   proxy shove does not run for a simulated copy.
+  On a carrier: `CopyCarrierFrame` finds this peer's copy of the packet's carrier by network id (missing: the body is
+  left alone), the copy rides it through `ICarrierRider.SetCopyCarrier` (`RideAsCopy` while simulating), the target and
+  the owner's velocity are turned from the carrier's axes (its pose of the last step), and the walk direction
+  (`PacketMovementControls.SetHeading`) and the look follow the carrier's heading.
 - `Visual/ReplicaVisualLag` (on `DummyPlayer`): moves the `ReplicaVisual` child (everything seen: `RotatablePart` with
   the model and the hand, `Nameplate`, the spectator camera points) by a `VisualLagOffset`, so a jump of a copy's body
   shows as a quick slide: the driver reports every snap and every pull step of at least `VisualCatchUpThreshold`; the
@@ -62,8 +67,9 @@ until the ride ends.
   what arrives in `BodyStateReceiveStats`. Packets are in world axes for now (platform 0).
 - `BodyStateChannelRegistry`: the channels spawned on this peer.
 - `Sending/`: `BodyStateSampler` (packet from the body, the owner's `IMovementControls`, the look, support and
-  `CharacterMovableBase.JumpCount`), `BodySendSchedule`.
-- `Receiving/`: `PacketMovementControls`, `PacketDelayBuffer`, `BodyStateReceiveStats` + `BodyStateReceiveReport` (also counts snaps).
+  `CharacterMovableBase.JumpCount`; on a carrier the position and velocity in its axes of the last step, the walk and
+  look in its heading, and its id as `CarrierId`), `BodySendSchedule`.
+- `Receiving/`: `PacketMovementControls`, `PacketDelayBuffer`, `CopyCarrierFrame`, `BodyStateReceiveStats` + `BodyStateReceiveReport` (also counts snaps).
 - `Diagnostics/` (editor and development builds), in the debug window's Network section: `ReplicaStatsDebugSystem`
   ("Replicas: stats": per other player to the console, packets a second, dropped, snaps, average and last age) and
   `ReplicaModeDebugSystem` ("Player sync: old / new").

@@ -19,13 +19,19 @@ namespace Features.MovingPlatformModule {
         [Tooltip("Radius of the circle, metres.")]
         [SerializeField, Min(0.1f)] private float _radius = 20f;
         [Tooltip("Speed along the circle, metres a second.")]
-        [SerializeField, Min(0f)] private float _speed = 9f;
+        [SerializeField, Min(0f)] private float _speed = 50f;
         [Tooltip("Largest roll from side to side, degrees.")]
         [SerializeField, Min(0f)] private float _swayRollDegrees = 12f;
         [Tooltip("Largest pitch forward and back, degrees.")]
         [SerializeField, Min(0f)] private float _swayPitchDegrees = 6f;
         [Tooltip("One full rock, seconds.")]
         [SerializeField, Min(0f)] private float _swayPeriodSeconds = 3f;
+        [Tooltip("Its clock may run this share faster or slower to meet the server time again after a stall (0.05 = 5 %).")]
+        [SerializeField, Range(0f, 0.5f)] private float _clockMaxRateChange = 0.05f;
+        [Tooltip("How fast the clock closes a gap to the server time: the share of the gap per second, before the limit above.")]
+        [SerializeField, Min(0f)] private float _clockCatchUpPerSecond = 1f;
+        [Tooltip("A gap to the server time this long, seconds, is closed at once (a long stall).")]
+        [SerializeField, Min(0.05f)] private float _clockJumpGap = 0.5f;
         [Tooltip("How high above the platform a body in the air still rides with it, metres (a jump).")]
         [SerializeField, Min(0f)] private float _rideHeight = 6f;
         [Tooltip("How far past the platform's edges a body in the air still rides with it, metres.")]
@@ -36,10 +42,8 @@ namespace Features.MovingPlatformModule {
         [SyncVar] private float _angleAtChange;
         [SyncVar] private double _changedAt;
 
-        // The server time minus this peer's time, measured each frame, so the physics steps between frames get the
-        // server time too.
-        private double _clockOffset;
-        private bool _hasClock;
+        // The server time the platform moves by: even steps, eased toward the network time (see SmoothServerClock).
+        private SmoothServerClock _clock;
 
         public bool IsRunning => _isRunning;
         public uint CarrierId => netId;
@@ -50,6 +54,7 @@ namespace Features.MovingPlatformModule {
         private float AngularSpeed => _speed / _radius;
 
         private void Awake() {
+            _clock = new SmoothServerClock(_clockMaxRateChange, _clockCatchUpPerSecond, _clockJumpGap);
             _body.isKinematic = true;
             _body.useGravity = false;
             _body.interpolation = RigidbodyInterpolation.Interpolate;
@@ -65,23 +70,32 @@ namespace Features.MovingPlatformModule {
             if (NetworkClient.active == false && NetworkServer.active == false)
                 return;
 
-            _clockOffset = NetworkTime.time - Time.timeAsDouble;
-            _hasClock = true;
+            if (_clock.IsStarted == false) {
+                _clock.Start(NetworkTime.time);
+                return;
+            }
+
+            // The clock stands at the last physics step; the frame is a little later.
+            double clockNow = _clock.Time + (Time.timeAsDouble - Time.fixedTimeAsDouble);
+            _clock.Compare(NetworkTime.time, clockNow);
         }
 
         private void FixedUpdate() {
             PoseBefore = PoseNow;
-            if (_hasClock == false)
+            if (_clock.IsStarted == false)
                 return;
 
-            double serverTime = Time.fixedTimeAsDouble + _clockOffset;
+            _clock.Step(Time.fixedDeltaTime);
+            double serverTime = _clock.Time;
             PoseNow = PoseAt(CirclePath.AngleAt(_isRunning, _angleAtChange, _changedAt, AngularSpeed, serverTime), serverTime);
             _body.MovePosition(PoseNow.position);
             _body.MoveRotation(PoseNow.rotation);
         }
 
         public bool Holds(Vector3 worldPoint) {
-            Vector3 local = CarrierMotion.ToLocalPoint(PoseNow, worldPoint);
+            // The bodies on it stand where the last step carried them, so the point is read in that step's pose: in this
+            // step's, a fast platform is already a step ahead and a body at its trailing edge looked off it.
+            Vector3 local = CarrierMotion.ToLocalPoint(PoseBefore, worldPoint);
             Vector3 half = _deck.size * 0.5f;
             return Mathf.Abs(local.x) <= half.x + _rideEdgeMargin
                 && Mathf.Abs(local.z) <= half.z + _rideEdgeMargin
@@ -91,7 +105,7 @@ namespace Features.MovingPlatformModule {
 
         [Server]
         public void ServerToggle() {
-            double now = NetworkTime.time;
+            double now = _clock.IsStarted ? _clock.Time : NetworkTime.time;
             _angleAtChange = CirclePath.AngleAt(_isRunning, _angleAtChange, _changedAt, AngularSpeed, now);
             _changedAt = now;
             _isRunning = _isRunning == false;

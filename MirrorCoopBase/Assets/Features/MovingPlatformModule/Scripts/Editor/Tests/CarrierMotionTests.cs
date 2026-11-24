@@ -50,6 +50,16 @@ namespace Features.MovingPlatformModule.Editor.Tests {
             AssertNear(direction, CarrierMotion.ToWorldDirection(pose, CarrierMotion.ToLocalDirection(pose, direction)));
         }
 
+        [Test]
+        public void WhenTheCarrierRocks_ThenItsHeadingKeepsOnlyTheTurn() {
+            var pose = new Pose(Vector3.zero, Quaternion.Euler(10f, 40f, -12f));
+
+            Quaternion heading = CarrierMotion.HeadingOf(pose);
+
+            Assert.AreEqual(40f, heading.eulerAngles.y, 0.01f);
+            AssertNear(Vector3.up, heading * Vector3.up);
+        }
+
         private static void AssertNear(Vector3 expected, Vector3 actual) =>
             Assert.AreEqual(0f, Vector3.Distance(expected, actual), TOLERANCE, $"expected {expected}, got {actual}");
     }

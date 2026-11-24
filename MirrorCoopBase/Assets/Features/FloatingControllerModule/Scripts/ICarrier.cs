@@ -14,7 +14,8 @@ namespace Features.FloatingControllerModule {
         // The rotation as drawn this frame (between physics steps), for what follows it every frame: the camera.
         Quaternion DrawnRotation { get; }
 
-        // Whether a point is in the space above the carrier where a body in the air still rides with it (a jump).
+        // Whether a point is in the space above the carrier where a body in the air still rides with it (a jump). The
+        // point is where a body stands now, before this step's carry, so it is read in the carrier's PoseBefore.
         bool Holds(Vector3 worldPoint);
     }
 }

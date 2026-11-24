@@ -20,6 +20,8 @@ namespace Features.PlayerReplicaModule {
     // once per packet, a snap past the snap distance. The target is moved ahead along the packet's velocity only while
     // the owner walks. The look follows the current packet too. A jump of the body is hidden by ReplicaVisualLag. While a
     // ride or a seat holds the body (kinematic), the copy leaves it alone.
+    // A packet sent on a carrier (a moving platform) is read in this peer's copy of that carrier (CopyCarrierFrame): the
+    // copy rides it (ICarrierRider), its target is the owner's spot on it, and the walk and look follow its heading.
     // Runs after the float probe and before the movement (execution order): a packet's controls and the reconciled
     // velocity are in place before the movement computes this step's drive, so a stop reaches the copy on the very
     // step it is due. All of it happens before the physics step moves the body.
@@ -34,7 +36,9 @@ namespace Features.PlayerReplicaModule {
         private readonly PacketMovementControls _input = new();
         private readonly PacketDelayBuffer _delayBuffer = new();
         private readonly GroundMismatchTimer _groundTimer = new();
+        private readonly CopyCarrierFrame _carrierFrame = new();
 
+        private ICarrierRider _rider;
         private ReplicaConfiguration _configuration;
         private ReplicaModeModel _modeModel;
         private bool _isDriving;
@@ -47,6 +51,9 @@ namespace Features.PlayerReplicaModule {
             _configuration = configuration;
             _modeModel = modeModel;
         }
+
+        private void Awake() =>
+            _rider = GetComponent<ICarrierRider>();
 
         private void OnEnable() =>
             _channel.OnPacketAccepted += OnPacketAccepted;
@@ -76,19 +83,31 @@ namespace Features.PlayerReplicaModule {
             if (_delayBuffer.Advance(showTime))
                 ApplyCurrent();
 
+            FollowCarrier();
+
             if (body.isKinematic) {
                 StopSimulating();
                 return;
             }
 
             StartSimulating();
-            Correct(body, showTime);
+            if (_carrierFrame.IsMissing == false)
+                Correct(body, showTime);
+        }
+
+        // The carrier of the current packet: the copy rides it, and its controls and look follow its heading this step.
+        private void FollowCarrier() {
+            BodyStatePacket packet = _delayBuffer.Current;
+            _carrierFrame.Resolve(packet.CarrierId);
+            _rider?.SetCopyCarrier(_carrierFrame.Carrier);
+            Quaternion heading = _carrierFrame.Heading;
+            _input.SetHeading(heading);
+            _movable.SetRemoteLook(YawCompression.Unpack(packet.LookYaw) + heading.eulerAngles.y);
         }
 
         private void ApplyCurrent() {
             BodyStatePacket packet = _delayBuffer.Current;
             _input.Apply(packet);
-            _movable.SetRemoteLook(YawCompression.Unpack(packet.LookYaw));
         }
 
         private void OnPacketAccepted(BodyStatePacket packet) {
@@ -113,7 +132,8 @@ namespace Features.PlayerReplicaModule {
             ApplyCurrent();
             _hasReconciled = false;
             _isDriving = true;
-            Snap(body, packet.RelativePosition, packet.RelativeVelocity, false);
+            _carrierFrame.Resolve(packet.CarrierId);
+            Snap(body, _carrierFrame.ToWorldPoint(packet.RelativePosition), _carrierFrame.ToWorldDirection(packet.RelativeVelocity), false);
             return true;
         }
 
@@ -135,6 +155,7 @@ namespace Features.PlayerReplicaModule {
             _groundTimer.Reset();
             _floatingController.SimulatesCopy = true;
             _movable.SetRemoteInput(_input);
+            _rider?.RideAsCopy(true);
         }
 
         private void StopSimulating() {
@@ -144,6 +165,7 @@ namespace Features.PlayerReplicaModule {
             _isSimulating = false;
             _floatingController.SimulatesCopy = false;
             _movable.SetRemoteInput(null);
+            _rider?.RideAsCopy(false);
         }
 
         private void Correct(Rigidbody body, double showTime) {
@@ -153,13 +175,16 @@ namespace Features.PlayerReplicaModule {
             // past the place they stop at, and the copy would be pulled back.
             bool ownerSteers = packet.WalkDirection != Vector2.zero;
             double age = ownerSteers ? showTime - packet.ServerTime : 0d;
-            Vector3 target = CorrectionTarget.Predict(packet.RelativePosition, packet.RelativeVelocity, age, settings.LeadLimitSeconds);
+            Vector3 localTarget = CorrectionTarget.Predict(packet.RelativePosition, packet.RelativeVelocity, age, settings.LeadLimitSeconds);
+            Vector3 target = _carrierFrame.ToWorldPoint(localTarget);
+            // Relative to the carrier like the copy's own velocity between the rider's steps, in world axes.
+            Vector3 ownerVelocity = _carrierFrame.ToWorldDirection(packet.RelativeVelocity);
 
             _groundTimer.Tick(packet.Has(BodyStateFlags.Grounded), _movable.IsSupported, Time.fixedDeltaTime);
             bool isStuck = _groundTimer.IsStuck(settings.GroundMismatchSeconds);
             PositionCorrectionStep step = PositionCorrection.Compute(target - body.position, ownerSteers, isStuck, settings);
             if (step.IsSnap) {
-                Snap(body, target, packet.RelativeVelocity, true);
+                Snap(body, target, ownerVelocity, true);
                 return;
             }
 
@@ -167,7 +192,7 @@ namespace Features.PlayerReplicaModule {
             if (_hasReconciled && packet.Number == _reconciledSequence)
                 return;
 
-            body.linearVelocity = VelocityReconciliation.Reconcile(body.linearVelocity, packet.RelativeVelocity, ownerSteers);
+            body.linearVelocity = VelocityReconciliation.Reconcile(body.linearVelocity, ownerVelocity, ownerSteers);
             _reconciledSequence = packet.Number;
             _hasReconciled = true;
         }

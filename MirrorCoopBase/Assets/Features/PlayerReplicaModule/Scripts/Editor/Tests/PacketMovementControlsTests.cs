@@ -56,5 +56,16 @@ namespace Features.PlayerReplicaModule.Editor.Tests {
             _source.Apply(new BodyStatePacket { JumpCount = 3 });
             Assert.IsFalse(_source.ConsumeJumpPress());
         }
+
+        [Test]
+        public void WhenThePacketIsOnACarrier_ThenTheWalkTurnsWithItsHeading() {
+            _source.Apply(new BodyStatePacket { WalkDirection = new Vector2(0f, 1f) });
+
+            _source.SetHeading(Quaternion.Euler(0f, 90f, 0f));
+
+            Vector3 wish = _source.ReadWish();
+            Assert.AreEqual(1f, wish.x, TOLERANCE);
+            Assert.AreEqual(0f, wish.z, TOLERANCE);
+        }
     }
 }

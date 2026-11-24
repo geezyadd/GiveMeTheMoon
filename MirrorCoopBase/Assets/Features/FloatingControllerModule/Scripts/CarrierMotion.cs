@@ -14,6 +14,10 @@ namespace Features.FloatingControllerModule {
         public static float YawOf(Pose before, Pose now) =>
             Mathf.DeltaAngle(before.rotation.eulerAngles.y, now.rotation.eulerAngles.y);
 
+        // The pose's turn around the up axis only: walking and looking follow the carrier's heading, not its rocking.
+        public static Quaternion HeadingOf(Pose pose) =>
+            Quaternion.Euler(0f, pose.rotation.eulerAngles.y, 0f);
+
         public static Vector3 PointVelocity(Pose before, Pose now, Vector3 point, float stepSeconds) =>
             (CarryPoint(before, now, point) - point) / stepSeconds;
 

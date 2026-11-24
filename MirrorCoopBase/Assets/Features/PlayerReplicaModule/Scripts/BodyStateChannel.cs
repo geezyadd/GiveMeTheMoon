@@ -41,7 +41,7 @@ namespace Features.PlayerReplicaModule {
         }
 
         private void Awake() =>
-            _sampler = new BodyStateSampler(_movable, _floatingController);
+            _sampler = new BodyStateSampler(_movable, _floatingController, GetComponent<ICarrierRider>());
 
         public override void OnStartClient() =>
             _registry?.Add(this);

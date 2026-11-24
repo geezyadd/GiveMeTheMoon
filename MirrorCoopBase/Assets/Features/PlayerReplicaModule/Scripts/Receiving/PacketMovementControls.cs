@@ -11,12 +11,18 @@ namespace Features.PlayerReplicaModule.Receiving {
 
         private BodyStatePacket _packet;
         private bool _pendingJump;
+        private Quaternion _heading = Quaternion.identity;
 
         public bool SprintHeld => _packet.Has(BodyStateFlags.Sprinting);
         public bool JumpHeld => _packet.Has(BodyStateFlags.JumpHeld);
 
+        // The walk direction comes in the carrier's heading; it is turned into the world's here.
         public Vector3 ReadWish() =>
-            new(_packet.WalkDirection.x, 0f, _packet.WalkDirection.y);
+            _heading * new Vector3(_packet.WalkDirection.x, 0f, _packet.WalkDirection.y);
+
+        // The heading of the carrier the packet is in (identity on the still world), updated each physics step.
+        public void SetHeading(Quaternion heading) =>
+            _heading = heading;
 
         public bool ConsumeJumpPress() {
             bool pressed = _pendingJump;
@@ -34,6 +40,7 @@ namespace Features.PlayerReplicaModule.Receiving {
         public void Reset() {
             _packet = default;
             _pendingJump = false;
+            _heading = Quaternion.identity;
             _jumps.Reset();
         }
     }
