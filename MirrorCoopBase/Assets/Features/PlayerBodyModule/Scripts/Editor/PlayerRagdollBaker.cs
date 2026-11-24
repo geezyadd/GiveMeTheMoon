@@ -70,6 +70,7 @@ namespace Features.PlayerBodyModule.Editor {
             PutOnRagdollLayer(body);
             PutToSleep(body, animator);
             WireSwitch(player, movable, body);
+            WireBodyHider(player, movable, animator);
             return true;
         }
 
@@ -99,6 +100,8 @@ namespace Features.PlayerBodyModule.Editor {
 
             animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(ControllerPath);
             animator.applyRootMotion = false;
+            // The pose is the ragdoll's target, needed even when the model is not drawn (the owner's own view).
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             animator.enabled = false;
         }
 
@@ -115,6 +118,22 @@ namespace Features.PlayerBodyModule.Editor {
                 player.GetComponent<FloatingController>();
             serialized.FindProperty("_ragdoll").objectReferenceValue = body;
             serialized.FindProperty("_copyDriver").objectReferenceValue = player.GetComponent<BodyCopyDriver>();
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // Every renderer of the model (the body mesh, the face parts) is hidden from the player's own view.
+        private static void WireBodyHider(GameObject player, CharacterMovableBase movable, Animator animator) {
+            OwnBodyHider hider = player.GetComponent<OwnBodyHider>();
+            if (hider == null)
+                hider = player.AddComponent<OwnBodyHider>();
+
+            Renderer[] modelRenderers = animator.GetComponentsInChildren<Renderer>(true);
+            SerializedObject serialized = new(hider);
+            serialized.FindProperty("_movable").objectReferenceValue = movable;
+            SerializedProperty renderers = serialized.FindProperty("_renderers");
+            renderers.arraySize = modelRenderers.Length;
+            for (int i = 0; i < modelRenderers.Length; i++)
+                renderers.GetArrayElementAtIndex(i).objectReferenceValue = modelRenderers[i];
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

@@ -38,8 +38,12 @@ throwaway idle / walk one.
   position, mass-weighted velocity, total mass, acceleration and velocity change on every limb, `PauseSupport` = the
   sensor's stand pause after a jump, `MoveBy` shifts every limb, `SetVelocity` shifts every limb's velocity by the same
   amount, the ride as `Rider`).
+- `OwnBodyHider` (on `DummyPlayer`): on the local player, while the active camera is the first-person one
+  (`IGameCameraService.ActiveId == FPCamera`), every renderer of the model (the body mesh, the face parts) only casts
+  shadows; in the third-person view and for other players the whole body is drawn.
 - `RagdollBodyParts`: the ragdoll components switched together, the hand-over of locomotion, the pose reset.
 - Editor: `PlayerRagdollBaker` (Tools > Ragdoll > Bake Ragdoll Into Player): on the humanoid in `DummyPlayer` adds
   the ragdoll components, fills `GameResources/PlayerRagdollProfile` from the avatar, bakes the limbs, puts every limb
   collider's object on the `PlayerRagdoll` layer (not in the interaction aim's blocker mask, so aiming and grabbing
-  pass through the player's own body), leaves it asleep, gives the animator the test controller and wires `PlayerRagdollBody` (with the player's `BodyCopyDriver`). Running it again rebuilds it.
+  pass through the player's own body), leaves it asleep, gives the animator the test controller and wires `PlayerRagdollBody` (with the player's `BodyCopyDriver`). It also sets the animator to always animate (the pose is needed while the owner's model is not drawn) and wires
+  `OwnBodyHider` with every renderer of the model. Running it again rebuilds it.
