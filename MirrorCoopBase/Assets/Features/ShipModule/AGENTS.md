@@ -101,7 +101,7 @@ the scene's sceneId still matches). Code in `ShipModule/Scripts/Throttle/`, numb
 **Riding the ship.** In flight a player on the deck is not moved by physics: `ShipRider` binds it to the ship
 (kinematic, collisions off) at a ship-local offset, and the owner walks and jumps in that offset. Each peer binds only
 its own player; the others follow the owner's synced offset. `ShipRider` is the network side and the order of a
-frame; the work is in `Scripts/Riding/`: `ShipRideBody` (binding the body: kinematic, no collisions, interpolation or
+frame; the work is in `Scripts/Riding/`: `ShipRideBody` (binding the body; `ShipRider` also marks the movement held, `CharacterMovableBase.SetHeld`, while bound: kinematic, no collisions, interpolation or
 spring, own network body silent, placed at the offset; releasing gives it back), `ShipDeckWalk` (the owner's walk along
 the camera in deck space and the vertical: spring, jump, air gravity via `RideVertical`), `ShipRideOffsetStream` (the
 standing offset sent every 0.05 s and played back late on the other peers) and `ShipSeatRide` (a moving seat point, the

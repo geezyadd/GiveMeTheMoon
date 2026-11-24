@@ -51,6 +51,7 @@ namespace Features.ShipModule.Scripts {
         private DeckRideModeModel _deckRideModeModel;
 
         private ShipRideBody _body;
+        private CharacterMovableBase _movable;
         private ShipDeckWalk _deckWalk;
         private readonly ShipRideOffsetStream _offsetStream = new ShipRideOffsetStream();
         private readonly ShipSeatRide _seatRide = new ShipSeatRide();
@@ -71,8 +72,10 @@ namespace Features.ShipModule.Scripts {
         private bool IsFollowingSeatPoint => _seatRide.IsFollowingSeatPoint(_seated);
         public PlayerKey Key => new PlayerKey(_playerKey);
 
-        private void Awake() =>
+        private void Awake() {
             EnsureParts();
+            _movable = GetComponent<CharacterMovableBase>();
+        }
 
         [Inject]
         private void InjectDependencies(
@@ -160,6 +163,8 @@ namespace Features.ShipModule.Scripts {
             _deckWalk.TrackPlatformRotation(_platform.rotation);
             _bound = true;
             _body.Attach(_platform, _localOffset);
+            if (_movable != null)
+                _movable.SetHeld(true);
 
             if (isOwned) {
                 _syncedLocalOffset = _localOffset;
@@ -238,6 +243,8 @@ namespace Features.ShipModule.Scripts {
                 _seated = false;
 
             _body.Detach(carryVelocity, _rideVelocity);
+            if (_movable != null)
+                _movable.SetHeld(false);
             _body.RestoreNetworkBody();
             if (isOwned && NetworkClient.ready)
                 CmdEndRide();

@@ -85,6 +85,13 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         // Makes the movement drive another body instead of the capsule (null: the capsule again).
+        // A ride or a seat holds the player in place (it moves the capsule itself): the movement does not walk the
+        // body, and a body other than the capsule follows the capsule instead of leading it.
+        public bool IsHeld { get; private set; }
+
+        public void SetHeld(bool isHeld) =>
+            IsHeld = isHeld;
+
         public void SetDrivenBody(IMovableBody body) =>
             _drivenBody = body;
 
@@ -141,7 +148,7 @@ namespace Features.CharacterMovableModule.Scripts {
                 return;
             }
 
-            if (DrivenBody.IsKinematic) {
+            if (DrivenBody.IsKinematic || IsHeld) {
                 if (ControlsSelf)
                     StopPushing();
                 return;

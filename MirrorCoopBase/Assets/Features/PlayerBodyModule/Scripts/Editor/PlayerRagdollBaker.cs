@@ -15,6 +15,7 @@ namespace Features.PlayerBodyModule.Editor {
         private const string ProfilePath = ProfileFolder + "/PlayerRagdollProfile.asset";
         // The player's limbs sit on their own layer, so the interaction aim and other player-only queries skip them.
         private const string RagdollLayer = "PlayerRagdoll";
+        private const string BodyRendererField = "_bodyRenderer";
         private const string ControllerPath =
             "Assets/Features/ActiveRagdollModule/GameResources/RagdollTestDummy.controller";
 
@@ -71,6 +72,7 @@ namespace Features.PlayerBodyModule.Editor {
             PutToSleep(body, animator);
             WireSwitch(player, movable, body);
             WireBodyHider(player, movable, animator);
+            WireBodyRendererReaders(player, animator);
             return true;
         }
 
@@ -98,7 +100,8 @@ namespace Features.PlayerBodyModule.Editor {
                 foreach (Collider limbCollider in limb.Colliders)
                     limbCollider.enabled = false;
 
-            animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(ControllerPath);
+            animator.runtimeAnimatorController =
+                AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(ControllerPath);
             animator.applyRootMotion = false;
             // The pose is the ragdoll's target, needed even when the model is not drawn (the owner's own view).
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
@@ -106,6 +109,7 @@ namespace Features.PlayerBodyModule.Editor {
         }
 
         private static void WireSwitch(GameObject player, CharacterMovableBase movable, RagdollBody body) {
+
             PlayerRagdollBody ragdollSwitch = player.GetComponent<PlayerRagdollBody>();
             if (ragdollSwitch == null)
                 ragdollSwitch = player.AddComponent<PlayerRagdollBody>();
@@ -113,7 +117,6 @@ namespace Features.PlayerBodyModule.Editor {
             SerializedObject serialized = new(ragdollSwitch);
             serialized.FindProperty("_movable").objectReferenceValue = movable;
             serialized.FindProperty("_capsule").objectReferenceValue = movable.Body;
-            serialized.FindProperty("_capsuleCollider").objectReferenceValue = player.GetComponent<CapsuleCollider>();
             serialized.FindProperty("_floatingController").objectReferenceValue =
                 player.GetComponent<FloatingController>();
             serialized.FindProperty("_ragdoll").objectReferenceValue = body;
@@ -135,6 +138,26 @@ namespace Features.PlayerBodyModule.Editor {
             for (int i = 0; i < modelRenderers.Length; i++)
                 renderers.GetArrayElementAtIndex(i).objectReferenceValue = modelRenderers[i];
             serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // Components that show themselves only while the body is drawn (the nameplate) read the model's skinned mesh,
+        // which the ragdoll hides for a dead player. Found by the field name, so this module needs no reference to
+        // theirs.
+        private static void WireBodyRendererReaders(GameObject player, Animator animator) {
+            SkinnedMeshRenderer bodyRenderer = animator.GetComponentInChildren<SkinnedMeshRenderer>(true);
+            foreach (MonoBehaviour behaviour in player.GetComponentsInChildren<MonoBehaviour>(true)) {
+                if (behaviour == null)
+                    continue;
+
+                SerializedObject serialized = new(behaviour);
+                SerializedProperty bodyRendererField = serialized.FindProperty(BodyRendererField);
+                if (bodyRendererField == null
+                    || bodyRendererField.propertyType != SerializedPropertyType.ObjectReference)
+                    continue;
+
+                bodyRendererField.objectReferenceValue = bodyRenderer;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
         }
 
         private static Animator FindHumanoid(GameObject player) {

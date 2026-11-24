@@ -1,6 +1,7 @@
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.GrabModule.Scripts;
 using Features.NetworkModelModule.Scripts;
+using Features.PlayerBodyModule;
 using Features.PlayerLifeModule.Scripts.Generated;
 using Features.ShipModule.Scripts;
 using Mirror;
@@ -17,6 +18,8 @@ namespace Features.PlayerLifeModule.Scripts {
         [SerializeField] private Transform _followTarget;
         [SerializeField] private Renderer[] _renderers;
         [SerializeField] private Collider[] _colliders;
+
+        private PlayerRagdollBody _ragdollBody;
 
         private IPlayerBodyRegistry _registry;
         private PlayerControlBlockModel _controlBlock;
@@ -53,6 +56,7 @@ namespace Features.PlayerLifeModule.Scripts {
         }
 
         private void Awake() {
+            _ragdollBody = GetComponent<PlayerRagdollBody>();
             _aliveConstraints = _body.constraints;
             _heldItemRelease = GetComponent<IHeldItemRelease>();
         }
@@ -108,6 +112,9 @@ namespace Features.PlayerLifeModule.Scripts {
                 return;
 
             _deadShown = dead;
+            // The ragdoll sleeps (and hides) first, so the capsule set up below for the dead stays that way.
+            if (_ragdollBody != null)
+                _ragdollBody.SetSuspended(dead);
             for (int i = 0; i < _renderers.Length; i++)
                 _renderers[i].enabled = dead == false;
 

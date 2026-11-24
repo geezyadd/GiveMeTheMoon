@@ -25,6 +25,7 @@ namespace Features.ShipModule.Scripts.Riding {
         public Pose PoseBefore { get; private set; }
         public Pose PoseNow { get; private set; }
         public Quaternion DrawnRotation => _ship.transform.rotation;
+        public Vector3 DrawnPosition => _ship.transform.position;
 
         private void FixedUpdate() {
             _ship.ServerFlightStep(Time.fixedDeltaTime);

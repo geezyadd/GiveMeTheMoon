@@ -86,7 +86,7 @@ at 1), falling and getting up, network copies.
   gravity, drag, the gizmo, the root pin and a throwaway animator from
   `TestDummyAnimatorBuilder`: `GameResources/RagdollTestDummy.controller`, float `Forward` blends idle (0) to walking
   forward (1), clips from `Global/Packages/KevinIglesias/HumanAnimations`; running it again replaces the dummy).
-  A test helper until the ragdoll moves into the player.
+  A test helper; the dummy itself was taken out of the lobby again once the ragdoll moved into the player.
 
 ## Setting up a body
 1. Put the model under a root object, add `RagdollBody`, create a body profile and assign it.

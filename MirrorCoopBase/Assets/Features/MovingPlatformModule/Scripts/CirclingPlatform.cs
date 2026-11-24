@@ -51,6 +51,7 @@ namespace Features.MovingPlatformModule {
         public Pose PoseBefore { get; private set; }
         public Pose PoseNow { get; private set; }
         public Quaternion DrawnRotation => _body.transform.rotation;
+        public Vector3 DrawnPosition => _body.transform.position;
 
         private float AngularSpeed => _speed / _radius;
 

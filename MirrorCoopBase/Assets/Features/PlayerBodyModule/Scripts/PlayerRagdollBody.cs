@@ -3,8 +3,8 @@ using Features.CameraModule.Scripts.Models;
 using Features.CharacterMovableModule.Scripts;
 using Features.CharacterMovableModule.Scripts.MovementControls;
 using Features.FloatingControllerModule;
-using Features.PlayerReplicaModule;
 using Features.GameCoreModule.Contracts;
+using Features.PlayerReplicaModule;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Zenject;
@@ -12,14 +12,16 @@ using Zenject;
 namespace Features.PlayerBodyModule {
     // The player's own movement walks with the ragdoll instead of the capsule. Asleep the ragdoll is a kinematic,
     // collision-free part of the model inside the capsule. Awake it leaves the capsule (physical limbs cannot live
-    // inside a moving rigidbody), the movement pushes it, and the capsule turns kinematic and follows its root limb,
-    // so the camera, the network and everything else that looks at the capsule keep working.
+    // inside a moving rigidbody), the movement pushes it, and the capsule turns kinematic, without its colliders, and
+    // follows its root limb, so the camera, the network and everything else that looks at the capsule keep working.
     // The owner's body is awake, and so is a copy of another player's body while this peer simulates it from that
-    // player's packets; otherwise (the old network body) it stays an asleep capsule.
-    // Awake, the ragdoll lives in the persistent scene like the players (the player destroys it with itself), so a map
-    // change that keeps the player keeps it too, and a teleport of the capsule (a spawn, a map change) takes the ragdoll along instead of
-    // being undone by the follow. Runs before everything that reads the body this step (the movement, the network).
-    [DefaultExecutionOrder(-200)]
+    // player's packets; otherwise (the old network body) it stays asleep. A suspended body (a dead player) sleeps and
+    // is not drawn.
+    // While a ride or a seat holds the player, the capsule leads instead: the ragdoll stands where the capsule is.
+    // Awake, the ragdoll lives in the persistent scene like the players (the player destroys it with itself), and a
+    // teleport of the capsule (a spawn, a map change) takes it along. Runs before everything that reads the body this
+    // step (the movement, the network), after the carriers have taken this step's pose.
+    [DefaultExecutionOrder(-190)]
     public sealed class PlayerRagdollBody : MonoBehaviour {
         private const string ForwardParameter = "Forward";
         private const float AnimatorDamping = 0.125f;
@@ -29,13 +31,14 @@ namespace Features.PlayerBodyModule {
 
         [SerializeField] private CharacterMovableBase _movable;
         [SerializeField] private Rigidbody _capsule;
-        [SerializeField] private Collider _capsuleCollider;
         [SerializeField] private FloatingController _floatingController;
         [SerializeField] private RagdollBody _ragdoll;
         [SerializeField] private BodyCopyDriver _copyDriver;
 
         private RagdollBodyParts _parts;
         private RagdollMovableBody _movableBody;
+        private CapsuleColliders _capsuleColliders;
+        private Renderer[] _modelRenderers;
         private Transform _home;
         private Vector3 _homeLocalPosition;
         private Quaternion _homeLocalRotation;
@@ -43,6 +46,8 @@ namespace Features.PlayerBodyModule {
         private Vector3 _capsuleOffset;
         private Vector3 _lastPlacedCapsule;
         private bool _isAwake;
+        private bool _isSuspended;
+        private bool _wasHeld;
         private CameraCarryTurnModel _cameraCarryTurnModel;
         private bool _hasDrawnYaw;
         private float _lastDrawnYaw;
@@ -54,6 +59,8 @@ namespace Features.PlayerBodyModule {
         private void Awake() {
             _parts = new RagdollBodyParts(_ragdoll);
             _movableBody = new RagdollMovableBody(_ragdoll, _parts.Ground, _parts.Ride);
+            _capsuleColliders = new CapsuleColliders(_capsule.transform, _ragdoll.transform);
+            _modelRenderers = _ragdoll.GetComponentsInChildren<Renderer>(true);
             Transform ragdollTransform = _ragdoll.transform;
             _home = ragdollTransform.parent;
             _homeLocalPosition = ragdollTransform.localPosition;
@@ -65,10 +72,32 @@ namespace Features.PlayerBodyModule {
             _ragdoll.SetInterpolation(false);
         }
 
+        // A player object that is turned off (not destroyed) must not leave its ragdoll standing in the world.
+        private void OnEnable() {
+            if (_isAwake && _ragdoll != null)
+                _ragdoll.gameObject.SetActive(true);
+        }
+
+        private void OnDisable() {
+            if (_isAwake && _ragdoll != null)
+                _ragdoll.gameObject.SetActive(false);
+        }
+
         private void OnDestroy() {
             // Awake, the ragdoll lives outside the player and would stay behind.
             if (_isAwake && _ragdoll != null)
                 Destroy(_ragdoll.gameObject);
+        }
+
+        // A suspended body (a dead player) sleeps inside the capsule and is not drawn. It falls asleep at once, so the
+        // caller can set up the capsule (colliders, freezing) right after without the sleep undoing it.
+        public void SetSuspended(bool isSuspended) {
+            _isSuspended = isSuspended;
+            if (isSuspended && _isAwake && _ragdoll != null)
+                FallAsleep();
+            foreach (Renderer modelRenderer in _modelRenderers)
+                if (modelRenderer != null)
+                    modelRenderer.enabled = isSuspended == false;
         }
 
         private void Update() {
@@ -76,7 +105,7 @@ namespace Features.PlayerBodyModule {
                 LoseRagdoll();
 
             bool simulated = _movable.isOwned || (_copyDriver != null && _copyDriver.IsSimulating);
-            bool wanted = simulated && _ragdoll != null;
+            bool wanted = simulated && _isSuspended == false && _ragdoll != null;
             if (wanted != _isAwake) {
                 if (wanted)
                     WakeUp();
@@ -89,9 +118,11 @@ namespace Features.PlayerBodyModule {
             TurnCameraWithCarrier();
         }
 
-        // The local player's view turns with the carrier the ragdoll rides, as the carrier is drawn each frame.
+        // The local player's view turns with the carrier the ragdoll rides, as the carrier is drawn each frame. A held
+        // player's capsule is turned by its ride, and the view with it, so nothing is added then.
         private void TurnCameraWithCarrier() {
-            ICarrier carrier = _isAwake && _parts.Ride != null ? _parts.Ride.Carrier : null;
+            bool riding = _isAwake && _movable.IsHeld == false && _parts.Ride != null;
+            ICarrier carrier = riding ? _parts.Ride.Carrier : null;
             if (carrier == null || _movable.isLocalPlayer == false || _cameraCarryTurnModel == null) {
                 _hasDrawnYaw = false;
                 return;
@@ -114,11 +145,41 @@ namespace Features.PlayerBodyModule {
                 return;
             }
 
+            _capsuleColliders.KeepOff();
+            // A seat or a ride holds the player: the ragdoll is put on the seat's spot once and then just stands there,
+            // carried by the ship like anyone standing on the deck (it does not walk while held).
+            if (_movable.IsHeld) {
+                if (_wasHeld == false)
+                    StepOntoHeldSpot();
+                _wasHeld = true;
+                return;
+            }
+
+            if (_wasHeld)
+                _lastPlacedCapsule = _capsule.position;
+            _wasHeld = false;
+
             FollowCapsuleTeleport();
-            // Others (a ride, a seat) may turn the capsule dynamic again; while awake it only follows.
+            // Others may turn the capsule dynamic again; while the ragdoll leads it only follows.
             _capsule.isKinematic = true;
             _lastPlacedCapsule = _ragdoll.Root.Rigidbody.position + _capsuleOffset;
             _capsule.MovePosition(_lastPlacedCapsule);
+        }
+
+        // The seat places the capsule once a frame on the carrier as drawn, the ragdoll is carried once a physics step:
+        // the spot is read in the drawn pose and put in the step's pose the ragdoll stands in now. Only horizontally:
+        // the ragdoll stands at its own height (no sitting).
+        private void StepOntoHeldSpot() {
+            Vector3 spot = _capsule.position - _capsuleOffset;
+            Vector3 up = Vector3.up;
+            ICarrier carrier = _parts.Ride != null ? _parts.Ride.Carrier : null;
+            if (carrier != null) {
+                Pose drawn = new(carrier.DrawnPosition, carrier.DrawnRotation);
+                spot = CarrierMotion.ToWorldPoint(carrier.PoseBefore, CarrierMotion.ToLocalPoint(drawn, spot));
+                up = carrier.PoseBefore.rotation * Vector3.up;
+            }
+
+            _ragdoll.MoveAllBy(Vector3.ProjectOnPlane(spot - _ragdoll.Root.Rigidbody.position, up));
         }
 
         private void FollowCapsuleTeleport() {
@@ -142,7 +203,7 @@ namespace Features.PlayerBodyModule {
         // The ragdoll was destroyed under a live player (it should not be): the capsule takes over again for good.
         private void LoseRagdoll() {
             _movable.SetDrivenBody(null);
-            _capsuleCollider.enabled = true;
+            _capsuleColliders.Restore();
             _capsule.isKinematic = false;
             _floatingController.HoverEnabled = true;
             _isAwake = false;
@@ -150,24 +211,25 @@ namespace Features.PlayerBodyModule {
         }
 
         private void WakeUp() {
-            Vector3 velocity = _capsule.linearVelocity;
+            Vector3 velocity = _capsule.isKinematic ? Vector3.zero : _capsule.linearVelocity;
             _capsuleOffset = _capsule.position - _ragdoll.Root.Rigidbody.position;
 
             _parts.Animator.enabled = true;
             _ragdoll.transform.SetParent(null, true);
             MoveToPersistentScene(_ragdoll.gameObject);
             _lastPlacedCapsule = _capsule.position;
+            _wasHeld = false;
             _ragdoll.SetInterpolation(true);
             _ragdoll.SetKinematic(false);
             _ragdoll.SetCollisions(true);
-            _ragdoll.IgnoreCollisionsWith(_capsuleCollider, true);
             _ragdoll.StopAllMotion();
             _ragdoll.AddVelocityChangeToAll(velocity);
             _parts.SetRunning(true);
             _parts.HandLocomotionToOwner();
 
-            _capsule.isKinematic = true;
-            _capsuleCollider.enabled = false;
+            _capsuleColliders.TurnOff();
+            if (_movable.IsHeld == false)
+                _capsule.isKinematic = true;
             _floatingController.HoverEnabled = false;
             _movable.SetDrivenBody(_movableBody);
             _isAwake = true;
@@ -188,18 +250,22 @@ namespace Features.PlayerBodyModule {
             ragdollTransform.localScale = _homeLocalScale;
             _parts.ResetPose();
 
-            _capsuleCollider.enabled = true;
+            _capsuleColliders.Restore();
+            _isAwake = false;
+            // A ride or a seat keeps holding the capsule; only a free capsule walks on by itself.
+            if (_movable.IsHeld)
+                return;
+
             _capsule.isKinematic = false;
             _capsule.linearVelocity = velocity;
             _floatingController.HoverEnabled = true;
-            _isAwake = false;
         }
 
         private void DriveAnimation() {
             _parts.Sampler.FacingYaw = _movable.ShownLookYaw;
             // From the controls, not the measured speed: on a moving, rocking carrier the body always drifts a little
-            // and would shuffle. Small values are cut so the idle stays still.
-            IMovementControls controls = _movable.ActiveControls;
+            // and would shuffle. Small values are cut so the idle stays still. A held player stands still.
+            IMovementControls controls = _movable.IsHeld ? null : _movable.ActiveControls;
             float forward = controls != null ? Mathf.Clamp01(controls.ReadWish().magnitude) : 0f;
             if (forward < IdleCutoff)
                 forward = 0f;

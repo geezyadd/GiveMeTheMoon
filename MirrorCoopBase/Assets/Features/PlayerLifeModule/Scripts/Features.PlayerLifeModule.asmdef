@@ -2,6 +2,7 @@
     "name": "Features.PlayerLifeModule",
     "rootNamespace": "Features.PlayerLifeModule",
     "references": [
+        "GUID:68ce0a1e556c460c8fa35765e586016a",
         "GUID:03a835aea0a645a7b43f5f0c61e8d191",
         "GUID:7db74d1a1ce84239aafaf8624bce950c",
         "GUID:28f96731f5c645d89bbee8e9e47e5c58",
