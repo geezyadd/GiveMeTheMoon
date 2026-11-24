@@ -10,11 +10,10 @@ namespace Game.Connection
     {
         readonly ConnectionLagTransport lagTransport;
 
-        public ConnectionLatencySimulation(Transform parent)
+        public ConnectionLatencySimulation(Transform parent, ConnectionLagTransport prefab)
         {
-            var holder = new GameObject(nameof(ConnectionLagTransport));
-            holder.transform.SetParent(parent, false);
-            lagTransport = holder.AddComponent<ConnectionLagTransport>();
+            lagTransport = Object.Instantiate(prefab, parent, false);
+            lagTransport.name = prefab.name;
             Apply(new ConnectionLatencyProfile());
         }
 

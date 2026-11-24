@@ -32,6 +32,8 @@ namespace Game.Connection
         [Header("Transports")]
         [SerializeField] Transport telepathyTransport;
         [SerializeField] Transport fizzyTransport;
+        [Tooltip("Editor and development builds: the transport that adds delay, jitter and loss for the debug window.")]
+        [SerializeField] ConnectionLagTransport lagTransportPrefab;
 
         ConnectionSessionModel sessionModel;
         ConnectionNetworkEvents events;
@@ -98,7 +100,7 @@ namespace Game.Connection
         {
             transportSwitch = new ConnectionTransportSwitch(gameObject, telepathyTransport, fizzyTransport);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            latencySimulation = new ConnectionLatencySimulation(transform);
+            latencySimulation = new ConnectionLatencySimulation(transform, lagTransportPrefab);
 #endif
             transport = WrapForLatency(transport != null ? transport : transportSwitch.Telepathy);
 
