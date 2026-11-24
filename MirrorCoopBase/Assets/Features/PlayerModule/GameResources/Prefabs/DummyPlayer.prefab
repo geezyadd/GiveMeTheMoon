@@ -43,7 +43,6 @@ GameObject:
   - component: {fileID: 6120488192738405830}
   - component: {fileID: 7148192738405830123}
   - component: {fileID: 8912313244057681703}
-  - component: {fileID: 919415383680135416}
   - component: {fileID: 2109845104136634489}
   - component: {fileID: 4109845104136634490}
   - component: {fileID: 5109845104136634491}
@@ -156,40 +155,6 @@ MonoBehaviour:
   serverOnly: 0
   visibility: 0
   hasSpawned: 0
---- !u!114 &919415383680135416
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1091338388048282597}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3b20dc110904e47f8a154cdcf6433eae, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncDirection: 1
-  syncMode: 0
-  syncInterval: 0
-  target: {fileID: 1910579984047903521}
-  syncPosition: 1
-  syncRotation: 1
-  syncScale: 0
-  onlySyncOnChange: 1
-  compressRotation: 1
-  interpolatePosition: 1
-  interpolateRotation: 1
-  interpolateScale: 1
-  coordinateSpace: 0
-  timelineOffset: 1
-  showGizmos: 0
-  showOverlay: 0
-  overlayColor: {r: 0, g: 0, b: 0, a: 0.5}
-  bufferResetMultiplier: 3
-  useFixedUpdate: 0
-  positionSensitivity: 0.001
-  rotationSensitivity: 0.01
-  scaleSensitivity: 0.01
 --- !u!114 &2109845104136634489
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -342,7 +307,6 @@ MonoBehaviour:
   syncInterval: 0
   _rb: {fileID: 7148192738405830123}
   _floating: {fileID: 5109845104136634491}
-  _netBody: {fileID: 919415383680135416}
   _walkSpeed: 5
   _sprintSpeed: 8
   _stats: {fileID: 8309845104136634496}
@@ -391,7 +355,6 @@ MonoBehaviour:
   syncInterval: 0
   _damageable: {fileID: 6409845104136634497}
   _body: {fileID: 7148192738405830123}
-  _networkBody: {fileID: 919415383680135416}
   _followTarget: {fileID: 7110000000000000012}
   _renderers:
   - {fileID: 5055733605705099643}
@@ -524,7 +487,6 @@ MonoBehaviour:
   _channel: {fileID: 8419845104136634501}
   _movable: {fileID: 2109845104136634489}
   _floatingController: {fileID: 5109845104136634491}
-  _networkBody: {fileID: 919415383680135416}
   _visualLag: {fileID: 8419845104136634503}
 --- !u!1 &2570366265993141210
 GameObject:

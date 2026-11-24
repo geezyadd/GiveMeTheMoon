@@ -10,5 +10,9 @@ namespace Features.FloatingControllerModule {
 
         // While riding as a copy: the carrier to ride (null: the still world).
         void SetCopyCarrier(ICarrier carrier);
+
+        // The body was put somewhere else (a respawn, a map change): the carrier is forgotten without giving its speed
+        // back, and the body boards again from where it now stands.
+        void DropCarrier();
     }
 }

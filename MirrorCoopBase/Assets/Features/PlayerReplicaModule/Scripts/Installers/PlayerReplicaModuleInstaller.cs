@@ -6,7 +6,6 @@ namespace Features.PlayerReplicaModule.Installers {
             Container.Bind<BodyStateChannelRegistry>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.BindInterfacesTo<Diagnostics.ReplicaStatsDebugSystem>().AsSingle();
-            Container.BindInterfacesTo<Diagnostics.ReplicaModeDebugSystem>().AsSingle();
 #endif
         }
     }

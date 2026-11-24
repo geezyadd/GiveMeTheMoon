@@ -29,7 +29,7 @@ point, window closes when walking away, the bought items come to rest within a t
 and destroys the hull in that cruise (`LoopSmokeRunEnd.HullLossInCruise`, `LoopSmokeSession.ReturnToLobbyByHullLossCoroutine`:
 hull 0 -> the crew in the lobby; `LoopSmokeHullLossCheck`: the host stands by the minigun before the takeoff and sits at it
 in the cruise through the seat's use command, so the hull is lost with the host seated and riding; back in the lobby
-it is not riding, not seated, not kinematic, has collisions, hover and its network body back, is alive with unblocked
+it is not riding, not seated, not kinematic, has collisions and hover back, is alive with unblocked
 controls, stands still on the lobby scene's ground and walks under the scripted move input; at the first station of
 run 3 it walks on the deck under that input and stays on it), returns to the menu and checks that there are no
 errors in the log. Before that check `LoopSmokeRejectCheck` joins a silent loopback "host", hands the client an

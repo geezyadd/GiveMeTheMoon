@@ -19,7 +19,6 @@ namespace Features.ShipModule.Scripts {
     public sealed class ShipRider : NetworkBehaviour {
         [SerializeField] private Rigidbody _rb;
         [SerializeField] private FloatingController _floating;
-        [SerializeField] private NetworkRigidbodyUnreliable _netBody;
         [SerializeField] private float _walkSpeed = 5f;
         [SerializeField] private float _sprintSpeed = 8f;
         [SerializeField] private PlayerStatEntity _stats;
@@ -166,7 +165,6 @@ namespace Features.ShipModule.Scripts {
                 CmdBeginRide(_localOffset, NetworkTime.time, ship.NetIdentity);
             }
 
-            _body.SilenceNetworkBody();
         }
 
         private void BindRemote(ShipBase ship) {
@@ -238,7 +236,6 @@ namespace Features.ShipModule.Scripts {
                 _seated = false;
 
             _body.Detach(carryVelocity, _rideVelocity);
-            _body.RestoreNetworkBody();
             if (isOwned && NetworkClient.ready)
                 CmdEndRide();
         }
@@ -400,7 +397,7 @@ namespace Features.ShipModule.Scripts {
 
         // Zenject may inject before or after Awake: whichever comes first makes the parts, the other keeps them.
         private void EnsureParts() {
-            _body ??= new ShipRideBody(transform, _rb, _floating, _netBody);
+            _body ??= new ShipRideBody(transform, _rb, _floating);
             _deckWalk ??= new ShipDeckWalk(_floating, _stats, _walkSpeed, _sprintSpeed, _deckInset);
         }
 

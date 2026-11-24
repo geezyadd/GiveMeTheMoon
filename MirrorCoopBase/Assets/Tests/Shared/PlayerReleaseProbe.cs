@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Tests.Shared {
     // Whether the local player is free of the ship (after a run ended in flight): not riding, not seated, its body
-    // under physics with collisions, hover and its network body, alive and with unblocked controls, and how far it
+    // under physics with collisions and hover, alive and with unblocked controls, and how far it
     // walks under the move input the keyboard fills. Used by the coop host test and the coop client bot (no NUnit there).
     public static class PlayerReleaseProbe {
         private const string SEPARATOR = "; ";
@@ -27,7 +27,6 @@ namespace Tests.Shared {
             AddIf(problems, body.isKinematic, "body kinematic");
             AddIf(problems, body.detectCollisions == false, "collisions off");
             AddIf(problems, player.GetComponent<FloatingController>().HoverEnabled == false, "hover off");
-            AddIf(problems, player.GetComponent<NetworkRigidbodyUnreliable>().enabled == false, "network body silenced");
             AddIf(problems, player.GetComponent<PlayerLifeBody>().Damageable.IsDead, "dead");
             AddIf(problems, SessionQueries.Resolve<CharacterInputBuffer>().IsBlocked, "controls blocked");
             return string.Join(SEPARATOR, problems);

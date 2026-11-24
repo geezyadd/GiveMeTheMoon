@@ -20,34 +20,34 @@ its owner stopped instead of running past and sliding back. Packets only correct
 - velocity is reconciled, never overwritten;
 - a very large error snaps, and the visual hides the jump.
 
-Rare events (death, seat, platform change, hits) go reliably and apply at once.
+Rare events (death, seat, platform change, hits) go reliably and apply at once. So does a move of the body by the
+server (a respawn, a map change, a world shift): every peer moves the body at once, the owner its own; each move has a
+number the owner's packets carry from then on, and a copy holds still at the new place until the first packet sent
+after the move, so it is never pulled back to where the player was.
 
 ## Status
-Being built in steps on `demo/platform-sync`, in the lobby first (the still world as the only platform); the ship deck
-comes later. Done: the pure math, the packet stream and the simulated copies behind a per-peer debug toggle ("Player
-sync: old / new", `ReplicaModeModel`, new by default). The old way stays one press away: copies follow
-`NetworkRigidbodyUnreliable`; riders always follow `ShipRider`. Carriers: on a moving carrier (`ICarrier`, the lobby
-test platform) the packet is in the carrier's axes and copies ride their own copy of it. Not done yet: the ship deck
-as a carrier, removing the proxy shove.
-
-Known limits of the toggle: on the host, the new mode silences the old network body of the other players, so a third
-player in the old mode sees them stand still (two players are fine). Switching to the old mode while a copy rides waits
-until the ride ends.
+Done on `demo/platform-sync`: the pure math, the packet stream and the simulated copies (the only way other players
+are shown; the old network body of the player and its "Player sync: old / new" toggle were removed on 2026-11-24),
+the server's moves of a body through the packets (`IPlayerBodyPlacement`), and carriers: on a moving carrier
+(`ICarrier`: the lobby test platform, the flying ship's deck) the packet is in the carrier's axes and copies ride their
+own copy of it. A seated player is still bound to its seat by `ShipRider` (kinematic); its copy leaves it alone.
+Not done yet: removing the proxy shove.
 
 ## Assembly
 `Features.PlayerReplicaModule` (layer 3; references Mirror, Mirror.Components, Zenject, `CharacterMovableModule`,
-`FloatingControllerModule`, `DebugModule.Contracts`).
+`FloatingControllerModule`, `GameCoreModule.Contracts`, `DebugModule.Contracts`).
 - `BodyCopyDriver` (on `DummyPlayer`, runs after the float probe and before the movement, so a packet's controls
-  and the reconciled velocity apply on the step they are due): on a non-owner in the new mode it silences
-  `NetworkRigidbodyUnreliable`, makes the body dynamic, turns on `FloatingController.SimulatesCopy` and gives
+  and the reconciled velocity apply on the step they are due): on a non-owner it holds the body still (kinematic)
+  until the first packet, then makes it dynamic, turns on `FloatingController.SimulatesCopy` and gives
   `CharacterMovableBase.SetRemoteInput` a `PacketMovementControls` (the newest packet's controls, a jump press from the
   jump counter). Packets wait in a `PacketDelayBuffer` until the show time (server time minus `CopyDelaySeconds`)
   reaches their stamp; the current one gives the controls and the target. After each physics step it pulls the body
   toward the target (`PositionCorrection`), reconciles the velocity once per packet (only slowing the copy while the owner presses no
   walk key) and snaps past the snap distance (counted in the
-  stats). A body that turns kinematic (ride, seat) is left alone until it is dynamic again; a copy held by a ride
-  when the mode is switched on is taken over only after the ride. The server's copy pushes items by contact, so the
-  proxy shove does not run for a simulated copy.
+  stats). A body a seat holds (kinematic, collisions off) is left alone until it is dynamic again. After a move by the
+  server (`BodyStateChannel.OnPlaced`) the copy stops, holds still at the new place and starts over from the first
+  packet with the move's number (`PlacementFence`; at most `PlacementWaitSeconds`, 1 s). The server's copy pushes
+  items by contact, so the proxy shove does not run for a simulated copy.
   On a carrier: `CopyCarrierFrame` finds this peer's copy of the packet's carrier by network id (missing: the body is
   left alone), the copy rides it through `ICarrierRider.SetCopyCarrier` (`RideAsCopy` while simulating), the target and
   the owner's velocity are turned from the carrier's axes (its pose of the last step), and the walk direction
@@ -64,18 +64,22 @@ until the ride ends.
   command and the RPC go on the unreliable channel. The server stamps `ServerTime` = its time minus half the owner's
   round trip, keeps the packet for its own copy and forwards it to everyone else (the host's own player goes out from
   the server directly). Each non-owner keeps the newest packet (`Latest`) through `PacketSequenceFilter` and counts
-  what arrives in `BodyStateReceiveStats`. Packets are in world axes for now (platform 0).
+  what arrives in `BodyStateReceiveStats`. It is also the player's `IPlayerBodyPlacement` (contract in
+  `GameCoreModule.Contracts`): `ServerPlace(pose)` (at rest, off any carrier: `ICarrierRider.DropCarrier`) and
+  `ServerShift(delta)` (velocity kept) move the body on the server at once and on every client by a reliable RPC (the
+  owner too, which moves the body it simulates), with the interpolation dropped for the jump; the move's number
+  (`PlaceCount`) goes into every packet after it. Callers: the respawn (`PlayerLifeBody.ServerTeleport`), the map
+  change (`ConnectionSpawnPlacement.TeleportEverybody`). A player that spawns or rejoins needs none: it spawns at its
+  pose on every peer, and its copies hold still there until its first packet.
 - `BodyStateChannelRegistry`: the channels spawned on this peer.
 - `Sending/`: `BodyStateSampler` (packet from the body, the owner's `IMovementControls`, the look, support and
   `CharacterMovableBase.JumpCount`; on a carrier the position and velocity in its axes of the last step, the walk and
   look in its heading, and its id as `CarrierId`), `BodySendSchedule`.
-- `Receiving/`: `PacketMovementControls`, `PacketDelayBuffer`, `CopyCarrierFrame`, `BodyStateReceiveStats` + `BodyStateReceiveReport` (also counts snaps).
+- `Receiving/`: `PacketMovementControls`, `PacketDelayBuffer`, `CopyCarrierFrame`, `PlacementFence`, `BodyStateReceiveStats` + `BodyStateReceiveReport` (also counts snaps).
 - `Diagnostics/` (editor and development builds), in the debug window's Network section: `ReplicaStatsDebugSystem`
-  ("Replicas: stats": per other player to the console, packets a second, dropped, snaps, average and last age) and
-  `ReplicaModeDebugSystem` ("Player sync: old / new").
-- `Models/ReplicaModeModel`: this peer's sync mode, bound in `DataInstaller`.
+  ("Replicas: stats": per other player to the console, packets a second, dropped, snaps, average and last age).
 - `Configuration/ReplicaConfiguration` (Addressables `ReplicaConfiguration_Default`, bound in
-  `ConfigurationInstaller`): send rates and the correction numbers.
+  `ConfigurationInstaller`): send rates, the placement wait and the correction numbers.
 - `Packets/`: `BodyStatePacket` (public fields so the network layer serializes it), `BodyStateFlags`,
   `YawCompression` (look angle in two bytes), `PacketSequenceFilter` (drops older and out-of-order packets, number
   wraps), `JumpCounterTracker` (a copy jumps once for any number of missed jumps).
@@ -89,4 +93,5 @@ until the ride ends.
   velocity reconciliation per axis (and only slowing while the owner steers nothing), ground mismatch timer, send schedule (moving, idle, a change after idle), receive
   stats, packet input source (controls, jump press from the counter, reset), delay buffer (waits, newest due one,
   restart), the gentle pull while the owner stands, sending at once when a control changes, the visual lag offset
-  (hide, tiny and huge jumps, fade, sum).
+  (hide, tiny and huge jumps, fade, sum), the placement fence (old packets blocked, the move's packet and the
+  ones after it pass, the wait runs out, the number wraps, clear).

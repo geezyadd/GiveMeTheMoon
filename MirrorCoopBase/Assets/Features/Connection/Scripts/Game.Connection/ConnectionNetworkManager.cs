@@ -150,14 +150,12 @@ namespace Game.Connection
         {
             base.OnStartClient();
             mapChange.StartClient();
-            NetworkClient.RegisterHandler<TeleportMessage>(ConnectionSpawnPlacement.OnTeleportMessage);
             events.RaiseClientStarted();
         }
 
         public override void OnStopClient()
         {
             mapChange.StopClient();
-            NetworkClient.UnregisterHandler<TeleportMessage>();
             loadingSceneAsync = null;
             networkSceneName = string.Empty;
             spawnPlacement.ClearSpawn();

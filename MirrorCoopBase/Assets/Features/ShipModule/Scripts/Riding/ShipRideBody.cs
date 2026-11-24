@@ -1,27 +1,23 @@
 using Features.FloatingControllerModule;
 using Features.GameCoreModule.Contracts;
-using Mirror;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts.Riding {
     // The rider's body while it is bound to a ship (standing or seated): kinematic, without collisions, interpolation
-    // or the float spring, its own network body silent, placed each frame at its offset in the ship's axes. Releasing
+    // or the float spring, placed each frame at its offset in the ship's axes. Releasing
     // gives it all back as it was.
     internal sealed class ShipRideBody {
         private readonly Transform _transform;
         private readonly Rigidbody _rb;
         private readonly FloatingController _floating;
-        private readonly NetworkRigidbodyUnreliable _netBody;
 
         private bool _wasKinematic;
         private RigidbodyInterpolation _wasInterpolation;
-        private bool _netBodyWasEnabled;
 
-        public ShipRideBody(Transform transform, Rigidbody rb, FloatingController floating, NetworkRigidbodyUnreliable netBody) {
+        public ShipRideBody(Transform transform, Rigidbody rb, FloatingController floating) {
             _transform = transform;
             _rb = rb;
             _floating = floating;
-            _netBody = netBody;
         }
 
         // Takes the body out of the physics and puts it at its offset on the platform.
@@ -75,21 +71,6 @@ namespace Features.ShipModule.Scripts.Riding {
 
             if (_floating != null)
                 _floating.HoverEnabled = true;
-        }
-
-        public void SilenceNetworkBody() {
-            if (_netBody == null)
-                return;
-
-            _netBodyWasEnabled = _netBody.enabled;
-            _netBody.enabled = false;
-        }
-
-        public void RestoreNetworkBody() {
-            if (_netBody == null)
-                return;
-
-            _netBody.enabled = _netBodyWasEnabled;
         }
     }
 }

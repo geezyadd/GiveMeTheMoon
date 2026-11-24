@@ -18,6 +18,10 @@ namespace Features.PlayerReplicaModule.Configuration {
         [Tooltip("How far in the past a copy shows its owner, seconds: a packet is applied when the server time reaches its stamp plus this. Then a copy stops and turns where its owner did instead of running past and sliding back. A packet older than this is applied at once.")]
         [SerializeField, Min(0f)] private float _copyDelaySeconds = 0.1f;
 
+        [Header("Placement")]
+        [Tooltip("After the server moved a body (a respawn, a map change, a world shift), how long a copy waits at most for its owner's first packet sent after the move, seconds. Older packets would pull it back to where the player was.")]
+        [SerializeField, Min(0f)] private float _placementWaitSeconds = 1f;
+
         [Header("Visual catch-up")]
         [Tooltip("A jump of a copy's body at least this long, metres, is hidden: the model and the nameplate stay where they were and catch up with the body.")]
         [SerializeField, Min(0f)] private float _visualCatchUpThreshold = 0.05f;
@@ -50,6 +54,7 @@ namespace Features.PlayerReplicaModule.Configuration {
         public float RestingPacketInterval => 1f / _restingPacketRate;
         public float RestingSpeed => _restingSpeed;
         public float CopyDelaySeconds => _copyDelaySeconds;
+        public float PlacementWaitSeconds => _placementWaitSeconds;
         public float VisualCatchUpThreshold => _visualCatchUpThreshold;
         public float VisualCatchUpMaxDistance => _visualCatchUpMaxDistance;
         public float VisualCatchUpSeconds => _visualCatchUpSeconds;

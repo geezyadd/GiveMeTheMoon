@@ -142,7 +142,7 @@ kinematic and not carried by it. When and how a player gets bound:
 - **the ship going away releases its riders** on every peer (`ShipBase` → `ShipRiders.ReleaseAllOnLeave` →
   `ShipRider.ReleaseFromLeavingShip`): when its map starts to unload (`ConnectionNetworkEvents.MapUnloading`, before the
   players are teleported to the next map; a hull loss, the whole crew dead or Start) and again in `OnDestroy`. Every
-  rider bound to it there, riding or seated, gets its body back (not kinematic, collisions, hover, network body) where it
+  rider bound to it there, riding or seated, gets its body back (not kinematic, collisions, hover) where it
   stands, without the ride's velocity, and none is caught or boarded again; the server also clears the rider's ride and
   seat SyncVars, every seat and the throttle. Before 2026-10-26 a hull loss in flight left the crew bound to a ship the
   next map no longer had: frozen in the void of the lobby and unable to walk in the next run;
