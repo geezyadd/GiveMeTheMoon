@@ -147,11 +147,14 @@ namespace Features.PlayerBodyModule {
             }
 
             _capsuleColliders.KeepOff();
-            // A seat or a ride holds the player: the ragdoll is put on the seat's spot once and then just stands there,
-            // carried by the ship like anyone standing on the deck (it does not walk while held).
+            // A seat or a ride holds the player: the ragdoll is put on the seat's spot once, then stands there carried
+            // by the ship like anyone on the deck (it does not walk while held), gently pulled back so it never drifts
+            // off.
             if (_movable.IsHeld) {
                 if (_wasHeld == false)
                     StepOntoHeldSpot();
+                else
+                    PullTowardHeldSpot();
                 _wasHeld = true;
                 return;
             }
@@ -170,17 +173,40 @@ namespace Features.PlayerBodyModule {
         // The seat places the capsule once a frame on the carrier as drawn, the ragdoll is carried once a physics step:
         // the spot is read in the drawn pose and put in the step's pose the ragdoll stands in now. Only horizontally:
         // the ragdoll stands at its own height (no sitting).
-        private void StepOntoHeldSpot() {
+        private void StepOntoHeldSpot() =>
+            _ragdoll.MoveAllBy(HeldSpotOffset(out _, out _));
+
+        // A soft spring with damping toward the held spot, in the carrier's plane, as a push for this step: the body
+        // may sway a little but keeps coming back. Its speed is taken relative to the carrier it rides.
+        private void PullTowardHeldSpot() {
+            RagdollStandSettings settings = _ragdoll.Profile.Stand;
+            Vector3 offset = HeldSpotOffset(out ICarrier carrier, out Vector3 up);
+            Vector3 velocity = _ragdoll.AverageVelocity;
+            if (carrier != null)
+                velocity -= CarrierMotion.PointVelocity(carrier.PoseBefore, carrier.PoseNow,
+                    _ragdoll.Root.Rigidbody.position, Time.fixedDeltaTime);
+            velocity = Vector3.ProjectOnPlane(velocity, up);
+
+            Vector3 pull = offset.magnitude > settings.HeldSpotTolerance
+                ? offset * settings.HeldSpotSpring
+                : Vector3.zero;
+            _ragdoll.AddAccelerationToAll(pull - velocity * settings.HeldSpotDamping);
+        }
+
+        // From the root limb to the held spot, in the carrier's plane. The seat places the capsule once a frame on
+        // the carrier as drawn, while the ragdoll is carried once a physics step: the spot is read in the drawn pose
+        // and put in the step's pose the ragdoll stands in now.
+        private Vector3 HeldSpotOffset(out ICarrier carrier, out Vector3 up) {
             Vector3 spot = _capsule.position - _capsuleOffset;
-            Vector3 up = Vector3.up;
-            ICarrier carrier = _parts.Ride != null ? _parts.Ride.Carrier : null;
+            up = Vector3.up;
+            carrier = _parts.Ride != null ? _parts.Ride.Carrier : null;
             if (carrier != null) {
                 Pose drawn = new(carrier.DrawnPosition, carrier.DrawnRotation);
                 spot = CarrierMotion.ToWorldPoint(carrier.PoseBefore, CarrierMotion.ToLocalPoint(drawn, spot));
                 up = carrier.PoseBefore.rotation * Vector3.up;
             }
 
-            _ragdoll.MoveAllBy(Vector3.ProjectOnPlane(spot - _ragdoll.Root.Rigidbody.position, up));
+            return Vector3.ProjectOnPlane(spot - _ragdoll.Root.Rigidbody.position, up);
         }
 
         private void FollowCapsuleTeleport() {

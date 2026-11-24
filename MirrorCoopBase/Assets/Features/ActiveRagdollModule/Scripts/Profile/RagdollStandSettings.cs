@@ -20,6 +20,15 @@ namespace Features.ActiveRagdollModule {
         [Tooltip("After a jump the body does not stand for this long, so the hover does not cancel the jump.")]
         public float StandPauseAfterJump = 0.3f;
 
+        [Header("Held on a spot (a seat)")]
+        [Tooltip("Horizontal pull toward the held spot, acceleration per metre off it. Gentle: the body may sway, it " +
+                 "only must not drift away over time.")]
+        public float HeldSpotSpring = 4f;
+        [Tooltip("Damping of the body's horizontal speed relative to its carrier while held, per second.")]
+        public float HeldSpotDamping = 4f;
+        [Tooltip("Closer than this to the held spot, metres, the body is left alone.")]
+        public float HeldSpotTolerance = 0.05f;
+
         [Header("Hover")]
         [Tooltip("Up / down acceleration on the hovered limbs when the height limb is a full smoothing band off.")]
         public float StandForce = 100f;

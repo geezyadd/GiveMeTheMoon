@@ -34,8 +34,10 @@ is bound. Editor code in `Features.PlayerBodyModule.Editor`.
   - Held (`CharacterMovableBase.IsHeld`: a seat or a ride places the capsule): the capsule leads. When the hold
     starts, the ragdoll is put on the capsule's spot once, horizontally (the seat places the capsule once a frame on
     the carrier as drawn, `ICarrier.DrawnPosition` / `DrawnRotation`, so the spot is read in the drawn pose and put in
-    the step's `PoseBefore`); then it just stands there, carried by the ship like anyone standing on the deck, at its
-    own height (no sitting). It does not walk while held, the walk animation stays idle, and no carrier turn is added
+    the step's `PoseBefore`); then it stands there, carried by the ship like anyone standing on the deck, at its own
+    height (no sitting), and a soft damped spring in the carrier's plane pulls it back so it never drifts off
+    (profile `Stand`: `Held Spot Spring` 4, `Held Spot Damping` 4, `Held Spot Tolerance` 0.05 m; speed relative to the
+    carrier). It does not walk while held, the walk animation stays idle, and no carrier turn is added
     to the camera (the held capsule already turns the view).
   - Each frame: the sampled animation is turned to the shown look, the animator's `Forward` comes from the walk input
     of the active controls (keyboard or packet; not the measured speed, which drifts on a moving carrier; under 0.125
