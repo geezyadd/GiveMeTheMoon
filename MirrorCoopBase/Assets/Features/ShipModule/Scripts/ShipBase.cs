@@ -179,6 +179,8 @@ namespace Features.ShipModule.Scripts {
                 dodgeRangeScale,
                 mode);
             SleepBody();
+            if (_body != null)
+                _body.interpolation = RigidbodyInterpolation.Interpolate;
             _flying = true;
             if (_poseSync != null)
                 _poseSync.ServerSetFlying(true);
@@ -301,6 +303,30 @@ namespace Features.ShipModule.Scripts {
             _fixedSteps += 1;
         }
 
+        // The server's flight, once per physics step (ShipCarrier runs it before anything that rides): the ship's body
+        // goes to the flight's pose by MovePosition / MoveRotation and is interpolated between steps, so the ship and all
+        // that follows its drawn pose move smoothly.
+        internal void ServerFlightStep(float dt) {
+            if (_flying == false || NetworkServer.active == false)
+                return;
+
+            _flightControl.ServerStep(dt);
+            if (_flightControl.IsActive == false)
+                return;
+
+            if (_body == null) {
+                ApplyDisplayPose(_flightControl.Position, _flightControl.Rotation);
+                return;
+            }
+
+            _body.MovePosition(_flightControl.Position);
+            _body.MoveRotation(_flightControl.Rotation);
+        }
+
+        // The ship's pose on this physics step: its body's (where the physics has it), or its transform without one.
+        internal Pose StepPose =>
+            _body != null ? new Pose(_body.position, _body.rotation) : new Pose(transform.position, transform.rotation);
+
         internal int ConsumeFixedSteps() {
             int steps = _fixedSteps;
             _fixedSteps = 0;
@@ -314,10 +340,6 @@ namespace Features.ShipModule.Scripts {
                 _cargo.ServerReleaseGrabbed();
 
             if (_flying && NetworkServer.active) {
-                _flightControl.ServerStep(Time.deltaTime);
-                if (_flightControl.IsActive)
-                    ApplyDisplayPose(_flightControl.Position, _flightControl.Rotation);
-
                 if (_poseSync != null)
                     _poseSync.ServerPublish(transform.position, transform.rotation, _flightControl.Velocity);
 

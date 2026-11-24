@@ -106,7 +106,18 @@ spring, own network body silent, placed at the offset; releasing gives it back),
 the camera in deck space and the vertical: spring, jump, air gravity via `RideVertical`), `ShipRideOffsetStream` (the
 standing offset sent every 0.05 s and played back late on the other peers) and `ShipSeatRide` (a moving seat point, the
 standing spot when getting up). The deck walk and the offset stream are what a carrier-based deck (`ICarrier`, see
-MovingPlatformModule) will replace for standing riders; seats keep the binding. When and how a player gets bound:
+MovingPlatformModule) will replace for standing riders; seats keep the binding.
+**The ship as a carrier.** `Riding/ShipCarrier` (`ICarrier`, on the ship's root, runs first in each physics step)
+calls `ShipBase.ServerFlightStep`: the server's flight is stepped once per physics step with the physics step time, and
+the ship's body goes to the flight's pose by `MovePosition` / `MoveRotation`, interpolated in flight (set at takeoff),
+so the ship and the riders, cargo and camera that follow its drawn transform move smoothly. Snaps, landings and world
+shifts still place it at once (`ApplyDisplayPose`). `ShipCarrier` keeps the ship's step poses (`ShipBase.StepPose`),
+its id is the pose sync's `netId`, and `Holds` is the deck's walk boxes (0.3 m past them) up to 6 m above the deck
+surface. A step longer than 5 m is a placement (the world shift at a landing, a berth snap), not a move:
+the poses before and now are the same then, so riders are not carried by it (the world shift moves the players itself;
+carrying them too dropped both players into the void at a landing). Clients still apply the interpolated pose once per frame in `LateUpdate` (the next step moves that to
+physics steps). A body the float probe stands on the deck with is boarded by `CarrierRider` too, but a bound rider is
+kinematic and not carried by it. When and how a player gets bound:
 - at takeoff (`ShipBase.BeginTakeoff` on the server, `ShipBase.OnClientFlightChanged(true)` on a client)
   `ShipRiders.BoardRidersOverDeck` boards every player over the deck, from the nose to the stern: at most
   `BoardingEdgeTolerance` (0.5 m) outside the walk boxes and `BoardingMinHeight`..`BoardingMaxHeight` (-0.5..6 m) above the

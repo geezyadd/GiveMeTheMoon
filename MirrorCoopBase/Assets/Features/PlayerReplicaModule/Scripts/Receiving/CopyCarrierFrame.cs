@@ -39,7 +39,8 @@ namespace Features.PlayerReplicaModule.Receiving {
                 ? NetworkServer.spawned.TryGetValue(carrierId, out identity)
                 : NetworkClient.spawned.TryGetValue(carrierId, out identity);
 
-            return found && identity != null ? identity.GetComponent<ICarrier>() : null;
+            // On the identity itself (a platform) or on a parent of it (the ship, whose identity is a child of its root).
+            return found && identity != null ? identity.GetComponentInParent<ICarrier>() : null;
         }
     }
 }
