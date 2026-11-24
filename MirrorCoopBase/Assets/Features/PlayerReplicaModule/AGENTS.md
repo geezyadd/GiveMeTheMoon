@@ -77,9 +77,12 @@ client's kinematic copy by its synced push) and its synced push fields on `Chara
 - `Sending/`: `BodyStateSampler` (packet from the body, the owner's `IMovementControls`, the look, support and
   `CharacterMovableBase.JumpCount`; on a carrier the position and velocity in its axes of the last step, the walk and
   look in its heading, and its id as `CarrierId`), `BodySendSchedule`.
-- `Receiving/`: `PacketMovementControls`, `PacketDelayBuffer`, `CopyCarrierFrame`, `PlacementFence`, `BodyStateReceiveStats` + `BodyStateReceiveReport` (also counts snaps).
+- `Receiving/`: `PacketMovementControls`, `PacketDelayBuffer`, `CopyCarrierFrame`, `PlacementFence`, `BodyStateReceiveStats` + `BodyStateReceiveReport` (also counts snaps and averages the copy's error to the
+  owner's packet, the distance the correction sees each physics step, with its largest value; the two-player test
+  `CoopClientDeckWalkLagTest` checks both under lag, see [Tests/Coop](../../Tests/Coop/AGENTS.md)).
 - `Diagnostics/` (editor and development builds), in the debug window's Network section: `ReplicaStatsDebugSystem`
-  ("Replicas: stats": per other player to the console, packets a second, dropped, snaps, average and last age).
+  ("Replicas: stats": per other player to the console, packets a second, dropped, snaps, average and last age, the
+  average and largest error to the owner).
 - `Configuration/ReplicaConfiguration` (Addressables `ReplicaConfiguration_Default`, bound in
   `ConfigurationInstaller`): send rates, the placement wait and the correction numbers.
 - `Packets/`: `BodyStatePacket` (public fields so the network layer serializes it), `BodyStateFlags`,
@@ -93,7 +96,7 @@ client's kinematic copy by its synced push) and its synced push fields on `Chara
 - `Features.PlayerReplicaModule.Editor.Tests`: yaw packing and wrap, flags, sequence order and wrap, jump counter (missed
   jumps, wrap), target extrapolation and its cap, horizontal share, vertical dead zone and cap, no overshoot, snap,
   velocity reconciliation per axis (and only slowing while the owner steers nothing), ground mismatch timer, send schedule (moving, idle, a change after idle), receive
-  stats, packet input source (controls, jump press from the counter, reset), delay buffer (waits, newest due one,
+  stats (with the error average and largest), packet input source (controls, jump press from the counter, reset), delay buffer (waits, newest due one,
   restart), the gentle pull while the owner stands, sending at once when a control changes, the visual lag offset
   (hide, tiny and huge jumps, fade, sum), the placement fence (old packets blocked, the move's packet and the
   ones after it pass, the wait runs out, the number wraps, clear).

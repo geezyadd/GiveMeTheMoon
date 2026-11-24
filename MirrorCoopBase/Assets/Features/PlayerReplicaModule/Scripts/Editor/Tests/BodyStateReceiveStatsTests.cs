@@ -44,11 +44,36 @@ namespace Features.PlayerReplicaModule.Editor.Tests {
         }
 
         [Test]
+        public void WhenErrorsAreRecorded_ThenTheReportHasTheirAverageAndLargest() {
+            _stats.RecordError(0.1d, 0d);
+            _stats.RecordError(0.3d, 0.5d);
+            _stats.RecordError(0.2d, 1d);
+
+            BodyStateReceiveReport report = _stats.TakeReport(2d);
+
+            Assert.AreEqual(0.2d, report.AverageErrorMeters, TOLERANCE);
+            Assert.AreEqual(0.3d, report.MaxErrorMeters, TOLERANCE);
+        }
+
+        [Test]
+        public void WhenAReportIsTaken_ThenTheErrorsStartOver() {
+            _stats.RecordError(2d, 0d);
+            _stats.TakeReport(1d);
+            _stats.RecordError(0.1d, 1.5d);
+
+            BodyStateReceiveReport report = _stats.TakeReport(2d);
+
+            Assert.AreEqual(0.1d, report.AverageErrorMeters, TOLERANCE);
+            Assert.AreEqual(0.1d, report.MaxErrorMeters, TOLERANCE);
+        }
+
+        [Test]
         public void WhenNothingArrived_ThenTheReportIsEmpty() {
             BodyStateReceiveReport report = _stats.TakeReport(5d);
 
             Assert.AreEqual(0, report.Accepted);
             Assert.AreEqual(0d, report.PacketsPerSecond, TOLERANCE);
+            Assert.AreEqual(0d, report.AverageErrorMeters, TOLERANCE);
         }
     }
 }

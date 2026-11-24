@@ -196,7 +196,9 @@ namespace Features.PlayerReplicaModule {
 
             _groundTimer.Tick(packet.Has(BodyStateFlags.Grounded), _movable.IsSupported, Time.fixedDeltaTime);
             bool isStuck = _groundTimer.IsStuck(settings.GroundMismatchSeconds);
-            PositionCorrectionStep step = PositionCorrection.Compute(target - body.position, ownerSteers, isStuck, settings);
+            Vector3 error = target - body.position;
+            _channel.ReceiveStats.RecordError(error.magnitude, Time.unscaledTimeAsDouble);
+            PositionCorrectionStep step = PositionCorrection.Compute(error, ownerSteers, isStuck, settings);
             if (step.IsSnap) {
                 Snap(body, target, ownerVelocity, true);
                 return;

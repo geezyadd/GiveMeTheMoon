@@ -52,7 +52,8 @@ namespace Features.PlayerReplicaModule.Diagnostics {
                 UnityEngine.Debug.Log(
                     $"[Replicas] {channel.name} (netId {channel.netId}): {report.PacketsPerSecond:F1} packets/s, " +
                     $"{report.Accepted} taken, {report.Dropped} dropped as old, {report.Snaps} snaps, " +
-                    $"age {report.AverageAgeSeconds * MILLISECONDS_PER_SECOND:F0} ms on average, last {report.LastAgeSeconds * MILLISECONDS_PER_SECOND:F0} ms");
+                    $"age {report.AverageAgeSeconds * MILLISECONDS_PER_SECOND:F0} ms on average, last {report.LastAgeSeconds * MILLISECONDS_PER_SECOND:F0} ms, " +
+                    $"error to the owner {report.AverageErrorMeters:F3} m on average, {report.MaxErrorMeters:F3} m at most");
             }
         }
     }
