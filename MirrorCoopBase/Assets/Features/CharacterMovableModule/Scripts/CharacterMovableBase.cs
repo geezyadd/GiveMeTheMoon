@@ -1,3 +1,4 @@
+using Features.CharacterMovableModule.Scripts.Body;
 using Features.CharacterMovableModule.Scripts.MovementControls;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.FloatingControllerModule;
@@ -35,10 +36,15 @@ namespace Features.CharacterMovableModule.Scripts {
         private float _remoteLookYaw;
         private float _moveSpeed;
         private readonly JumpAndAirGravity _jump = new JumpAndAirGravity();
-        private Vector3 _weight;
         private int _shoveMask;
+        private IMovableBody _capsuleBody;
+        private IMovableBody _drivenBody;
 
         public Rigidbody Body => _rb;
+
+        // What the movement pushes: the capsule, or another body put in by SetDrivenBody.
+        private IMovableBody DrivenBody =>
+            _drivenBody ?? (_capsuleBody ??= new CapsuleMovableBody(_rb, _floatingController));
 
         // Grows by one on every takeoff of this body (wraps at 255): the state packet carries it, so a remote copy sees
         // every jump even when the packet of that moment is lost.
@@ -68,14 +74,16 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         protected virtual void Awake() {
-            CacheWeight();
             CacheShoveMask();
         }
+
+        // Makes the movement drive another body instead of the capsule (null: the capsule again).
+        public void SetDrivenBody(IMovableBody body) =>
+            _drivenBody = body;
 
         public override void OnStartLocalPlayer() {
             _moveSpeed = ReadStat(PlayerStatType.WalkSpeed);
             _jump.RefillAirJumps(ExtraAirJumps);
-            CacheWeight();
         }
 
         // On a peer that does not own this body: simulate it as a copy from these controls (null: stop, the body is
@@ -86,7 +94,6 @@ namespace Features.CharacterMovableModule.Scripts {
                 return;
 
             _jump.RefillAirJumps(ExtraAirJumps);
-            CacheWeight();
         }
 
         // On a peer that does not own this body: the look to turn toward instead of the synced one, degrees around the
@@ -127,7 +134,7 @@ namespace Features.CharacterMovableModule.Scripts {
                 return;
             }
 
-            if (_rb.isKinematic) {
+            if (DrivenBody.IsKinematic) {
                 if (ControlsSelf)
                     StopPushing();
                 return;
@@ -148,7 +155,7 @@ namespace Features.CharacterMovableModule.Scripts {
             if (source == null)
                 return;
 
-            Vector3 planar = Flatten(_rb.linearVelocity);
+            Vector3 planar = Flatten(DrivenBody.Velocity);
             _moveSpeed = source.SprintHeld ? ReadStat(PlayerStatType.SprintSpeed) : ReadStat(PlayerStatType.WalkSpeed);
 
             Vector3 wish = ReadWishDirection(source);
@@ -159,7 +166,7 @@ namespace Features.CharacterMovableModule.Scripts {
         private Vector3 ReadWishDirection(IMovementControls source) {
             Vector3 wish = source.ReadWish();
             if (HasSupport())
-                wish = Vector3.ProjectOnPlane(wish, _floatingController.SupportNormal);
+                wish = Vector3.ProjectOnPlane(wish, DrivenBody.SupportNormal);
 
             if (wish.sqrMagnitude > 1f)
                 wish.Normalize();
@@ -194,38 +201,39 @@ namespace Features.CharacterMovableModule.Scripts {
             Vector3 next = Vector3.MoveTowards(planar, desired, rate * Time.fixedDeltaTime);
             Vector3 accel = (next - planar) / Time.fixedDeltaTime;
             accel.y = 0f;
-            Vector3 force = Vector3.ClampMagnitude(accel, forceCap) * _rb.mass;
-            _rb.AddForce(force);
+            Vector3 drive = Vector3.ClampMagnitude(accel, forceCap);
+            DrivenBody.AddAcceleration(drive);
 
             // The push is the owner's to sync; a remote copy only moves its own body.
             if (ControlsSelf == false)
                 return;
 
-            _pushStrength = force.magnitude;
+            _pushStrength = drive.magnitude * DrivenBody.Mass;
             _pushHeading = wish;
             _pushSpeed = steering ? _moveSpeed : 0f;
         }
 
         private void ApplyJumpAndAirGravity() {
-            if (_floatingController == null)
+            IMovableBody body = DrivenBody;
+            if (body.SensesGround == false)
                 return;
 
             JumpTuning tuning = JumpTuning.Read(_stats);
             bool supported = HasSupport();
-            if (_jump.TryTakeoff(tuning, supported, _rb.linearVelocity.y, Physics.gravity.y, Time.fixedDeltaTime,
+            if (_jump.TryTakeoff(tuning, supported, body.Velocity.y, Physics.gravity.y, Time.fixedDeltaTime,
                     out float speedChange)) {
-                _floatingController.PauseSupport();
-                _rb.AddForce(new Vector3(0f, speedChange, 0f) * _rb.mass, ForceMode.Impulse);
+                body.PauseSupport();
+                body.AddVelocityChange(new Vector3(0f, speedChange, 0f));
                 JumpCount = unchecked((byte)(JumpCount + 1));
             }
 
-            _jump.Land(tuning, supported, _rb.linearVelocity.y);
+            _jump.Land(tuning, supported, body.Velocity.y);
             if (supported)
                 return;
 
-            float extra = _jump.AirGravityExtra(tuning, _rb.linearVelocity.y);
+            float extra = _jump.AirGravityExtra(tuning, body.Velocity.y);
             if (extra > 0f)
-                _rb.AddForce(_weight * extra);
+                body.AddAcceleration(Physics.gravity * extra);
         }
 
         private void ShoveNearbyBodies() {
@@ -305,7 +313,7 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         private bool HasSupport() {
-            return _floatingController != null && _floatingController.HasSupport;
+            return DrivenBody.HasSupport;
         }
 
         private float ReadStat(PlayerStatType type) =>
@@ -323,11 +331,6 @@ namespace Features.CharacterMovableModule.Scripts {
                 if (Physics.GetIgnoreLayerCollision(layer, other) == false)
                     _shoveMask |= 1 << other;
             }
-        }
-
-        private void CacheWeight() {
-            if (_rb != null)
-                _weight = Physics.gravity * _rb.mass;
         }
     }
 }
