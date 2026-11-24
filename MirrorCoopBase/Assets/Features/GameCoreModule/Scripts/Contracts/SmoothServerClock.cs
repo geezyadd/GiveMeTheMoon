@@ -1,6 +1,6 @@
 using System;
 
-namespace Features.MovingPlatformModule {
+namespace Features.GameCoreModule.Contracts {
     // A clock that follows the server's time but never jumps between physics steps: it moves on by each step's time,
     // a few percent faster or slower until it meets the server time again. When this peer's frames stall (the editor in
     // the background, a long frame, a minimised game), the game time falls behind the real time the network time

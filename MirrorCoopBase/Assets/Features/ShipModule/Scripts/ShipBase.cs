@@ -270,6 +270,9 @@ namespace Features.ShipModule.Scripts {
 
             // Riders are released by the server (ShipRider.ServerRelease) after the landing snap and origin shift.
             _flying = flying;
+            // A client's ship is moved on physics steps in flight (ClientFlightStep) and drawn between them.
+            if (_body != null)
+                _body.interpolation = flying ? RigidbodyInterpolation.Interpolate : RigidbodyInterpolation.None;
             if (flying)
                 _riders.BoardRidersOverDeck();
         }
@@ -314,13 +317,28 @@ namespace Features.ShipModule.Scripts {
             if (_flightControl.IsActive == false)
                 return;
 
+            MoveBody(_flightControl.Position, _flightControl.Rotation);
+        }
+
+        // A client's flight, once per physics step (ShipCarrier runs it): the pose from the pose sync's buffer at this
+        // step's time, moved onto the body like the server's, so the ship moves on physics steps on every peer.
+        internal void ClientFlightStep(float dt) {
+            if (_flying == false || NetworkServer.active || _poseSync == null)
+                return;
+
+            _poseSync.ClientStep(dt, _steering.IsSteeredByLocalPlayer());
+        }
+
+        // Moves the ship's body to a pose in this physics step (interpolated while flying), or places it at once without
+        // a body.
+        internal void MoveBody(Vector3 position, Quaternion rotation) {
             if (_body == null) {
-                ApplyDisplayPose(_flightControl.Position, _flightControl.Rotation);
+                ApplyDisplayPose(position, rotation);
                 return;
             }
 
-            _body.MovePosition(_flightControl.Position);
-            _body.MoveRotation(_flightControl.Rotation);
+            _body.MovePosition(position);
+            _body.MoveRotation(rotation);
         }
 
         // The ship's pose on this physics step: its body's (where the physics has it), or its transform without one.
@@ -345,9 +363,6 @@ namespace Features.ShipModule.Scripts {
 
                 if (_runService != null)
                     _runService.ServerTick();
-            }
-            else if (_flying && _poseSync != null) {
-                _poseSync.ApplyInterpolated(_steering.IsSteeredByLocalPlayer());
             }
 
             _cargo.Follow(NetworkServer.active);

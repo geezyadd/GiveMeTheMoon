@@ -2,7 +2,8 @@ using Features.FloatingControllerModule;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts.Riding {
-    // The ship as a carrier: runs the server's flight step first in each physics step, before anything that rides it,
+    // The ship as a carrier: runs the flight step (the server's, or a client's pose from its buffer) first in each
+    // physics step, before anything that rides it,
     // and keeps the ship's pose of the last step and of this one, so a body on the deck can be carried exactly as far
     // as the ship moved (ICarrier). It sits on the ship's root, where the deck colliders find it; a copy finds it from
     // the ship's network identity below.
@@ -27,6 +28,7 @@ namespace Features.ShipModule.Scripts.Riding {
 
         private void FixedUpdate() {
             _ship.ServerFlightStep(Time.fixedDeltaTime);
+            _ship.ClientFlightStep(Time.fixedDeltaTime);
             Pose now = _ship.StepPose;
             bool placed = _hasPose && (now.position - PoseNow.position).sqrMagnitude > _maxStepMove * _maxStepMove;
             PoseBefore = _hasPose && placed == false ? PoseNow : now;

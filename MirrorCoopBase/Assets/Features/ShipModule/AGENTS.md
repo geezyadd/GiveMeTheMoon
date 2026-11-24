@@ -115,8 +115,10 @@ shifts still place it at once (`ApplyDisplayPose`). `ShipCarrier` keeps the ship
 its id is the pose sync's `netId`, and `Holds` is the deck's walk boxes (0.3 m past them) up to 6 m above the deck
 surface. A step longer than 5 m is a placement (the world shift at a landing, a berth snap), not a move:
 the poses before and now are the same then, so riders are not carried by it (the world shift moves the players itself;
-carrying them too dropped both players into the void at a landing). Clients still apply the interpolated pose once per frame in `LateUpdate` (the next step moves that to
-physics steps). A body the float probe stands on the deck with is boarded by `CarrierRider` too, but a bound rider is
+carrying them too dropped both players into the void at a landing). A client's ship moves on physics steps too: `ShipCarrier` calls `ShipBase.ClientFlightStep`, and
+`ShipPoseSync.ClientStep` samples its buffer at the step's show time (a `SmoothServerClock` eased toward
+`NetworkTime.time`, minus the 0.06 s interpolation delay; none for the local pilot) and moves the body there
+(`ShipBase.MoveBody`), interpolated while flying (set in `OnClientFlightChanged`). A body the float probe stands on the deck with is boarded by `CarrierRider` too, but a bound rider is
 kinematic and not carried by it. When and how a player gets bound:
 - at takeoff (`ShipBase.BeginTakeoff` on the server, `ShipBase.OnClientFlightChanged(true)` on a client)
   `ShipRiders.BoardRidersOverDeck` boards every player over the deck, from the nose to the stern: at most

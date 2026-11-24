@@ -1,3 +1,4 @@
+using Features.GameCoreModule.Contracts;
 using NUnit.Framework;
 
 namespace Features.MovingPlatformModule.Editor.Tests {

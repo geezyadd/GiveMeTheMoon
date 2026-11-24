@@ -2,6 +2,7 @@
     "name": "Features.MovingPlatformModule",
     "rootNamespace": "Features.MovingPlatformModule",
     "references": [
+        "GUID:a637b2d2f1cb470a8bea9746a87397c0",
         "GUID:30817c1a0e6d646d99c048fc403f5979",
         "GUID:1f74e8c7b4c74b6ab22be0bd160a9a17",
         "GUID:fdd0b9d0874240ecb4326459ad87a585",

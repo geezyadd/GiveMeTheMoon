@@ -26,7 +26,8 @@ copy rides its own copy of the platform (see [PlayerReplicaModule](../PlayerRepl
   stand (in this step's pose a fast platform's trailing edge dropped a jumping body). Synced: running or not, and the angle and server
   time of the last start or stop (SyncVars); every peer computes the pose from `NetworkTime.time` with `CirclePath`, so
   there is no buffer and no jitter. The pose is set each physics step on a kinematic, interpolated `Rigidbody`
-  (`MovePosition` / `MoveRotation`) at the time of its `SmoothServerClock`: the clock moves on by each step's time and
+  (`MovePosition` / `MoveRotation`) at the time of its `SmoothServerClock` (in `GameCoreModule.Contracts`, shared with the
+  ship's pose sync): the clock moves on by each step's time and
   eases toward `NetworkTime.time` (up to 5 % faster or slower; a gap over 0.5 s is closed at once), because when frames
   stall (the editor in the background, a long frame, a minimised game) the game time falls behind the real time and a
   platform driven by the network time directly leapt and threw off its riders. Numbers are fields on the component. `ServerToggle` starts or stops it where it is.
