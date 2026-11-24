@@ -34,7 +34,7 @@ namespace Features.ShipImpactModule.Scripts {
 
         private bool IsLocalPlayerOnBoard() {
             ShipBase ship = _shipRunBindingModel.Ship != null ? _shipRunBindingModel.Ship : _shipClientBindingModel.Ship;
-            return ship != null && ship.Riders.IsLocalPlayerRiding();
+            return ship != null && ship.Riders.IsLocalPlayerAboard();
         }
 
         private void OnImpact(ShipRockImpact impact) {

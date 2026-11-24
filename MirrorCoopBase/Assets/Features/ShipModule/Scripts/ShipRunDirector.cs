@@ -75,11 +75,15 @@ namespace Features.ShipModule.Scripts {
         // The server has already moved the pads; pads have no transform sync, so clients move their copies here, in
         // the same frame the ship's shift arrives. Loose items are moved on every peer instead of teleported: Mirror's
         // teleport RPC lands before the client's rigidbody interpolation and the item slides in from the old frame.
+        // Players are moved by their own body placement (each owner moves its body, the copies follow): a player the
+        // deck carries is not moved by the ship's jump, which is a placement and carries nobody.
         internal void ServerShiftWorld(Vector3 delta, NetworkIdentity currentPad, NetworkIdentity previousPad) {
             ShiftWreck(delta);
             foreach (NetworkIdentity identity in NetworkServer.spawned.Values) {
                 if (TryGetLooseItem(identity, out Rigidbody body))
                     ShiftBody(body, delta);
+                else if (identity != null && identity.TryGetComponent(out IPlayerBodyPlacement player))
+                    player.ServerShift(delta);
             }
 
             RpcShiftWorld(delta, currentPad, previousPad);

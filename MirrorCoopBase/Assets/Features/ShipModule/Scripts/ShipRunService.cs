@@ -240,7 +240,7 @@ namespace Features.ShipModule.Scripts {
             Ship.ServerSettleAfterLanding();
             _shipLandingRepair.ServerRepairAfterLanding();
             EnterStation(CurrentPad, ShipRunPhase.Build, _model.LastAbortReason);
-            // After EnterStation's origin shift: riders still bound are carried by it, released ones would stay behind.
+            // After EnterStation's origin shift, which moves the ship, its seated riders and every player's body.
             Ship.Riders.ServerReleaseRiders();
         }
 

@@ -3,7 +3,7 @@ using Features.GameCoreModule.Contracts;
 using UnityEngine;
 
 namespace Features.ShipModule.Scripts.Riding {
-    // The rider's body while it is bound to a ship (standing or seated): kinematic, without collisions, interpolation
+    // The rider's body while it is bound to a seat on a ship: kinematic, without collisions, interpolation
     // or the float spring, placed each frame at its offset in the ship's axes. Releasing
     // gives it all back as it was.
     internal sealed class ShipRideBody {

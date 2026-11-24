@@ -20,9 +20,4 @@ MonoBehaviour:
   _bankDegrees: 22
   _swayStiffness: 7
   _swayDamping: 0.32
-  _boardingEdgeTolerance: 0.5
-  _boardingMinHeight: -0.5
-  _boardingMaxHeight: 6
-  _confineRidersToDeck: 0
-  _reboardDelaySeconds: 0.5
   _helmSteerSendSeconds: 0.03
