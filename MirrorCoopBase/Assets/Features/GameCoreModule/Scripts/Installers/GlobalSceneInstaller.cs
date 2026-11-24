@@ -1,4 +1,4 @@
-using Features.BodySyncModule.Installers;
+using Features.PlayerReplicaModule.Installers;
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts;
 using Features.CrewInviteModule.Scripts.Installers;
@@ -29,7 +29,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             GameFlowStateMachineModuleInstaller.Install(Container);
             InputModuleInstaller.Install(Container);
             CharacterMovableModuleInstaller.Install(Container);
-            BodySyncModuleInstaller.Install(Container);
+            PlayerReplicaModuleInstaller.Install(Container);
             CameraModuleInstaller.Install(Container);
             GrabModuleInstaller.Install(Container);
             ShipModuleInstaller.Install(Container);

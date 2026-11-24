@@ -1,4 +1,4 @@
-using Features.CharacterMovableModule.Scripts.MoveInput;
+using Features.CharacterMovableModule.Scripts.MovementControls;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.FloatingControllerModule;
 using Mirror;
@@ -29,8 +29,8 @@ namespace Features.CharacterMovableModule.Scripts {
 
         [Inject]
         private CharacterInputBuffer _input;
-        private IMoveInputSource _ownInput;
-        private IMoveInputSource _remoteInput;
+        private IMovementControls _ownInput;
+        private IMovementControls _remoteInput;
         private float _moveSpeed;
         private readonly JumpAndAirGravity _jump = new JumpAndAirGravity();
         private Vector3 _weight;
@@ -43,7 +43,7 @@ namespace Features.CharacterMovableModule.Scripts {
         public byte JumpCount { get; private set; }
 
         // The synced look direction around the up axis, degrees.
-        public float FacingYaw => _facingYaw;
+        public float LookYaw => _facingYaw;
 
         // Whether the body stands on something right now (the float probe's support).
         public bool IsSupported => HasSupport();
@@ -52,14 +52,14 @@ namespace Features.CharacterMovableModule.Scripts {
 
         // The controls this peer simulates the body from: its own keyboard, a remote copy's source, or none (the body is
         // moved by someone else).
-        private IMoveInputSource ActiveInput => ControlsSelf ? OwnInput : _remoteInput;
+        private IMovementControls ActiveInput => ControlsSelf ? OwnInput : _remoteInput;
 
         // The keyboard source of the player's own body, made on first use: the input buffer is injected after Awake.
         // Null on peers that do not own this body.
-        public IMoveInputSource OwnInput {
+        public IMovementControls OwnInput {
             get {
                 if (_ownInput == null && _input != null && ControlsSelf)
-                    _ownInput = new LocalMoveInputSource(_input, _stats);
+                    _ownInput = new KeyboardMovementControls(_input, _stats);
 
                 return _ownInput;
             }
@@ -78,7 +78,7 @@ namespace Features.CharacterMovableModule.Scripts {
 
         // On a peer that does not own this body: simulate it as a copy from these controls (null: stop, the body is
         // moved by someone else again). The body must be dynamic for the simulation to move it.
-        public void SetRemoteInput(IMoveInputSource source) {
+        public void SetRemoteInput(IMovementControls source) {
             _remoteInput = source;
             if (source == null)
                 return;
@@ -88,7 +88,7 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         private void Update() {
-            IMoveInputSource source = ActiveInput;
+            IMovementControls source = ActiveInput;
             if (source == null)
                 return;
 
@@ -108,7 +108,7 @@ namespace Features.CharacterMovableModule.Scripts {
 
             // The server copy of a client-owned player that is not simulated is kinematic (its NetworkRigidbody follows the
             // owner), so it never pushes by contact: the proxy shove has to run for it. A simulated copy pushes by contact.
-            IMoveInputSource source = ActiveInput;
+            IMovementControls source = ActiveInput;
             if (source == null) {
                 if (isServer && ControlsSelf == false)
                     ShoveNearbyBodies();
@@ -132,7 +132,7 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         // One physics step of the body from its controls: walk or brake, then jump and the extra air gravity.
-        private void Simulate(IMoveInputSource source) {
+        private void Simulate(IMovementControls source) {
             if (source == null)
                 return;
 
@@ -144,7 +144,7 @@ namespace Features.CharacterMovableModule.Scripts {
             ApplyJumpAndAirGravity();
         }
 
-        private Vector3 ReadWishDirection(IMoveInputSource source) {
+        private Vector3 ReadWishDirection(IMovementControls source) {
             Vector3 wish = source.ReadWish();
             if (HasSupport())
                 wish = Vector3.ProjectOnPlane(wish, _floatingController.SupportNormal);

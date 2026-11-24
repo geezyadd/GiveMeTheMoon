@@ -112,7 +112,7 @@ types.
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
      `Features.WeaponModule`, `Features.SpaceHazeModule`.
-  3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.BodySyncModule`.
+  3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.PlayerReplicaModule`.
   4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`,
      `Features.HandWeaponModule`.
   5. `Features.ShipImpactModule`, `Features.ShipDamageModule`, `Features.TurretModule`, `Features.PlayerLifeModule`,
@@ -135,7 +135,7 @@ types.
 | [HandWeaponModule](MirrorCoopBase/Assets/Features/HandWeaponModule/AGENTS.md) | weapons carried in the hand: the pistol |
 | [SonarModule](MirrorCoopBase/Assets/Features/SonarModule/AGENTS.md) | the navigator's sonar console on the radar |
 | [SpaceHazeModule](MirrorCoopBase/Assets/Features/SpaceHazeModule/AGENTS.md) | the dark space haze: how far the crew sees by eye |
-| [BodySyncModule](MirrorCoopBase/Assets/Features/BodySyncModule/AGENTS.md) | player body sync by state and input: packet stream, soft correction of the copies (being built) |
+| [PlayerReplicaModule](MirrorCoopBase/Assets/Features/PlayerReplicaModule/AGENTS.md) | player body sync by state and input: packet stream, soft correction of the copies (being built) |
 | [DebugModule](MirrorCoopBase/Assets/Features/DebugModule/AGENTS.md) | the in-game debug window and its action registry |
 | [StagePresetModule](MirrorCoopBase/Assets/Features/StagePresetModule/AGENTS.md) | playtest stage presets |
 | [ShopModule](MirrorCoopBase/Assets/Features/ShopModule/AGENTS.md) | the station shop, the crew wallet, buying back a dead crewmate |
@@ -153,7 +153,7 @@ types.
 | [Two-player test](MirrorCoopBase/Assets/Tests/Coop/AGENTS.md) | `CoopTwoProcessTest` with a real second client process |
 | `Features.AddressablesConstantGeneratorModule` | `Address_g.cs`; editor tools and tests load a configuration at its address with `AddressableConfigurationLoader` in `Features.AddressablesConstantGeneratorModule.EditorLoading` |
 | `Features.EffectPoolModule` | `SelfDisablingEffectPool<TEffect>` over `ISelfDisablingEffect`, the pool of effects that disable themselves when over; the rock break and the rock impact effects use it |
-| `Features.CharacterMovableModule` | player movement; the body simulation takes its controls through `IMoveInputSource` (`LocalMoveInputSource`: keyboard and camera for the player's own body; a state packet source for remote copies comes with BodySyncModule); tests: `Features.CharacterMovableModule.Editor.Tests` |
+| `Features.CharacterMovableModule` | player movement; the body simulation takes its controls through `IMovementControls` (`KeyboardMovementControls`: keyboard and camera for the player's own body; a state packet source for remote copies comes with PlayerReplicaModule); tests: `Features.CharacterMovableModule.Editor.Tests` |
 
 Other modules (Menu, Lobby, Mvp, Input, Stats, GameFlow, Bootstrapers, ...) have no file yet; add one when there is
 something to describe.

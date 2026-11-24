@@ -181,7 +181,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 99c26e9f08bf4ed2a7b914e40570ac6e
-    m_Address: BodySyncConfiguration_Default
+    m_Address: ReplicaConfiguration_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

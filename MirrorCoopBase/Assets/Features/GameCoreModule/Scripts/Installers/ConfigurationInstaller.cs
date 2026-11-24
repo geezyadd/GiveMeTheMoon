@@ -1,5 +1,5 @@
 using Features.AddressablesConstantsGenerator.Generated;
-using Features.BodySyncModule.Configuration;
+using Features.PlayerReplicaModule.Configuration;
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.FlightFieldModule.Scripts.Configuration;
@@ -52,7 +52,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<ShipStationCatalog>(Address.Configurations.ShipStationCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<SonarConfiguration>(Address.Configurations.SonarConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<SpaceHazeConfiguration>(Address.Configurations.SpaceHazeConfiguration_Default).AsSingle();
-            Container.BindConfigurationFromAddressables<BodySyncConfiguration>(Address.Configurations.BodySyncConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ReplicaConfiguration>(Address.Configurations.ReplicaConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<CameraCatalog>(Address.Configurations.CameraCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FieldStructureCatalog>(Address.Configurations.FieldStructureCatalog_Default).AsSingle();
