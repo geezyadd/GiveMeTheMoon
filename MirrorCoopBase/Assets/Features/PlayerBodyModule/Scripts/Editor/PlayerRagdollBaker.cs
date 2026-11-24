@@ -2,6 +2,7 @@ using Features.ActiveRagdollModule;
 using Features.ActiveRagdollModule.Editor;
 using Features.CharacterMovableModule.Scripts;
 using Features.FloatingControllerModule;
+using Features.PlayerReplicaModule;
 using UnityEditor;
 using UnityEngine;
 
@@ -12,6 +13,8 @@ namespace Features.PlayerBodyModule.Editor {
         private const string PlayerPrefabPath = "Assets/Features/PlayerModule/GameResources/Prefabs/DummyPlayer.prefab";
         private const string ProfileFolder = "Assets/Features/PlayerBodyModule/GameResources";
         private const string ProfilePath = ProfileFolder + "/PlayerRagdollProfile.asset";
+        // The player's limbs sit on their own layer, so the interaction aim and other player-only queries skip them.
+        private const string RagdollLayer = "PlayerRagdoll";
         private const string ControllerPath =
             "Assets/Features/ActiveRagdollModule/GameResources/RagdollTestDummy.controller";
 
@@ -64,9 +67,22 @@ namespace Features.PlayerBodyModule.Editor {
 
             HumanoidProfileFiller.Fill(body);
             RagdollBodyBaker.Bake(body);
+            PutOnRagdollLayer(body);
             PutToSleep(body, animator);
             WireSwitch(player, movable, body);
             return true;
+        }
+
+        private static void PutOnRagdollLayer(RagdollBody body) {
+            int layer = LayerMask.NameToLayer(RagdollLayer);
+            if (layer < 0) {
+                Debug.LogWarning($"Ragdoll: no '{RagdollLayer}' layer in the project, the limbs stay on their layer.");
+                return;
+            }
+
+            foreach (RagdollLimb limb in body.Limbs)
+                foreach (Collider limbCollider in limb.Colliders)
+                    limbCollider.gameObject.layer = layer;
         }
 
         // Asleep in the prefab, so no peer runs it until the owner's switch wakes it.
@@ -98,6 +114,7 @@ namespace Features.PlayerBodyModule.Editor {
             serialized.FindProperty("_floatingController").objectReferenceValue =
                 player.GetComponent<FloatingController>();
             serialized.FindProperty("_ragdoll").objectReferenceValue = body;
+            serialized.FindProperty("_copyDriver").objectReferenceValue = player.GetComponent<BodyCopyDriver>();
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

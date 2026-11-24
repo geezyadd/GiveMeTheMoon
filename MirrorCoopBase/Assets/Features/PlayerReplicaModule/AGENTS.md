@@ -28,7 +28,8 @@ comes later. Done: the pure math, the packet stream and the simulated copies beh
 sync: old / new", `ReplicaModeModel`, new by default). The old way stays one press away: copies follow
 `NetworkRigidbodyUnreliable`; riders always follow `ShipRider`. Carriers: on a moving carrier (`ICarrier`, the lobby
 test platform) the packet is in the carrier's axes and copies ride their own copy of it. Not done yet: the ship deck
-as a carrier, removing the proxy shove.
+as a carrier, removing the proxy shove. The body is the one the movement drives (`CharacterMovableBase.DrivenBody`):
+the capsule, or the active ragdoll (PlayerBodyModule), which wakes on a copy while it is simulated.
 
 Known limits of the toggle: on the host, the new mode silences the old network body of the other players, so a third
 player in the old mode sees them stand still (two players are fine). Switching to the old mode while a copy rides waits

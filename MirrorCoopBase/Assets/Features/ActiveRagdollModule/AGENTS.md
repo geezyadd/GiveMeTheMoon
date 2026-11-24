@@ -35,7 +35,9 @@ at 1), falling and getting up, network copies.
   pose, ignores nearby limb collisions and sets the joint drives; on each physics step, after every other ragdoll
   component, hands each limb's summed force to its rigidbody in one call. `ApplyDriveScale`, `StopAllMotion`,
   `SetKinematic`, `SetCollisions` (on again re-ignores nearby limbs), `IgnoreCollisionsWith`, `TotalMass`,
-  `AverageVelocity` (mass-weighted), `AddAccelerationToAll`, `AddVelocityChangeToAll`.
+  `AverageVelocity` (mass-weighted), `AddAccelerationToAll`, `AddVelocityChangeToAll`, `MoveAllBy` (moves each
+  limb's transform and rigidbody together: the sampler writes the transforms each step, and a moved transform is
+  copied onto its rigidbody before the simulation, so moving only the rigidbody is undone), `ShiftVelocities`.
 - `Body/RagdollLimb` (on each physical bone): its rigidbody, joint (none on the root), colliders, parent limb and drive
   spring / damper; the bind rotation relative to the parent limb (taken on `Awake`) and the current
   `LimbPoseTarget` (rotation relative to the parent limb, world forward / up, world offset from the root limb,
@@ -43,7 +45,8 @@ at 1), falling and getting up, network copies.
 - `Body/AnimatedPoseSampler` (on the body root, execution order −95, before any force): takes the animator's graph
   off Unity's update (`Stop` + `DirectorUpdateMode.Manual`), and on each physics step but the first evaluates it by
   `fixedDeltaTime` (turned to `FacingYaw` if the owner sets one; the graph is taken again each time the animator is
-  turned on), captures every limb's target, then puts every limb back on its rigidbody. Root motion is off.
+  turned on), captures every limb's target, then puts every limb back on its rigidbody. Root motion is off and the animator always animates (no culling: the pose is the body's target, needed off screen
+  too).
   Animator parameters are set by the body's owner in `Update`; they apply at the next evaluation.
 - `Body/AnimatedPoseFollower` (execution order −90, after the sampler): per limb, the joint drive target (target
   rotation relative to the parent limb, turned into the joint's space against the bind rotation), a torque toward
@@ -68,7 +71,8 @@ at 1), falling and getting up, network copies.
   it in the air while the carrier `Holds` the root limb; at the step end each limb's velocity gets the carrier's move
   of its point over the step and is turned with the carrier, at the next step start that is taken off, so between
   them velocities are relative to the carrier; boarding takes the carrier's point speed off, leaving gives it back;
-  a carry over 5 m in one step moves the limbs at once. `Carrier`.
+  a carry over 5 m in one step moves the limbs at once. `Carrier`. It is an `ICarrierRider`: a network copy
+  (`RideAsCopy`) rides the carrier its owner's state names (`SetCopyCarrier`) instead of what it stands on.
 - `Testing/RagdollRootPin`: test helper, makes the root limb kinematic so the body hangs in the air (off by default).
 - `Body/RagdollPoseGizmo`: white = the animated skeleton hung on the physical root limb, red = physical limb to its
   target.

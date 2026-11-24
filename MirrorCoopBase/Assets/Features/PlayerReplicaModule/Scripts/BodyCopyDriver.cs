@@ -5,6 +5,7 @@ using Features.PlayerReplicaModule.Packets;
 using Features.PlayerReplicaModule.Receiving;
 using Features.PlayerReplicaModule.Visual;
 using Features.CharacterMovableModule.Scripts;
+using Features.CharacterMovableModule.Scripts.Body;
 using Features.FloatingControllerModule;
 using Mirror;
 using UnityEngine;
@@ -25,6 +26,8 @@ namespace Features.PlayerReplicaModule {
     // Runs after the float probe and before the movement (execution order): a packet's controls and the reconciled
     // velocity are in place before the movement computes this step's drive, so a stop reaches the copy on the very
     // step it is due. All of it happens before the physics step moves the body.
+    // The copy is read and corrected through the body the movement drives (the capsule, or the ragdoll once it wakes
+    // for the copy), and rides through that body's rider; taking over from the old network body is done on the capsule.
     [DefaultExecutionOrder(-50)]
     public sealed class BodyCopyDriver : MonoBehaviour {
         [SerializeField] private BodyStateChannel _channel;
@@ -38,7 +41,7 @@ namespace Features.PlayerReplicaModule {
         private readonly GroundMismatchTimer _groundTimer = new();
         private readonly CopyCarrierFrame _carrierFrame = new();
 
-        private ICarrierRider _rider;
+        private ICarrierRider _copyRider;
         private ReplicaConfiguration _configuration;
         private ReplicaModeModel _modeModel;
         private bool _isDriving;
@@ -52,8 +55,8 @@ namespace Features.PlayerReplicaModule {
             _modeModel = modeModel;
         }
 
-        private void Awake() =>
-            _rider = GetComponent<ICarrierRider>();
+        // Whether this peer simulates the body as a copy right now (the body is dynamic and driven by packets).
+        public bool IsSimulating => _isSimulating;
 
         private void OnEnable() =>
             _channel.OnPacketAccepted += OnPacketAccepted;
@@ -65,14 +68,14 @@ namespace Features.PlayerReplicaModule {
             if (_channel.isOwned || _configuration == null || _modeModel == null)
                 return;
 
-            Rigidbody body = _movable.Body;
+            Rigidbody capsule = _movable.Body;
             if (_modeModel.SimulatesCopies == false || _channel.HasLatest == false) {
-                if (_isDriving && body.isKinematic == false)
+                if (_isDriving && _movable.DrivenBody.IsKinematic == false)
                     Release();
                 return;
             }
 
-            if (_isDriving == false && TryTakeOver(body) == false)
+            if (_isDriving == false && TryTakeOver(capsule) == false)
                 return;
 
             // A ride that ended gives the old network body back; the copy keeps it silent.
@@ -85,12 +88,14 @@ namespace Features.PlayerReplicaModule {
 
             FollowCarrier();
 
-            if (body.isKinematic) {
+            IMovableBody body = _movable.DrivenBody;
+            if (body.IsKinematic) {
                 StopSimulating();
                 return;
             }
 
             StartSimulating();
+            SyncRider();
             if (_carrierFrame.IsMissing == false)
                 Correct(body, showTime);
         }
@@ -99,7 +104,7 @@ namespace Features.PlayerReplicaModule {
         private void FollowCarrier() {
             BodyStatePacket packet = _delayBuffer.Current;
             _carrierFrame.Resolve(packet.CarrierId);
-            _rider?.SetCopyCarrier(_carrierFrame.Carrier);
+            _movable.DrivenBody.Rider?.SetCopyCarrier(_carrierFrame.Carrier);
             Quaternion heading = _carrierFrame.Heading;
             _input.SetHeading(heading);
             _movable.SetRemoteLook(YawCompression.Unpack(packet.LookYaw) + heading.eulerAngles.y);
@@ -117,15 +122,15 @@ namespace Features.PlayerReplicaModule {
 
         // The old network body makes a copy kinematic; a ride or a seat does too, but silences that body first. Only the
         // old network body's hold is taken over: a ridden copy is waited for.
-        private bool TryTakeOver(Rigidbody body) {
-            bool heldByRideOrSeat = body.isKinematic && (_networkBody == null || _networkBody.enabled == false);
+        private bool TryTakeOver(Rigidbody capsule) {
+            bool heldByRideOrSeat = capsule.isKinematic && (_networkBody == null || _networkBody.enabled == false);
             if (heldByRideOrSeat)
                 return false;
 
             if (_networkBody != null)
                 _networkBody.enabled = false;
 
-            body.isKinematic = false;
+            capsule.isKinematic = false;
             BodyStatePacket packet = _channel.Latest;
             _delayBuffer.Restart(packet);
             _input.Reset();
@@ -133,7 +138,8 @@ namespace Features.PlayerReplicaModule {
             _hasReconciled = false;
             _isDriving = true;
             _carrierFrame.Resolve(packet.CarrierId);
-            Snap(body, _carrierFrame.ToWorldPoint(packet.RelativePosition), _carrierFrame.ToWorldDirection(packet.RelativeVelocity), false);
+            Snap(_movable.DrivenBody, _carrierFrame.ToWorldPoint(packet.RelativePosition),
+                _carrierFrame.ToWorldDirection(packet.RelativeVelocity), false);
             return true;
         }
 
@@ -155,7 +161,7 @@ namespace Features.PlayerReplicaModule {
             _groundTimer.Reset();
             _floatingController.SimulatesCopy = true;
             _movable.SetRemoteInput(_input);
-            _rider?.RideAsCopy(true);
+            SyncRider();
         }
 
         private void StopSimulating() {
@@ -165,10 +171,21 @@ namespace Features.PlayerReplicaModule {
             _isSimulating = false;
             _floatingController.SimulatesCopy = false;
             _movable.SetRemoteInput(null);
-            _rider?.RideAsCopy(false);
+            SyncRider();
         }
 
-        private void Correct(Rigidbody body, double showTime) {
+        // The rider of the body being simulated rides as a copy; the body can change (the ragdoll wakes for the copy).
+        private void SyncRider() {
+            ICarrierRider wanted = _isSimulating ? _movable.DrivenBody.Rider : null;
+            if (wanted == _copyRider)
+                return;
+
+            _copyRider?.RideAsCopy(false);
+            _copyRider = wanted;
+            _copyRider?.RideAsCopy(true);
+        }
+
+        private void Correct(IMovableBody body, double showTime) {
             BodyStatePacket packet = _delayBuffer.Current;
             BodyCorrectionSettings settings = _configuration.CorrectionSettings;
             // Ahead along the velocity only while the owner walks: a braking owner's velocity would carry the target
@@ -182,7 +199,7 @@ namespace Features.PlayerReplicaModule {
 
             _groundTimer.Tick(packet.Has(BodyStateFlags.Grounded), _movable.IsSupported, Time.fixedDeltaTime);
             bool isStuck = _groundTimer.IsStuck(settings.GroundMismatchSeconds);
-            PositionCorrectionStep step = PositionCorrection.Compute(target - body.position, ownerSteers, isStuck, settings);
+            PositionCorrectionStep step = PositionCorrection.Compute(target - body.Position, ownerSteers, isStuck, settings);
             if (step.IsSnap) {
                 Snap(body, target, ownerVelocity, true);
                 return;
@@ -192,24 +209,25 @@ namespace Features.PlayerReplicaModule {
             if (_hasReconciled && packet.Number == _reconciledSequence)
                 return;
 
-            body.linearVelocity = VelocityReconciliation.Reconcile(body.linearVelocity, ownerVelocity, ownerSteers);
+            body.SetVelocity(VelocityReconciliation.Reconcile(body.Velocity, ownerVelocity, ownerSteers));
             _reconciledSequence = packet.Number;
             _hasReconciled = true;
         }
 
         // A step of the pull long enough to see (a large error) is hidden like a snap.
-        private void MoveBy(Rigidbody body, Vector3 offset) {
-            body.position += offset;
+        private void MoveBy(IMovableBody body, Vector3 offset) {
+            body.MoveBy(offset);
             if (_visualLag != null)
                 _visualLag.HideJump(offset);
         }
 
-        private void Snap(Rigidbody body, Vector3 position, Vector3 velocity, bool count) {
+        private void Snap(IMovableBody body, Vector3 position, Vector3 velocity, bool count) {
+            Vector3 offset = position - body.Position;
             if (_visualLag != null)
-                _visualLag.HideJump(position - body.position);
+                _visualLag.HideJump(offset);
 
-            body.position = position;
-            body.linearVelocity = velocity;
+            body.MoveBy(offset);
+            body.SetVelocity(velocity);
             if (count)
                 _channel.ReceiveStats.RecordSnap(Time.unscaledTimeAsDouble);
         }

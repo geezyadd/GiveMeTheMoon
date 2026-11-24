@@ -85,6 +85,29 @@ namespace Features.ActiveRagdollModule {
                     limb.Rigidbody.AddForce(velocityChange, ForceMode.VelocityChange);
         }
 
+        // Shifts every limb at once, keeping the body's shape (a teleport or a network correction). The bone's transform
+        // moves too: the pose sampler writes the transforms each step, and a moved transform is copied back onto its
+        // rigidbody before the simulation, so moving the rigidbody alone would be undone. Parents go first (the list
+        // order), so a parent's move never drags an already placed child.
+        public void MoveAllBy(Vector3 offset) {
+            foreach (RagdollLimb limb in _limbs) {
+                Rigidbody rigidbody = limb.Rigidbody;
+                if (rigidbody.isKinematic)
+                    continue;
+
+                Vector3 position = rigidbody.position + offset;
+                limb.transform.SetPositionAndRotation(position, rigidbody.rotation);
+                rigidbody.position = position;
+            }
+        }
+
+        // Adds the same velocity to every limb right now, keeping how the limbs move against each other.
+        public void ShiftVelocities(Vector3 delta) {
+            foreach (RagdollLimb limb in _limbs)
+                if (limb.Rigidbody.isKinematic == false)
+                    limb.Rigidbody.linearVelocity += delta;
+        }
+
         public void StopAllMotion() {
             foreach (RagdollLimb limb in _limbs) {
                 if (limb.Rigidbody.isKinematic)

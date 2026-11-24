@@ -42,9 +42,16 @@ namespace Features.CharacterMovableModule.Scripts {
 
         public Rigidbody Body => _rb;
 
-        // What the movement pushes: the capsule, or another body put in by SetDrivenBody.
-        private IMovableBody DrivenBody =>
-            _drivenBody ?? (_capsuleBody ??= new CapsuleMovableBody(_rb, _floatingController));
+        // What the movement pushes and the network copy corrects: the capsule, or another body put in by SetDrivenBody.
+        public IMovableBody DrivenBody =>
+            _drivenBody ?? (_capsuleBody ??= new CapsuleMovableBody(
+                _rb, _floatingController, GetComponent<ICarrierRider>()));
+
+        // The controls the body is simulated from on this peer: the keyboard of the owner, a copy's packets, or null.
+        public IMovementControls ActiveControls => ActiveInput;
+
+        // The look the body shows on this peer, degrees around the up axis: a copy's packet look while it has one.
+        public float ShownLookYaw => _hasRemoteLook && ControlsSelf == false ? _remoteLookYaw : _facingYaw;
 
         // Grows by one on every takeoff of this body (wraps at 255): the state packet carries it, so a remote copy sees
         // every jump even when the packet of that moment is lost.
@@ -302,7 +309,7 @@ namespace Features.CharacterMovableModule.Scripts {
             if (_rotatablePart == null)
                 return;
 
-            float yaw = _hasRemoteLook && ControlsSelf == false ? _remoteLookYaw : _facingYaw;
+            float yaw = ShownLookYaw;
             Quaternion target = Quaternion.Euler(0f, yaw, 0f);
             float t = 1f - Mathf.Exp(-ReadStat(PlayerStatType.LookTurnRate) * Time.deltaTime);
             _rotatablePart.rotation = Quaternion.Slerp(_rotatablePart.rotation, target, t);

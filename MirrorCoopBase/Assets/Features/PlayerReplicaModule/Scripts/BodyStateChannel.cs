@@ -4,7 +4,6 @@ using Features.PlayerReplicaModule.Packets;
 using Features.PlayerReplicaModule.Receiving;
 using Features.PlayerReplicaModule.Sending;
 using Features.CharacterMovableModule.Scripts;
-using Features.FloatingControllerModule;
 using Mirror;
 using UnityEngine;
 using Zenject;
@@ -16,7 +15,6 @@ namespace Features.PlayerReplicaModule {
     // only means the next one arrives a little later.
     public sealed class BodyStateChannel : NetworkBehaviour {
         [SerializeField] private CharacterMovableBase _movable;
-        [SerializeField] private FloatingController _floatingController;
 
         private readonly BodySendSchedule _schedule = new();
         private readonly PacketSequenceFilter _sequenceFilter = new();
@@ -41,7 +39,7 @@ namespace Features.PlayerReplicaModule {
         }
 
         private void Awake() =>
-            _sampler = new BodyStateSampler(_movable, _floatingController, GetComponent<ICarrierRider>());
+            _sampler = new BodyStateSampler(_movable);
 
         public override void OnStartClient() =>
             _registry?.Add(this);

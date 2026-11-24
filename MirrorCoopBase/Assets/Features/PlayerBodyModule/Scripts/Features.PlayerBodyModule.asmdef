@@ -5,6 +5,8 @@
         "Mirror",
         "Zenject",
         "Features.CameraModule",
+        "Features.PlayerReplicaModule",
+        "Features.GameCoreModule.Contracts",
         "Features.CharacterMovableModule",
         "Features.ActiveRagdollModule",
         "Features.FloatingControllerModule"

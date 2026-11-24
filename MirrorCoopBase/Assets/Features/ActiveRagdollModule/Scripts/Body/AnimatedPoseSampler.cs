@@ -62,6 +62,9 @@ namespace Features.ActiveRagdollModule {
             }
 
             _animator.applyRootMotion = false;
+            // The pose is the body's target, not just its look: it is needed off screen too, or an unseen body would
+            // only hold whatever shape it is in.
+            _animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             _graph.Evaluate(0f);
             _graph.Stop();
             _graph.SetTimeUpdateMode(DirectorUpdateMode.Manual);
