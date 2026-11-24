@@ -47,7 +47,13 @@ namespace Features.ActiveRagdollModule.Editor {
             humanoid.transform.localRotation = Quaternion.identity;
             humanoid.transform.localScale = PlayerHumanoidScale();
 
+            Animator animator = humanoid.GetComponentInChildren<Animator>();
+            animator.runtimeAnimatorController = TestDummyAnimatorBuilder.Build();
+            animator.applyRootMotion = false;
+
             RagdollBody body = root.AddComponent<RagdollBody>();
+            root.AddComponent<AnimatedPoseSampler>();
+            root.AddComponent<RagdollPoseGizmo>();
             SerializedObject serializedBody = new(body);
             serializedBody.FindProperty("_profile").objectReferenceValue = LoadOrCreateProfile();
             serializedBody.ApplyModifiedPropertiesWithoutUndo();

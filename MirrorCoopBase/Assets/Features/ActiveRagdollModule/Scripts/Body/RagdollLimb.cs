@@ -17,6 +17,29 @@ namespace Features.ActiveRagdollModule {
         public Collider[] Colliders => _colliders;
         public RagdollLimb Parent => _parent;
         public bool IsRoot => _joint == null;
+        // Rotation relative to the parent limb when the body was set up; the joint's rest pose.
+        public Quaternion BindRotationInParent { get; private set; }
+        public LimbPoseTarget Target { get; private set; }
+        public bool HasTarget { get; private set; }
+
+        public void CaptureBindPose() {
+            BindRotationInParent = RotationInParent();
+        }
+
+        // Called while the bones stand in the animated pose.
+        public void CaptureTarget(Vector3 animatedRootPosition) {
+            Target = new LimbPoseTarget(RotationInParent(), transform.forward, transform.up,
+                IsRoot ? Vector3.zero : transform.position - animatedRootPosition);
+            HasTarget = true;
+        }
+
+        // Puts the bone back where its rigidbody is, so the animated pose never reaches physics or the screen.
+        public void ReturnToPhysics() {
+            transform.SetPositionAndRotation(_rigidbody.position, _rigidbody.rotation);
+        }
+
+        private Quaternion RotationInParent() =>
+            _parent == null ? transform.rotation : Quaternion.Inverse(_parent.transform.rotation) * transform.rotation;
 
         public void Configure(Rigidbody rigidbody, ConfigurableJoint joint, Collider[] colliders, RagdollLimb parent,
             float driveSpring, float driveDamper) {

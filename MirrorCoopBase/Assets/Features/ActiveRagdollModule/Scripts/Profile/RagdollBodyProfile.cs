@@ -21,7 +21,11 @@ namespace Features.ActiveRagdollModule {
                  "around a joint do not push the body apart.")]
         [SerializeField] private bool _ignoreNearbyLimbCollisions = true;
 
+        [Tooltip("Multiplies every limb's capsule radius when the body is baked.")]
+        [SerializeField] private float _radiusMultiplier = 1.3f;
+
         public List<RagdollLimbProfile> Limbs => _limbs;
+        public float RadiusMultiplier => _radiusMultiplier;
         public float MassMultiplier => _massMultiplier;
         public float DamperToSpringRatio => _damperToSpringRatio;
         public float AngularLimit => _angularLimit;

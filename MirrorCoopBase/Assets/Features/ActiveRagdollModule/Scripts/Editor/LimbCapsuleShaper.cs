@@ -7,10 +7,12 @@ namespace Features.ActiveRagdollModule.Editor {
     public static class LimbCapsuleShaper {
         public static CapsuleCollider AddCapsule(RagdollBody body, Transform bone, RagdollLimb parent,
             RagdollLimbProfile limbProfile) {
-            Vector3 localEnd = bone.InverseTransformPoint(EndPoint(body, bone, parent, limbProfile));
+            Vector3 localEnd = bone.InverseTransformPoint(
+                EndPoint(body, bone, parent == null ? null : parent.transform, limbProfile));
             int axis = LongestAxis(localEnd);
             float scale = Mathf.Abs(bone.lossyScale.x);
-            float localRadius = scale > 0f ? limbProfile.Radius / scale : limbProfile.Radius;
+            float radius = limbProfile.Radius * body.Profile.RadiusMultiplier;
+            float localRadius = scale > 0f ? radius / scale : radius;
 
             CapsuleCollider capsule = Undo.AddComponent<CapsuleCollider>(bone.gameObject);
             capsule.direction = axis;
@@ -20,13 +22,14 @@ namespace Features.ActiveRagdollModule.Editor {
             return capsule;
         }
 
-        private static Vector3 EndPoint(RagdollBody body, Transform bone, RagdollLimb parent,
+        // The far end of the limb's capsule axis; the near end is the bone itself.
+        public static Vector3 EndPoint(RagdollBody body, Transform bone, Transform parentBone,
             RagdollLimbProfile limbProfile) {
             Transform endBone = RagdollBodyBaker.FindBone(body, limbProfile.EndBonePath);
             if (endBone != null)
                 return endBone.position;
 
-            Vector3 direction = parent != null ? (bone.position - parent.transform.position).normalized : bone.up;
+            Vector3 direction = parentBone != null ? (bone.position - parentBone.position).normalized : bone.up;
             return bone.position + direction * limbProfile.FallbackLength;
         }
 

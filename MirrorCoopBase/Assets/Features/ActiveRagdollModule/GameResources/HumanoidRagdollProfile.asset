@@ -115,3 +115,4 @@ MonoBehaviour:
   _angularDamping: 0.05
   _maxAngularVelocity: 50
   _ignoreNearbyLimbCollisions: 1
+  _radiusMultiplier: 1.3

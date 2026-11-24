@@ -27,8 +27,10 @@ namespace Features.ActiveRagdollModule {
                 return;
             }
 
-            foreach (RagdollLimb limb in _limbs)
+            foreach (RagdollLimb limb in _limbs) {
                 limb.Rigidbody.maxAngularVelocity = _profile.MaxAngularVelocity;
+                limb.CaptureBindPose();
+            }
 
             if (_profile.IgnoreNearbyLimbCollisions)
                 IgnoreNearbyLimbCollisions();
