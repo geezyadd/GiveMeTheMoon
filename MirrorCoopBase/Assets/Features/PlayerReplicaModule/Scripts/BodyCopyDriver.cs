@@ -3,6 +3,7 @@ using Features.PlayerReplicaModule.Correction;
 using Features.PlayerReplicaModule.Models;
 using Features.PlayerReplicaModule.Packets;
 using Features.PlayerReplicaModule.Receiving;
+using Features.PlayerReplicaModule.Visual;
 using Features.CharacterMovableModule.Scripts;
 using Features.FloatingControllerModule;
 using Mirror;
@@ -17,7 +18,8 @@ namespace Features.PlayerReplicaModule {
     // and a copy stops where its owner stopped. After each physics step it is pulled toward the current packet: a share
     // of the position error (gentle, with a dead zone, while the owner presses no walk key), the velocity reconciled
     // once per packet, a snap past the snap distance. The target is moved ahead along the packet's velocity only while
-    // the owner walks. While a ride or a seat holds the body (kinematic), the copy leaves it alone.
+    // the owner walks. The look follows the current packet too. A jump of the body is hidden by ReplicaVisualLag. While a
+    // ride or a seat holds the body (kinematic), the copy leaves it alone.
     // Runs after the float probe and before the movement (execution order): a packet's controls and the reconciled
     // velocity are in place before the movement computes this step's drive, so a stop reaches the copy on the very
     // step it is due. All of it happens before the physics step moves the body.
@@ -27,6 +29,7 @@ namespace Features.PlayerReplicaModule {
         [SerializeField] private CharacterMovableBase _movable;
         [SerializeField] private FloatingController _floatingController;
         [SerializeField] private NetworkRigidbodyUnreliable _networkBody;
+        [SerializeField] private ReplicaVisualLag _visualLag;
 
         private readonly PacketMovementControls _input = new();
         private readonly PacketDelayBuffer _delayBuffer = new();
@@ -71,7 +74,7 @@ namespace Features.PlayerReplicaModule {
 
             double showTime = BodyStateChannel.ReadServerNow() - _configuration.CopyDelaySeconds;
             if (_delayBuffer.Advance(showTime))
-                _input.Apply(_delayBuffer.Current);
+                ApplyCurrent();
 
             if (body.isKinematic) {
                 StopSimulating();
@@ -80,6 +83,12 @@ namespace Features.PlayerReplicaModule {
 
             StartSimulating();
             Correct(body, showTime);
+        }
+
+        private void ApplyCurrent() {
+            BodyStatePacket packet = _delayBuffer.Current;
+            _input.Apply(packet);
+            _movable.SetRemoteLook(YawCompression.Unpack(packet.LookYaw));
         }
 
         private void OnPacketAccepted(BodyStatePacket packet) {
@@ -101,7 +110,7 @@ namespace Features.PlayerReplicaModule {
             BodyStatePacket packet = _channel.Latest;
             _delayBuffer.Restart(packet);
             _input.Reset();
-            _input.Apply(packet);
+            ApplyCurrent();
             _hasReconciled = false;
             _isDriving = true;
             Snap(body, packet.RelativePosition, packet.RelativeVelocity, false);
@@ -114,6 +123,7 @@ namespace Features.PlayerReplicaModule {
                 _networkBody.enabled = true;
 
             _delayBuffer.Clear();
+            _movable.ClearRemoteLook();
             _isDriving = false;
         }
 
@@ -153,7 +163,7 @@ namespace Features.PlayerReplicaModule {
                 return;
             }
 
-            body.position += step.Offset;
+            MoveBy(body, step.Offset);
             if (_hasReconciled && packet.Number == _reconciledSequence)
                 return;
 
@@ -162,7 +172,17 @@ namespace Features.PlayerReplicaModule {
             _hasReconciled = true;
         }
 
+        // A step of the pull long enough to see (a large error) is hidden like a snap.
+        private void MoveBy(Rigidbody body, Vector3 offset) {
+            body.position += offset;
+            if (_visualLag != null)
+                _visualLag.HideJump(offset);
+        }
+
         private void Snap(Rigidbody body, Vector3 position, Vector3 velocity, bool count) {
+            if (_visualLag != null)
+                _visualLag.HideJump(position - body.position);
+
             body.position = position;
             body.linearVelocity = velocity;
             if (count)

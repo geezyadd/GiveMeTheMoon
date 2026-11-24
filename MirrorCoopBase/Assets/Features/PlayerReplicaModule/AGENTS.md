@@ -26,8 +26,8 @@ Rare events (death, seat, platform change, hits) go reliably and apply at once.
 Being built in steps on `demo/platform-sync`, in the lobby first (the still world as the only platform); the ship deck
 comes later. Done: the pure math, the packet stream and the simulated copies behind a per-peer debug toggle ("Player
 sync: old / new", `ReplicaModeModel`, new by default). The old way stays one press away: copies follow
-`NetworkRigidbodyUnreliable`; riders always follow `ShipRider`. Not done yet: hiding a snap visually, the look from the packet,
-the ship deck as a moving platform, removing the proxy shove.
+`NetworkRigidbodyUnreliable`; riders always follow `ShipRider`. Not done yet: the ship deck as a moving platform,
+removing the proxy shove.
 
 Known limits of the toggle: on the host, the new mode silences the old network body of the other players, so a third
 player in the old mode sees them stand still (two players are fine). Switching to the old mode while a copy rides waits
@@ -47,6 +47,12 @@ until the ride ends.
   stats). A body that turns kinematic (ride, seat) is left alone until it is dynamic again; a copy held by a ride
   when the mode is switched on is taken over only after the ride. The server's copy pushes items by contact, so the
   proxy shove does not run for a simulated copy.
+- `Visual/ReplicaVisualLag` (on `DummyPlayer`): moves the `ReplicaVisual` child (everything seen: `RotatablePart` with
+  the model and the hand, `Nameplate`, the spectator camera points) by a `VisualLagOffset`, so a jump of a copy's body
+  shows as a quick slide: the driver reports every snap and every pull step of at least `VisualCatchUpThreshold`; the
+  offset fades to 5 % over `VisualCatchUpSeconds`; a jump past `VisualCatchUpMaxDistance` (a respawn) is shown as it
+  is. The colliders stay with the body. The copy's look comes from the current packet
+  (`CharacterMovableBase.SetRemoteLook`), so it turns at the same moment it walks.
 - `BodyStateChannel` (on `DummyPlayer`): the owner samples its body each physics step and sends a packet when
   `BodySendSchedule` says so (at once when a control changes: walk pressed or released, sprint, jump held, support, a
   jump; `PacketRate` while anything moves or the look turns; `RestingPacketRate` while it stands); the
@@ -76,4 +82,5 @@ until the ride ends.
   jumps, wrap), target extrapolation and its cap, horizontal share, vertical dead zone and cap, no overshoot, snap,
   velocity reconciliation per axis (and only slowing while the owner steers nothing), ground mismatch timer, send schedule (moving, idle, a change after idle), receive
   stats, packet input source (controls, jump press from the counter, reset), delay buffer (waits, newest due one,
-  restart), the gentle pull while the owner stands, sending at once when a control changes.
+  restart), the gentle pull while the owner stands, sending at once when a control changes, the visual lag offset
+  (hide, tiny and huge jumps, fade, sum).

@@ -18,6 +18,14 @@ namespace Features.PlayerReplicaModule.Configuration {
         [Tooltip("How far in the past a copy shows its owner, seconds: a packet is applied when the server time reaches its stamp plus this. Then a copy stops and turns where its owner did instead of running past and sliding back. A packet older than this is applied at once.")]
         [SerializeField, Min(0f)] private float _copyDelaySeconds = 0.1f;
 
+        [Header("Visual catch-up")]
+        [Tooltip("A jump of a copy's body at least this long, metres, is hidden: the model and the nameplate stay where they were and catch up with the body.")]
+        [SerializeField, Min(0f)] private float _visualCatchUpThreshold = 0.05f;
+        [Tooltip("A jump longer than this, metres (a respawn, a move to a station), is shown as it is: sliding across the map would look worse.")]
+        [SerializeField, Min(0f)] private float _visualCatchUpMaxDistance = 10f;
+        [Tooltip("How long the model takes to catch up with the body, seconds.")]
+        [SerializeField, Min(0.01f)] private float _visualCatchUpSeconds = 0.1f;
+
         [Header("Correction")]
         [Tooltip("Share of the horizontal error removed per physics step.")]
         [SerializeField, Range(0f, 1f)] private float _pullShare = 0.1f;
@@ -42,6 +50,9 @@ namespace Features.PlayerReplicaModule.Configuration {
         public float RestingPacketInterval => 1f / _restingPacketRate;
         public float RestingSpeed => _restingSpeed;
         public float CopyDelaySeconds => _copyDelaySeconds;
+        public float VisualCatchUpThreshold => _visualCatchUpThreshold;
+        public float VisualCatchUpMaxDistance => _visualCatchUpMaxDistance;
+        public float VisualCatchUpSeconds => _visualCatchUpSeconds;
 
         public BodyCorrectionSettings CorrectionSettings =>
             new() {

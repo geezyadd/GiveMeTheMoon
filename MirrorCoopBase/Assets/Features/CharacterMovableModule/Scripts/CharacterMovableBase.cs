@@ -31,6 +31,8 @@ namespace Features.CharacterMovableModule.Scripts {
         private CharacterInputBuffer _input;
         private IMovementControls _ownInput;
         private IMovementControls _remoteInput;
+        private bool _hasRemoteLook;
+        private float _remoteLookYaw;
         private float _moveSpeed;
         private readonly JumpAndAirGravity _jump = new JumpAndAirGravity();
         private Vector3 _weight;
@@ -86,6 +88,16 @@ namespace Features.CharacterMovableModule.Scripts {
             _jump.RefillAirJumps(ExtraAirJumps);
             CacheWeight();
         }
+
+        // On a peer that does not own this body: the look to turn toward instead of the synced one, degrees around the
+        // up axis, so a simulated copy turns at the same moment as it walks. ClearRemoteLook goes back to the synced one.
+        public void SetRemoteLook(float yaw) {
+            _remoteLookYaw = yaw;
+            _hasRemoteLook = true;
+        }
+
+        public void ClearRemoteLook() =>
+            _hasRemoteLook = false;
 
         private void Update() {
             IMovementControls source = ActiveInput;
@@ -282,7 +294,8 @@ namespace Features.CharacterMovableModule.Scripts {
             if (_rotatablePart == null)
                 return;
 
-            Quaternion target = Quaternion.Euler(0f, _facingYaw, 0f);
+            float yaw = _hasRemoteLook && ControlsSelf == false ? _remoteLookYaw : _facingYaw;
+            Quaternion target = Quaternion.Euler(0f, yaw, 0f);
             float t = 1f - Mathf.Exp(-ReadStat(PlayerStatType.LookTurnRate) * Time.deltaTime);
             _rotatablePart.rotation = Quaternion.Slerp(_rotatablePart.rotation, target, t);
         }
