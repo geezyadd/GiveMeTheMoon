@@ -53,7 +53,9 @@ namespace Features.ActiveRagdollModule.Editor {
 
             RagdollBody body = root.AddComponent<RagdollBody>();
             root.AddComponent<AnimatedPoseSampler>();
+            root.AddComponent<AnimatedPoseFollower>();
             root.AddComponent<RagdollPoseGizmo>();
+            root.AddComponent<RagdollRootPin>();
             SerializedObject serializedBody = new(body);
             serializedBody.FindProperty("_profile").objectReferenceValue = LoadOrCreateProfile();
             serializedBody.ApplyModifiedPropertiesWithoutUndo();

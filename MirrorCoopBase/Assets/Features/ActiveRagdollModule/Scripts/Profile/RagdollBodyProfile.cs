@@ -21,11 +21,22 @@ namespace Features.ActiveRagdollModule {
                  "around a joint do not push the body apart.")]
         [SerializeField] private bool _ignoreNearbyLimbCollisions = true;
 
+        [Header("Following the animated pose")]
+        [Tooltip("Spring that pulls each limb toward its animated position (from the physical root limb), " +
+                 "as acceleration per metre of error.")]
+        [SerializeField] private float _poseForce = 150f;
+        [Tooltip("Turns each limb, the root too, toward its animated world axes, as angular acceleration per " +
+                 "degree of error. This is what keeps the body upright.")]
+        [SerializeField] private float _poseTorque = 15f;
+
+        [Header("Baking")]
         [Tooltip("Multiplies every limb's capsule radius when the body is baked.")]
         [SerializeField] private float _radiusMultiplier = 1.3f;
 
         public List<RagdollLimbProfile> Limbs => _limbs;
         public float RadiusMultiplier => _radiusMultiplier;
+        public float PoseForce => _poseForce;
+        public float PoseTorque => _poseTorque;
         public float MassMultiplier => _massMultiplier;
         public float DamperToSpringRatio => _damperToSpringRatio;
         public float AngularLimit => _angularLimit;

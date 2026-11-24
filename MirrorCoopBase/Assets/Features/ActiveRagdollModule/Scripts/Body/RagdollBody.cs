@@ -4,18 +4,17 @@ using UnityEngine;
 namespace Features.ActiveRagdollModule {
     // The root of a ragdoll body: knows its limbs and does what concerns all of them at once.
     // It knows nothing about who owns the body (a player, a creature): they use it through this API.
+    // Runs after everything that adds forces to the limbs this step, and hands them to physics in one go.
+    [DefaultExecutionOrder(100)]
     public sealed class RagdollBody : MonoBehaviour {
         [SerializeField] private RagdollBodyProfile _profile;
         [SerializeField] private List<RagdollLimb> _limbs = new();
 
-        [Tooltip("Temporary until the pose following step: joint drive strength, 0 = limp, 1 = holds the pose " +
-                 "the body was baked in.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _driveScale;
-
         public RagdollBodyProfile Profile => _profile;
         public IReadOnlyList<RagdollLimb> Limbs => _limbs;
         public RagdollLimb Root => _limbs.Count > 0 ? _limbs[0] : null;
+        // 0 = a limp ragdoll, 1 = fully follows the animation. Always 1 until falling and getting up are built.
+        public float ControlFactor { get; private set; } = 1f;
 
         public void SetLimbs(List<RagdollLimb> limbs) {
             _limbs = limbs;
@@ -35,16 +34,15 @@ namespace Features.ActiveRagdollModule {
             if (_profile.IgnoreNearbyLimbCollisions)
                 IgnoreNearbyLimbCollisions();
 
-            ApplyDriveScale(_driveScale);
+            ApplyDriveScale(ControlFactor);
         }
 
-        private void OnValidate() {
-            if (Application.isPlaying && _profile != null)
-                ApplyDriveScale(_driveScale);
+        private void FixedUpdate() {
+            foreach (RagdollLimb limb in _limbs)
+                limb.ApplyPendingForce();
         }
 
         public void ApplyDriveScale(float scale) {
-            _driveScale = scale;
             foreach (RagdollLimb limb in _limbs)
                 limb.ApplyDriveScale(scale);
         }
