@@ -31,7 +31,9 @@ are shown; the old network body of the player and its "Player sync: old / new" t
 the server's moves of a body through the packets (`IPlayerBodyPlacement`), and carriers: on a moving carrier
 (`ICarrier`: the lobby test platform, the flying ship's deck) the packet is in the carrier's axes and copies ride their
 own copy of it. A seated player is still bound to its seat by `ShipRider` (kinematic); its copy leaves it alone.
-Not done yet: removing the proxy shove.
+Every peer's copy, the server's too, pushes items by contact; the proxy shove (the server pushing items in front of a
+client's kinematic copy by its synced push) and its synced push fields on `CharacterMovableBase` were removed on
+2026-11-24. Postponed to the ragdoll work: inertia, the ship's hit impulses on players and players pushing players.
 
 ## Assembly
 `Features.PlayerReplicaModule` (layer 3; references Mirror, Mirror.Components, Zenject, `CharacterMovableModule`,
@@ -47,7 +49,7 @@ Not done yet: removing the proxy shove.
   stats). A body a seat holds (kinematic, collisions off) is left alone until it is dynamic again. After a move by the
   server (`BodyStateChannel.OnPlaced`) the copy stops, holds still at the new place and starts over from the first
   packet with the move's number (`PlacementFence`; at most `PlacementWaitSeconds`, 1 s). The server's copy pushes
-  items by contact, so the proxy shove does not run for a simulated copy.
+  items by contact.
   On a carrier: `CopyCarrierFrame` finds this peer's copy of the packet's carrier by network id (missing: the body is
   left alone), the copy rides it through `ICarrierRider.SetCopyCarrier` (`RideAsCopy` while simulating), the target and
   the owner's velocity are turned from the carrier's axes (its pose of the last step), and the walk direction

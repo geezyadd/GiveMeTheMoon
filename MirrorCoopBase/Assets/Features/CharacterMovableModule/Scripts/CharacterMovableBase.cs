@@ -7,25 +7,13 @@ using Zenject;
 
 namespace Features.CharacterMovableModule.Scripts {
     public abstract class CharacterMovableBase : NetworkBehaviour {
-        private const int LAYER_COUNT = 32;
-
         [Header("Body")]
         [SerializeField] private Rigidbody _rb;
-        [SerializeField] private CapsuleCollider _capsuleCollider;
         [SerializeField] private FloatingController _floatingController;
         [SerializeField] private Transform _rotatablePart;
         [SerializeField] private PlayerStatEntity _stats;
 
-        [Header("Proxy Shove")]
-        [SerializeField] private float _proxyReach = 0.2f;
-        [SerializeField] private float _proxyPadding = 0.1f;
-
-        [SyncVar] private float _pushStrength;
-        [SyncVar] private Vector3 _pushHeading;
-        [SyncVar] private float _pushSpeed;
         [SyncVar] private float _facingYaw;
-
-        private static readonly Collider[] OverlapScratch = new Collider[32];
 
         [Inject]
         private CharacterInputBuffer _input;
@@ -36,7 +24,6 @@ namespace Features.CharacterMovableModule.Scripts {
         private float _moveSpeed;
         private readonly JumpAndAirGravity _jump = new JumpAndAirGravity();
         private Vector3 _weight;
-        private int _shoveMask;
 
         public Rigidbody Body => _rb;
 
@@ -67,10 +54,8 @@ namespace Features.CharacterMovableModule.Scripts {
             }
         }
 
-        protected virtual void Awake() {
+        protected virtual void Awake() =>
             CacheWeight();
-            CacheShoveMask();
-        }
 
         public override void OnStartLocalPlayer() {
             _moveSpeed = ReadStat(PlayerStatType.WalkSpeed);
@@ -118,29 +103,13 @@ namespace Features.CharacterMovableModule.Scripts {
             if (_rb == null)
                 return;
 
-            // The server copy of a client-owned player that is not simulated is kinematic (its NetworkRigidbody follows the
-            // owner), so it never pushes by contact: the proxy shove has to run for it. A simulated copy pushes by contact.
+            // A body nobody simulates on this peer (a copy before its first state packet) or a kinematic one (seated)
+            // does not move. Every simulated body, a remote copy too, pushes items by contact.
             IMovementControls source = ActiveInput;
-            if (source == null) {
-                if (isServer && ControlsSelf == false)
-                    ShoveNearbyBodies();
+            if (source == null || _rb.isKinematic)
                 return;
-            }
-
-            if (_rb.isKinematic) {
-                if (ControlsSelf)
-                    StopPushing();
-                return;
-            }
 
             Simulate(source);
-        }
-
-        // A kinematic owner (bound to the ship) does not simulate: the last walk would stay in the synced push and the
-        // server would keep shoving bodies next to a player who stands still.
-        private void StopPushing() {
-            _pushStrength = 0f;
-            _pushSpeed = 0f;
         }
 
         // One physics step of the body from its controls: walk or brake, then jump and the extra air gravity.
@@ -196,14 +165,6 @@ namespace Features.CharacterMovableModule.Scripts {
             accel.y = 0f;
             Vector3 force = Vector3.ClampMagnitude(accel, forceCap) * _rb.mass;
             _rb.AddForce(force);
-
-            // The push is the owner's to sync; a remote copy only moves its own body.
-            if (ControlsSelf == false)
-                return;
-
-            _pushStrength = force.magnitude;
-            _pushHeading = wish;
-            _pushSpeed = steering ? _moveSpeed : 0f;
         }
 
         private void ApplyJumpAndAirGravity() {
@@ -226,51 +187,6 @@ namespace Features.CharacterMovableModule.Scripts {
             float extra = _jump.AirGravityExtra(tuning, _rb.linearVelocity.y);
             if (extra > 0f)
                 _rb.AddForce(_weight * extra);
-        }
-
-        private void ShoveNearbyBodies() {
-            // Gated on the push intent, not on speed: a client walking into an item is stopped by its own copy of it,
-            // so its speed drops to zero exactly while it pushes.
-            if (_pushHeading.sqrMagnitude < 0.0001f || _pushStrength < 0.01f || _capsuleCollider == null)
-                return;
-
-            Vector3 shove = _pushHeading * Mathf.Max(_pushStrength, 0.1f);
-            Vector3 shoveDirection = shove.normalized;
-            Vector3 center = _capsuleCollider.transform.TransformPoint(_capsuleCollider.center);
-            float radius = _capsuleCollider.radius;
-            float height = _capsuleCollider.height;
-            Vector3 up = _capsuleCollider.transform.up;
-            Vector3 lead = Vector3.ClampMagnitude(shove, 1f) * _proxyReach;
-            if (connectionToClient != null)
-                lead += lead.normalized * (float)connectionToClient.rtt * 0.5f;
-
-            Vector3 origin = center + lead;
-            Vector3 top = origin + up * (height * 0.5f - radius);
-            Vector3 bottom = origin - up * (height * 0.5f - radius);
-            int count = Physics.OverlapCapsuleNonAlloc(
-                top,
-                bottom,
-                radius + _proxyPadding,
-                OverlapScratch,
-                _shoveMask,
-                QueryTriggerInteraction.Ignore);
-
-            for (int i = 0; i < count; i++) {
-                Rigidbody other = OverlapScratch[i].attachedRigidbody;
-                if (other == null || other.isKinematic || other == _rb || other.TryGetComponent(out CharacterMovableBase _))
-                    continue;
-
-                Vector3 contact = OverlapScratch[i].ClosestPoint(center);
-                Vector3 away = (contact - center).normalized;
-                if (Vector3.Dot(away, shoveDirection) <= 0.1f)
-                    continue;
-
-                // Bounded like a body contact: the drive force is shared by player and item by mass, and the item is never
-                // pushed faster than the player moves.
-                Vector3 impulse = Vector3.Project(shove, away) * (other.mass / (other.mass + _rb.mass));
-                if (Vector3.Dot(other.linearVelocity, shoveDirection) < _pushSpeed)
-                    other.AddForceAtPosition(impulse, contact);
-            }
         }
 
         private void CaptureFacingYaw() {
@@ -313,17 +229,6 @@ namespace Features.CharacterMovableModule.Scripts {
 
         private int ExtraAirJumps =>
             Mathf.RoundToInt(ReadStat(PlayerStatType.ExtraAirJumps));
-
-        // The shove stands in for the body contact of a client-owned player, so it reaches every layer that body collides
-        // with (items lie on Interactable), not only the ground the float probe stands on. Players never shove players.
-        private void CacheShoveMask() {
-            int layer = _capsuleCollider != null ? _capsuleCollider.gameObject.layer : gameObject.layer;
-            _shoveMask = 0;
-            for (int other = 0; other < LAYER_COUNT; other++) {
-                if (Physics.GetIgnoreLayerCollision(layer, other) == false)
-                    _shoveMask |= 1 << other;
-            }
-        }
 
         private void CacheWeight() {
             if (_rb != null)

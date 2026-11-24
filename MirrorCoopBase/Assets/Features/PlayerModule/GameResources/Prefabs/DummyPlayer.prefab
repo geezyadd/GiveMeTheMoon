@@ -171,12 +171,9 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   _rb: {fileID: 7148192738405830123}
-  _capsuleCollider: {fileID: 6120488192738405830}
   _floatingController: {fileID: 5109845104136634491}
   _rotatablePart: {fileID: 3734261479117514419}
   _stats: {fileID: 8309845104136634496}
-  _proxyReach: 0.2
-  _proxyPadding: 0.1
 --- !u!114 &4109845104136634490
 MonoBehaviour:
   m_ObjectHideFlags: 0
