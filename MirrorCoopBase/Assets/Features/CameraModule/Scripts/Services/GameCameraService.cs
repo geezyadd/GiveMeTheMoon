@@ -205,18 +205,20 @@ namespace Features.CameraModule.Scripts.Services {
         private void SpawnCameras() {
             GameCamera fpPrefab = _catalog != null ? _catalog.FpCameraPrefab : null;
             GameCamera tpPrefab = _catalog != null ? _catalog.TpCameraPrefab : null;
-            Spawn(CameraIds.FPCamera, GameCameraKind.FirstPerson, fpPrefab);
-            Spawn(CameraIds.TPCamera, GameCameraKind.ThirdPerson, tpPrefab);
+            Spawn(CameraIds.FPCamera, fpPrefab);
+            Spawn(CameraIds.TPCamera, tpPrefab);
         }
 
-        private void Spawn(string id, GameCameraKind kind, GameCamera prefab) {
+        private void Spawn(string id, GameCamera prefab) {
             if (_model.TryGet(id, out GameCamera existing) && existing != null)
                 return;
 
-            GameCamera camera = prefab != null
-                ? UnityEngine.Object.Instantiate(prefab, _root)
-                : GameCamera.Create(id, kind, _root);
+            if (prefab == null) {
+                Debug.LogError($"Camera: no {id} prefab in the camera catalog.");
+                return;
+            }
 
+            GameCamera camera = UnityEngine.Object.Instantiate(prefab, _root);
             camera.name = id;
             Register(camera);
         }
@@ -230,24 +232,39 @@ namespace Features.CameraModule.Scripts.Services {
             camera.LockFollowToTarget();
         }
 
+        // The cameras' root from the catalog's prefab, with the output camera and its brain on it.
         private void EnsureRoot() {
             if (_root != null)
                 return;
 
-            var rootObject = new GameObject("GameCameras");
+            GameObject prefab = _catalog != null ? _catalog.CameraRootPrefab : null;
+            if (prefab == null) {
+                Debug.LogError("Camera: no camera root prefab in the camera catalog.");
+                return;
+            }
+
+            GameObject rootObject = UnityEngine.Object.Instantiate(prefab);
             UnityEngine.Object.DontDestroyOnLoad(rootObject);
             _root = rootObject.transform;
+            _output = rootObject.GetComponentInChildren<Camera>(true);
+            _brain = rootObject.GetComponentInChildren<CinemachineBrain>(true);
             EnsureLookPivot();
         }
 
+        // A new look pivot from the catalog's prefab when there is none (it rides on the player and may go down with it).
         private void EnsureLookPivot() {
-            if (_model.LookPivot != null)
+            if (_model.LookPivot != null || _root == null)
                 return;
 
-            var pivotObject = new GameObject("CameraLook");
-            pivotObject.transform.SetParent(_root, false);
-            pivotObject.AddComponent<CameraLookRig>();
-            _model.LookPivot = pivotObject.transform;
+            CameraLookRig prefab = _catalog != null ? _catalog.LookPivotPrefab : null;
+            if (prefab == null) {
+                Debug.LogError("Camera: no look pivot prefab in the camera catalog.");
+                return;
+            }
+
+            CameraLookRig pivot = UnityEngine.Object.Instantiate(prefab, _root);
+            pivot.name = prefab.name;
+            _model.LookPivot = pivot.transform;
         }
 
         private void ReturnLookPivotToRoot() {
@@ -259,35 +276,12 @@ namespace Features.CameraModule.Scripts.Services {
                 pivot.SetParent(_root, true);
         }
 
-        private void EnsureOutputCamera() {
-            if (_output != null)
-                return;
-
+        // The output camera and its brain come with the root prefab.
+        private void EnsureOutputCamera() =>
             EnsureRoot();
-            var outputObject = new GameObject("GameCameraOutput");
-            outputObject.tag = "MainCamera";
-            outputObject.transform.SetParent(_root, false);
-            _output = outputObject.AddComponent<Camera>();
-            _output.nearClipPlane = 0.1f;
-            if (outputObject.GetComponent<AudioListener>() == null)
-                outputObject.AddComponent<AudioListener>();
-        }
 
-        private void EnsureBrain() {
-            EnsureOutputCamera();
-            if (_output == null)
-                return;
-
-            if (_brain != null && _brain.gameObject == _output.gameObject)
-                return;
-
-            _brain = _output.GetComponent<CinemachineBrain>();
-            if (_brain == null)
-                _brain = _output.gameObject.AddComponent<CinemachineBrain>();
-
-            _brain.UpdateMethod = CinemachineBrain.UpdateMethods.ManualUpdate;
-            _brain.BlendUpdateMethod = CinemachineBrain.BrainUpdateMethods.LateUpdate;
-        }
+        private void EnsureBrain() =>
+            EnsureRoot();
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode) {
             DisableSceneCameras(scene);

@@ -157,9 +157,6 @@ namespace Features.CameraModule.Scripts {
                 return null;
 
             _rig = pivot.GetComponent<CameraLookRig>();
-            if (_rig == null)
-                _rig = pivot.gameObject.AddComponent<CameraLookRig>();
-
             return _rig;
         }
 
