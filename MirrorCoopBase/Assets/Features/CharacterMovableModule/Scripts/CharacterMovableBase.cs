@@ -37,12 +37,20 @@ namespace Features.CharacterMovableModule.Scripts {
 
         public Rigidbody Body => _rb;
 
+        // Grows by one on every takeoff of this body (wraps at 255): the state packet carries it, so a remote copy sees
+        // every jump even when the packet of that moment is lost.
+        public byte JumpCount { get; private set; }
+
+        // The synced look direction around the up axis, degrees.
+        public float FacingYaw => _facingYaw;
+
         private bool ControlsSelf => isOwned;
 
         // The keyboard source of the player's own body, made on first use: the input buffer is injected after Awake.
-        private IMoveInputSource OwnInput {
+        // Null on peers that do not own this body.
+        public IMoveInputSource OwnInput {
             get {
-                if (_ownInput == null && _input != null)
+                if (_ownInput == null && _input != null && ControlsSelf)
                     _ownInput = new LocalMoveInputSource(_input, _stats);
 
                 return _ownInput;
@@ -171,6 +179,7 @@ namespace Features.CharacterMovableModule.Scripts {
                     out float speedChange)) {
                 _floatingController.PauseSupport();
                 _rb.AddForce(new Vector3(0f, speedChange, 0f) * _rb.mass, ForceMode.Impulse);
+                JumpCount = unchecked((byte)(JumpCount + 1));
             }
 
             _jump.Land(tuning, supported, _rb.linearVelocity.y);

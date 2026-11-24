@@ -10,7 +10,8 @@ namespace Features.AddressablesConstantsGenerator.Generated {
             public const string MenuWindow = "MenuWindow";
             public const string GameHudWindow = "GameHudWindow";
             public const string SonarWindow = "SonarWindow";
-            public static List<string> AllAddressablesInGroup = new List<string>() {"ShopWindow","MenuWindow","GameHudWindow","SonarWindow",};
+            public const string DebugWindow = "DebugWindow";
+            public static List<string> AllAddressablesInGroup = new List<string>() {"ShopWindow","MenuWindow","GameHudWindow","SonarWindow","DebugWindow",};
         }
         public static partial class Scenes {
             public const string ADDRESSABLE_GROUP_NAME = "Scenes";
@@ -55,7 +56,8 @@ namespace Features.AddressablesConstantsGenerator.Generated {
             public const string StagePresetCatalog_Default = "StagePresetCatalog_Default";
             public const string FlightFieldDecorConfiguration_Default = "FlightFieldDecorConfiguration_Default";
             public const string SpaceHazeConfiguration_Default = "SpaceHazeConfiguration_Default";
-            public static List<string> AllAddressablesInGroup = new List<string>() {"SonarConfiguration_Default","ShopKioskConfiguration_Default","ConnectionConfig_Default","WeaponDebugTargetConfiguration_Default","ShipHullHudConfiguration_Default","CameraCatalog_Default","ShipStationCatalog_Default","GrabConfiguration_Default","WeaponHitRuleConfiguration_Default","FieldTargetConfiguration_Default","PlayerLifeConfiguration_Default","WeaponCatalog_Default","ShipRockImpactConfiguration_Default","FlightFieldConfiguration_Default","ShipRunConfig_Default","ShipFlightConfig_Default","ReviveConfiguration_Default","ShipHullConfiguration_Default","ShipDamageConfiguration_Default","PlayerDamageConfiguration_Default","FieldTargetCatalog_Default","FieldRockDurabilityConfiguration_Default","ShopCatalog_Default","ModuleCatalog_Default","FieldStructureCatalog_Default","WalletConfiguration_Default","PlayerNameplateConfiguration_Default","PlayerStatsConfiguration_Default","ShipAccumulativeStatsConfiguration_Default","ShipThrottleConfiguration_Default","StagePresetCatalog_Default","FlightFieldDecorConfiguration_Default","SpaceHazeConfiguration_Default",};
+            public const string BodySyncConfiguration_Default = "BodySyncConfiguration_Default";
+            public static List<string> AllAddressablesInGroup = new List<string>() {"SonarConfiguration_Default","ShopKioskConfiguration_Default","ConnectionConfig_Default","WeaponDebugTargetConfiguration_Default","ShipHullHudConfiguration_Default","CameraCatalog_Default","ShipStationCatalog_Default","GrabConfiguration_Default","WeaponHitRuleConfiguration_Default","FieldTargetConfiguration_Default","PlayerLifeConfiguration_Default","WeaponCatalog_Default","ShipRockImpactConfiguration_Default","FlightFieldConfiguration_Default","ShipRunConfig_Default","ShipFlightConfig_Default","ReviveConfiguration_Default","ShipHullConfiguration_Default","ShipDamageConfiguration_Default","PlayerDamageConfiguration_Default","FieldTargetCatalog_Default","FieldRockDurabilityConfiguration_Default","ShopCatalog_Default","ModuleCatalog_Default","FieldStructureCatalog_Default","WalletConfiguration_Default","PlayerNameplateConfiguration_Default","PlayerStatsConfiguration_Default","ShipAccumulativeStatsConfiguration_Default","ShipThrottleConfiguration_Default","StagePresetCatalog_Default","FlightFieldDecorConfiguration_Default","SpaceHazeConfiguration_Default","BodySyncConfiguration_Default",};
         }
         public static partial class Groups {
             public static List<List<string>> AllAddressablesGroups = new List<List<string>>() {Windows.AllAddressablesInGroup,Scenes.AllAddressablesInGroup,Configurations.AllAddressablesInGroup,};

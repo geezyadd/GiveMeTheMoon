@@ -20,19 +20,35 @@ Rare events (death, seat, platform change, hits) go reliably and apply at once.
 
 ## Status
 Being built in steps on `demo/platform-sync`, in the lobby first (the still world as the only platform); the ship deck
-comes later. Done: the pure math below. Not wired into the game yet: nothing sends packets and the players still use
-`NetworkRigidbodyUnreliable` and `ShipRider`.
+comes later. Done: the pure math and the packet stream. Every player's `BodyStateChannel` sends and receives packets,
+but nothing drives the copies from them yet: the players still use `NetworkRigidbodyUnreliable` and `ShipRider`.
 
 ## Assembly
-`Features.BodySyncModule` (layer 1; no references). No MonoBehaviour yet: plain classes covered by EditMode tests.
+`Features.BodySyncModule` (layer 3; references Mirror, Zenject, `CharacterMovableModule`, `FloatingControllerModule`,
+`DebugModule.Contracts`).
+- `BodyStateChannel` (on `DummyPlayer`): the owner samples its body each physics step and sends a packet when
+  `BodySendSchedule` says so (`SendRate` while anything moves or changes, `IdleSendRate` while it stands); the
+  command and the RPC go on the unreliable channel. The server stamps `ServerTime` = its time minus half the owner's
+  round trip, keeps the packet for its own copy and forwards it to everyone else (the host's own player goes out from
+  the server directly). Each non-owner keeps the newest packet (`Latest`) through `PacketSequenceFilter` and counts
+  what arrives in `BodyStateReceiveStats`. Packets are in world axes for now (platform 0).
+- `BodyStateChannelRegistry`: the channels spawned on this peer.
+- `Sending/`: `BodyStateSampler` (packet from the body, the owner's `IMoveInputSource`, the look, support and
+  `CharacterMovableBase.JumpCount`), `BodySendSchedule`.
+- `Receiving/`: `BodyStateReceiveStats` + `BodyStateReceiveReport`.
+- `Diagnostics/BodySyncDebugSystem` (editor and development builds): the debug window's Network section button "Body
+  sync: stats" writes per other player to the console: packets a second, dropped, average and last age.
+- `Configuration/BodySyncConfiguration` (Addressables `BodySyncConfiguration_Default`, bound in
+  `ConfigurationInstaller`): send rates and the correction numbers.
 - `Packets/`: `BodyStatePacket` (public fields so the network layer serializes it), `BodyStateFlags`,
   `YawCompression` (look angle in two bytes), `PacketSequenceFilter` (drops older and out-of-order packets, number
   wraps), `JumpCounterTracker` (a copy jumps once for any number of missed jumps).
-- `Correction/`: `BodyCorrectionSettings` (all numbers; the configuration asset comes when the correction is wired in),
+- `Correction/`: `BodyCorrectionSettings` (filled from the configuration),
   `CorrectionTarget`, `PositionCorrection` + `PositionCorrectionStep`, `VelocityReconciliation` (per axis: scale down
   to a slower owner keeping direction, add only the missing speed toward a faster one), `GroundMismatchTimer`.
 
 ## Tests
 - `Features.BodySyncModule.Editor.Tests`: yaw packing and wrap, flags, sequence order and wrap, jump counter (missed
   jumps, wrap), target extrapolation and its cap, horizontal share, vertical dead zone and cap, no overshoot, snap,
-  velocity reconciliation per axis, ground mismatch timer.
+  velocity reconciliation per axis, ground mismatch timer, send schedule (moving, idle, a change after idle), receive
+  stats.
