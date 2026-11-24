@@ -88,7 +88,7 @@ namespace Tests.Coop.Host {
             CollectionAssert.Contains(client.ImpactKinds, nameof(ShipRockImpactKind.Large), $"No large rock impact reached the client: {client.DescribeFlight()}");
             Assert.AreEqual(_hostImpacts.Count, client.ImpactKinds.Length, $"The client got {client.ImpactKinds.Length} rock impacts, the host {_hostImpacts.Count}.");
             Assert.AreEqual(client.ImpactKinds.Length, client.ShakenImpacts, "Not every rock impact shook the riding client's view.");
-            Assert.IsTrue(client.IsRiding, "The client stopped riding the ship on the rock hits.");
+            Assert.IsTrue(client.IsAboard, "The client is not aboard the ship after the rock hits.");
             AssertSameDamage("after the rock hits");
             _host.AssertSameView(true);
             Debug.Log($"[CoopTest] the client's rock impacts: [{string.Join(", ", client.ImpactKinds)}], all shook its view; screenshot {client.Screenshot}");
@@ -144,7 +144,7 @@ namespace Tests.Coop.Host {
 
         private IEnumerator LoseHullWithClientAboardCoroutine() {
             _host.BeginStep("the hull is lost in flight with the client aboard");
-            Assert.IsTrue(_host.ClientRider().IsRiding, "The client does not ride the ship before the hull loss.");
+            Assert.IsTrue(Ship.Riders.IsAboard(_host.ClientRider()), "The client is not aboard the ship on the server before the hull loss.");
             yield return _host.Session.ReturnToLobbyByHullLossCoroutine();
             yield return _lobbySettle;
             string hostProblems = PlayerReleaseProbe.DescribeProblems(SessionQueries.LocalPlayer);

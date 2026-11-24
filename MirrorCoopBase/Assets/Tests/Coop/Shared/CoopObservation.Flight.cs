@@ -25,8 +25,10 @@ namespace Tests.Coop.Shared {
         public int ShakenImpacts;
         public uint HeldItemId;
         public uint DroppedItemId;
-        // The local player released from the ship (after a hull loss): riding, seated, body, hover, input, how far it walked.
+        // The local player released from the ship (after a hull loss): riding (bound to a seat), seated, body, hover,
+        // input, how far it walked. Aboard: on the ship in flight, seated or carried by its deck.
         public bool IsRiding;
+        public bool IsAboard;
         public bool IsSeated;
         public string ReleaseProblems;
         public float WalkedMeters;
@@ -37,7 +39,7 @@ namespace Tests.Coop.Shared {
             + $"hull {Hull:0.0}, broken [{Join(BrokenSockets)}], breaches [{Join(OpenBreaches)}], "
             + $"sonar marks [{Join(SonarMarks)}] markers {SonarMarkerCount}, station marker {IsStationMarkerShown}, "
             + $"haze {IsHazeEnabled} {HazeClearMeters:0}-{HazeHiddenMeters:0} m, impacts [{Join(ImpactKinds)}] shaken {ShakenImpacts}, "
-            + $"held #{HeldItemId} dropped #{DroppedItemId}, riding {IsRiding} seated {IsSeated}, release problems '{ReleaseProblems}', walked {WalkedMeters:0.00} m";
+            + $"held #{HeldItemId} dropped #{DroppedItemId}, riding {IsRiding} aboard {IsAboard} seated {IsSeated}, release problems '{ReleaseProblems}', walked {WalkedMeters:0.00} m";
 
         private static string Join(string[] values) =>
             string.Join(LIST_SEPARATOR, values ?? Array.Empty<string>());

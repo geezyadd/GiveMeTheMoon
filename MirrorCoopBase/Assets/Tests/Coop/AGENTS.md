@@ -7,6 +7,10 @@ the editor is the host, a Windows development build of the game is the client. O
 `Invoke-AgentEditor.ps1 -AgentDir . -Command run-tests -Mode PlayMode -Filter CoopTwoProcess`
 (or Test Runner → PlayMode → `CoopTwoProcessTest`). It takes about 70 s, plus about 30-80 s when the client is rebuilt.
 
+A standing player is carried by the flying deck, not bound to it: a check that a player rides the ship reads
+`IsAboard` (`CoopRunState.IsAboard`, `CoopObservation.IsAboard`, on the server `IShipRiders.IsAboard` of the client's
+copy; see `SessionQueries.IsAboard`), and `IsRiding` (bound to a seat) only for seats and the release in the lobby.
+
 - **The client build.** Before Play mode the test's `PrebuildSetup` (`CoopClientBuild`, editor) builds Addressables
   content and a Win64 development player of the Build Settings scenes into `MirrorCoopBase/Builds/CoopClient/`
   (git-ignored). It skips the build when the content of `Assets`, `Packages` and `ProjectSettings` is the same as

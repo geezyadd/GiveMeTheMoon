@@ -116,7 +116,7 @@ namespace Tests.PlayMode.LoopSmoke {
             float deadline = Time.realtimeSinceStartup + COMMAND_TIMEOUT_SECONDS;
             while (station.IsOccupiedByLocalPlayer == false) {
                 if (Time.realtimeSinceStartup > deadline)
-                    Assert.Fail($"Turret tier: the host is not seated at {moduleId} (socket occupant {socket.HasOccupant}, held by the host {socket.IsHeldBy(rider.Key)}, riding {rider.IsRiding}, seated {rider.IsSeated}, at {Player.transform.position} ship {_session.Ship.transform.position}).");
+                    Assert.Fail($"Turret tier: the host is not seated at {moduleId} (socket occupant {socket.HasOccupant}, held by the host {socket.IsHeldBy(rider.Key)}, riding {rider.IsRiding}, aboard {SessionQueries.IsAboard(_session.Ship, Player)}, seated {rider.IsSeated}, at {Player.transform.position} ship {_session.Ship.transform.position}).");
 
                 yield return null;
             }
@@ -160,8 +160,8 @@ namespace Tests.PlayMode.LoopSmoke {
             Vector3 offset = ShipLocal(Player.transform.position) - LoopSmokeTurretCheck.GunnerSpot;
             offset.y = 0f;
             bool isOnDeck = SessionQueries.IsOnDeck(_session.Ship, Player.transform.position);
-            bool isRidingInFlight = _session.Ship.IsFlying == false || rider.IsRiding;
-            return isOnDeck && isRidingInFlight && offset.magnitude < STAND_TOLERANCE;
+            bool isAboardInFlight = _session.Ship.IsFlying == false || SessionQueries.IsAboard(_session.Ship, Player);
+            return isOnDeck && isAboardInFlight && offset.magnitude < STAND_TOLERANCE;
         }
 
         private Vector3 ShipLocal(Vector3 world) =>

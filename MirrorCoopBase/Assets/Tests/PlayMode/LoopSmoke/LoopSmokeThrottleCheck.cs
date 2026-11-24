@@ -103,7 +103,7 @@ namespace Tests.PlayMode.LoopSmoke {
         }
 
         private void AssertRidingOnDeck(string when) {
-            Assert.IsTrue(Player.GetComponent<ShipRider>().IsRiding, $"Throttle: the player does not ride the ship {when}.");
+            Assert.IsTrue(SessionQueries.IsAboard(_session.Ship, Player), $"Throttle: the player is not aboard the ship {when}.");
             Assert.IsTrue(SessionQueries.IsOnDeck(_session.Ship, Player.transform.position), $"Throttle: the player is not on the deck {when}.");
         }
     }

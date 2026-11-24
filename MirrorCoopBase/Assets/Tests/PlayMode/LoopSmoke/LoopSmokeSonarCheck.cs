@@ -63,7 +63,7 @@ namespace Tests.PlayMode.LoopSmoke {
             IReadOnlySonarConsoleModel synced = SessionQueries.Resolve<IReadOnlySonarConsoleModel>();
             float markTimeout = LoopSmokeSonarConfigOverride.STATION_MARK_SECONDS + TIMEOUT_SECONDS;
             yield return _session.WaitForCoroutine(() => synced.Marks.Count == 0, markTimeout, "Sonar: the station mark running out");
-            Assert.IsTrue(Player.GetComponent<ShipRider>().IsRiding, "Sonar: the host does not ride the ship after the console.");
+            Assert.IsTrue(SessionQueries.IsAboard(Player), "Sonar: the host is not aboard the ship after the console.");
         }
 
         // Takes the console, pings, marks the station and leaves the console again; the mark stays.

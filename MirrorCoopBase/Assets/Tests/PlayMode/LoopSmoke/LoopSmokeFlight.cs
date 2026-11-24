@@ -96,7 +96,7 @@ namespace Tests.PlayMode.LoopSmoke {
 
             yield return _session.WaitForCoroutine(IsCruisingAfterTakeoffFrame, FLIGHT_TIMEOUT_SECONDS, $"Cruise of loop {expectedLoopIndex}");
             Debug.Log($"[LoopSmoke] loop {expectedLoopIndex} takeoff: longest frame {_longestTakeoffFrame * MILLISECONDS_PER_SECOND:0.0} ms");
-            Assert.IsTrue(LocalPlayer.GetComponent<ShipRider>().IsRiding, $"Loop {expectedLoopIndex}: the player is not riding the ship in cruise.");
+            Assert.IsTrue(SessionQueries.IsAboard(LocalPlayer), $"Loop {expectedLoopIndex}: the player is not aboard the ship in cruise.");
             FaceDestination();
             yield return _fieldCheck.AssertNewFieldStandsCoroutine(expectedLoopIndex);
             if (inCruise != null)

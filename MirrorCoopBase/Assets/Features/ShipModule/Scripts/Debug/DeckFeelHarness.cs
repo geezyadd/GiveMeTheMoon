@@ -1069,7 +1069,7 @@ namespace Features.ShipModule.Scripts.Debug {
             PlaceRiderOnDeck();
 
             _input.BeginScripted();
-            Note("Client riding in Build. players=" + UnityEngine.Object.FindObjectsByType<ShipRider>(FindObjectsSortMode.None).Length);
+            Note("Client on the deck in Build. players=" + UnityEngine.Object.FindObjectsByType<ShipRider>(FindObjectsSortMode.None).Length);
             Enter(20);
         }
 
@@ -1098,8 +1098,8 @@ namespace Features.ShipModule.Scripts.Debug {
                 return;
             }
 
-            if (_rider.IsRiding == false) {
-                Fail("client player is not riding in cruise");
+            if (_ship.Riders.IsAboard(_rider) == false) {
+                Fail("client player is not aboard in cruise");
                 return;
             }
 

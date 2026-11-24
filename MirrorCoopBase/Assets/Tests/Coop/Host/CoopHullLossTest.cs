@@ -56,7 +56,7 @@ namespace Tests.Coop.Host {
             bool isSeated = _client.LastReport.RunState.IsSeated;
             yield return _host.LaunchCoroutine(1);
             yield return _host.CommandCoroutine(_client, CoopConnectionCommands.WAIT_PHASE, nameof(ShipRunPhase.Cruise));
-            Assert.IsTrue(_client.LastReport.RunState.IsRiding, "The client does not ride the ship in cruise before the hull is lost.");
+            Assert.IsTrue(_client.LastReport.RunState.IsAboard, "The client is not aboard the ship in cruise before the hull is lost.");
             Assert.AreEqual(isSeated, _client.LastReport.RunState.IsSeated, "The client stood up or sat down on takeoff.");
 
             _host.BeginStep($"lose the hull with the client on the {where}");

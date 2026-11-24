@@ -189,7 +189,7 @@ namespace Tests.Coop.Client {
             yield return Settle;
             CoopObservation observation = CoopFlightObserver.CaptureFlight(CoopFlightSteps.STOOD_UP);
             observation.IsSeated = Player.GetComponent<ShipRider>().IsSeated;
-            observation.IsRiding = Player.GetComponent<ShipRider>().IsRiding;
+            observation.IsAboard = SessionQueries.IsAboard(Player);
             Report(observation);
         }
 
