@@ -1,3 +1,4 @@
+using Features.CharacterMovableModule.Scripts.MoveInput;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.FloatingControllerModule;
 using Mirror;
@@ -28,6 +29,7 @@ namespace Features.CharacterMovableModule.Scripts {
 
         [Inject]
         private CharacterInputBuffer _input;
+        private IMoveInputSource _ownInput;
         private float _moveSpeed;
         private readonly JumpAndAirGravity _jump = new JumpAndAirGravity();
         private Vector3 _weight;
@@ -36,6 +38,16 @@ namespace Features.CharacterMovableModule.Scripts {
         public Rigidbody Body => _rb;
 
         private bool ControlsSelf => isOwned;
+
+        // The keyboard source of the player's own body, made on first use: the input buffer is injected after Awake.
+        private IMoveInputSource OwnInput {
+            get {
+                if (_ownInput == null && _input != null)
+                    _ownInput = new LocalMoveInputSource(_input, _stats);
+
+                return _ownInput;
+            }
+        }
 
         protected virtual void Awake() {
             CacheWeight();
@@ -49,10 +61,11 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         private void Update() {
-            if (ControlsSelf == false)
+            IMoveInputSource source = ControlsSelf ? OwnInput : null;
+            if (source == null)
                 return;
 
-            _jump.ReadInput(_input.JumpHeld, HasSupport(), Time.deltaTime);
+            _jump.ReadInput(source.JumpHeld, source.ConsumeJumpPress(), HasSupport(), Time.deltaTime);
         }
 
         private void LateUpdate() {
@@ -79,7 +92,7 @@ namespace Features.CharacterMovableModule.Scripts {
                 return;
             }
 
-            SimulateOwner();
+            Simulate(OwnInput);
         }
 
         // A kinematic owner (bound to the ship) does not simulate: the last walk would stay in the synced push and the
@@ -89,24 +102,21 @@ namespace Features.CharacterMovableModule.Scripts {
             _pushSpeed = 0f;
         }
 
-        private void SimulateOwner() {
-            if (_input == null)
+        // One physics step of the body from its controls: walk or brake, then jump and the extra air gravity.
+        private void Simulate(IMoveInputSource source) {
+            if (source == null)
                 return;
 
             Vector3 planar = Flatten(_rb.linearVelocity);
-            _moveSpeed = _input.SprintHeld ? ReadStat(PlayerStatType.SprintSpeed) : ReadStat(PlayerStatType.WalkSpeed);
+            _moveSpeed = source.SprintHeld ? ReadStat(PlayerStatType.SprintSpeed) : ReadStat(PlayerStatType.WalkSpeed);
 
-            Vector3 wish = ReadWishDirection();
+            Vector3 wish = ReadWishDirection(source);
             DrivePlanar(wish, planar);
             ApplyJumpAndAirGravity();
         }
 
-        private Vector3 ReadWishDirection() {
-            Vector2 stick = _input.MoveStick;
-            Vector3 wish = _stats.CameraRelative
-                ? CameraPlanar(stick)
-                : new Vector3(stick.x, 0f, stick.y);
-
+        private Vector3 ReadWishDirection(IMoveInputSource source) {
+            Vector3 wish = source.ReadWish();
             if (HasSupport())
                 wish = Vector3.ProjectOnPlane(wish, _floatingController.SupportNormal);
 
@@ -241,25 +251,6 @@ namespace Features.CharacterMovableModule.Scripts {
             Quaternion target = Quaternion.Euler(0f, _facingYaw, 0f);
             float t = 1f - Mathf.Exp(-ReadStat(PlayerStatType.LookTurnRate) * Time.deltaTime);
             _rotatablePart.rotation = Quaternion.Slerp(_rotatablePart.rotation, target, t);
-        }
-
-        private static Vector3 CameraPlanar(Vector2 stick) {
-            Transform cameraTransform = Camera.main != null ? Camera.main.transform : null;
-            if (cameraTransform == null || stick.sqrMagnitude < 0.0001f)
-                return Vector3.zero;
-
-            Vector3 forward = cameraTransform.forward;
-            Vector3 right = cameraTransform.right;
-            forward.y = 0f;
-            right.y = 0f;
-            if (forward.sqrMagnitude < 0.0001f || right.sqrMagnitude < 0.0001f)
-                return new Vector3(stick.x, 0f, stick.y);
-
-            Vector3 world = forward.normalized * stick.y + right.normalized * stick.x;
-            if (world.sqrMagnitude > 1f)
-                world.Normalize();
-
-            return world;
         }
 
         private static Vector3 Flatten(Vector3 velocity) {

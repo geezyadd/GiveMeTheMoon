@@ -10,7 +10,7 @@ module's description lives in its own AGENTS.md.** Change it there, not here; ad
 for a new module. Before working on a module, read its file.
 
 ## The game
-A co-op **friendslop** in the vein of Peak, YAPYAP and Lethal Company. A crew of players flies a platform-ship from
+A co-op **friendslop** in the vein of YAPYAP and Lethal Company. A crew of players flies a platform-ship from
 station to station and upgrades the ship with modules along the way.
 
 ### Core loop (current focus)
@@ -153,7 +153,7 @@ types.
 | [Two-player test](MirrorCoopBase/Assets/Tests/Coop/AGENTS.md) | `CoopTwoProcessTest` with a real second client process |
 | `Features.AddressablesConstantGeneratorModule` | `Address_g.cs`; editor tools and tests load a configuration at its address with `AddressableConfigurationLoader` in `Features.AddressablesConstantGeneratorModule.EditorLoading` |
 | `Features.EffectPoolModule` | `SelfDisablingEffectPool<TEffect>` over `ISelfDisablingEffect`, the pool of effects that disable themselves when over; the rock break and the rock impact effects use it |
-| `Features.CharacterMovableModule` | player movement; tests: `Features.CharacterMovableModule.Editor.Tests` |
+| `Features.CharacterMovableModule` | player movement; the body simulation takes its controls through `IMoveInputSource` (`LocalMoveInputSource`: keyboard and camera for the player's own body; a state packet source for remote copies comes with BodySyncModule); tests: `Features.CharacterMovableModule.Editor.Tests` |
 
 Other modules (Menu, Lobby, Mvp, Input, Stats, GameFlow, Bootstrapers, ...) have no file yet; add one when there is
 something to describe.
