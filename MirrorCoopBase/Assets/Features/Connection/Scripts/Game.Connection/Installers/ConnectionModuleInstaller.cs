@@ -17,6 +17,9 @@ namespace Game.Connection
             Container.Bind<IPlayerIdentityService>().To<ConnectionPlayerIdentityService>().AsSingle();
             Container.Bind<IPlayerNameSource>().To<ConnectionPlayerNameSource>().AsSingle();
             Container.Bind<IGameplaySession>().To<ConnectionGameplaySession>().AsSingle();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Container.BindInterfacesTo<ConnectionLatencyDebugSystem>().AsSingle();
+#endif
         }
     }
 }

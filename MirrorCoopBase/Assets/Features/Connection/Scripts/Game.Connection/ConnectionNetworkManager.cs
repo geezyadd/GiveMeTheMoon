@@ -42,6 +42,7 @@ namespace Game.Connection
         ConnectionMapChange mapChange;
         ConnectionLateJoin lateJoin;
         ConnectionMenuReturn menuReturn;
+        ConnectionLatencySimulation latencySimulation;
         bool returningToMenu;
 
         public string LobbySceneName => lobbySceneName;
@@ -50,6 +51,9 @@ namespace Game.Connection
         public bool IsMapLoaded => mapChange.IsMapLoaded;
         public bool IsChangingMap => mapChange.IsChangingMap;
         public bool UsesSteamTransport => transportSwitch.UsesSteam;
+
+        // Null in release builds: the latency simulation exists only in the editor and development builds.
+        public ConnectionLatencySimulation LatencySimulation => latencySimulation;
 
         public bool IsInLobby =>
             string.IsNullOrEmpty(networkSceneName) || networkSceneName == lobbySceneName;
@@ -93,8 +97,10 @@ namespace Game.Connection
         public override void Awake()
         {
             transportSwitch = new ConnectionTransportSwitch(gameObject, telepathyTransport, fizzyTransport);
-            if (transport == null)
-                transport = transportSwitch.Telepathy;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            latencySimulation = new ConnectionLatencySimulation(transform);
+#endif
+            transport = WrapForLatency(transport != null ? transport : transportSwitch.Telepathy);
 
             offlineScene = string.Empty;
             onlineScene = string.Empty;
@@ -275,9 +281,12 @@ namespace Game.Connection
 
         public void SetUseSteamTransport(bool useSteam)
         {
-            transport = transportSwitch.Select(useSteam);
+            transport = WrapForLatency(transportSwitch.Select(useSteam));
             Transport.active = transport;
         }
+
+        Transport WrapForLatency(Transport chosen) =>
+            latencySimulation != null ? latencySimulation.Wrap(chosen) : chosen;
 
         // Fire-and-forget entry for network callbacks (the session dropped without the local Leave); a failed scene
         // unload would otherwise be lost silently. A Leave already on its way to the menu raises no drop.
