@@ -1,3 +1,4 @@
+using System;
 using Features.BodySyncModule.Configuration;
 using Features.BodySyncModule.Packets;
 using Features.BodySyncModule.Receiving;
@@ -29,6 +30,9 @@ namespace Features.BodySyncModule {
         public bool HasLatest { get; private set; }
         public BodyStatePacket Latest { get; private set; }
         public BodyStateReceiveStats ReceiveStats => _receiveStats;
+
+        // On a peer that does not own the body, for every packet newer than the last one.
+        public event Action<BodyStatePacket> OnPacketAccepted;
 
         [Inject]
         private void Construct(BodySyncConfiguration configuration, BodyStateChannelRegistry registry) {
@@ -99,6 +103,11 @@ namespace Features.BodySyncModule {
             Latest = packet;
             HasLatest = true;
             _receiveStats.RecordAccepted(serverNow - packet.ServerTime, now);
+            OnPacketAccepted?.Invoke(packet);
         }
+
+        // The server's time as this peer sees it now, on the clock the packets' ServerTime is in.
+        public static double ReadServerNow() =>
+            NetworkServer.active ? NetworkTime.localTime : NetworkTime.predictedTime;
     }
 }

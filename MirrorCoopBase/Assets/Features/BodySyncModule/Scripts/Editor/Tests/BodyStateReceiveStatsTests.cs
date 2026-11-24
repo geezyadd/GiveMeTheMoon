@@ -16,11 +16,13 @@ namespace Features.BodySyncModule.Editor.Tests {
             _stats.RecordAccepted(0.1d, 0d);
             _stats.RecordAccepted(0.2d, 1d);
             _stats.RecordDropped(1.5d);
+            _stats.RecordSnap(1.7d);
 
             BodyStateReceiveReport report = _stats.TakeReport(2d);
 
             Assert.AreEqual(2, report.Accepted);
             Assert.AreEqual(1, report.Dropped);
+            Assert.AreEqual(1, report.Snaps);
             Assert.AreEqual(1d, report.PacketsPerSecond, TOLERANCE);
             Assert.AreEqual(0.15d, report.AverageAgeSeconds, TOLERANCE);
             Assert.AreEqual(0.2d, report.LastAgeSeconds, TOLERANCE);
@@ -36,6 +38,7 @@ namespace Features.BodySyncModule.Editor.Tests {
 
             Assert.AreEqual(1, report.Accepted);
             Assert.AreEqual(0, report.Dropped);
+            Assert.AreEqual(0, report.Snaps);
             Assert.AreEqual(1d, report.PacketsPerSecond, TOLERANCE);
             Assert.AreEqual(0.3d, report.AverageAgeSeconds, TOLERANCE);
         }

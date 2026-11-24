@@ -61,7 +61,8 @@ GameObject:
   - component: {fileID: 7796742713216826431}
   - component: {fileID: 6948430025197362347}
   - component: {fileID: 952212633973718306}
-  - component: {fileID: 9309845104136634499}
+  - component: {fileID: 8419845104136634501}
+  - component: {fileID: 8419845104136634502}
   m_Layer: 0
   m_Name: DummyPlayer
   m_TagString: Untagged
@@ -492,7 +493,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _grab: {fileID: 7209845104136634493}
   _weaponSync: {fileID: 6948430025197362347}
---- !u!114 &9309845104136634499
+--- !u!114 &8419845104136634501
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -509,6 +510,22 @@ MonoBehaviour:
   syncInterval: 0
   _movable: {fileID: 2109845104136634489}
   _floatingController: {fileID: 5109845104136634491}
+--- !u!114 &8419845104136634502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe41048875f94a8baceecc5260d92606, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _channel: {fileID: 8419845104136634501}
+  _movable: {fileID: 2109845104136634489}
+  _floatingController: {fileID: 5109845104136634491}
+  _networkBody: {fileID: 919415383680135416}
 --- !u!1 &2570366265993141210
 GameObject:
   m_ObjectHideFlags: 0

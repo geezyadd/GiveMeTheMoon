@@ -47,19 +47,36 @@ namespace Features.BodySyncModule.Editor.Tests {
         }
 
         [Test]
-        public void WhenOnlyAFlagChanges_ThenThePacketGoesAtTheSendRate() {
+        public void WhenOnlyAFlagChanges_ThenThePacketGoesAtOnce() {
             _schedule.MarkSent(Standing, START);
             var landed = new BodyStatePacket { Flags = BodyStateFlags.Grounded };
 
-            Assert.IsTrue(IsDue(landed, START + SEND_INTERVAL * 1.01d));
+            Assert.IsTrue(IsDue(landed, START));
         }
 
         [Test]
-        public void WhenTheOwnerJumpedInPlace_ThenThePacketGoesAtTheSendRate() {
+        public void WhenTheOwnerJumpedInPlace_ThenThePacketGoesAtOnce() {
             _schedule.MarkSent(Standing, START);
             var jumped = new BodyStatePacket { JumpCounter = 1 };
 
-            Assert.IsTrue(IsDue(jumped, START + SEND_INTERVAL * 1.01d));
+            Assert.IsTrue(IsDue(jumped, START));
+        }
+
+        [Test]
+        public void WhenTheOwnerStartsOrStopsWalking_ThenThePacketGoesAtOnce() {
+            _schedule.MarkSent(Standing, START);
+            Assert.IsTrue(IsDue(Walking, START));
+
+            _schedule.MarkSent(Walking, START);
+            Assert.IsTrue(IsDue(Standing, START));
+        }
+
+        [Test]
+        public void WhenTheWalkDirectionOnlyTurns_ThenThePacketWaitsForTheSendRate() {
+            _schedule.MarkSent(Walking, START);
+            var turned = new BodyStatePacket { LocalVelocity = Walking.LocalVelocity, Wish = Vector2.right };
+
+            Assert.IsFalse(IsDue(turned, START + SEND_INTERVAL * 0.5d));
         }
 
         [Test]

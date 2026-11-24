@@ -34,6 +34,8 @@ namespace Features.FloatingControllerModule {
         public bool HasSupport => _hasSupport && _lockoutLeft <= 0f;
         public Vector3 SupportNormal => _supportNormal;
         public bool HoverEnabled { get; set; } = true;
+        // On a peer that does not own the body: probe and hover anyway, because this peer simulates a copy of it.
+        public bool SimulatesCopy { get; set; }
         public float StandHeight =>
             _hoverClearance - (ProbeStart().y - transform.position.y);
         public HoverSpringSettings Spring => new HoverSpringSettings(
@@ -44,7 +46,7 @@ namespace Features.FloatingControllerModule {
             _capsuleCollider.center + Vector3.down * (_capsuleCollider.height * 0.5f))).y;
 
         private void FixedUpdate() {
-            if (isOwned == false)
+            if (isOwned == false && SimulatesCopy == false)
                 return;
 
             if (_lockoutLeft > 0f) {

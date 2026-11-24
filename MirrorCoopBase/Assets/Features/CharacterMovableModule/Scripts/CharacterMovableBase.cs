@@ -30,6 +30,7 @@ namespace Features.CharacterMovableModule.Scripts {
         [Inject]
         private CharacterInputBuffer _input;
         private IMoveInputSource _ownInput;
+        private IMoveInputSource _remoteInput;
         private float _moveSpeed;
         private readonly JumpAndAirGravity _jump = new JumpAndAirGravity();
         private Vector3 _weight;
@@ -44,7 +45,14 @@ namespace Features.CharacterMovableModule.Scripts {
         // The synced look direction around the up axis, degrees.
         public float FacingYaw => _facingYaw;
 
+        // Whether the body stands on something right now (the float probe's support).
+        public bool IsSupported => HasSupport();
+
         private bool ControlsSelf => isOwned;
+
+        // The controls this peer simulates the body from: its own keyboard, a remote copy's source, or none (the body is
+        // moved by someone else).
+        private IMoveInputSource ActiveInput => ControlsSelf ? OwnInput : _remoteInput;
 
         // The keyboard source of the player's own body, made on first use: the input buffer is injected after Awake.
         // Null on peers that do not own this body.
@@ -68,8 +76,19 @@ namespace Features.CharacterMovableModule.Scripts {
             CacheWeight();
         }
 
+        // On a peer that does not own this body: simulate it as a copy from these controls (null: stop, the body is
+        // moved by someone else again). The body must be dynamic for the simulation to move it.
+        public void SetRemoteInput(IMoveInputSource source) {
+            _remoteInput = source;
+            if (source == null)
+                return;
+
+            _jump.RefillAirJumps(ExtraAirJumps);
+            CacheWeight();
+        }
+
         private void Update() {
-            IMoveInputSource source = ControlsSelf ? OwnInput : null;
+            IMoveInputSource source = ActiveInput;
             if (source == null)
                 return;
 
@@ -87,20 +106,22 @@ namespace Features.CharacterMovableModule.Scripts {
             if (_rb == null)
                 return;
 
-            // The server copy of a client-owned player is kinematic (its NetworkRigidbody follows the owner), so it
-            // never pushes by contact: the proxy shove has to run for it, while only the owner simulates a dynamic body.
-            if (ControlsSelf == false) {
-                if (isServer)
+            // The server copy of a client-owned player that is not simulated is kinematic (its NetworkRigidbody follows the
+            // owner), so it never pushes by contact: the proxy shove has to run for it. A simulated copy pushes by contact.
+            IMoveInputSource source = ActiveInput;
+            if (source == null) {
+                if (isServer && ControlsSelf == false)
                     ShoveNearbyBodies();
                 return;
             }
 
             if (_rb.isKinematic) {
-                StopPushing();
+                if (ControlsSelf)
+                    StopPushing();
                 return;
             }
 
-            Simulate(OwnInput);
+            Simulate(source);
         }
 
         // A kinematic owner (bound to the ship) does not simulate: the last walk would stay in the synced push and the
@@ -163,6 +184,10 @@ namespace Features.CharacterMovableModule.Scripts {
             accel.y = 0f;
             Vector3 force = Vector3.ClampMagnitude(accel, forceCap) * _rb.mass;
             _rb.AddForce(force);
+
+            // The push is the owner's to sync; a remote copy only moves its own body.
+            if (ControlsSelf == false)
+                return;
 
             _pushStrength = force.magnitude;
             _pushHeading = wish;

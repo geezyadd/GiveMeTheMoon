@@ -1,3 +1,4 @@
+using Features.BodySyncModule.Models;
 using Features.CameraModule.Scripts.Models;
 using Features.CameraModule.Scripts.Shake;
 using Features.PlayerLifeModule.Scripts.Spectator;
@@ -33,6 +34,7 @@ using Zenject;
 namespace Features.GameCoreModule.Scripts.Installers {
     public sealed class DataInstaller : Installer<DataInstaller> {
         public override void InstallBindings() {
+            Container.Bind<BodySyncModeModel>().AsSingle();
             Container.Bind<ConnectionSessionModel>().AsSingle();
             Container.Bind<ConnectionSpawnModel>().AsSingle();
             Container.Bind<ConnectionNetworkEvents>().AsSingle();

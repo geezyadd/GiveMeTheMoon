@@ -15,7 +15,10 @@ MonoBehaviour:
   _sendRate: 30
   _idleSendRate: 5
   _idleSpeed: 0.05
+  _copyDelaySeconds: 0.1
   _positionPull: 0.1
+  _idleDeadZone: 0.15
+  _idlePositionPull: 0.02
   _verticalDeadZoneMin: 0.3
   _verticalDeadZoneMax: 0.6
   _verticalPullPerStep: 0.1

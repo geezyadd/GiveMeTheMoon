@@ -7,7 +7,8 @@ using Zenject;
 
 namespace Features.BodySyncModule.Diagnostics {
     // Debug only: the debug window's "Body sync: stats" button. It writes to the console, for every other player's body
-    // on this peer, what arrived since the last press: packets a second, packets dropped as old, how old they were.
+    // on this peer, what arrived since the last press: packets a second, packets dropped as old, how old they were, and
+    // how often its simulated copy had to snap.
     public sealed class BodySyncDebugSystem : IInitializable, IDisposable {
         private const string LABEL = "Body sync: stats";
         private const string DESCRIPTION = "Writes to the console, for every other player, the state packets that reached this game since the last press: how many a second, how many were dropped as old or out of order, and their age.";
@@ -50,7 +51,7 @@ namespace Features.BodySyncModule.Diagnostics {
                 BodyStateReceiveReport report = channel.ReceiveStats.TakeReport(now);
                 UnityEngine.Debug.Log(
                     $"[BodySync] {channel.name} (netId {channel.netId}): {report.PacketsPerSecond:F1} packets/s, " +
-                    $"{report.Accepted} taken, {report.Dropped} dropped as old, " +
+                    $"{report.Accepted} taken, {report.Dropped} dropped as old, {report.Snaps} snaps, " +
                     $"age {report.AverageAgeSeconds * MILLISECONDS_PER_SECOND:F0} ms on average, last {report.LastAgeSeconds * MILLISECONDS_PER_SECOND:F0} ms");
             }
         }
