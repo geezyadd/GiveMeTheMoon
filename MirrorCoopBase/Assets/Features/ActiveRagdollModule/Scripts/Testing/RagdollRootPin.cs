@@ -5,7 +5,7 @@ namespace Features.ActiveRagdollModule {
     // the body can stand on its own. Toggle it in Play mode.
     [RequireComponent(typeof(RagdollBody))]
     public sealed class RagdollRootPin : MonoBehaviour {
-        [SerializeField] private bool _pinned = true;
+        [SerializeField] private bool _pinned;
 
         private RagdollBody _body;
 

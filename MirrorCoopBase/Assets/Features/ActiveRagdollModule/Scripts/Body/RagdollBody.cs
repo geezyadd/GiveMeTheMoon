@@ -13,6 +13,8 @@ namespace Features.ActiveRagdollModule {
         public RagdollBodyProfile Profile => _profile;
         public IReadOnlyList<RagdollLimb> Limbs => _limbs;
         public RagdollLimb Root => _limbs.Count > 0 ? _limbs[0] : null;
+        // The limb kept at its animated height above the ground (the head of a person); the root if none is marked.
+        public RagdollLimb HeightLimb => _limbs.Find(limb => limb.IsHeightReference) ?? Root;
         // 0 = a limp ragdoll, 1 = fully follows the animation. Always 1 until falling and getting up are built.
         public float ControlFactor { get; private set; } = 1f;
 

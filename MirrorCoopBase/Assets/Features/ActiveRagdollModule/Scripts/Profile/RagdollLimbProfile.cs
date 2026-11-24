@@ -22,5 +22,12 @@ namespace Features.ActiveRagdollModule {
 
         [Tooltip("Capsule length in world units when there is no end bone.")]
         public float FallbackLength = 0.15f;
+
+        [Tooltip("The hover force holds this limb at standing height (for a person: hips, spine, chest, head).")]
+        public bool Hovered;
+
+        [Tooltip("The limb whose height above the ground is kept at its animated height (for a person: the head). " +
+                 "One per body.")]
+        public bool HeightReference;
     }
 }

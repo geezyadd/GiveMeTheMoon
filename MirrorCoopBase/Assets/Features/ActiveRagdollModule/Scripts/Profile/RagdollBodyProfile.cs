@@ -29,6 +29,8 @@ namespace Features.ActiveRagdollModule {
                  "degree of error. This is what keeps the body upright.")]
         [SerializeField] private float _poseTorque = 15f;
 
+        [SerializeField] private RagdollStandSettings _stand = new();
+
         [Header("Baking")]
         [Tooltip("Multiplies every limb's capsule radius when the body is baked.")]
         [SerializeField] private float _radiusMultiplier = 1.3f;
@@ -37,6 +39,7 @@ namespace Features.ActiveRagdollModule {
         public float RadiusMultiplier => _radiusMultiplier;
         public float PoseForce => _poseForce;
         public float PoseTorque => _poseTorque;
+        public RagdollStandSettings Stand => _stand;
         public float MassMultiplier => _massMultiplier;
         public float DamperToSpringRatio => _damperToSpringRatio;
         public float AngularLimit => _angularLimit;

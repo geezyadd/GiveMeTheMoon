@@ -1,7 +1,9 @@
 {
     "name": "Features.ActiveRagdollModule",
     "rootNamespace": "Features.ActiveRagdollModule",
-    "references": [],
+    "references": [
+        "Features.FloatingControllerModule"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

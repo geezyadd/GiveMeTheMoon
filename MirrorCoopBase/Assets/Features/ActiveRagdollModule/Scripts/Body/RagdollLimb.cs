@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Features.ActiveRagdollModule {
@@ -7,10 +8,12 @@ namespace Features.ActiveRagdollModule {
         [SerializeField] private Rigidbody _rigidbody;
         [Tooltip("Empty on the root limb.")]
         [SerializeField] private ConfigurableJoint _joint;
-        [SerializeField] private Collider[] _colliders = new Collider[0];
+        [SerializeField] private Collider[] _colliders = Array.Empty<Collider>();
         [SerializeField] private RagdollLimb _parent;
         [SerializeField] private float _driveSpring;
         [SerializeField] private float _driveDamper;
+        [SerializeField] private bool _hovered;
+        [SerializeField] private bool _heightReference;
 
         private Quaternion _jointSpace = Quaternion.identity;
         private Vector3 _pendingForce;
@@ -20,19 +23,23 @@ namespace Features.ActiveRagdollModule {
         public Collider[] Colliders => _colliders;
         public RagdollLimb Parent => _parent;
         public bool IsRoot => _joint == null;
+        public bool IsHovered => _hovered;
+        public bool IsHeightReference => _heightReference;
         // Rotation relative to the parent limb when the body was set up; the joint's rest pose.
         public Quaternion BindRotationInParent { get; private set; }
         public LimbPoseTarget Target { get; private set; }
         public bool HasTarget { get; private set; }
 
         public void Configure(Rigidbody rigidbody, ConfigurableJoint joint, Collider[] colliders, RagdollLimb parent,
-            float driveSpring, float driveDamper) {
+            float driveSpring, float driveDamper, bool hovered, bool heightReference) {
             _rigidbody = rigidbody;
             _joint = joint;
             _colliders = colliders;
             _parent = parent;
             _driveSpring = driveSpring;
             _driveDamper = driveDamper;
+            _hovered = hovered;
+            _heightReference = heightReference;
         }
 
         public void CaptureBindPose() {
@@ -42,9 +49,9 @@ namespace Features.ActiveRagdollModule {
         }
 
         // Called while the bones stand in the animated pose.
-        public void CaptureTarget(Vector3 animatedRootPosition) {
+        public void CaptureTarget(Vector3 animatedRootPosition, float originHeight) {
             Target = new LimbPoseTarget(RotationInParent(), transform.forward, transform.up,
-                IsRoot ? Vector3.zero : transform.position - animatedRootPosition);
+                IsRoot ? Vector3.zero : transform.position - animatedRootPosition, transform.position.y - originHeight);
             HasTarget = true;
         }
 
@@ -90,6 +97,17 @@ namespace Features.ActiveRagdollModule {
             if (_rigidbody.isKinematic == false && _pendingForce != Vector3.zero)
                 _rigidbody.AddForce(_pendingForce, ForceMode.Force);
             _pendingForce = Vector3.zero;
+        }
+
+        // Every contact of this limb with anything, reported on each physics step it lasts.
+        public event Action<RagdollLimb, Collision> Touching;
+
+        private void OnCollisionEnter(Collision collision) {
+            Touching?.Invoke(this, collision);
+        }
+
+        private void OnCollisionStay(Collision collision) {
+            Touching?.Invoke(this, collision);
         }
 
         private Quaternion RotationInParent() =>

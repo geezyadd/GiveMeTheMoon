@@ -71,12 +71,18 @@ namespace Features.ActiveRagdollModule.Editor {
                     Mass = limbDefault.Mass,
                     DriveSpring = limbDefault.Spring,
                     Radius = limbDefault.Radius * sizeScale,
-                    FallbackLength = limbDefault.Length * sizeScale
+                    FallbackLength = limbDefault.Length * sizeScale,
+                    Hovered = IsTrunk(limbDefault.Bone[0]),
+                    HeightReference = limbDefault.Bone[0] == HumanBodyBones.Head
                 });
             }
 
             EditorUtility.SetDirty(profile);
         }
+
+        // The hover holds the trunk; the legs only follow the pose.
+        private static bool IsTrunk(HumanBodyBones bone) =>
+            bone is HumanBodyBones.Hips or HumanBodyBones.Spine or HumanBodyBones.UpperChest or HumanBodyBones.Head;
 
         // The default radii and lengths are for a person about 1.8 m tall (hips to head about 0.75 m).
         private static float SizeScale(Animator animator) {

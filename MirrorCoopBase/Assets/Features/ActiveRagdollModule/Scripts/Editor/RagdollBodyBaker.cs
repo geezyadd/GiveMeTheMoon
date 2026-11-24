@@ -67,7 +67,7 @@ namespace Features.ActiveRagdollModule.Editor {
 
             Undo.RecordObject(limb, "Bake ragdoll");
             limb.Configure(limb.GetComponent<Rigidbody>(), joint, new Collider[] { capsule }, parent,
-                limbProfile.DriveSpring, damper);
+                limbProfile.DriveSpring, damper, limbProfile.Hovered, limbProfile.HeightReference);
             EditorUtility.SetDirty(limb);
         }
 

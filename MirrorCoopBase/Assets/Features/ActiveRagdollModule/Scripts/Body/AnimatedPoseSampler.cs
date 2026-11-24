@@ -56,8 +56,9 @@ namespace Features.ActiveRagdollModule {
             _graph.Evaluate(deltaTime);
 
             Vector3 animatedRootPosition = _body.Root.transform.position;
+            float originHeight = _animator.transform.position.y;
             foreach (RagdollLimb limb in _body.Limbs)
-                limb.CaptureTarget(animatedRootPosition);
+                limb.CaptureTarget(animatedRootPosition, originHeight);
 
             // Limbs are listed parents first, so moving a parent never drags an already placed child.
             foreach (RagdollLimb limb in _body.Limbs)

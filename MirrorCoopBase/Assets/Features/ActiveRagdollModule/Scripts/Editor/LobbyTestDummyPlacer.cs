@@ -17,10 +17,23 @@ namespace Features.ActiveRagdollModule.Editor {
 
         [MenuItem("Tools/Ragdoll/Place Test Dummy In Lobby")]
         public static void Place() {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) {
+                Debug.LogError("Ragdoll: leave Play mode before placing the test dummy.");
+                return;
+            }
+
             Scene lobby = SceneManager.GetSceneByPath(LobbyScenePath);
             bool openedHere = lobby.isLoaded == false;
             if (openedHere)
                 lobby = EditorSceneManager.OpenScene(LobbyScenePath, OpenSceneMode.Additive);
+
+            // Never save a lobby that did not load in full: that would wipe the scene.
+            if (HasSceneContent(lobby) == false) {
+                Debug.LogError("Ragdoll: the lobby scene looks empty, nothing was changed.");
+                if (openedHere)
+                    EditorSceneManager.CloseScene(lobby, true);
+                return;
+            }
 
             RemoveOldDummy(lobby);
             RagdollBody body = CreateDummy(lobby);
@@ -54,12 +67,26 @@ namespace Features.ActiveRagdollModule.Editor {
             RagdollBody body = root.AddComponent<RagdollBody>();
             root.AddComponent<AnimatedPoseSampler>();
             root.AddComponent<AnimatedPoseFollower>();
+            root.AddComponent<RagdollGroundSensor>();
+            root.AddComponent<RagdollHover>();
+            root.AddComponent<RagdollGravity>();
+            root.AddComponent<RagdollDrag>();
             root.AddComponent<RagdollPoseGizmo>();
             root.AddComponent<RagdollRootPin>();
             SerializedObject serializedBody = new(body);
             serializedBody.FindProperty("_profile").objectReferenceValue = LoadOrCreateProfile();
             serializedBody.ApplyModifiedPropertiesWithoutUndo();
             return body;
+        }
+
+        private static bool HasSceneContent(Scene lobby) {
+            if (lobby.IsValid() == false || lobby.isLoaded == false)
+                return false;
+
+            foreach (GameObject rootObject in lobby.GetRootGameObjects())
+                if (rootObject.name != DummyName)
+                    return true;
+            return false;
         }
 
         private static void RemoveOldDummy(Scene lobby) {
