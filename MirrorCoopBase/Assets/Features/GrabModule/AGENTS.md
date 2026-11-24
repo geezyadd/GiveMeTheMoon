@@ -17,5 +17,11 @@ go in flight with it), and `Grabbable.ApplyLoosePhysics` is the one place that g
 
 Seats and the helm are in [ShipModule](../ShipModule/AGENTS.md).
 
+**Aim on a moving deck.** `InteractionAim` casts its ray where the physics has the player: it adds how far the
+player's interpolated body is ahead of its drawn pose (`DrawLag`), because a moving body and the ship around it are
+drawn a fraction of a step behind their physics poses, which the colliders follow; and a target the ray just slipped
+off stays aimed at for `GrabConfiguration.AimHoldSeconds` (0.1 s), since deck cargo follows the ship's drawn pose and
+a one-frame miss made the outline flicker in flight.
+
 ## Tests
 - `Features.GrabModule.Editor.Tests` (`HoldUseProgressTests`: the hold completes after its time, resets on release, walking away, another item in the hand or an unusable target)

@@ -107,11 +107,21 @@ the camera in deck space and the vertical: spring, jump, air gravity via `RideVe
 standing offset sent every 0.05 s and played back late on the other peers) and `ShipSeatRide` (a moving seat point, the
 standing spot when getting up). The deck walk and the offset stream are what a carrier-based deck (`ICarrier`, see
 MovingPlatformModule) will replace for standing riders; seats keep the binding.
+**Deck ride modes.** `Riding/DeckRideModeModel` (bound in `DataInstaller`, local, debug toggle "Deck ride: new / old"
+in the Ship section, `Debug/DeckRideModeDebugSystem`) decides how this peer's own player stands on the flying deck. New
+(the default): `ShipRider.BindToPlatform` does not bind a standing owner (takeoff boarding, the catch over the deck), so
+the player stays a physical body that `CarrierRider` carries with the ship (`ShipCarrier`), synced in the ship's axes
+by PlayerReplicaModule like on any moving platform; standing up from a seat releases the seat's binding at the
+standing spot (`ReleaseStandingRider`, the same way as walking off the deck). Seats still bind in both modes. Old: the
+bound ride below. Loop and coop tests that check `IsRiding` for a standing player expect the old mode.
+
 **The ship as a carrier.** `Riding/ShipCarrier` (`ICarrier`, on the ship's root, runs first in each physics step)
 calls `ShipBase.ServerFlightStep`: the server's flight is stepped once per physics step with the physics step time, and
 the ship's body goes to the flight's pose by `MovePosition` / `MoveRotation`, interpolated in flight (set at takeoff),
 so the ship and the riders, cargo and camera that follow its drawn transform move smoothly. Snaps, landings and world
-shifts still place it at once (`ApplyDisplayPose`). `ShipCarrier` keeps the ship's step poses (`ShipBase.StepPose`),
+shifts still place it at once (`ApplyDisplayPose`). `ShipCarrier` keeps the ship's step poses (`ShipBase.TakeStepPose`: the pose the flight moved the body to in this
+step, since `MovePosition` only lands in the physics step; reading the body gave the last step's pose and made a
+player on a client's deck slide during the autopilot),
 its id is the pose sync's `netId`, and `Holds` is the deck's walk boxes (0.3 m past them) up to 6 m above the deck
 surface. A step longer than 5 m is a placement (the world shift at a landing, a berth snap), not a move:
 the poses before and now are the same then, so riders are not carried by it (the world shift moves the players itself;

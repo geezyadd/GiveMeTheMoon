@@ -29,7 +29,7 @@ namespace Features.ShipModule.Scripts.Riding {
         private void FixedUpdate() {
             _ship.ServerFlightStep(Time.fixedDeltaTime);
             _ship.ClientFlightStep(Time.fixedDeltaTime);
-            Pose now = _ship.StepPose;
+            Pose now = _ship.TakeStepPose();
             bool placed = _hasPose && (now.position - PoseNow.position).sqrMagnitude > _maxStepMove * _maxStepMove;
             PoseBefore = _hasPose && placed == false ? PoseNow : now;
             PoseNow = now;

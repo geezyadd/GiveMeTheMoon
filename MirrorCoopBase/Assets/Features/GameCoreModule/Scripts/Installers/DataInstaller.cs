@@ -55,6 +55,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<SpectatorModel>().AsSingle();
             Container.Bind<ShopVisitModel>().AsSingle();
             Container.Bind<DeadCrewModel>().AsSingle();
+            Container.Bind<Features.ShipModule.Scripts.Riding.DeckRideModeModel>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.Bind<Features.ShipModule.Scripts.Debug.WeaponDebugTargetModel>().AsSingle();
 #endif

@@ -39,6 +39,8 @@ namespace Features.ShipModule.Scripts {
         private ShipSteering _steering;
         private ShipFlightControl _flightControl;
         private int _fixedSteps;
+        private Pose _movedPose;
+        private bool _hasMovedPose;
         private bool _flying;
 
         private IReadOnlyShipRunModel _run;
@@ -332,6 +334,8 @@ namespace Features.ShipModule.Scripts {
         // Moves the ship's body to a pose in this physics step (interpolated while flying), or places it at once without
         // a body.
         internal void MoveBody(Vector3 position, Quaternion rotation) {
+            _movedPose = new Pose(position, rotation);
+            _hasMovedPose = true;
             if (_body == null) {
                 ApplyDisplayPose(position, rotation);
                 return;
@@ -341,9 +345,17 @@ namespace Features.ShipModule.Scripts {
             _body.MoveRotation(rotation);
         }
 
-        // The ship's pose on this physics step: its body's (where the physics has it), or its transform without one.
-        internal Pose StepPose =>
-            _body != null ? new Pose(_body.position, _body.rotation) : new Pose(transform.position, transform.rotation);
+        // The ship's pose on this physics step, taken once per step after the flight step: the pose the flight moved the
+        // body to (MovePosition only takes effect in the physics step, so the body still has the last step's pose), or,
+        // when nothing moved it, where its body or transform is.
+        internal Pose TakeStepPose() {
+            if (_hasMovedPose) {
+                _hasMovedPose = false;
+                return _movedPose;
+            }
+
+            return _body != null ? new Pose(_body.position, _body.rotation) : new Pose(transform.position, transform.rotation);
+        }
 
         internal int ConsumeFixedSteps() {
             int steps = _fixedSteps;

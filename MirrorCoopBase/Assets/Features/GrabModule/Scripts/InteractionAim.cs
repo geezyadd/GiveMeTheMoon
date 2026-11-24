@@ -15,6 +15,9 @@ namespace Features.GrabModule.Scripts {
         private Collider _cachedCollider;
         private Grabbable _cachedGrabbable;
         private InteractableBase[] _cachedInteractables = Array.Empty<InteractableBase>();
+        private Transform _cachedPlayer;
+        private Rigidbody _cachedPlayerBody;
+        private float _lastHitTime = float.NegativeInfinity;
 
         public InteractionAim(IGameCameraService cameras, GrabConfiguration configuration) {
             _cameras = cameras;
@@ -25,7 +28,9 @@ namespace Features.GrabModule.Scripts {
             grabbable = null;
             interactables = Array.Empty<InteractableBase>();
             if (TryFindTargetCollider(player, eye, out Collider target) == false)
-                return false;
+                return TryHoldLastTarget(out grabbable, out interactables);
+
+            _lastHitTime = Time.unscaledTime;
 
             if (target != _cachedCollider) {
                 _cachedCollider = target;
@@ -38,6 +43,40 @@ namespace Features.GrabModule.Scripts {
             return true;
         }
 
+        // A ray that slipped off the target it was on a moment ago keeps it for the hold time: on a moving deck items
+        // follow the ship's drawn pose while ship parts follow its physics pose, and one frame's miss made the outline
+        // flicker. A target that is gone or switched off is not held.
+        private bool TryHoldLastTarget(out Grabbable grabbable, out InteractableBase[] interactables) {
+            grabbable = null;
+            interactables = Array.Empty<InteractableBase>();
+            if (_cachedCollider == null || _cachedCollider.enabled == false || _cachedCollider.gameObject.activeInHierarchy == false)
+                return false;
+
+            if (Time.unscaledTime - _lastHitTime > _configuration.AimHoldSeconds)
+                return false;
+
+            grabbable = _cachedGrabbable;
+            interactables = _cachedInteractables;
+            return true;
+        }
+
+        // How far the player's physical body is ahead of where it is drawn. A moving body (on a flying ship or platform)
+        // is drawn interpolated, a fraction of a physics step behind its physics pose, and so is the ship around it,
+        // while the colliders the ray hits are at their physics poses: a ray from the drawn camera missed the deck's
+        // items by up to a step of the ship's motion, more or less from frame to frame, and their outline flickered.
+        // Moved by this lag, the ray is cast where the physics has the player, among the colliders it looks at.
+        private Vector3 DrawLag(Transform player) {
+            if (player != _cachedPlayer) {
+                _cachedPlayer = player;
+                _cachedPlayerBody = player != null ? player.GetComponent<Rigidbody>() : null;
+            }
+
+            if (_cachedPlayerBody == null || _cachedPlayerBody.interpolation == RigidbodyInterpolation.None)
+                return Vector3.zero;
+
+            return _cachedPlayerBody.position - player.position;
+        }
+
         private bool TryFindTargetCollider(Transform player, Vector3 eye, out Collider target) {
             target = null;
             Camera camera = _cameras.OutputCamera;
@@ -47,7 +86,7 @@ namespace Features.GrabModule.Scripts {
             Transform view = camera.transform;
             Vector3 direction = view.forward;
             float behindEye = Mathf.Max(0f, Vector3.Dot(eye - view.position, direction));
-            Vector3 origin = view.position + direction * behindEye;
+            Vector3 origin = view.position + direction * behindEye + DrawLag(player);
             int interactableMask = _configuration.InteractableMask;
             int blockerMask = _configuration.AimBlockerMask & ~interactableMask;
             int count = Physics.RaycastNonAlloc(

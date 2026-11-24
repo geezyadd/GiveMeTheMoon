@@ -48,6 +48,7 @@ namespace Features.ShipModule.Scripts {
 
         private IPlayerIdentityService _playerIdentityService;
         private ShipRiderKeyModel _shipRiderKeyModel;
+        private DeckRideModeModel _deckRideModeModel;
 
         private ShipRideBody _body;
         private ShipDeckWalk _deckWalk;
@@ -78,12 +79,18 @@ namespace Features.ShipModule.Scripts {
             CharacterInputBuffer characterInputBuffer,
             IGameCameraService gameCameraService,
             IPlayerIdentityService playerIdentityService,
-            ShipRiderKeyModel shipRiderKeyModel) {
+            ShipRiderKeyModel shipRiderKeyModel,
+            DeckRideModeModel deckRideModeModel) {
             EnsureParts();
             _deckWalk.SetInput(characterInputBuffer, gameCameraService);
             _playerIdentityService = playerIdentityService;
             _shipRiderKeyModel = shipRiderKeyModel;
+            _deckRideModeModel = deckRideModeModel;
         }
+
+        // This peer's own player stands on the deck as a physical body the ship carries (CarrierRider), not bound here;
+        // only a seat binds it.
+        private bool StandsAsCarried => isOwned && _deckRideModeModel != null && _deckRideModeModel.UsesCarrier;
 
         public override void OnStartServer() {
             _playerKey = _playerIdentityService.GetKey(connectionToClient).Id;
@@ -114,6 +121,9 @@ namespace Features.ShipModule.Scripts {
 
         internal void BindToPlatform(ShipBase ship) {
             if (_rb == null || ship == null || _bound)
+                return;
+
+            if (_seated == false && StandsAsCarried)
                 return;
 
             Vector3 standingOffset = ship.ToShipLocal(transform.position);
@@ -354,6 +364,17 @@ namespace Features.ShipModule.Scripts {
             ReleaseFromPlatform();
         }
 
+        // The owner lets go of a standing ride the same way as walking off the deck: the server releases it on every
+        // peer, a client releases at once and ends the ride on the server.
+        private void ReleaseStandingRider() {
+            if (isServer) {
+                ServerRelease();
+                return;
+            }
+
+            ReleaseFromPlatform();
+        }
+
         private void SnapToSyncedOffset() {
             _localOffset = _syncedLocalOffset;
             _offsetStream.Reset(_syncedOffsetTime, _syncedLocalOffset);
@@ -402,6 +423,9 @@ namespace Features.ShipModule.Scripts {
                 TryMoveToStandingSpot();
                 // Standing up starts from rest on the seat, never with a velocity left over from before sitting.
                 ResetVertical(0f);
+                // A player who stands as carried gets off the seat's binding at the standing spot; the ship carries it.
+                if (_bound && StandsAsCarried)
+                    ReleaseStandingRider();
                 return;
             }
 
