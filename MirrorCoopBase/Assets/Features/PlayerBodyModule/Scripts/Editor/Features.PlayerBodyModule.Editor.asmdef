@@ -1,0 +1,23 @@
+{
+    "name": "Features.PlayerBodyModule.Editor",
+    "rootNamespace": "Features.PlayerBodyModule.Editor",
+    "references": [
+        "Features.PlayerBodyModule",
+        "Mirror",
+        "Features.ActiveRagdollModule",
+        "Features.ActiveRagdollModule.Editor",
+        "Features.CharacterMovableModule",
+        "Features.FloatingControllerModule"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

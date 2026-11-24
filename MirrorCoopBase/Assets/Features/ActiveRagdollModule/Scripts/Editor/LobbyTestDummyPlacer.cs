@@ -71,6 +71,8 @@ namespace Features.ActiveRagdollModule.Editor {
             root.AddComponent<RagdollHover>();
             root.AddComponent<RagdollGravity>();
             root.AddComponent<RagdollDrag>();
+            root.AddComponent<RagdollCarrierRide>();
+            root.AddComponent<RagdollCarrierRideStepEnd>();
             root.AddComponent<RagdollPoseGizmo>();
             root.AddComponent<RagdollRootPin>();
             SerializedObject serializedBody = new(body);

@@ -1,0 +1,21 @@
+{
+    "name": "Features.PlayerBodyModule",
+    "rootNamespace": "Features.PlayerBodyModule",
+    "references": [
+        "Mirror",
+        "Zenject",
+        "Features.CameraModule",
+        "Features.CharacterMovableModule",
+        "Features.ActiveRagdollModule",
+        "Features.FloatingControllerModule"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

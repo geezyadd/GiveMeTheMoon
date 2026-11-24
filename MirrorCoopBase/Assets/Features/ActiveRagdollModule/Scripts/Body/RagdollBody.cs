@@ -49,6 +49,42 @@ namespace Features.ActiveRagdollModule {
                 limb.ApplyDriveScale(scale);
         }
 
+        public float TotalMass {
+            get {
+                float mass = 0f;
+                foreach (RagdollLimb limb in _limbs)
+                    mass += limb.Rigidbody.mass;
+                return mass;
+            }
+        }
+
+        // Mass-weighted velocity of the whole body.
+        public Vector3 AverageVelocity {
+            get {
+                Vector3 momentum = Vector3.zero;
+                float mass = 0f;
+                foreach (RagdollLimb limb in _limbs) {
+                    momentum += limb.Rigidbody.linearVelocity * limb.Rigidbody.mass;
+                    mass += limb.Rigidbody.mass;
+                }
+
+                return mass > 0f ? momentum / mass : Vector3.zero;
+            }
+        }
+
+        // Pushes every limb by the same acceleration this step (walking, extra gravity).
+        public void AddAccelerationToAll(Vector3 acceleration) {
+            foreach (RagdollLimb limb in _limbs)
+                limb.AddAcceleration(acceleration);
+        }
+
+        // Changes every limb's velocity at once (a jump).
+        public void AddVelocityChangeToAll(Vector3 velocityChange) {
+            foreach (RagdollLimb limb in _limbs)
+                if (limb.Rigidbody.isKinematic == false)
+                    limb.Rigidbody.AddForce(velocityChange, ForceMode.VelocityChange);
+        }
+
         public void StopAllMotion() {
             foreach (RagdollLimb limb in _limbs) {
                 if (limb.Rigidbody.isKinematic)
@@ -57,6 +93,14 @@ namespace Features.ActiveRagdollModule {
                 limb.Rigidbody.linearVelocity = Vector3.zero;
                 limb.Rigidbody.angularVelocity = Vector3.zero;
             }
+        }
+
+        // Off while the limbs ride inside a moving parent as kinematic parts of a model: interpolation would keep
+        // putting them back where their rigidbodies were and tear them away from the parent.
+        public void SetInterpolation(bool interpolate) {
+            RigidbodyInterpolation mode = interpolate ? RigidbodyInterpolation.Interpolate : RigidbodyInterpolation.None;
+            foreach (RagdollLimb limb in _limbs)
+                limb.Rigidbody.interpolation = mode;
         }
 
         public void SetKinematic(bool isKinematic) {
@@ -68,6 +112,20 @@ namespace Features.ActiveRagdollModule {
             foreach (RagdollLimb limb in _limbs)
                 foreach (Collider limbCollider in limb.Colliders)
                     limbCollider.enabled = enabled;
+
+            // Turning a collider off forgets which pairs it ignored.
+            if (enabled && _profile != null && _profile.IgnoreNearbyLimbCollisions)
+                IgnoreNearbyLimbCollisions();
+        }
+
+        // Ignores collisions between every limb and the given colliders (the body that carries the ragdoll).
+        public void IgnoreCollisionsWith(Collider other, bool ignore) {
+            if (other == null)
+                return;
+
+            foreach (RagdollLimb limb in _limbs)
+                foreach (Collider limbCollider in limb.Colliders)
+                    Physics.IgnoreCollision(limbCollider, other, ignore);
         }
 
         // A joint already stops its own pair from colliding; this also covers a limb and its grandparent

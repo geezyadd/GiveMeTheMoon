@@ -114,7 +114,7 @@ types.
      `Features.WeaponModule`, `Features.SpaceHazeModule`, `Features.ActiveRagdollModule` (FloatingController).
   3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.PlayerReplicaModule`.
   4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`,
-     `Features.HandWeaponModule`, `Features.MovingPlatformModule`.
+     `Features.HandWeaponModule`, `Features.MovingPlatformModule`, `Features.PlayerBodyModule`.
   5. `Features.ShipImpactModule`, `Features.ShipDamageModule`, `Features.TurretModule`, `Features.PlayerLifeModule`,
      `Features.LobbyModule` (Ship, Grab, GameFlow, Mvp, Connection).
   6. `Features.StagePresetModule`, `Features.ShopModule`, `Features.TooltipModule`, `Features.CrewInviteModule`,
@@ -137,6 +137,7 @@ types.
 | [SpaceHazeModule](MirrorCoopBase/Assets/Features/SpaceHazeModule/AGENTS.md) | the dark space haze: how far the crew sees by eye |
 | [PlayerReplicaModule](MirrorCoopBase/Assets/Features/PlayerReplicaModule/AGENTS.md) | player body sync by state and input: packet stream, soft correction of the copies (being built) |
 | [ActiveRagdollModule](MirrorCoopBase/Assets/Features/ActiveRagdollModule/AGENTS.md) | physical bodies that follow an animation, for any creature (being built) |
+| [PlayerBodyModule](MirrorCoopBase/Assets/Features/PlayerBodyModule/AGENTS.md) | the body the player walks with: the player's own body is the active ragdoll pushed by the movement (being built) |
 | [MovingPlatformModule](MirrorCoopBase/Assets/Features/MovingPlatformModule/AGENTS.md) | moving platforms: the lobby's test platform flying around a circle, its start / stop button |
 | [DebugModule](MirrorCoopBase/Assets/Features/DebugModule/AGENTS.md) | the in-game debug window and its action registry |
 | [StagePresetModule](MirrorCoopBase/Assets/Features/StagePresetModule/AGENTS.md) | playtest stage presets |

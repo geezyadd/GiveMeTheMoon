@@ -32,8 +32,9 @@ namespace Features.ActiveRagdollModule.Editor {
             foreach (RagdollLimb limb in body.GetComponentsInChildren<RagdollLimb>(true)) {
                 if (limb.Joint != null)
                     Undo.DestroyObjectImmediate(limb.Joint);
+                // Only the capsule on the bone is the baker's; colliders the model already had stay.
                 foreach (Collider limbCollider in limb.Colliders)
-                    if (limbCollider != null)
+                    if (limbCollider is CapsuleCollider && limbCollider.gameObject == limb.gameObject)
                         Undo.DestroyObjectImmediate(limbCollider);
                 Rigidbody rigidbody = limb.Rigidbody;
                 Undo.DestroyObjectImmediate(limb);
@@ -66,9 +67,19 @@ namespace Features.ActiveRagdollModule.Editor {
             float damper = limbProfile.DriveSpring * profile.DamperToSpringRatio;
 
             Undo.RecordObject(limb, "Bake ragdoll");
-            limb.Configure(limb.GetComponent<Rigidbody>(), joint, new Collider[] { capsule }, parent,
+            limb.Configure(limb.GetComponent<Rigidbody>(), joint, LimbColliders(limb, capsule), parent,
                 limbProfile.DriveSpring, damper, limbProfile.Hovered, limbProfile.HeightReference);
             EditorUtility.SetDirty(limb);
+        }
+
+        // The capsule plus any solid collider the model already has on this bone or below it, short of the next limb:
+        // they move with the limb, so they are switched and ignored together with it.
+        private static Collider[] LimbColliders(RagdollLimb limb, CapsuleCollider capsule) {
+            List<Collider> colliders = new() { capsule };
+            foreach (Collider found in limb.GetComponentsInChildren<Collider>(true))
+                if (found != capsule && found.isTrigger == false && found.GetComponentInParent<RagdollLimb>() == limb)
+                    colliders.Add(found);
+            return colliders.ToArray();
         }
 
         private static ConfigurableJoint AddJoint(RagdollLimb limb, RagdollLimb parent, RagdollBodyProfile profile) {

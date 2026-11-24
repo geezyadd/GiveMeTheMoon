@@ -17,6 +17,9 @@ namespace Features.ActiveRagdollModule {
         [Tooltip("The probe reaches the root limb's animated height plus this.")]
         public float ProbeExtraLength = 0.3f;
 
+        [Tooltip("After a jump the body does not stand for this long, so the hover does not cancel the jump.")]
+        public float StandPauseAfterJump = 0.3f;
+
         [Header("Hover")]
         [Tooltip("Up / down acceleration on the hovered limbs when the height limb is a full smoothing band off.")]
         public float StandForce = 100f;

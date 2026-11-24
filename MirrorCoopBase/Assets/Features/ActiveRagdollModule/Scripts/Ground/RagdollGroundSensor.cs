@@ -16,6 +16,7 @@ namespace Features.ActiveRagdollModule {
         private Vector3 _wedgedNormalSum;
         private GroundSample _highestWedgedContact;
         private bool _hasWedgedContact;
+        private float _standPauseLeft;
 
         public bool IsGrounded { get; private set; }
         public Vector3 GroundPoint { get; private set; }
@@ -24,7 +25,13 @@ namespace Features.ActiveRagdollModule {
         public ICarrier Carrier { get; private set; }
         public float SecondsSinceGrounded { get; private set; }
         // Off for a moment after a jump, so the hover does not cancel it.
-        public bool CanStand { get; set; } = true;
+        public bool CanStand => _standPauseLeft <= 0f;
+
+        // The body does not stand for this long (a jump takes off).
+        public void PauseStanding(float seconds) {
+            _standPauseLeft = Mathf.Max(_standPauseLeft, seconds);
+            IsGrounded = false;
+        }
 
         private void Awake() {
             _body = GetComponent<RagdollBody>();
@@ -41,6 +48,9 @@ namespace Features.ActiveRagdollModule {
         }
 
         private void FixedUpdate() {
+            if (_standPauseLeft > 0f)
+                _standPauseLeft -= Time.fixedDeltaTime;
+
             RagdollLimb root = _body.Root;
             if (root != null && root.HasTarget && CanStand && TryFindGround(root, out GroundSample ground))
                 Stand(ground);

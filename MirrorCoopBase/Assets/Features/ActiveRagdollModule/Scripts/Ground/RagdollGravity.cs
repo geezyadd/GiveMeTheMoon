@@ -9,6 +9,10 @@ namespace Features.ActiveRagdollModule {
         private RagdollBody _body;
         private RagdollGroundSensor _ground;
 
+        // In the air the body falls with plain world gravity instead of its own ramped one. For an owner that runs its
+        // own jump and air rules (a player's movement), which are tuned for plain gravity.
+        public bool UsesPlainGravityInAir { get; set; }
+
         private void Awake() {
             _body = GetComponent<RagdollBody>();
             _ground = GetComponent<RagdollGroundSensor>();
@@ -20,13 +24,15 @@ namespace Features.ActiveRagdollModule {
             foreach (RagdollLimb limb in _body.Limbs)
                 limb.Rigidbody.useGravity = limp;
 
-            if (_ground.IsGrounded)
+            if (_ground.IsGrounded || limp)
                 return;
 
+            _body.AddAccelerationToAll(UsesPlainGravityInAir ? Physics.gravity : OwnAirGravity(settings));
+        }
+
+        private Vector3 OwnAirGravity(RagdollStandSettings settings) {
             float ramp = settings.AirGravityRamp.Evaluate(_ground.SecondsSinceGrounded * settings.AirGravityRampSpeed);
-            Vector3 acceleration = Vector3.up * (settings.MaxAirGravity * ramp * _body.ControlFactor);
-            foreach (RagdollLimb limb in _body.Limbs)
-                limb.AddAcceleration(acceleration);
+            return Vector3.up * (settings.MaxAirGravity * ramp * _body.ControlFactor);
         }
     }
 }

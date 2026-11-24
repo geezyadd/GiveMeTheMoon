@@ -1,0 +1,191 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 036200ab5c79d5e41a94ddf2557b9835, type: 3}
+  m_Name: PlayerRagdollProfile
+  m_EditorClassIdentifier: 
+  _limbs:
+  - BonePath: Armature | Humanoid/Hips
+    EndBonePath: Armature | Humanoid/Hips/Spine
+    Mass: 50
+    DriveSpring: 0
+    Radius: 0.15724786
+    FallbackLength: 0.18143985
+    Hovered: 1
+    HeightReference: 0
+  - BonePath: Armature | Humanoid/Hips/Spine
+    EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2
+    Mass: 35
+    DriveSpring: 3500
+    Radius: 0.14515187
+    FallbackLength: 0.18143985
+    Hovered: 1
+    HeightReference: 0
+  - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2
+    EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/Neck
+    Mass: 35
+    DriveSpring: 3500
+    Radius: 0.16934384
+    FallbackLength: 0.18143985
+    Hovered: 1
+    HeightReference: 0
+  - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/Neck/Head
+    EndBonePath: 
+    Mass: 25
+    DriveSpring: 2500
+    Radius: 0.13305588
+    FallbackLength: 0.26611176
+    Hovered: 1
+    HeightReference: 1
+  - BonePath: Armature | Humanoid/Hips/LeftUpLeg
+    EndBonePath: Armature | Humanoid/Hips/LeftUpLeg/LeftLeg
+    Mass: 25
+    DriveSpring: 2500
+    Radius: 0.09676791
+    FallbackLength: 0.18143985
+    Hovered: 0
+    HeightReference: 0
+  - BonePath: Armature | Humanoid/Hips/LeftUpLeg/LeftLeg
+    EndBonePath: Armature | Humanoid/Hips/LeftUpLeg/LeftLeg/LeftFoot
+    Mass: 15
+    DriveSpring: 1500
+    Radius: 0.072575934
+    FallbackLength: 0.18143985
+    Hovered: 0
+    HeightReference: 0
+  - BonePath: Armature | Humanoid/Hips/LeftUpLeg/LeftLeg/LeftFoot
+    EndBonePath: Armature | Humanoid/Hips/LeftUpLeg/LeftLeg/LeftFoot/LeftToeBase
+    Mass: 10
+    DriveSpring: 1000
+    Radius: 0.054431953
+    FallbackLength: 0.18143985
+    Hovered: 0
+    HeightReference: 0
+  - BonePath: Armature | Humanoid/Hips/RightUpLeg
+    EndBonePath: Armature | Humanoid/Hips/RightUpLeg/RightLeg
+    Mass: 25
+    DriveSpring: 2500
+    Radius: 0.09676791
+    FallbackLength: 0.18143985
+    Hovered: 0
+    HeightReference: 0
+  - BonePath: Armature | Humanoid/Hips/RightUpLeg/RightLeg
+    EndBonePath: Armature | Humanoid/Hips/RightUpLeg/RightLeg/RightFoot
+    Mass: 15
+    DriveSpring: 1500
+    Radius: 0.072575934
+    FallbackLength: 0.18143985
+    Hovered: 0
+    HeightReference: 0
+  - BonePath: Armature | Humanoid/Hips/RightUpLeg/RightLeg/RightFoot
+    EndBonePath: Armature | Humanoid/Hips/RightUpLeg/RightLeg/RightFoot/RightToeBase
+    Mass: 10
+    DriveSpring: 1000
+    Radius: 0.054431953
+    FallbackLength: 0.18143985
+    Hovered: 0
+    HeightReference: 0
+  - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/LeftShoulder/LeftArm
+    EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/LeftShoulder/LeftArm/LeftForeArm
+    Mass: 10
+    DriveSpring: 1000
+    Radius: 0.060479946
+    FallbackLength: 0.18143985
+    Hovered: 0
+    HeightReference: 0
+  - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/LeftShoulder/LeftArm/LeftForeArm
+    EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/LeftShoulder/LeftArm/LeftForeArm/LeftHand
+    Mass: 10
+    DriveSpring: 1000
+    Radius: 0.054431953
+    FallbackLength: 0.18143985
+    Hovered: 0
+    HeightReference: 0
+  - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/LeftShoulder/LeftArm/LeftForeArm/LeftHand
+    EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/LeftShoulder/LeftArm/LeftForeArm/LeftHand/LeftHandMiddle1
+    Mass: 10
+    DriveSpring: 1000
+    Radius: 0.048383955
+    FallbackLength: 0.12095989
+    Hovered: 0
+    HeightReference: 0
+  - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/RightShoulder/RightArm
+    EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/RightShoulder/RightArm/RightForeArm
+    Mass: 10
+    DriveSpring: 1000
+    Radius: 0.060479946
+    FallbackLength: 0.18143985
+    Hovered: 0
+    HeightReference: 0
+  - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/RightShoulder/RightArm/RightForeArm
+    EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/RightShoulder/RightArm/RightForeArm/RightHand
+    Mass: 10
+    DriveSpring: 1000
+    Radius: 0.054431953
+    FallbackLength: 0.18143985
+    Hovered: 0
+    HeightReference: 0
+  - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/RightShoulder/RightArm/RightForeArm/RightHand
+    EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/RightShoulder/RightArm/RightForeArm/RightHand/RightHandMiddle1
+    Mass: 10
+    DriveSpring: 1000
+    Radius: 0.048383955
+    FallbackLength: 0.12095989
+    Hovered: 0
+    HeightReference: 0
+  _massMultiplier: 1
+  _damperToSpringRatio: 0.1
+  _angularLimit: 177
+  _angularDamping: 0.05
+  _maxAngularVelocity: 50
+  _ignoreNearbyLimbCollisions: 1
+  _poseForce: 150
+  _poseTorque: 15
+  _stand:
+    GroundMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    MaxStandSlope: 50
+    MinSupportMass: 500
+    ProbeRadius: 0.15
+    ProbeExtraLength: 0.3
+    StandPauseAfterJump: 0.3
+    StandForce: 100
+    StandSmoothing: 0.25
+    AirGravityRamp:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    AirGravityRampSpeed: 1
+    MaxAirGravity: -500
+    UnityGravityBelowControl: 0.9
+    VelocityKeptPer60th: 0.85
+  _radiusMultiplier: 1.3
