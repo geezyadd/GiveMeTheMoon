@@ -4,7 +4,9 @@
     "references": [
         "Zenject",
         "Features.CharacterMovableModule",
-        "Features.ActiveRagdollModule"
+        "Features.ActiveRagdollModule",
+        "InputModule",
+        "InputModuleRalization"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -5,9 +5,12 @@ using UnityEditor.Animations;
 using UnityEngine;
 
 namespace Features.PlayerAnimationModule.Editor {
-    // Builds the player's animator controller from code, so it is never edited by hand. Two layers:
+    // Builds the player's animator controller from code, so it is never edited by hand. Three layers:
     // - Base Layer: Locomotion, a 1D blend by Forward from idle (0) to walking forward (1);
-    // - Fly (override): only Fall; PlayerAnimationDriver fades the layer's weight in while Fly is on, out when off.
+    // - Fly (override): only Fall; PlayerAnimationDriver fades the layer's weight in while Fly is on, out when off;
+    // - Slap (override, upper body mask, weight 1): Empty (an empty blend tree), the Slap trigger goes to Slap, Slap
+    //   goes back to Empty.
+    // It also builds the upper body mask and, the first time, the slap clip (SlapClipDraft).
     // Running it again rebuilds the controller in place (the asset keeps its GUID, so every reference keeps working) and
     // puts it on the humanoid in the player prefab.
     public static class PlayerAnimatorBuilder {
@@ -21,8 +24,11 @@ namespace Features.PlayerAnimationModule.Editor {
         private const string IdleClipPath = ClipsFolder + "/Idles/HumanM@Idle01.fbx";
         private const string WalkClipPath = ClipsFolder + "/Movement/Walk/HumanM@Walk01_Forward.fbx";
         private const string FallClipPath = ClipsFolder + "/Movement/Jump/HumanM@Fall01.anim";
+        private const string SlapClipPath = ResourcesFolder + "/Animations/PlayerSlap.anim";
+        private const string UpperBodyMaskPath = ResourcesFolder + "/PlayerUpperBody.mask";
         private const string LocomotionState = "Locomotion";
         private const string FallState = "Fall";
+        private const string EmptyState = "Empty";
 
         [MenuItem("Tools/Animation/Build Player Animator")]
         public static void BuildAndAssign() {
@@ -44,17 +50,19 @@ namespace Features.PlayerAnimationModule.Editor {
 
         public static AnimatorController Build() {
             EnsureResourcesFolder();
+            AvatarMask upperBody = BuildUpperBodyMask();
             AssetDatabase.DeleteAsset(TemporaryPath);
             AnimatorController building = AnimatorController.CreateAnimatorControllerAtPath(TemporaryPath);
-            Fill(building);
+            Fill(building, upperBody);
             AssetDatabase.SaveAssets();
             ReplaceController();
             return AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
         }
 
-        private static void Fill(AnimatorController controller) {
+        private static void Fill(AnimatorController controller, AvatarMask upperBody) {
             controller.AddParameter(PlayerAnimatorParameters.ForwardName, AnimatorControllerParameterType.Float);
             controller.AddParameter(PlayerAnimatorParameters.FlyName, AnimatorControllerParameterType.Bool);
+            controller.AddParameter(PlayerAnimatorParameters.SlapName, AnimatorControllerParameterType.Trigger);
 
             AnimatorState locomotion = controller.CreateBlendTreeInController(LocomotionState, out BlendTree tree, 0);
             tree.blendType = BlendTreeType.Simple1D;
@@ -65,6 +73,7 @@ namespace Features.PlayerAnimationModule.Editor {
             controller.layers[0].stateMachine.defaultState = locomotion;
 
             AddFlyLayer(controller);
+            AddSlapLayer(controller, upperBody);
         }
 
         // The second layer, over the locomotion: only Fall, over the whole body. It starts at weight 0 and
@@ -84,17 +93,75 @@ namespace Features.PlayerAnimationModule.Editor {
             machine.defaultState = fall;
         }
 
-        // The new controller's file takes the place of the old one's, whose meta (and GUID) stays; a controller is
-        // always the file's main object, so references to it survive.
-        private static void ReplaceController() {
-            if (AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath) == null) {
-                AssetDatabase.MoveAsset(TemporaryPath, ControllerPath);
-                return;
+        // The third layer, over the upper body (the legs keep walking or falling), at weight 1: Empty, a blend tree with
+        // no motions, by default; the Slap trigger goes from Empty to Slap, Slap goes back to Empty at its exit time.
+        // Both transitions have the editor's default exit time and duration.
+        private static void AddSlapLayer(AnimatorController controller, AvatarMask upperBody) {
+            controller.AddLayer(PlayerAnimatorParameters.SlapLayerName);
+            AnimatorControllerLayer[] layers = controller.layers;
+            int layerIndex = layers.Length - 1;
+            AnimatorControllerLayer slapLayer = layers[layerIndex];
+            slapLayer.defaultWeight = 1f;
+            slapLayer.blendingMode = AnimatorLayerBlendingMode.Override;
+            slapLayer.avatarMask = upperBody;
+            controller.layers = layers;
+
+            AnimatorStateMachine machine = slapLayer.stateMachine;
+            AnimatorState empty = controller.CreateBlendTreeInController(EmptyState, out BlendTree _, layerIndex);
+            AnimatorState slap = machine.AddState(PlayerAnimatorParameters.SlapStateName);
+            slap.motion = SlapClipDraft.LoadOrCreate(SlapClipPath, LoadClip(IdleClipPath));
+            machine.defaultState = empty;
+
+            AnimatorStateTransition start = empty.AddTransition(slap);
+            start.AddCondition(AnimatorConditionMode.If, 0f, PlayerAnimatorParameters.SlapName);
+            start.hasExitTime = false;
+
+            slap.AddTransition(empty, true);
+        }
+
+        // The upper body of a humanoid: the trunk, the head, the arms and the fingers; not the root and the legs.
+        // Created once, then changed in place (the asset keeps its GUID).
+        private static AvatarMask BuildUpperBodyMask() {
+            AvatarMask mask = AssetDatabase.LoadAssetAtPath<AvatarMask>(UpperBodyMaskPath);
+            if (mask == null) {
+                mask = new AvatarMask();
+                AssetDatabase.CreateAsset(mask, UpperBodyMaskPath);
             }
 
-            File.Copy(FullPath(TemporaryPath), FullPath(ControllerPath), true);
-            AssetDatabase.DeleteAsset(TemporaryPath);
-            AssetDatabase.ImportAsset(ControllerPath, ImportAssetOptions.ForceUpdate);
+            for (AvatarMaskBodyPart part = 0; part < AvatarMaskBodyPart.LastBodyPart; part++)
+                mask.SetHumanoidBodyPartActive(part, IsUpperBody(part));
+
+            EditorUtility.SetDirty(mask);
+            AssetDatabase.SaveAssets();
+            return mask;
+        }
+
+        private static bool IsUpperBody(AvatarMaskBodyPart part) =>
+            part == AvatarMaskBodyPart.Body || part == AvatarMaskBodyPart.Head
+            || part == AvatarMaskBodyPart.LeftArm || part == AvatarMaskBodyPart.RightArm
+            || part == AvatarMaskBodyPart.LeftFingers || part == AvatarMaskBodyPart.RightFingers
+            || part == AvatarMaskBodyPart.LeftHandIK || part == AvatarMaskBodyPart.RightHandIK;
+
+        // The new controller's file takes the place of the old one's, whose meta (and GUID) stays; a controller is
+        // always the file's main object, so references to it survive. The copied file still names its controller after
+        // the temporary file, so the name is set to the file's again.
+        private static void ReplaceController() {
+            if (AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath) == null)
+                AssetDatabase.MoveAsset(TemporaryPath, ControllerPath);
+            else {
+                File.Copy(FullPath(TemporaryPath), FullPath(ControllerPath), true);
+                AssetDatabase.DeleteAsset(TemporaryPath);
+                AssetDatabase.ImportAsset(ControllerPath, ImportAssetOptions.ForceUpdate);
+            }
+
+            AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+            string fileName = Path.GetFileNameWithoutExtension(ControllerPath);
+            if (controller == null || controller.name == fileName)
+                return;
+
+            controller.name = fileName;
+            EditorUtility.SetDirty(controller);
+            AssetDatabase.SaveAssets();
         }
 
         private static void AssignToPlayer(AnimatorController controller) {

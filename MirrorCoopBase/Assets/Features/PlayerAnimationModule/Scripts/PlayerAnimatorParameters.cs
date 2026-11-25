@@ -11,7 +11,15 @@ namespace Features.PlayerAnimationModule {
         // The layer that shows the fall over the locomotion; the driver fades its weight with Fly.
         public const string FlyLayerName = "Fly";
 
+        // Trigger: start the slap from its first frame (again, if it is already playing).
+        public const string SlapName = "Slap";
+        // The layer that shows the slap over the upper body.
+        public const string SlapLayerName = "Slap";
+        // The slap layer's state that plays the slap.
+        public const string SlapStateName = "Slap";
+
         public static readonly int Forward = Animator.StringToHash(ForwardName);
         public static readonly int Fly = Animator.StringToHash(FlyName);
+        public static readonly int Slap = Animator.StringToHash(SlapName);
     }
 }
