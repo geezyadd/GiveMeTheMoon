@@ -8,7 +8,9 @@
         "Features.ActiveRagdollModule.Editor",
         "Features.CharacterMovableModule",
         "Features.FloatingControllerModule",
-        "Features.PlayerReplicaModule"
+        "Features.PlayerReplicaModule",
+        "Features.PlayerAnimationModule",
+        "Features.PlayerAnimationModule.Editor"
     ],
     "includePlatforms": [
         "Editor"

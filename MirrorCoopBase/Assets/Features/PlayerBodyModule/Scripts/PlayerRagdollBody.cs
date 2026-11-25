@@ -2,7 +2,6 @@ using Features.ActiveRagdollModule;
 using Features.CameraModule.Scripts.Models;
 using Features.CharacterMovableModule.Scripts;
 using Features.CharacterMovableModule.Scripts.Drift;
-using Features.CharacterMovableModule.Scripts.MovementControls;
 using Features.FloatingControllerModule;
 using Features.GameCoreModule.Contracts;
 using Features.PlayerReplicaModule;
@@ -24,10 +23,6 @@ namespace Features.PlayerBodyModule {
     // step (the movement, the network), after the carriers have taken this step's pose.
     [DefaultExecutionOrder(-190)]
     public sealed class PlayerRagdollBody : MonoBehaviour {
-        private const string ForwardParameter = "Forward";
-        private const string FlyParameter = "Fly";
-        private const float AnimatorDamping = 0.125f;
-        private const float IdleCutoff = 0.125f;
         // While the ragdoll leads, only it moves the capsule, and the capsule ends each step exactly where it was put.
         // Found farther than this from there, someone else moved it (a respawn, a map change, a world shift).
         private const float TeleportDistance = 0.01f;
@@ -119,7 +114,7 @@ namespace Features.PlayerBodyModule {
             }
 
             if (_isAwake)
-                DriveAnimation();
+                DrivePose();
             TurnCameraWithCarrier();
         }
 
@@ -294,17 +289,10 @@ namespace Features.PlayerBodyModule {
             _floatingController.HoverEnabled = true;
         }
 
-        private void DriveAnimation() {
+        // How the pose is turned: toward the shown look, and head first while drifting. The animator's parameters are
+        // PlayerAnimationModule's (PlayerAnimationDriver).
+        private void DrivePose() {
             _parts.Sampler.FacingYaw = _movable.ShownLookYaw;
-            // From the controls, not the measured speed: on a moving, rocking carrier the body always drifts a little
-            // and would shuffle. Small values are cut so the idle stays still. A held player stands still.
-            IMovementControls controls = _movable.IsHeld ? null : _movable.ActiveControls;
-            float forward = controls != null ? Mathf.Clamp01(controls.ReadWish().magnitude) : 0f;
-            if (forward < IdleCutoff)
-                forward = 0f;
-            _parts.Animator.SetFloat(ForwardParameter, forward, AnimatorDamping, Time.deltaTime);
-            // In the air (a jump, a fall, a drift); a held player stands at its seat.
-            _parts.Animator.SetBool(FlyParameter, _movable.IsHeld == false && _parts.Ground.IsGrounded == false);
             TurnHeadFirstWhileDrifting();
         }
 

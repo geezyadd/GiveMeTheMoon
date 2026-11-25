@@ -69,6 +69,7 @@ GameObject:
   - component: {fileID: 8261068881824211472}
   - component: {fileID: 7209845104136634601}
   - component: {fileID: 7209845104136634602}
+  - component: {fileID: 7209845104136634603}
   m_Layer: 0
   m_Name: DummyPlayer
   m_TagString: Untagged
@@ -155,7 +156,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sceneId: 0
-  _assetId: 3376318766
+  _assetId: 0
   serverOnly: 0
   visibility: 0
   hasSpawned: 0
@@ -592,6 +593,20 @@ MonoBehaviour:
   syncInterval: 0
   _rider: {fileID: 8209845104136634494}
   _drift: {fileID: 7209845104136634601}
+--- !u!114 &7209845104136634603
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13a1a21e25a84d32af8c8fb76b0b01bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _movable: {fileID: 2109845104136634489}
+  _ragdoll: {fileID: 334446075228949800}
 --- !u!1 &1653071117312433485
 GameObject:
   m_ObjectHideFlags: 0
@@ -1654,11 +1669,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5347511318737039540, guid: 31f6676788424824f81d41d250333da1, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.033381928
+      value: 0.03338193
       objectReference: {fileID: 0}
     - target: {fileID: 5347511318737039540, guid: 31f6676788424824f81d41d250333da1, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.006045151
+      value: -0.0060451515
       objectReference: {fileID: 0}
     - target: {fileID: 5703999443181960028, guid: 31f6676788424824f81d41d250333da1, type: 3}
       propertyPath: m_Layer
@@ -1671,7 +1686,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: 31f6676788424824f81d41d250333da1, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 6f5a8ef86d26b4e45a0633c2eaa88aab, type: 2}
+      objectReference: {fileID: 9100000, guid: 329742a5c8f60c944a1ac206cdeaeff5, type: 2}
     - target: {fileID: 5866666021909216657, guid: 31f6676788424824f81d41d250333da1, type: 3}
       propertyPath: m_CullingMode
       value: 0

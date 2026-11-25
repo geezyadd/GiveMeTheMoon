@@ -3,6 +3,8 @@ using Features.ActiveRagdollModule.Editor;
 using Features.CharacterMovableModule.Scripts;
 using Features.CharacterMovableModule.Scripts.Drift;
 using Features.FloatingControllerModule;
+using Features.PlayerAnimationModule;
+using Features.PlayerAnimationModule.Editor;
 using Features.PlayerReplicaModule;
 using UnityEditor;
 using UnityEngine;
@@ -17,8 +19,6 @@ namespace Features.PlayerBodyModule.Editor {
         // The player's limbs sit on their own layer, so the interaction aim and other player-only queries skip them.
         private const string RagdollLayer = "PlayerRagdoll";
         private const string BodyRendererField = "_bodyRenderer";
-        private const string ControllerPath =
-            "Assets/Features/ActiveRagdollModule/GameResources/RagdollTestDummy.controller";
 
         [MenuItem("Tools/Ragdoll/Bake Ragdoll Into Player")]
         public static void Bake() {
@@ -72,6 +72,7 @@ namespace Features.PlayerBodyModule.Editor {
             PutOnRagdollLayer(body);
             PutToSleep(body, animator);
             WireSwitch(player, movable, body);
+            WireAnimationDriver(player, movable, body);
             WireBodyHider(player, movable, animator);
             WireBodyRendererReaders(player, animator);
             return true;
@@ -101,8 +102,7 @@ namespace Features.PlayerBodyModule.Editor {
                 foreach (Collider limbCollider in limb.Colliders)
                     limbCollider.enabled = false;
 
-            animator.runtimeAnimatorController =
-                AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(ControllerPath);
+            animator.runtimeAnimatorController = PlayerAnimatorBuilder.LoadOrBuild();
             animator.applyRootMotion = false;
             // The pose is the ragdoll's target, needed even when the model is not drawn (the owner's own view).
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
@@ -123,6 +123,18 @@ namespace Features.PlayerBodyModule.Editor {
             serialized.FindProperty("_ragdoll").objectReferenceValue = body;
             serialized.FindProperty("_copyDriver").objectReferenceValue = player.GetComponent<BodyCopyDriver>();
             serialized.FindProperty("_drift").objectReferenceValue = player.GetComponent<CharacterDrift>();
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // The animator's parameters come from the movement and the ragdoll's ground sensor (PlayerAnimationModule).
+        private static void WireAnimationDriver(GameObject player, CharacterMovableBase movable, RagdollBody body) {
+            PlayerAnimationDriver driver = player.GetComponent<PlayerAnimationDriver>();
+            if (driver == null)
+                driver = player.AddComponent<PlayerAnimationDriver>();
+
+            SerializedObject serialized = new(driver);
+            serialized.FindProperty("_movable").objectReferenceValue = movable;
+            serialized.FindProperty("_ragdoll").objectReferenceValue = body;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

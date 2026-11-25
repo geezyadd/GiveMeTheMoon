@@ -113,7 +113,8 @@ types.
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
      `Features.WeaponModule`, `Features.SpaceHazeModule`, `Features.ActiveRagdollModule` (FloatingController).
-  3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.PlayerReplicaModule`.
+  3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.PlayerReplicaModule`,
+     `Features.PlayerAnimationModule`.
   4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`,
      `Features.HandWeaponModule`, `Features.MovingPlatformModule`, `Features.PlayerBodyModule`.
   5. `Features.ShipImpactModule`, `Features.ShipDamageModule`, `Features.TurretModule`, `Features.PlayerLifeModule`,
@@ -139,6 +140,7 @@ types.
 | [PlayerReplicaModule](MirrorCoopBase/Assets/Features/PlayerReplicaModule/AGENTS.md) | player body sync by state and input, the only one: packet stream, simulated copies with soft correction, carriers, the server's moves of a body |
 | [ActiveRagdollModule](MirrorCoopBase/Assets/Features/ActiveRagdollModule/AGENTS.md) | physical bodies that follow an animation, for any creature (being built) |
 | [PlayerBodyModule](MirrorCoopBase/Assets/Features/PlayerBodyModule/AGENTS.md) | the body the player walks with: the player's own body is the active ragdoll pushed by the movement (being built) |
+| [PlayerAnimationModule](MirrorCoopBase/Assets/Features/PlayerAnimationModule/AGENTS.md) | the player's animator: its controller built from code and the driver that sets its parameters (`Forward`, `Fly`) |
 | [MovingPlatformModule](MirrorCoopBase/Assets/Features/MovingPlatformModule/AGENTS.md) | riding moving carriers (`CarrierRider`, used by the ship's deck too) and the lobby's test platform flying around a circle, its start / stop button |
 | [DebugModule](MirrorCoopBase/Assets/Features/DebugModule/AGENTS.md) | the in-game debug window and its action registry |
 | [StagePresetModule](MirrorCoopBase/Assets/Features/StagePresetModule/AGENTS.md) | playtest stage presets |

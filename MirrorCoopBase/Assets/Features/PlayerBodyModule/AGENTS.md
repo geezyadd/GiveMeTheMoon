@@ -12,7 +12,8 @@ walking, sprint, jump, stats and input drive a physical body.
 Being built on `demo/active-ragdoll`. The owner's player always walks with the ragdoll, and every peer that simulates
 a copy of it from its packets (PlayerReplicaModule, new sync mode) runs that copy as a ragdoll too. Known limits: a
 copy's snaps and pulls are not hidden (the model no longer sits under `ReplicaVisual`); in the old sync mode copies
-stay capsules; the feel numbers are not tuned; the animator is the throwaway idle / walk one.
+stay capsules; the feel numbers are not tuned. The animator and its parameters are
+[PlayerAnimationModule](../PlayerAnimationModule/AGENTS.md)'s.
 
 ## Assembly
 `Features.PlayerBodyModule` (layer 4; references Mirror, Zenject, `CharacterMovableModule`, `ActiveRagdollModule`,
@@ -39,9 +40,10 @@ is bound. Editor code in `Features.PlayerBodyModule.Editor`.
     (profile `Stand`: `Held Spot Spring` 4, `Held Spot Damping` 4, `Held Spot Tolerance` 0.05 m; speed relative to the
     carrier). It does not walk while held, the walk animation stays idle, and no carrier turn is added
     to the camera (the held capsule already turns the view).
-  - Each frame: the sampled animation is turned to the shown look, the animator's `Forward` comes from the walk input
-    of the active controls (keyboard or packet; not the measured speed, which drifts on a moving carrier; under 0.125
-    is cut), and the local player's camera turns with the carrier the ragdoll rides (`CameraCarryTurnModel`).
+  - Each frame: the sampled animation is turned to the shown look and, while the player drifts overboard, smoothly
+    tilted to fly head first (`AnimatedPoseSampler.Tilt`, `CharacterDriftHeadFirstTurn`); the local player's camera
+    turns with the carrier the ragdoll rides (`CameraCarryTurnModel`). The animator's parameters are set by
+    `PlayerAnimationDriver` (PlayerAnimationModule).
   - `SetSuspended` (from `PlayerLifeBody` for a dead player): falls asleep at once and hides the model's renderers.
   - A turned-off player object turns its detached ragdoll off too; destroyed while awake, it destroys it. A ragdoll
     lost under a live player hands the walking back to the capsule.
@@ -57,6 +59,6 @@ is bound. Editor code in `Features.PlayerBodyModule.Editor`.
 - Editor: `PlayerRagdollBaker` (Tools > Ragdoll > Bake Ragdoll Into Player): on the humanoid in `DummyPlayer` adds
   the ragdoll components, fills `GameResources/PlayerRagdollProfile` from the avatar, bakes the limbs, puts every limb
   collider's object on the `PlayerRagdoll` layer (not in the interaction aim's blocker mask, so aiming and grabbing
-  pass through the player's own body), leaves it asleep, gives the animator the test controller and wires `PlayerRagdollBody` (with the player's `BodyCopyDriver`). It also points every component's `_bodyRenderer` field (the nameplate) at the model's skinned mesh, sets the
+  pass through the player's own body), leaves it asleep, gives the animator the player's controller (`PlayerAnimatorBuilder.LoadOrBuild`) and wires `PlayerRagdollBody` (with the player's `BodyCopyDriver` and `CharacterDrift`) and `PlayerAnimationDriver`. It also points every component's `_bodyRenderer` field (the nameplate) at the model's skinned mesh, sets the
   animator to always animate (the pose is needed while the owner's model is not drawn) and wires
   `OwnBodyHider` with every renderer of the model. Running it again rebuilds it.
