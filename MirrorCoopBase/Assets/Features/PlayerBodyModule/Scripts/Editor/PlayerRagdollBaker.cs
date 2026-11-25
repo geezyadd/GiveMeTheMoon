@@ -1,6 +1,7 @@
 using Features.ActiveRagdollModule;
 using Features.ActiveRagdollModule.Editor;
 using Features.CharacterMovableModule.Scripts;
+using Features.CharacterMovableModule.Scripts.Drift;
 using Features.FloatingControllerModule;
 using Features.PlayerReplicaModule;
 using UnityEditor;
@@ -121,6 +122,7 @@ namespace Features.PlayerBodyModule.Editor {
                 player.GetComponent<FloatingController>();
             serialized.FindProperty("_ragdoll").objectReferenceValue = body;
             serialized.FindProperty("_copyDriver").objectReferenceValue = player.GetComponent<BodyCopyDriver>();
+            serialized.FindProperty("_drift").objectReferenceValue = player.GetComponent<CharacterDrift>();
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

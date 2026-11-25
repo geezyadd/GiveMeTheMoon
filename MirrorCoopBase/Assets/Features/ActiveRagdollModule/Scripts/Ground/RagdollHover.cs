@@ -18,7 +18,7 @@ namespace Features.ActiveRagdollModule {
 
         private void FixedUpdate() {
             RagdollLimb heightLimb = _body.HeightLimb;
-            if (_ground.IsGrounded == false || heightLimb == null || heightLimb.HasTarget == false)
+            if (_body.IsWeightless || _ground.IsGrounded == false || heightLimb == null || heightLimb.HasTarget == false)
                 return;
 
             RagdollStandSettings settings = _body.Profile.Stand;

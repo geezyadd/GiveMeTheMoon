@@ -22,9 +22,9 @@ namespace Features.ActiveRagdollModule {
             RagdollStandSettings settings = _body.Profile.Stand;
             bool limp = _body.ControlFactor < settings.UnityGravityBelowControl;
             foreach (RagdollLimb limb in _body.Limbs)
-                limb.Rigidbody.useGravity = limp;
+                limb.Rigidbody.useGravity = limp && _body.IsWeightless == false;
 
-            if (_ground.IsGrounded || limp)
+            if (_ground.IsGrounded || limp || _body.IsWeightless)
                 return;
 
             _body.AddAccelerationToAll(UsesPlainGravityInAir ? Physics.gravity : OwnAirGravity(settings));

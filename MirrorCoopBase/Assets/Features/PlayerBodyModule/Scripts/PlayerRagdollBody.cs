@@ -1,6 +1,7 @@
 using Features.ActiveRagdollModule;
 using Features.CameraModule.Scripts.Models;
 using Features.CharacterMovableModule.Scripts;
+using Features.CharacterMovableModule.Scripts.Drift;
 using Features.CharacterMovableModule.Scripts.MovementControls;
 using Features.FloatingControllerModule;
 using Features.GameCoreModule.Contracts;
@@ -24,6 +25,7 @@ namespace Features.PlayerBodyModule {
     [DefaultExecutionOrder(-190)]
     public sealed class PlayerRagdollBody : MonoBehaviour {
         private const string ForwardParameter = "Forward";
+        private const string FlyParameter = "Fly";
         private const float AnimatorDamping = 0.125f;
         private const float IdleCutoff = 0.125f;
         // While the ragdoll leads, only it moves the capsule, and the capsule ends each step exactly where it was put.
@@ -35,7 +37,9 @@ namespace Features.PlayerBodyModule {
         [SerializeField] private FloatingController _floatingController;
         [SerializeField] private RagdollBody _ragdoll;
         [SerializeField] private BodyCopyDriver _copyDriver;
+        [SerializeField] private CharacterDrift _drift;
 
+        private readonly CharacterDriftHeadFirstTurn _headFirstTurn = new();
         private RagdollBodyParts _parts;
         private RagdollMovableBody _movableBody;
         private CapsuleColliders _capsuleColliders;
@@ -265,6 +269,8 @@ namespace Features.PlayerBodyModule {
         private void FallAsleep() {
             Vector3 velocity = _ragdoll.AverageVelocity;
             _movable.SetDrivenBody(null);
+            _headFirstTurn.Reset();
+            _parts.Sampler.Tilt = Quaternion.identity;
             _parts.SetRunning(false);
             _ragdoll.SetKinematic(true);
             _ragdoll.SetCollisions(false);
@@ -297,6 +303,16 @@ namespace Features.PlayerBodyModule {
             if (forward < IdleCutoff)
                 forward = 0f;
             _parts.Animator.SetFloat(ForwardParameter, forward, AnimatorDamping, Time.deltaTime);
+            // In the air (a jump, a fall, a drift); a held player stands at its seat.
+            _parts.Animator.SetBool(FlyParameter, _movable.IsHeld == false && _parts.Ground.IsGrounded == false);
+            TurnHeadFirstWhileDrifting();
+        }
+
+        // A drifting body turns smoothly to fly head first; caught by a carrier or back on its feet it stands upright
+        // again. Each peer shows it on its own from the body's velocity.
+        private void TurnHeadFirstWhileDrifting() {
+            bool isFlying = _drift.IsDrifting && (_parts.Ride == null || _parts.Ride.Carrier == null);
+            _parts.Sampler.Tilt = _headFirstTurn.Step(isFlying, _ragdoll.AverageVelocity, _drift.Settings, Time.deltaTime);
         }
     }
 }

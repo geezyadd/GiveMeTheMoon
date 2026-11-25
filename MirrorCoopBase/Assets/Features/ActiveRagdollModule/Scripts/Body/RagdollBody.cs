@@ -17,6 +17,8 @@ namespace Features.ActiveRagdollModule {
         public RagdollLimb HeightLimb => _limbs.Find(limb => limb.IsHeightReference) ?? Root;
         // 0 = a limp ragdoll, 1 = fully follows the animation. Always 1 until falling and getting up are built.
         public float ControlFactor { get; private set; } = 1f;
+        // Open space: neither gravity nor the hover act on the body; it still senses the ground it touches.
+        public bool IsWeightless { get; set; }
 
         public void SetLimbs(List<RagdollLimb> limbs) {
             _limbs = limbs;

@@ -24,6 +24,10 @@ namespace Features.ActiveRagdollModule {
         // body turns toward it by following the pose. Null: the animator's own facing.
         public float? FacingYaw { get; set; }
 
+        // A world turn of the whole pose on top of the facing (a body flying head first); the body follows it like any
+        // pose. Identity: upright.
+        public Quaternion Tilt { get; set; } = Quaternion.identity;
+
         private void Awake() {
             _body = GetComponent<RagdollBody>();
             if (_animator == null)
@@ -75,8 +79,8 @@ namespace Features.ActiveRagdollModule {
         private void SamplePose(float deltaTime) {
             Transform origin = _animator.transform;
             Quaternion rotationBefore = origin.rotation;
-            if (FacingYaw.HasValue)
-                origin.rotation = Quaternion.Euler(0f, FacingYaw.Value, 0f);
+            Quaternion facing = FacingYaw.HasValue ? Quaternion.Euler(0f, FacingYaw.Value, 0f) : rotationBefore;
+            origin.rotation = Tilt * facing;
 
             _graph.Evaluate(deltaTime);
 

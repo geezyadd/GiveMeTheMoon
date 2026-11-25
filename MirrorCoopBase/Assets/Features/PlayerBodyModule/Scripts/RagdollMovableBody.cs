@@ -39,5 +39,8 @@ namespace Features.PlayerBodyModule {
 
         public void SetVelocity(Vector3 velocity) =>
             _body.ShiftVelocities(velocity - _body.AverageVelocity);
+
+        public void SetWeightless(bool isWeightless) =>
+            _body.IsWeightless = isWeightless;
     }
 }

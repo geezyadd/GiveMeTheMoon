@@ -40,6 +40,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 32f130b1c4a0f9346ab31298e73cae35
+    m_Address: ShipOverboardConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 63e5913a3be342769214365da29e3e58
     m_Address: WindowsRootConfiguration_Default
     m_ReadOnly: 0

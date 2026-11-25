@@ -14,5 +14,9 @@ namespace Features.FloatingControllerModule {
         // The body was put somewhere else (a respawn, a map change): the carrier is forgotten without giving its speed
         // back, and the body boards again from where it now stands.
         void DropCarrier();
+
+        // The body is caught in the air by a carrier (a drifting player taken back by the ship): from the next physics
+        // step it rides that carrier at rest on it, as if it had jumped from it, while the carrier holds it.
+        void CatchInAir(ICarrier carrier);
     }
 }

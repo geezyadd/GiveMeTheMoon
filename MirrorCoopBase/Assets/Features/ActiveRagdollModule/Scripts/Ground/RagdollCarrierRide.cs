@@ -23,6 +23,7 @@ namespace Features.ActiveRagdollModule {
         private Vector3[] _addedCarry = Array.Empty<Vector3>();
         private bool _isCopy;
         private ICarrier _copyCarrier;
+        private ICarrier _caughtBy;
 
         // The carrier the body moves with now, or null on still ground.
         public ICarrier Carrier { get; private set; }
@@ -43,6 +44,9 @@ namespace Features.ActiveRagdollModule {
             Array.Clear(_addedCarry, 0, _addedCarry.Length);
         }
 
+        public void CatchInAir(ICarrier carrier) =>
+            _caughtBy = carrier;
+
         private void Awake() {
             _body = GetComponent<RagdollBody>();
             _ground = GetComponent<RagdollGroundSensor>();
@@ -56,6 +60,8 @@ namespace Features.ActiveRagdollModule {
         private void FixedUpdate() {
             EnsureCarrySlots();
             TakeCarryOff();
+            if (TryBoardCatch())
+                return;
 
             ICarrier wanted = PickCarrier();
             if (wanted == Carrier)
@@ -103,6 +109,21 @@ namespace Features.ActiveRagdollModule {
             foreach (RagdollLimb limb in _body.Limbs)
                 if (limb.Rigidbody.isKinematic == false)
                     limb.Rigidbody.linearVelocity = turn * limb.Rigidbody.linearVelocity;
+            return true;
+        }
+
+        // A catch in the air: the body rides the carrier from this step at rest on it (relative velocity zero, the spin
+        // kept). A copy rides what its owner's packets name, so it is never caught.
+        private bool TryBoardCatch() {
+            ICarrier carrier = _caughtBy;
+            _caughtBy = null;
+            if (carrier == null || _isCopy)
+                return false;
+
+            Carrier = carrier;
+            foreach (RagdollLimb limb in _body.Limbs)
+                if (limb.Rigidbody.isKinematic == false)
+                    limb.Rigidbody.linearVelocity = Vector3.zero;
             return true;
         }
 

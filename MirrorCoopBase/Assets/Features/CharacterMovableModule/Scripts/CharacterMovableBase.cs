@@ -74,9 +74,24 @@ namespace Features.CharacterMovableModule.Scripts {
         public void SetHeld(bool isHeld) =>
             IsHeld = isHeld;
 
-        // Makes the movement drive another body instead of the capsule (null: the capsule again).
-        public void SetDrivenBody(IMovableBody body) =>
+        // The body drifts in open space (CharacterDrift moves it): weightless, and the movement neither walks nor jumps.
+        public bool IsDrifting { get; private set; }
+
+        public void SetDrifting(bool isDrifting) {
+            IsDrifting = isDrifting;
+            DrivenBody.SetWeightless(isDrifting);
+        }
+
+        // Makes the movement drive another body instead of the capsule (null: the capsule again). A drifting player's
+        // weightlessness moves over to the new body.
+        public void SetDrivenBody(IMovableBody body) {
+            if (IsDrifting)
+                DrivenBody.SetWeightless(false);
+
             _drivenBody = body;
+            if (IsDrifting)
+                DrivenBody.SetWeightless(true);
+        }
 
         public override void OnStartLocalPlayer() {
             _moveSpeed = ReadStat(PlayerStatType.WalkSpeed);
@@ -123,9 +138,10 @@ namespace Features.CharacterMovableModule.Scripts {
                 return;
 
             // A body nobody simulates on this peer (a copy before its first state packet) or a kinematic one (seated)
-            // does not move. Every simulated body, a remote copy too, pushes items by contact.
+            // does not move. Every simulated body, a remote copy too, pushes items by contact. A drifting body is moved
+            // by its drift.
             IMovementControls source = ActiveInput;
-            if (source == null || DrivenBody.IsKinematic || IsHeld)
+            if (source == null || DrivenBody.IsKinematic || IsHeld || IsDrifting)
                 return;
 
             Simulate(source);

@@ -27,6 +27,7 @@ namespace Features.MovingPlatformModule {
         private CameraCarryTurnModel _cameraCarryTurnModel;
         private ICarrier _carrier;
         private ICarrier _copyCarrier;
+        private ICarrier _caughtBy;
         private bool _isCopy;
         private Vector3 _addedCarry;
         private bool _hasDrawnYaw;
@@ -49,6 +50,9 @@ namespace Features.MovingPlatformModule {
             _addedCarry = Vector3.zero;
         }
 
+        public void CatchInAir(ICarrier carrier) =>
+            _caughtBy = carrier;
+
         [Inject]
         private void Construct(CameraCarryTurnModel cameraCarryTurnModel) =>
             _cameraCarryTurnModel = cameraCarryTurnModel;
@@ -63,6 +67,16 @@ namespace Features.MovingPlatformModule {
 
             _body.linearVelocity -= _addedCarry;
             _addedCarry = Vector3.zero;
+
+            // A catch in the air (the owner's own body only): it rides the carrier from this step at rest on it.
+            ICarrier caughtBy = _caughtBy;
+            _caughtBy = null;
+            if (caughtBy != null && _identity.isOwned) {
+                _carrier = caughtBy;
+                _hasDrawnYaw = false;
+                _body.linearVelocity = Vector3.zero;
+                return;
+            }
 
             ICarrier wanted = _identity.isOwned ? PickOwnCarrier() : _copyCarrier;
             if (wanted == _carrier)

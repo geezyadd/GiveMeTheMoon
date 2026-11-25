@@ -13,6 +13,7 @@ using Features.ShipDamageModule.Scripts.Damage;
 using Features.ShipImpactModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Hull;
+using Features.ShipModule.Scripts.Overboard;
 using Features.ShipModule.Scripts.Throttle;
 using Features.ShopModule.Scripts.Configurations;
 using Features.SonarModule.Scripts.Configurations;
@@ -40,6 +41,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<ShipHullHudConfiguration>(Address.Configurations.ShipHullHudConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShipRockImpactConfiguration>(Address.Configurations.ShipRockImpactConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShipThrottleConfiguration>(Address.Configurations.ShipThrottleConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ShipOverboardConfiguration>(Address.Configurations.ShipOverboardConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShopCatalog>(Address.Configurations.ShopCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WalletConfiguration>(Address.Configurations.WalletConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShopKioskConfiguration>(Address.Configurations.ShopKioskConfiguration_Default).AsSingle();

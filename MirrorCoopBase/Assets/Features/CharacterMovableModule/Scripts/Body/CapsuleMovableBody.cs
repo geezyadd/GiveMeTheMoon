@@ -38,5 +38,10 @@ namespace Features.CharacterMovableModule.Scripts.Body {
 
         public void SetVelocity(Vector3 velocity) =>
             _rigidbody.linearVelocity = velocity;
+
+        // Only the gravity: the hover finds no ground in open space, and the ragdoll owns the capsule's hover while it
+        // is the body.
+        public void SetWeightless(bool isWeightless) =>
+            _rigidbody.useGravity = isWeightless == false;
     }
 }

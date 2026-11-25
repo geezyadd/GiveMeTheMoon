@@ -33,5 +33,8 @@ namespace Features.CharacterMovableModule.Scripts.Body {
 
         // Sets the whole body's velocity at once, keeping how its parts move against each other.
         void SetVelocity(Vector3 velocity);
+
+        // Open space: no gravity at all (false: back to normal). A weightless body still senses what it touches.
+        void SetWeightless(bool isWeightless);
     }
 }
