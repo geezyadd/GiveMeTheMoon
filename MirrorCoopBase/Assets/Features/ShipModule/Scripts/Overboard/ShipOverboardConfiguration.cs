@@ -25,7 +25,15 @@ namespace Features.ShipModule.Scripts.Overboard {
         [Tooltip("A player drifting longer than this dies, seconds.")]
         [SerializeField, Min(0f)] private float _maxDriftSeconds = 240f;
 
+        [Header("Areas on the ground (lobby, stations)")]
+        [Tooltip("A player drifting farther than this from the nearest overboard area is put back at its return point, meters.")]
+        [SerializeField, Min(0f)] private float _areaMaxDistanceMeters = 100f;
+        [Tooltip("A player drifting longer than this away from the areas is put back at the return point, seconds.")]
+        [SerializeField, Min(0f)] private float _areaMaxDriftSeconds = 60f;
+
         public CharacterDriftSettings Drift => _drift;
+        public float AreaMaxDistanceMeters => _areaMaxDistanceMeters;
+        public float AreaMaxDriftSeconds => _areaMaxDriftSeconds;
         public float VolumeEdgeMeters => _volumeEdgeMeters;
         public float VolumeMinHeightMeters => _volumeMinHeightMeters;
         public float VolumeMaxHeightMeters => _volumeMaxHeightMeters;

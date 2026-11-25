@@ -43,13 +43,17 @@ namespace Features.ShipModule.Scripts {
             Container.BindInterfacesTo<Debug.ShipThrottleDebugSystem>().AsSingle();
             Container.BindInterfacesTo<Debug.WeaponDebugTargetSystem>().AsSingle();
             Container.BindInterfacesTo<Debug.WeaponDebugTargetPrefabSystem>().AsSingle();
+            Container.BindInterfacesTo<Debug.ShipOverboardDebugSystem>().AsSingle();
             Container.Bind<Debug.ShipStatsDebugOverlay>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
 #endif
         }
 
-        // A player who leaves the ship in flight drifts until the ship takes it back or the void takes it.
+        // A player who leaves the ship in flight, or the ground's overboard areas (lobby, stations), drifts until it is
+        // back or past the limit.
         private void InstallOverboard() {
             Container.BindInterfacesTo<ComponentRegistry<ShipOverboardRider>>().AsSingle();
+            Container.BindInterfacesTo<ComponentRegistry<OverboardArea>>().AsSingle();
+            Container.Bind<OverboardAreas>().AsSingle();
             Container.Bind<IShipOverboardRule>().To<ShipOverboardRule>().AsSingle();
             Container.Bind<IShipOverboardQuery>().To<ShipOverboardQuery>().AsSingle();
             Container.BindInterfacesTo<ShipOverboardEventBus>().AsSingle();

@@ -25,3 +25,5 @@ MonoBehaviour:
   _minDriftSecondsBeforeCapture: 1
   _maxDistanceMeters: 400
   _maxDriftSeconds: 240
+  _areaMaxDistanceMeters: 100
+  _areaMaxDriftSeconds: 60

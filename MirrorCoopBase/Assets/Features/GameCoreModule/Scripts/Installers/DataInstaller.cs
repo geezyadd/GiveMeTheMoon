@@ -1,6 +1,7 @@
 using Features.CameraModule.Scripts.Models;
 using Features.CameraModule.Scripts.Shake;
 using Features.PlayerLifeModule.Scripts.Spectator;
+using Features.CharacterMovableModule.Scripts.Drift;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.CrewInviteModule.Data.Generated;
 using Features.FlightFieldModule.Scripts.Decor;
@@ -40,6 +41,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<ConnectionRejectModel>().AsSingle();
             Container.Bind<PreloadedWindowsModel>().AsSingle();
             Container.Bind<CharacterMovableModel>().AsSingle();
+            Container.Bind<DriftPushScaleModel>().AsSingle();
             Container.Bind<PlayerControlBlockModel>().AsSingle();
             Container.Bind<GameCameraModel>().AsSingle();
             Container.Bind<CameraCarryTurnModel>().AsSingle();

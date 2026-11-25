@@ -62,7 +62,7 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenPlayerRidesInFlightForFirstTime_ThenItsRideIsMarked() =>
-            Assert.AreEqual(ShipOverboardDecision.MarkRidden, _rule.Decide(Aboard(isFlying: true, hasRidden: false, isRiding: true, isInVolume: true)));
+            Assert.AreEqual(ShipOverboardDecision.MarkInside, _rule.Decide(Aboard(isFlying: true, hasRidden: false, isRiding: true, isInVolume: true)));
 
         [Test]
         public void WhenRiderLeavesShipVolumeInFlight_ThenItGoesOverboard() =>
@@ -77,8 +77,77 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
             Assert.AreEqual(ShipOverboardDecision.None, _rule.Decide(Aboard(isFlying: true, hasRidden: false, isRiding: false, isInVolume: false)));
 
         [Test]
-        public void WhenShipStandsAtStation_ThenNobodyGoesOverboardAndTheRideIsForgotten() =>
-            Assert.AreEqual(ShipOverboardDecision.ForgetRide, _rule.Decide(Aboard(isFlying: false, hasRidden: true, isRiding: false, isInVolume: false)));
+        public void WhenPlayerOnGroundIsInAreaForFirstTime_ThenItIsMarkedInside() =>
+            Assert.AreEqual(ShipOverboardDecision.MarkInside, _rule.Decide(Aboard(isFlying: false, hasRidden: false, isRiding: false, isInVolume: true)));
+
+        [Test]
+        public void WhenPlayerOnGroundLeavesEveryArea_ThenItGoesOverboard() =>
+            Assert.AreEqual(ShipOverboardDecision.GoOverboard, _rule.Decide(Aboard(isFlying: false, hasRidden: true, isRiding: false, isInVolume: false)));
+
+        [Test]
+        public void WhenPlayerOnGroundWasNeverInside_ThenItDoesNotGoOverboard() =>
+            Assert.AreEqual(ShipOverboardDecision.None, _rule.Decide(Aboard(isFlying: false, hasRidden: false, isRiding: false, isInVolume: false)));
+
+        [Test]
+        public void WhenGroundDrifterIsBackInAreaAfterAMoment_ThenDriftEnds() =>
+            Assert.AreEqual(ShipOverboardDecision.EndDrift, _rule.Decide(DriftingOnGround(isInArea: true, isOverFloor: true, LONG_ENOUGH_SECONDS, NEAR_SHIP_METERS)));
+
+        [Test]
+        public void WhenGroundDrifterIsBackInAreaRightAfterLeaving_ThenItDriftsOn() {
+            float justLeft = _configuration.MinDriftSecondsBeforeCapture * 0.5f;
+
+            Assert.AreEqual(ShipOverboardDecision.None, _rule.Decide(DriftingOnGround(isInArea: true, isOverFloor: true, justLeft, NEAR_SHIP_METERS)));
+        }
+
+        [Test]
+        public void WhenGroundDrifterIsFartherThanAreaLimit_ThenItIsPutBack() {
+            float tooFar = _configuration.AreaMaxDistanceMeters + 1f;
+
+            Assert.AreEqual(ShipOverboardDecision.ReturnToArea, _rule.Decide(DriftingOnGround(isInArea: false, isOverFloor: false, LONG_ENOUGH_SECONDS, tooFar)));
+        }
+
+        [Test]
+        public void WhenGroundDrifterDriftsLongerThanAreaLimit_ThenItIsPutBack() {
+            float tooLong = _configuration.AreaMaxDriftSeconds + 1f;
+
+            Assert.AreEqual(ShipOverboardDecision.ReturnToArea, _rule.Decide(DriftingOnGround(isInArea: false, isOverFloor: false, tooLong, NEAR_SHIP_METERS)));
+        }
+
+        [Test]
+        public void WhenGroundDrifterIsInAreaBesideFloorButNotOverIt_ThenItDriftsOn() =>
+            Assert.AreEqual(ShipOverboardDecision.None, _rule.Decide(DriftingOnGround(isInArea: true, isOverFloor: false, LONG_ENOUGH_SECONDS, NEAR_SHIP_METERS)));
+
+        [Test]
+        public void WhenPointIsOverFloorAboveItsTop_ThenItIsOverFloor() {
+            Bounds floor = new Bounds(Vector3.zero, new Vector3(10f, 0.4f, 10f));
+
+            Assert.IsTrue(_rule.IsOverFloor(floor, new Vector3(4f, 0.2f + STANDING_HEIGHT, 0f)));
+        }
+
+        [Test]
+        public void WhenPointIsBesideFloorOrUnderItsTop_ThenItIsNotOverFloor() {
+            Bounds floor = new Bounds(Vector3.zero, new Vector3(10f, 0.4f, 10f));
+
+            Assert.IsFalse(_rule.IsOverFloor(floor, new Vector3(5f + A_LITTLE, 0.2f + STANDING_HEIGHT, 0f)));
+            Assert.IsFalse(_rule.IsOverFloor(floor, new Vector3(0f, 0.2f - A_LITTLE, 0f)));
+        }
+        [Test]
+        public void WhenPointIsJustBesideFloorEdge_ThenItIsInArea() {
+            Bounds floor = new Bounds(Vector3.zero, new Vector3(10f, 0.4f, 10f));
+            float x = 5f + _configuration.VolumeEdgeMeters - A_LITTLE;
+
+            Assert.IsTrue(_rule.IsInArea(floor, new Vector3(x, 0.2f + STANDING_HEIGHT, 0f)));
+        }
+
+        [Test]
+        public void WhenPointIsPastFloorEdgeOrBelowBand_ThenItIsOutOfArea() {
+            Bounds floor = new Bounds(Vector3.zero, new Vector3(10f, 0.4f, 10f));
+            float x = 5f + _configuration.VolumeEdgeMeters + A_LITTLE;
+            float y = 0.2f + _configuration.VolumeMinHeightMeters - A_LITTLE;
+
+            Assert.IsFalse(_rule.IsInArea(floor, new Vector3(x, 0.2f + STANDING_HEIGHT, 0f)));
+            Assert.IsFalse(_rule.IsInArea(floor, new Vector3(0f, y, 0f)));
+        }
 
         [Test]
         public void WhenDrifterIsBesideShipButNotAboard_ThenItDriftsOn() =>
@@ -86,7 +155,7 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
 
         [Test]
         public void WhenDrifterBoardsDeck_ThenDriftEndsOnDeck() =>
-            Assert.AreEqual(ShipOverboardDecision.EndOnDeck, _rule.Decide(Drifting(isRiding: true, isInVolume: true, LONG_ENOUGH_SECONDS, NEAR_SHIP_METERS)));
+            Assert.AreEqual(ShipOverboardDecision.EndDrift, _rule.Decide(Drifting(isRiding: true, isInVolume: true, LONG_ENOUGH_SECONDS, NEAR_SHIP_METERS)));
 
         [Test]
         public void WhenDrifterIsFartherThanLimit_ThenItExpires() {
@@ -111,5 +180,8 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
 
         private static ShipOverboardState Drifting(bool isRiding, bool isInVolume, float driftSeconds, float distanceMeters) =>
             new ShipOverboardState(true, true, true, isRiding, isInVolume, driftSeconds, distanceMeters);
+
+        private static ShipOverboardState DriftingOnGround(bool isInArea, bool isOverFloor, float driftSeconds, float distanceMeters) =>
+            new ShipOverboardState(false, true, true, false, isInArea, driftSeconds, distanceMeters, isOverFloor);
     }
 }

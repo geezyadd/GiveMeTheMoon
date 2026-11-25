@@ -17,6 +17,7 @@ namespace Features.CharacterMovableModule.Scripts.Drift {
         private CharacterInputBuffer _characterInputBuffer;
         private ILocalViewDirectionSource _localViewDirectionSource;
         private CharacterDriftSettings _settings;
+        private DriftPushScaleModel _driftPushScaleModel;
 
         public bool IsDrifting => _movable.IsDrifting;
         // The body that drifts now: the one the movement drives.
@@ -26,9 +27,13 @@ namespace Features.CharacterMovableModule.Scripts.Drift {
         public CharacterDriftSettings Settings => _settings;
 
         [Inject]
-        private void InjectDependencies(CharacterInputBuffer characterInputBuffer, ILocalViewDirectionSource localViewDirectionSource) {
+        private void InjectDependencies(
+            CharacterInputBuffer characterInputBuffer,
+            ILocalViewDirectionSource localViewDirectionSource,
+            DriftPushScaleModel driftPushScaleModel) {
             _characterInputBuffer = characterInputBuffer;
             _localViewDirectionSource = localViewDirectionSource;
+            _driftPushScaleModel = driftPushScaleModel;
         }
 
         private void OnDisable() =>
@@ -44,7 +49,7 @@ namespace Features.CharacterMovableModule.Scripts.Drift {
                 return;
 
             Vector3 push = _movable.isOwned ? ReadPushDirection() : Vector3.zero;
-            body.SetVelocity(_motion.Step(body.Velocity, push, _settings, Time.fixedDeltaTime));
+            body.SetVelocity(_motion.Step(body.Velocity, push, _settings, Time.fixedDeltaTime, _driftPushScaleModel.Scale));
         }
 
         // The body keeps the velocity it has at this moment (the exit velocity in the world).

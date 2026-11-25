@@ -375,7 +375,14 @@ namespace Features.CameraModule.Scripts.Services {
             return false;
         }
 
+        // The hook stays in the editor's player loop after Play mode ends, and the editor runs that loop whenever it
+        // updates (on focus): out of Play mode it must do nothing, or it spawns a new camera root into the open scene.
         private static void PresentAfterSimulation() {
+            if (Application.isPlaying == false) {
+                _presenting = null;
+                return;
+            }
+
             if (_presenting != null)
                 _presenting.PresentNow();
         }

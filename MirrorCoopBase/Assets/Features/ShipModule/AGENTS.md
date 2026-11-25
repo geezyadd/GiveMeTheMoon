@@ -164,6 +164,40 @@ The old ways were removed on 2026-11-24: the kinematic standing ride (`ShipDeckW
 standing offset `ShipRideOffsetStream` / `RideOffsetBuffer`, the takeoff boarding and the catch over the deck with
 `ShipDeckRideRule`, the deck edge drop and the reboard delay) and its "Deck ride: new / old" toggle.
 
+## Overboard (drifting in open space)
+A player who leaves the ship in flight, or the ground's areas in the lobby and at a station, does not fall: it drifts
+in open space. Code in `Scripts/Overboard/`, numbers in `ShipOverboardConfiguration_Default` (Addressables
+`Configurations`).
+- **The server decides** (`ShipOverboardSystem`, every tick, asks the pure `ShipOverboardRule.Decide` about every
+  player's `ShipOverboardRider`; synced: overboard and since when). A takeoff or a landing starts the safe space over
+  (`ShipOverboardRider.WasFlying`), so a player left at a station does not go overboard when the ship leaves.
+  - **In flight:** a player who rode the ship in this flight (`IShipRiders.IsAboard`) and is out of the ship's volume
+    (the deck's walk area widened by `VolumeEdgeMeters` 2.5 m, `VolumeMinHeightMeters`..`VolumeMaxHeightMeters`
+    −1.5..8 m over the deck surface) drifts. Back: the owner's peer catches its drifting body over the deck after
+    `MinDriftSecondsBeforeCapture` (1 s) when `ShipCarrier.Holds` it (`ICarrierRider.CatchInAir`: it rides the ship at
+    rest on it), the owner's packets say it rides, and the server ends the drift. Past `MaxDistanceMeters` (400 m) or
+    `MaxDriftSeconds` (240 s): `IShipOverboardEvents.OnDriftLimitReached`, PlayerLifeModule kills it
+    (`DamageType.Drift`).
+  - **On the ground** (no ship: the lobby; or the ship standing at a station): the safe space is any `OverboardArea`
+    or the standing ship's volume. An `OverboardArea` is a list of floor colliders, its space their live bounds
+    widened the same way (`ShipOverboardRule.IsInArea`), so it follows a moving platform, and an optional return
+    point. Placed on the lobby's floors in `LobbyScene` (return point: the lobby's `SpawnPoint`), on `TestPlatform`
+    (MovingPlatformModule) and on `StationPad` (no return point). Lobby areas register in a
+    `ComponentRegistry<OverboardArea>`; a station pad is spawned without a context, so `OverboardAreas` takes the
+    current pad's area from `IShipStationPads.CurrentPad`. A player who was inside and leaves drifts; right over a floor
+    or the standing ship's deck again (inside its bounds, above its top: `IsOverFloor`, `IsOverShipDeck`; beside or
+    under it the gravity would pull the player off again) after `MinDriftSecondsBeforeCapture` the drift ends and it
+    falls back onto the floor; past `AreaMaxDistanceMeters`
+    (100 m from the nearest area) or `AreaMaxDriftSeconds` (60 s) it is put back (`IPlayerBodyPlacement.ServerPlace`)
+    at the nearest area's return point, else on the standing ship's deck spawn point; no death.
+- **The drift** (`CharacterDrift`, CharacterMovableModule): each peer drifts the body it simulates: weightless
+  (`IMovableBody.SetWeightless`), the movement neither walks nor jumps, the speed fades to a slow drift, the owner's
+  move keys push it along the view (3 m/s² up to 4 m/s, times this peer's `DriftPushScaleModel.Scale`: the debug window's Player → "Drift speed"
+  slider, x1..x10, `Debug/ShipOverboardDebugSystem`); the ragdoll turns smoothly to fly head first (PlayerBodyModule). The fall kill
+  skips a drifter (`IShipOverboardQuery`). Ends also on death (`ShipRunRiderService.ServerReleaseRider`). Not restored
+  on a rejoin.
+- Not done yet: the "man overboard" sonar contact.
+
 ## Cargo on the deck
 The flying deck is moved by code, not by physics, so it carries the grabbable items on it itself (`ShipDeckCargo`, run
 by `ShipBase.LateUpdate` on every peer):

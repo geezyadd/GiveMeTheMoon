@@ -43,7 +43,8 @@ rides its own copy of the carrier (see [PlayerReplicaModule](../PlayerReplicaMod
   20 m, 50 m/s for the test (a lap in about 2.5 s); stands at the start) and child `Platform` (the kinematic body with a 6 x 0.4 x 6 m
   box collider on the Ground layer, so the float probe stands on it; `Holds` uses that box). Under `Platform`: `DeckMesh`
   (the scaled cube that is seen) and `PlatformButton` (the switch post on the deck, Interactable layer), so the switch
-  rides along. Placed in `LobbyScene` as a scene object (its own `sceneId`); the circle goes around the lobby floor at
+  rides along. The root also has an `OverboardArea` (ShipModule) over the `Platform` box, so a player who leaves it
+  drifts and can come back onto it. Placed in `LobbyScene` as a scene object (its own `sceneId`); the circle goes around the lobby floor at
   floor height.
 
 ## Tests

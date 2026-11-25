@@ -1,6 +1,7 @@
 using Features.CharacterMovableModule.Scripts.Body;
 using Features.CharacterMovableModule.Scripts.Drift;
 using Features.FloatingControllerModule;
+using Features.GameCoreModule.Contracts;
 using Features.NetworkModelModule.Scripts;
 using Features.ShipModule.Scripts.Contracts;
 using Mirror;
@@ -33,8 +34,11 @@ namespace Features.ShipModule.Scripts.Overboard {
         public PlayerKey Key => _rider.Key;
         public Vector3 Position => transform.position;
         internal ShipRider Rider => _rider;
-        // Server: rode the ship in this flight, so leaving its volume is going overboard.
-        internal bool HasRiddenThisFlight { get; set; }
+        // Server: was in the safe space since the ship last took off or landed (in flight: rode the ship), so leaving it
+        // is going overboard.
+        internal bool HasBeenInside { get; set; }
+        // Server: whether the ship flew on the last tick; a takeoff or a landing starts the safe space over.
+        internal bool WasFlying { get; set; }
         internal float DriftSeconds => (float)(NetworkTime.time - _overboardSince);
 
         [Inject]
@@ -81,12 +85,22 @@ namespace Features.ShipModule.Scripts.Overboard {
             ShowOverboard(false);
         }
 
-        // Death, a leave or no ship: no drift, and the next one needs a new ride first.
+        // Death or a leave: no drift, and the next one needs the player inside again first.
         [Server]
         internal void ServerReset() {
-            HasRiddenThisFlight = false;
+            HasBeenInside = false;
             if (_isOverboard)
                 ServerEnd();
+        }
+
+        // Drifted too far from the ground's areas: the drift ends and the body is put at the pose on every peer.
+        [Server]
+        internal void ServerReturn(Pose pose) {
+            ServerEnd();
+            if (TryGetComponent(out IPlayerBodyPlacement placement) == false)
+                throw new System.InvalidOperationException(name + " has no " + nameof(IPlayerBodyPlacement) + ".");
+
+            placement.ServerPlace(pose);
         }
 
         // The owner's drifting body over the flying ship's deck rides the ship from the next step.

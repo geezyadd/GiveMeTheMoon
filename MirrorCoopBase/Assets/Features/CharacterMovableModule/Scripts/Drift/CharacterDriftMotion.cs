@@ -7,9 +7,11 @@ namespace Features.CharacterMovableModule.Scripts.Drift {
     public sealed class CharacterDriftMotion {
         private const float NO_PUSH_SQR = 0.0001f;
 
-        public Vector3 Step(Vector3 velocity, Vector3 pushDirection, CharacterDriftSettings settings, float deltaTime) {
+        // The push scale multiplies the push's acceleration and its cap.
+        public Vector3 Step(Vector3 velocity, Vector3 pushDirection, CharacterDriftSettings settings, float deltaTime,
+            float pushScale = 1f) {
             Vector3 damped = Damp(velocity, settings, deltaTime);
-            return Push(damped, pushDirection, settings, deltaTime);
+            return Push(damped, pushDirection, settings, deltaTime, pushScale);
         }
 
         private static Vector3 Damp(Vector3 velocity, CharacterDriftSettings settings, float deltaTime) {
@@ -22,17 +24,17 @@ namespace Features.CharacterMovableModule.Scripts.Drift {
             return velocity * (faded / speed);
         }
 
-        private static Vector3 Push(Vector3 velocity, Vector3 pushDirection, CharacterDriftSettings settings, float deltaTime) {
+        private static Vector3 Push(Vector3 velocity, Vector3 pushDirection, CharacterDriftSettings settings, float deltaTime, float pushScale) {
             if (pushDirection.sqrMagnitude < NO_PUSH_SQR)
                 return velocity;
 
             Vector3 direction = Vector3.ClampMagnitude(pushDirection, 1f);
             float alongBefore = Vector3.Dot(velocity, direction.normalized);
-            float cap = settings.MaxPushSpeedMetersPerSecond;
+            float cap = settings.MaxPushSpeedMetersPerSecond * pushScale;
             if (alongBefore >= cap)
                 return velocity;
 
-            Vector3 pushed = velocity + direction * (settings.PushAcceleration * deltaTime);
+            Vector3 pushed = velocity + direction * (settings.PushAcceleration * pushScale * deltaTime);
             float alongAfter = Vector3.Dot(pushed, direction.normalized);
             return alongAfter <= cap ? pushed : pushed - direction.normalized * (alongAfter - cap);
         }
