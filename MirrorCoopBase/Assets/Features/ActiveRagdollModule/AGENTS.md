@@ -44,8 +44,9 @@ at 1), falling and getting up, network copies.
   height above the animator's origin). Reports its contacts through `Touching`. Limbs are listed parents first.
 - `Body/AnimatedPoseSampler` (on the body root, execution order −95, before any force): takes the animator's graph
   off Unity's update (`Stop` + `DirectorUpdateMode.Manual`), and on each physics step but the first evaluates it by
-  `fixedDeltaTime` (turned to `FacingYaw` if the owner sets one; the graph is taken again each time the animator is
-  turned on), captures every limb's target, then puts every limb back on its rigidbody. Root motion is off and the animator always animates (no culling: the pose is the body's target, needed off screen
+  `fixedDeltaTime` (turned to `FacingYaw` if the owner sets one, at most at profile `Max Facing Turn Degrees Per
+  Second` (0: at once; 540 in `PlayerRagdollProfile` since 2026-11-26, so a fast spin of the look does not whirl the
+  body and fling its legs out); the graph is taken again each time the animator is turned on), captures every limb's target, then puts every limb back on its rigidbody. Root motion is off and the animator always animates (no culling: the pose is the body's target, needed off screen
   too).
   Animator parameters are set by the body's owner in `Update`; they apply at the next evaluation.
 - `Body/AnimatedPoseFollower` (execution order −90, after the sampler): per limb, the joint drive target (target
@@ -68,7 +69,11 @@ at 1), falling and getting up, network copies.
   height above the ground point. On the step it lands, `Ground/LandingSag` lowers that height for a moment by the
   landing speed times `Landing Sag Per Speed` (0.03 m per m/s, at most `Max Landing Sag` 0.3 m): the trunk sinks over
   the first `Landing Sag Sink Share` (0.3) of `Landing Sag Seconds` (0.35 s) and comes back up over the rest (profile
-  `Stand`, read every step; added 2026-11-26 so a landing sags as the capsule's hover spring did).
+  `Stand`, read every step; added 2026-11-26 so a landing sags as the capsule's hover spring did). When the legs (the
+  limbs that are not hovered) no longer reach the floor (their lowest collider point more than `Leg Reach Tolerance`
+  0.05 m over the ground point, e.g. flung out by a spin), the held height drops by that gap over `Leg Reach
+  Smoothing` (0.1 s), at most `Max Leg Reach Drop` (0.6 m), and rises back at `Leg Reach Rise Speed` (0.5 m/s) once a
+  leg reaches the floor, so the body sits onto its legs instead of floating.
 - `Ground/RagdollGravity` (−80): Unity gravity only below the limp threshold; in the air its own gravity ramps up by
   time since the ground, or plain world gravity with `UsesPlainGravityInAir` (an owner with its own jump rules);
   none while grounded.

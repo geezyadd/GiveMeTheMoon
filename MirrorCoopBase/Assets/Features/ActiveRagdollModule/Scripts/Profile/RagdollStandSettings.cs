@@ -35,6 +35,20 @@ namespace Features.ActiveRagdollModule {
         [Tooltip("Height band, metres, over which the stand force grows from zero to full.")]
         public float StandSmoothing = 0.25f;
 
+        [Header("Legs reaching the floor")]
+        [Tooltip("The legs may hang this far above the floor, metres, before the trunk is lowered onto them.")]
+        [Min(0f)]
+        public float LegReachTolerance = 0.05f;
+        [Tooltip("How fast the trunk drops onto legs that no longer reach the floor: the time constant, seconds.")]
+        [Min(0f)]
+        public float LegReachSmoothing = 0.1f;
+        [Tooltip("Once a leg reaches the floor again, the trunk rises back at this speed, metres per second.")]
+        [Min(0f)]
+        public float LegReachRiseSpeed = 0.5f;
+        [Tooltip("The trunk is never lowered more than this for its legs, metres.")]
+        [Min(0f)]
+        public float MaxLegReachDrop = 0.6f;
+
         [Header("Landing sag")]
         [Tooltip("On landing the hover lets the trunk sink this many metres per m/s of the landing speed, then lifts it " +
                  "back. 0: no sag. Read every physics step, so it can be tuned in Play mode.")]

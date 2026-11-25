@@ -28,6 +28,9 @@ namespace Features.ActiveRagdollModule {
         // pose. Identity: upright.
         public Quaternion Tilt { get; set; } = Quaternion.identity;
 
+        private float _shownFacingYaw;
+        private bool _hasShownFacing;
+
         private void Awake() {
             _body = GetComponent<RagdollBody>();
             if (_animator == null)
@@ -37,6 +40,7 @@ namespace Features.ActiveRagdollModule {
         private void OnDisable() {
             _graphReady = false;
             _firstStepSkipped = false;
+            _hasShownFacing = false;
         }
 
         private void FixedUpdate() {
@@ -79,7 +83,7 @@ namespace Features.ActiveRagdollModule {
         private void SamplePose(float deltaTime) {
             Transform origin = _animator.transform;
             Quaternion rotationBefore = origin.rotation;
-            Quaternion facing = FacingYaw.HasValue ? Quaternion.Euler(0f, FacingYaw.Value, 0f) : rotationBefore;
+            Quaternion facing = FacingYaw.HasValue ? Quaternion.Euler(0f, TurnTowardFacing(FacingYaw.Value, deltaTime), 0f) : rotationBefore;
             origin.rotation = Tilt * facing;
 
             _graph.Evaluate(deltaTime);
@@ -93,6 +97,19 @@ namespace Features.ActiveRagdollModule {
             // Limbs are listed parents first, so moving a parent never drags an already placed child.
             foreach (RagdollLimb limb in _body.Limbs)
                 limb.ReturnToPhysics();
+        }
+
+        // The facing the pose is sampled at turns toward the wanted one at most at the profile's turn speed, so a fast
+        // spin of the look does not whirl the body round (and fling its legs out). 0: it turns at once.
+        private float TurnTowardFacing(float wantedYaw, float deltaTime) {
+            float maxSpeed = _body.Profile.MaxFacingTurnDegreesPerSecond;
+            if (_hasShownFacing == false || maxSpeed <= 0f)
+                _shownFacingYaw = wantedYaw;
+            else
+                _shownFacingYaw = Mathf.MoveTowardsAngle(_shownFacingYaw, wantedYaw, maxSpeed * deltaTime);
+
+            _hasShownFacing = true;
+            return _shownFacingYaw;
         }
     }
 }

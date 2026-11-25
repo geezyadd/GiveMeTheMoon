@@ -37,6 +37,10 @@ namespace Features.ActiveRagdollModule {
                  "a jump or a landing, while turning toward the look keeps its speed, since the pose turns too. 0: none. " +
                  "Read every physics step, so it can be tuned in Play mode.")]
         [SerializeField, Min(0f)] private float _rootSwingDamping;
+        [Tooltip("The pose turns toward the wanted facing (a player's look) at most this fast, degrees per second, so a " +
+                 "fast spin of the look does not whirl the body round and fling its legs out. 0: at once. Read every " +
+                 "physics step, so it can be tuned in Play mode.")]
+        [SerializeField, Min(0f)] private float _maxFacingTurnDegreesPerSecond;
 
         [SerializeField] private RagdollStandSettings _stand = new();
 
@@ -50,6 +54,7 @@ namespace Features.ActiveRagdollModule {
         public float PoseDamping => _poseDamping;
         public float PoseTorque => _poseTorque;
         public float RootSwingDamping => _rootSwingDamping;
+        public float MaxFacingTurnDegreesPerSecond => _maxFacingTurnDegreesPerSecond;
         public RagdollStandSettings Stand => _stand;
         public float MassMultiplier => _massMultiplier;
         public float DamperToSpringRatio => _damperToSpringRatio;
