@@ -28,8 +28,11 @@ Editor code in `Features.PlayerAnimationModule.Editor`.
 - `AirborneDelay`: the delay itself, pure.
 - `PlayerAnimationConfiguration` (Addressables `PlayerAnimationConfiguration_Default`, bound in
   `ConfigurationInstaller`): `ForwardDampingSeconds` 0.125, `ForwardIdleCutoff` 0.125, `FlyDelaySeconds` 0.2.
-- `GameResources/PlayerAnimator.controller`: built from code, never edited by hand. One layer: `Locomotion` (default,
-  1D blend by `Forward`, idle 0 → walk 1) ⇄ `Fall` (in when `Fly`, 0.15 s; out when not, 0.2 s), no exit times.
+- `GameResources/PlayerAnimator.controller`: built from code, never edited by hand. Two layers: `Base Layer` with
+  `Locomotion` (1D blend by `Forward`, idle 0 → walk 1), and `Fly` (override, weight 0 by default) with only `Fall`.
+  `PlayerAnimationDriver` fades the `Fly` layer's weight to 1 while `Fly` is on (`FlyBlendInSeconds` 0.15) and back to 0
+  when it is off (`FlyBlendOutSeconds` 0.2). No empty state: an empty state in an override layer freezes the layer's
+  last pose (and with written defaults pulls the body to its rest pose).
 - Editor: `PlayerAnimatorBuilder` (Tools > Animation > Build Player Animator): rebuilds the controller in place (the
   asset keeps its GUID) and puts it on the humanoid in `DummyPlayer`. The ragdoll baker (PlayerBodyModule) takes the
   controller from here too.

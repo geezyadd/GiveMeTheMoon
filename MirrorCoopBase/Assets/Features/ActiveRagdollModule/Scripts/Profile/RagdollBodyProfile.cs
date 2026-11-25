@@ -25,9 +25,18 @@ namespace Features.ActiveRagdollModule {
         [Tooltip("Spring that pulls each limb toward its animated position (from the physical root limb), " +
                  "as acceleration per metre of error.")]
         [SerializeField] private float _poseForce = 150f;
+        [Tooltip("Damps the pose spring: slows each limb's speed relative to the root limb, as acceleration per " +
+                 "metre per second. The sway keeps its size and dies out sooner (0: no damping; about twice the " +
+                 "square root of the pose force: no overshoot). Read every physics step, so it can be tuned in Play mode.")]
+        [SerializeField, Min(0f)] private float _poseDamping = 12f;
         [Tooltip("Turns each limb, the root too, toward its animated world axes, as angular acceleration per " +
                  "degree of error. This is what keeps the body upright.")]
         [SerializeField] private float _poseTorque = 15f;
+        [Tooltip("Damps only the root limb's (the hips') rotation against the animated pose's own rotation, on every " +
+                 "axis, per second: the hips stop swinging like a pendulum (turning left / right, tilting) sooner after " +
+                 "a jump or a landing, while turning toward the look keeps its speed, since the pose turns too. 0: none. " +
+                 "Read every physics step, so it can be tuned in Play mode.")]
+        [SerializeField, Min(0f)] private float _rootSwingDamping;
 
         [SerializeField] private RagdollStandSettings _stand = new();
 
@@ -38,7 +47,9 @@ namespace Features.ActiveRagdollModule {
         public List<RagdollLimbProfile> Limbs => _limbs;
         public float RadiusMultiplier => _radiusMultiplier;
         public float PoseForce => _poseForce;
+        public float PoseDamping => _poseDamping;
         public float PoseTorque => _poseTorque;
+        public float RootSwingDamping => _rootSwingDamping;
         public RagdollStandSettings Stand => _stand;
         public float MassMultiplier => _massMultiplier;
         public float DamperToSpringRatio => _damperToSpringRatio;

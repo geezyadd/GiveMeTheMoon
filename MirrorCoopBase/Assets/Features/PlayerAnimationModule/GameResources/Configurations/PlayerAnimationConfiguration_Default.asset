@@ -14,4 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _forwardDampingSeconds: 0.125
   _forwardIdleCutoff: 0.125
-  _flyDelaySeconds: 0.2
+  _flyDelaySeconds: 0.3
+  _flyBlendInSeconds: 0.15
+  _flyBlendOutSeconds: 0.2

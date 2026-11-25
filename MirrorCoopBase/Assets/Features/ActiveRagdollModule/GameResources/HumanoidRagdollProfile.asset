@@ -148,6 +148,7 @@ MonoBehaviour:
   _maxAngularVelocity: 50
   _ignoreNearbyLimbCollisions: 1
   _poseForce: 150
+  _poseDamping: 12
   _poseTorque: 15
   _stand:
     GroundMask:
@@ -159,6 +160,10 @@ MonoBehaviour:
     ProbeExtraLength: 0.3
     StandForce: 100
     StandSmoothing: 0.25
+    LandingSagPerSpeed: 0.03
+    MaxLandingSag: 0.3
+    LandingSagSeconds: 0.35
+    LandingSagSinkShare: 0.3
     AirGravityRamp:
       serializedVersion: 2
       m_Curve:

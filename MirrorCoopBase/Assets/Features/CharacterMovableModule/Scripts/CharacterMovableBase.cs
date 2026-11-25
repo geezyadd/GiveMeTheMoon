@@ -24,6 +24,7 @@ namespace Features.CharacterMovableModule.Scripts {
         private float _remoteLookYaw;
         private float _moveSpeed;
         private readonly JumpAndAirGravity _jump = new JumpAndAirGravity();
+        private readonly JumpPush _jumpPush = new JumpPush();
         private IMovableBody _capsuleBody;
         private IMovableBody _drivenBody;
 
@@ -212,8 +213,13 @@ namespace Features.CharacterMovableModule.Scripts {
             if (_jump.TryTakeoff(tuning, supported, body.Velocity.y, Physics.gravity.y, Time.fixedDeltaTime,
                     out float speedChange)) {
                 body.PauseSupport();
-                body.AddVelocityChange(new Vector3(0f, speedChange, 0f));
+                _jumpPush.Begin(speedChange, tuning.JumpPushSeconds);
                 JumpCount = unchecked((byte)(JumpCount + 1));
+            }
+
+            if (_jumpPush.IsPushing) {
+                PushOff(body, supported);
+                return;
             }
 
             _jump.Land(tuning, supported, body.Velocity.y);
@@ -223,6 +229,16 @@ namespace Features.CharacterMovableModule.Scripts {
             float extra = _jump.AirGravityExtra(tuning, body.Velocity.y);
             if (extra > 0f)
                 body.AddAcceleration(Physics.gravity * extra);
+        }
+
+        // One step of the legs' push: this step's share of the takeoff speed, with the gravity of the step taken off
+        // (the body already left the ground, so it falls meanwhile), so the push ends at the full takeoff speed and the
+        // jump keeps its height. Neither landing nor the extra air gravity counts until the push is over.
+        private void PushOff(IMovableBody body, bool supported) {
+            float speed = _jumpPush.Step(Time.fixedDeltaTime);
+            body.AddVelocityChange(new Vector3(0f, speed, 0f));
+            if (supported == false)
+                body.AddAcceleration(-Physics.gravity);
         }
 
         private void CaptureFacingYaw() {

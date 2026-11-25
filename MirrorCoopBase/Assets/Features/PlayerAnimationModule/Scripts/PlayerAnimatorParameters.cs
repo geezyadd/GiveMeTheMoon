@@ -8,6 +8,8 @@ namespace Features.PlayerAnimationModule {
         public const string ForwardName = "Forward";
         // Bool: the body has been off the ground long enough (a jump, a fall, a drift).
         public const string FlyName = "Fly";
+        // The layer that shows the fall over the locomotion; the driver fades its weight with Fly.
+        public const string FlyLayerName = "Fly";
 
         public static readonly int Forward = Animator.StringToHash(ForwardName);
         public static readonly int Fly = Animator.StringToHash(FlyName);

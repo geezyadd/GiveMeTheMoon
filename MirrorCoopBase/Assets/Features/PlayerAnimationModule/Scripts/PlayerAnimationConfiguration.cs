@@ -15,6 +15,13 @@ namespace Features.PlayerAnimationModule {
 
         public float ForwardDampingSeconds => _forwardDampingSeconds;
         public float ForwardIdleCutoff => _forwardIdleCutoff;
+        [Tooltip("How long the fall layer takes to fade in once Fly turns on, seconds.")]
+        [SerializeField, Min(0f)] private float _flyBlendInSeconds = 0.15f;
+        [Tooltip("How long the fall layer takes to fade out once Fly turns off (back on the feet), seconds.")]
+        [SerializeField, Min(0f)] private float _flyBlendOutSeconds = 0.2f;
+
         public float FlyDelaySeconds => _flyDelaySeconds;
+        public float FlyBlendInSeconds => _flyBlendInSeconds;
+        public float FlyBlendOutSeconds => _flyBlendOutSeconds;
     }
 }

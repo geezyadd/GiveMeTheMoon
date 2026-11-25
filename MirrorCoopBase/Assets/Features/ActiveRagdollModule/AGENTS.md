@@ -22,7 +22,7 @@ at 1), falling and getting up, network copies.
 `Features.ActiveRagdollModule` (layer 2, references `FloatingControllerModule` for `SupportProbe` and `ICarrier`). Editor code in `Features.ActiveRagdollModule.Editor`.
 - `Profile/RagdollBodyProfile` (ScriptableObject, Create > Ragdoll > Body Profile): the limbs and the numbers shared by
   all of them (mass multiplier, capsule radius multiplier, damper to spring ratio, joint angular limit, angular damping, max angular velocity,
-  ignoring collisions between nearby limbs), pose force and torque, and `Stand` settings. The first limb is the root
+  ignoring collisions between nearby limbs), pose force, damping and torque, and `Stand` settings. The first limb is the root
   and gets no joint.
 - `Profile/RagdollStandSettings`: ground (mask, max stand slope 50°, min support mass 500, probe radius and extra
   length), hover (stand force 100, smoothing 0.25 m), air gravity (ramp curve and speed, max −500, Unity gravity below
@@ -51,15 +51,24 @@ at 1), falling and getting up, network copies.
 - `Body/AnimatedPoseFollower` (execution order −90, after the sampler): per limb, the joint drive target (target
   rotation relative to the parent limb, turned into the joint's space against the bind rotation), a torque toward
   the animated forward / up (the root too: this keeps the body upright) and, except the root, a spring force toward
-  physical root + animated offset with half of it back on the parent and half on the root. Profile `Pose Force` and
-  `Pose Torque`, both times the control factor. A limb sums forces with `AddForce` / `AddAcceleration`.
+  physical root + animated offset, damped by the limb's speed relative to the root, with half of it back on the
+  parent and half on the root (so the damping calms the sway without slowing the whole body). Profile `Pose Force`,
+  `Pose Damping` (12 since 2026-11-26, was none: the pelvis sway dies out sooner) and `Pose Torque`, all times the
+  control factor. `Root Swing Damping` slows only the root limb's (the hips') spin against the spin of its animated
+  target (from the target's turn since the last step; a turn over 45° in a step counts as a jump, not a spin), so the
+  hips stop swinging like a pendulum (left / right and tilting) sooner while turning toward the look keeps its speed
+  (0 by default, 100 in `PlayerRagdollProfile` since 2026-11-26). A limb sums forces with `AddForce` /
+  `AddAcceleration`.
 - `Ground/RagdollGroundSensor` (−85): each step takes the highest standable sample (slope, support body still,
   kinematic or heavy, not its own) from the `SupportProbe` cast down from the root limb (animated root height + extra)
   and from the limbs' contacts of the last simulation; with none, contacts whose normals point up on average count
   (wedged). `IsGrounded`, `GroundPoint`, `GroundNormal`, `Carrier`, `SecondsSinceGrounded`; `PauseStanding`
   (profile `Stand Pause After Jump`, 0.3 s) turns standing off for a while so a jump is not held down.
 - `Ground/RagdollHover` (−80): while grounded, pushes the hovered limbs up / down toward the height limb's animated
-  height above the ground point.
+  height above the ground point. On the step it lands, `Ground/LandingSag` lowers that height for a moment by the
+  landing speed times `Landing Sag Per Speed` (0.03 m per m/s, at most `Max Landing Sag` 0.3 m): the trunk sinks over
+  the first `Landing Sag Sink Share` (0.3) of `Landing Sag Seconds` (0.35 s) and comes back up over the rest (profile
+  `Stand`, read every step; added 2026-11-26 so a landing sags as the capsule's hover spring did).
 - `Ground/RagdollGravity` (−80): Unity gravity only below the limp threshold; in the air its own gravity ramps up by
   time since the ground, or plain world gravity with `UsesPlainGravityInAir` (an owner with its own jump rules);
   none while grounded.

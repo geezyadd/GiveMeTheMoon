@@ -9,7 +9,8 @@ namespace Features.PlayerAnimationModule {
     // copies of the others), from that peer's controls and ground sensor; nothing extra goes over the network.
     // - Forward: the walk input, not the measured speed (on a moving, rocking carrier the body always drifts a little
     //   and would shuffle); weak input is cut so the idle stays still; a held player (a seat) stands still.
-    // - Fly: the body has been off the ground for the configured delay; never while held.
+    // - Fly: the body has been off the ground for the configured delay; never while held. The fall layer's weight
+    //   fades in with it and out when it is off.
     // Works only while the ragdoll is awake (its animator is on): the ragdoll samples the animator once a physics step
     // (AnimatedPoseSampler), so the values apply from the next step.
     public sealed class PlayerAnimationDriver : MonoBehaviour {
@@ -21,6 +22,8 @@ namespace Features.PlayerAnimationModule {
         private PlayerAnimationConfiguration _configuration;
         private Animator _animator;
         private RagdollGroundSensor _ground;
+        private RuntimeAnimatorController _layerController;
+        private int _flyLayer = -1;
 
         [Inject]
         private void Construct(PlayerAnimationConfiguration configuration) =>
@@ -43,7 +46,34 @@ namespace Features.PlayerAnimationModule {
             float deltaTime = Time.deltaTime;
             _animator.SetFloat(PlayerAnimatorParameters.Forward, ReadForward(), _configuration.ForwardDampingSeconds, deltaTime);
             bool isInAir = _movable.IsHeld == false && _ground.IsGrounded == false;
-            _animator.SetBool(PlayerAnimatorParameters.Fly, _airborneDelay.Step(isInAir, _configuration.FlyDelaySeconds, deltaTime));
+            bool isFlying = _airborneDelay.Step(isInAir, _configuration.FlyDelaySeconds, deltaTime);
+            _animator.SetBool(PlayerAnimatorParameters.Fly, isFlying);
+            FadeFlyLayer(isFlying, deltaTime);
+        }
+
+        // The fall layer over the locomotion fades in while flying and out on the feet; at weight 0 it changes nothing.
+        private void FadeFlyLayer(bool isFlying, float deltaTime) {
+            int layer = FlyLayerIndex();
+            if (layer < 0)
+                return;
+
+            float seconds = isFlying ? _configuration.FlyBlendInSeconds : _configuration.FlyBlendOutSeconds;
+            float target = isFlying ? 1f : 0f;
+            float weight = seconds > 0f
+                ? Mathf.MoveTowards(_animator.GetLayerWeight(layer), target, deltaTime / seconds)
+                : target;
+            _animator.SetLayerWeight(layer, weight);
+        }
+
+        // Looked up again only when the animator gets another controller; -1 when it has no fall layer.
+        private int FlyLayerIndex() {
+            RuntimeAnimatorController controller = _animator.runtimeAnimatorController;
+            if (controller != _layerController) {
+                _layerController = controller;
+                _flyLayer = controller != null ? _animator.GetLayerIndex(PlayerAnimatorParameters.FlyLayerName) : -1;
+            }
+
+            return _flyLayer;
         }
 
         private float ReadForward() {

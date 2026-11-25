@@ -5,9 +5,9 @@ using UnityEditor.Animations;
 using UnityEngine;
 
 namespace Features.PlayerAnimationModule.Editor {
-    // Builds the player's animator controller from code, so it is never edited by hand. One layer:
-    // - Locomotion (default): a 1D blend by Forward from idle (0) to walking forward (1);
-    // - Fall: entered while Fly is on, left as soon as it is off.
+    // Builds the player's animator controller from code, so it is never edited by hand. Two layers:
+    // - Base Layer: Locomotion, a 1D blend by Forward from idle (0) to walking forward (1);
+    // - Fly (override): only Fall; PlayerAnimationDriver fades the layer's weight in while Fly is on, out when off.
     // Running it again rebuilds the controller in place (the asset keeps its GUID, so every reference keeps working) and
     // puts it on the humanoid in the player prefab.
     public static class PlayerAnimatorBuilder {
@@ -23,9 +23,6 @@ namespace Features.PlayerAnimationModule.Editor {
         private const string FallClipPath = ClipsFolder + "/Movement/Jump/HumanM@Fall01.anim";
         private const string LocomotionState = "Locomotion";
         private const string FallState = "Fall";
-        // Cross-fades, seconds: into the fall and back to the feet.
-        private const float IntoFallSeconds = 0.15f;
-        private const float OutOfFallSeconds = 0.2f;
 
         [MenuItem("Tools/Animation/Build Player Animator")]
         public static void BuildAndAssign() {
@@ -65,22 +62,26 @@ namespace Features.PlayerAnimationModule.Editor {
             tree.useAutomaticThresholds = false;
             tree.AddChild(LoadClip(IdleClipPath), 0f);
             tree.AddChild(LoadClip(WalkClipPath), 1f);
+            controller.layers[0].stateMachine.defaultState = locomotion;
 
-            AnimatorStateMachine machine = controller.layers[0].stateMachine;
-            AnimatorState fall = machine.AddState(FallState);
-            fall.motion = LoadClip(FallClipPath);
-            machine.defaultState = locomotion;
-
-            AddFlyTransition(locomotion, fall, AnimatorConditionMode.If, IntoFallSeconds);
-            AddFlyTransition(fall, locomotion, AnimatorConditionMode.IfNot, OutOfFallSeconds);
+            AddFlyLayer(controller);
         }
 
-        private static void AddFlyTransition(AnimatorState from, AnimatorState to, AnimatorConditionMode mode, float seconds) {
-            AnimatorStateTransition transition = from.AddTransition(to);
-            transition.hasExitTime = false;
-            transition.hasFixedDuration = true;
-            transition.duration = seconds;
-            transition.AddCondition(mode, 0f, PlayerAnimatorParameters.FlyName);
+        // The second layer, over the locomotion: only Fall, over the whole body. It starts at weight 0 and
+        // PlayerAnimationDriver fades its weight in while Fly is on and out when it is off: an empty state in an
+        // override layer would freeze the layer's last pose (or, writing defaults, pull the body to its rest pose).
+        private static void AddFlyLayer(AnimatorController controller) {
+            controller.AddLayer(PlayerAnimatorParameters.FlyLayerName);
+            AnimatorControllerLayer[] layers = controller.layers;
+            AnimatorControllerLayer flyLayer = layers[layers.Length - 1];
+            flyLayer.defaultWeight = 0f;
+            flyLayer.blendingMode = AnimatorLayerBlendingMode.Override;
+            controller.layers = layers;
+
+            AnimatorStateMachine machine = flyLayer.stateMachine;
+            AnimatorState fall = machine.AddState(FallState);
+            fall.motion = LoadClip(FallClipPath);
+            machine.defaultState = fall;
         }
 
         // The new controller's file takes the place of the old one's, whose meta (and GUID) stays; a controller is

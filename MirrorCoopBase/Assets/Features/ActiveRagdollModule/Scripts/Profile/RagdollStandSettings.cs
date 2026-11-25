@@ -35,6 +35,18 @@ namespace Features.ActiveRagdollModule {
         [Tooltip("Height band, metres, over which the stand force grows from zero to full.")]
         public float StandSmoothing = 0.25f;
 
+        [Header("Landing sag")]
+        [Tooltip("On landing the hover lets the trunk sink this many metres per m/s of the landing speed, then lifts it " +
+                 "back. 0: no sag. Read every physics step, so it can be tuned in Play mode.")]
+        public float LandingSagPerSpeed = 0.03f;
+        [Tooltip("The deepest landing sag, metres.")]
+        public float MaxLandingSag = 0.3f;
+        [Tooltip("How long a landing sag lasts from touching down until the trunk is back up, seconds.")]
+        public float LandingSagSeconds = 0.35f;
+        [Tooltip("Share of the sag time spent sinking (the rest is coming back up), 0..1.")]
+        [Range(0.05f, 0.95f)]
+        public float LandingSagSinkShare = 0.3f;
+
         [Header("In the air")]
         [Tooltip("Share of the full air gravity by time since the ground, 0..1 over the curve's time.")]
         public AnimationCurve AirGravityRamp = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
