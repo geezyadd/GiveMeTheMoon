@@ -119,10 +119,14 @@ namespace Features.PlayerBodyModule {
         }
 
         // The local player's view turns with the carrier the ragdoll rides, as the carrier is drawn each frame. A held
-        // player's capsule is turned by its ride, and the view with it, so nothing is added then.
+        // player's capsule is turned by its ride, and the view with it, so nothing is added then. A carrier destroyed
+        // under the ride (the ship's scene unloaded when the crew goes back to the lobby) counts as none: through the
+        // interface a destroyed object is not null.
         private void TurnCameraWithCarrier() {
             bool riding = _isAwake && _movable.IsHeld == false && _parts.Ride != null;
             ICarrier carrier = riding ? _parts.Ride.Carrier : null;
+            if (carrier is Object carrierObject && carrierObject == null)
+                carrier = null;
             if (carrier == null || _movable.isLocalPlayer == false || _cameraCarryTurnModel == null) {
                 _hasDrawnYaw = false;
                 return;
