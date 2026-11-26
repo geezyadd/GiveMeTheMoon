@@ -33,7 +33,9 @@ explosion during the flight's world shift is not moved with the world; a wave re
   knockdown): Small (3 m, 25 m/s, 15 m/s, 1.5 s), Medium (5 m, 30 m/s, 22 m/s, 2.5 s), Large (9 m, 35 m/s, 32 m/s,
   3.5 s); centre speeds were 10 / 15 / 22 until 2026-11-26.
 - `Configuration/ExplosionConfiguration` (`GameResources/Configurations/ExplosionConfiguration_Default`, Addressables
-  group `Configurations`): the preset list (a preset goes over the network as its index here), the layers whose loose
+  group `Configurations`): the preset list (a preset goes over the network as its index here; `IndexOf` matches by
+  the asset's name too, since in a player build a preset referenced by a scene object or a weapon asset is a copy of its
+  own: by reference alone no projectile or mine explosion was sent, fixed 2026-11-27, `ExplosionConfigurationTests`), the layers whose loose
   rigidbodies are thrown, the debug distance.
 - **The look is local, never over the network.** `IExplosionEffects` / `ExplosionEffects` plays the preset's effect at
   the centre and the shake (strength 1 - camera distance / shake distance). A projectile's explosion (grenade,
