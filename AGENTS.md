@@ -108,6 +108,7 @@ types.
      `Features.CrewInviteModule.Data`, `Features.StagePresetModule.Data`, `Features.FlightFieldModule.Contracts`,
      `Features.WeaponModule.Contracts`, `Features.CameraModule.Contracts`, `Features.EffectPoolModule` (no references),
      `Features.DebugModule.Contracts`, `Features.SonarModule.Contracts`, `Features.SonarModule.Data`,
+     `Features.VfxModule`, `Features.ScreenShakeModule`,
      `Features.SpaceHazeModule.Data`, `Features.AttackModule.Contracts`, `Features.ExplosionModule.Contracts`; third-party
      `QuickOutline` also has its own asmdef (the unused `Mini Mapa(Radar)` pack was deleted on 2026-10-25).
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
@@ -146,6 +147,8 @@ types.
 | [PlayerAnimationModule](MirrorCoopBase/Assets/Features/PlayerAnimationModule/AGENTS.md) | the player's animator: its controller built from code, the driver that sets its parameters (`Forward`, `Fly`) and plays actions' triggers (`Slap`), and `LimbReach` (a limb pointed at something over the animation) |
 | [TargetModule](MirrorCoopBase/Assets/Features/TargetModule/AGENTS.md) | targets any system can find and act on (`Hittable`, `LookAt`), their registry and the hit event reactions listen to |
 | [AttackModule](MirrorCoopBase/Assets/Features/AttackModule/AGENTS.md) | attacks of any ragdoll body (the slap): the attack as data, its timing, presses, aim, the limb's reach and where it lands |
+| [VfxModule](MirrorCoopBase/Assets/Features/VfxModule/AGENTS.md) | pooled visual effects (ported from FLEXUS): an effect as a `VfxDefinition`, particle systems now, VFX Graph when its package is in |
+| [ScreenShakeModule](MirrorCoopBase/Assets/Features/ScreenShakeModule/AGENTS.md) | screen shake through the Cinemachine noise, the strongest shake wins (ported from FLEXUS); explosions only for now |
 | [ExplosionModule](MirrorCoopBase/Assets/Features/ExplosionModule/AGENTS.md) | explosions as presets (small, medium, large): a wave spreading from the centre throws items and knocks ragdolls down for a while; the service, the receivers, the lobby test mine |
 | [MovingPlatformModule](MirrorCoopBase/Assets/Features/MovingPlatformModule/AGENTS.md) | riding moving carriers (`CarrierRider`, used by the ship's deck too) and the lobby's test platform flying around a circle, its start / stop button |
 | [DebugModule](MirrorCoopBase/Assets/Features/DebugModule/AGENTS.md) | the in-game debug window and its action registry |

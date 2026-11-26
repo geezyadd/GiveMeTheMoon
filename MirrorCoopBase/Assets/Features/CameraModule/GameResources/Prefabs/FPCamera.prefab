@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 2017684611173507533}
   - component: {fileID: 5800418331380214756}
   - component: {fileID: 1189232536859529701}
+  - component: {fileID: 1312703136571977547}
+  - component: {fileID: 3785349329983745695}
   m_Layer: 0
   m_Name: FPCamera
   m_TagString: Untagged
@@ -119,3 +121,33 @@ MonoBehaviour:
   _id: FPCamera
   _kind: 1
   _virtualCamera: {fileID: 2547015218624210219}
+--- !u!114 &1312703136571977547
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 273384790375608737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68bb026fafb42b14791938953eaace77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  NoiseProfile: {fileID: 11400000, guid: 69ce8388f6785dd4c8c39915efece2f4, type: 2}
+  PivotOffset: {x: 0, y: 0, z: 0}
+  AmplitudeGain: 0
+  FrequencyGain: 1
+  m_NoiseOffsets: {x: 0, y: 0, z: 0}
+--- !u!114 &3785349329983745695
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 273384790375608737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6656510ebbef154db0cdc40317a3905, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _noise: {fileID: 1312703136571977547}

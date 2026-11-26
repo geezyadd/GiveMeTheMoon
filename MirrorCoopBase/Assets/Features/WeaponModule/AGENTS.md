@@ -51,8 +51,10 @@ ported, on purpose).
   `ExplosionPreset`), `Projectile` (a Rigidbody flown by Unity physics; ignores the shooter's body and the weapon's
   colliders, `WeaponHolderColliders`), `ProjectilePool` (per prefab, no Instantiate while firing, rebuilt when its root
   went away with a scene), `ProjectileLifetimeSystem` (`IFixedTickable`), `ProjectileSpawner`. The **server's**
-  projectile is the real one: where it ends, `IExplosionService.ServerExplode` sets off the wave on every peer and
-  `RpcProjectileEnded` removes the other peers' copies (a copy flies from the same launch and only hides). Projectile
+  projectile is the real one: where it ends, `IExplosionService.ServerExplode(..., showsEffect: false)` sets off the
+  wave on every peer and `RpcProjectileEnded` ends the other peers' copies (a copy flies from the same launch). Every
+  projectile that ends on a peer, the server's or a copy (by itself or by that message), plays the explosion's look
+  there by itself (`IExplosionEffects`: the air explosion and the screen shake); the look never goes over the network. Projectile
   id = holder netId << 16 | shot sequence, the same on the owner and the server.
 - Data rules: a weapon with a projectile needs no hit effect (`WeaponCatalogValidator`, `WeaponCatalogGuardTests`).
 

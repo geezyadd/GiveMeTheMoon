@@ -10,8 +10,9 @@ things that react in their own way (a ragdoll creature, a seated player) are **r
 themselves. Kinds of explosions (small, medium, large...) are data: presets in one configuration.
 
 ## Status
-Built on `demo/explosion` (2026-11-26). Not checked in Play mode yet. The only stand-in visual is a see-through sphere
-along the front; no sound, no damage, no cover behind walls. Known limits: the centre is a world point, so an
+Built on `demo/explosion` (2026-11-26). Since 2026-11-27 an explosion looks like the GabrielAguiarProductions air
+explosion (VfxModule) and shakes the screen (ScreenShakeModule); the see-through stand-in sphere is gone. No sound, no
+damage, no cover behind walls. Known limits: the centre is a world point, so an
 explosion during the flight's world shift is not moved with the world; a wave reaches a receiver by its centre only.
 
 ## Assemblies
@@ -19,34 +20,43 @@ explosion during the flight's world shift is not moved with the world; a wave re
   upward share, knockdown seconds, `VelocityAt(point)`), `IExplosionReceiver` (centre, parts, `ReceiveExplosion`),
   `IExplosionReceiverRegistry`. Receivers in other modules reference only this.
 - `Features.ExplosionModule` (layer 4; references Mirror, Zenject, Contracts, `DebugModule.Contracts`, `CameraModule`,
-  `TargetModule`, `EffectPoolModule`). Bindings: `ExplosionModuleInstaller`, called from GameCore's
+  `TargetModule`, `VfxModule`, `ScreenShakeModule`). Bindings: `ExplosionModuleInstaller`, called from GameCore's
   `GlobalSceneInstaller`; the configuration is bound in `ConfigurationInstaller`
   (`Address.Configurations.ExplosionConfiguration_Default`).
 
 ## Parts
 - `Configuration/ExplosionPreset` (Create > Explosion > Preset): display name, radius, wave speed, centre speed (velocity
   change right at the centre, m/s), falloff curve (share of the centre speed by distance / radius), upward share,
-  knockdown seconds, knockdown min share (farther than this share a ragdoll is only pushed), the sphere's fade time and
-  colour. Presets in `GameResources/Presets` (radius, wave speed, centre speed,
+  knockdown seconds, knockdown min share (farther than this share a ragdoll is only pushed), and its look: the effect
+  (`VfxDefinition`), the effect's scale, the screen shake profile and the shake distance (full at the centre, nothing
+  this far from the camera). Presets in `GameResources/Presets` (radius, wave speed, centre speed,
   knockdown): Small (3 m, 25 m/s, 15 m/s, 1.5 s), Medium (5 m, 30 m/s, 22 m/s, 2.5 s), Large (9 m, 35 m/s, 32 m/s,
   3.5 s); centre speeds were 10 / 15 / 22 until 2026-11-26.
 - `Configuration/ExplosionConfiguration` (`GameResources/Configurations/ExplosionConfiguration_Default`, Addressables
   group `Configurations`): the preset list (a preset goes over the network as its index here), the layers whose loose
-  rigidbodies are thrown, the sphere prefab, the debug distance.
+  rigidbodies are thrown, the debug distance.
+- **The look is local, never over the network.** `IExplosionEffects` / `ExplosionEffects` plays the preset's effect at
+  the centre and the shake (strength 1 - camera distance / shake distance). A projectile's explosion (grenade,
+  rocket: WeaponModule's `ProjectileSpawner`) shows it on every peer where that peer's own projectile ends (the
+  server's or a copy) and asks the server's wave with `showsEffect: false`; any other explosion (the lobby mine, the
+  debug buttons) shows it when its wave starts (`ExplosionMessage.ShowsEffect`).
+- Looks (`GameResources/Effects`): `ExplosionAirSmall/Medium/Large` (prefab variants of the pack's
+  `vfx_StylizedExplosion_360_v1_S/M/L` with a `ParticleSystemVfx`; the pack's root system loops, `Play Once` turns it
+  off) and their `...Vfx` definitions (prewarm 1, max 6, life 0.5..6 s); `ScreenShake_ExplosionSmall/Medium/Large`
+  (amplitude 0.45 / 0.7 / 1.0, frequency 1, 0.3 / 0.35 / 0.45 s); shake distances 15 / 25 / 40 m. The pack itself sits
+  in `Assets/GabrielAguiarProductions` (imported by the user; not yet moved under `Global/Packages`).
 - `IExplosionService` / `ExplosionService`: `ServerExplode(centre, preset)`, server only. Sends `ExplosionMessage`
   (centre, preset index) to every client with `NetworkServer.SendToAll`; a server without a local client runs the
   wave itself.
 - `Network/ExplosionNetworkChannel`: the client handler of `ExplosionMessage`, registered again on every client start
   (GameCore's `ExplosionNetworkChannelSystem`, on `ConnectionNetworkEvents.ClientStarted`), starts the wave.
 - `Wave/ExplosionWaves` (`IFixedTickable`): the waves running on this peer, each stepped every physics step; starts a
-  wave's sphere from a pool. `Wave/ExplosionWave`: per step the radius grows by speed x step up to the preset's radius;
+  wave and, when the message says so, its look (`IExplosionEffects`). `Wave/ExplosionWave`: per step the radius grows by speed x step up to the preset's radius;
   every receiver whose centre is inside and was not reached gets `ReceiveExplosion` (on every peer); on the server only,
   every non-kinematic rigidbody inside (`OverlapSphereNonAlloc` on the affected layers, triggers ignored) that no
   receiver owns and was not thrown gets an impulse of `VelocityAt` x mass at its bounds' point nearest the centre, so it
   also spins. Loose items are simulated on the server and synced to the clients by their network bodies.
 - `Wave/ExplosionReceiverRegistry`: the receivers on this peer and the rigidbodies they own.
-- `Visual/ExplosionSphere` (prefab `GameResources/ExplosionSphere`, URP unlit transparent material): grows with the
-  front, fades out over the preset's fade time, turns itself off.
 - `DebugActions/ExplosionDebugSystem` (editor / development builds): section Explosions, one button per preset,
   "Explode: <name>", host only, `Debug Distance` (4 m) in front of the host's camera.
 - `Testing/ExplosionTestMine`: a test object in `LobbyScene` (`ExplosionTestMine`, a flat red cylinder at (5, 0, 5)

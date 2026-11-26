@@ -1,32 +1,31 @@
 using System.Collections.Generic;
-using Features.EffectPoolModule.Scripts;
 using Features.ExplosionModule.Configuration;
-using Features.ExplosionModule.Visual;
 using Mirror;
 using UnityEngine;
 using Zenject;
 
 namespace Features.ExplosionModule.Wave {
-    // The explosion waves running on this peer: starts a wave and its sphere, steps every wave each physics step and
-    // drops the ones that reached their radius.
+    // The explosion waves running on this peer: starts a wave (and, for an explosion that brings no look of its own,
+    // its effect and shake), steps every wave each physics step and drops the ones that reached their radius.
     public sealed class ExplosionWaves : IFixedTickable {
         private const int OVERLAP_BUFFER_SIZE = 256;
 
         private readonly ExplosionConfiguration _configuration;
         private readonly ExplosionReceiverRegistry _registry;
-        private readonly SelfDisablingEffectPool<ExplosionSphere> _spheres = new();
+        private readonly IExplosionEffects _effects;
         private readonly List<ExplosionWave> _waves = new();
         private readonly Collider[] _overlapBuffer = new Collider[OVERLAP_BUFFER_SIZE];
 
-        public ExplosionWaves(ExplosionConfiguration configuration, ExplosionReceiverRegistry registry) {
+        public ExplosionWaves(ExplosionConfiguration configuration, ExplosionReceiverRegistry registry, IExplosionEffects effects) {
             _configuration = configuration;
             _registry = registry;
+            _effects = effects;
         }
 
-        public void Start(Vector3 center, ExplosionPreset preset) {
+        public void Start(Vector3 center, ExplosionPreset preset, bool showsEffect) {
             _waves.Add(new ExplosionWave(center, preset));
-            if (_configuration.SpherePrefab != null)
-                _spheres.TakeFree(_configuration.SpherePrefab, null).Play(center, preset);
+            if (showsEffect)
+                _effects.Play(center, preset);
         }
 
         public void FixedTick() {

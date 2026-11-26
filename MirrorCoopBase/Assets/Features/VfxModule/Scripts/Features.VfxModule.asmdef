@@ -1,0 +1,23 @@
+{
+    "name": "Features.VfxModule",
+    "rootNamespace": "Features.VfxModule",
+    "references": [
+        "Zenject",
+        "Unity.VisualEffectGraph.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.visualeffectgraph",
+            "expression": "",
+            "define": "VFX_GRAPH_PRESENT"
+        }
+    ],
+    "noEngineReferences": false
+}

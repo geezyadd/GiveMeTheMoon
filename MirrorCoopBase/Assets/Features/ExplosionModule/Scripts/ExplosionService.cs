@@ -16,7 +16,7 @@ namespace Features.ExplosionModule {
             _waves = waves;
         }
 
-        public void ServerExplode(Vector3 center, ExplosionPreset preset) {
+        public void ServerExplode(Vector3 center, ExplosionPreset preset, bool showsEffect = true) {
             if (NetworkServer.active == false)
                 return;
 
@@ -26,9 +26,9 @@ namespace Features.ExplosionModule {
                 return;
             }
 
-            NetworkServer.SendToAll(new ExplosionMessage { Center = center, PresetIndex = (byte)index });
+            NetworkServer.SendToAll(new ExplosionMessage { Center = center, PresetIndex = (byte)index, ShowsEffect = showsEffect });
             if (NetworkClient.active == false)
-                _waves.Start(center, preset);
+                _waves.Start(center, preset, false);
         }
     }
 }

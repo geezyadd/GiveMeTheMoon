@@ -22,7 +22,7 @@ namespace Features.ExplosionModule.Network {
                 return;
             }
 
-            _waves.Start(message.Center, preset);
+            _waves.Start(message.Center, preset, message.ShowsEffect);
         }
     }
 }

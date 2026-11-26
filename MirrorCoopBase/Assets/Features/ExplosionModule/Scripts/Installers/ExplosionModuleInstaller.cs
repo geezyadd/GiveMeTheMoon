@@ -7,6 +7,7 @@ namespace Features.ExplosionModule.Installers {
         public override void InstallBindings() {
             Container.BindInterfacesAndSelfTo<ExplosionReceiverRegistry>().AsSingle();
             Container.BindInterfacesAndSelfTo<ExplosionWaves>().AsSingle();
+            Container.Bind<IExplosionEffects>().To<ExplosionEffects>().AsSingle();
             Container.BindInterfacesTo<ExplosionService>().AsSingle();
             Container.BindInterfacesTo<ExplosionNetworkChannel>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

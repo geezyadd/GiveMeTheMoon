@@ -1,3 +1,5 @@
+using Features.ScreenShakeModule;
+using Features.VfxModule;
 using UnityEngine;
 
 namespace Features.ExplosionModule.Configuration {
@@ -21,9 +23,15 @@ namespace Features.ExplosionModule.Configuration {
         [SerializeField, Min(0f)] private float _knockdownSeconds = 2f;
         [Tooltip("A ragdoll is knocked down only where the falloff share is at least this; farther it is only pushed.")]
         [SerializeField, Range(0f, 1f)] private float _knockdownMinShare = 0.2f;
-        [Tooltip("The wave's sphere fades out over this many seconds once it has reached the radius.")]
-        [SerializeField, Min(0f)] private float _sphereFadeSeconds = 0.3f;
-        [SerializeField] private Color _sphereColor = new(1f, 0.55f, 0.15f, 0.45f);
+        [Header("Look")]
+        [Tooltip("The effect played where it goes off, on each peer by itself.")]
+        [SerializeField] private VfxDefinition _effect;
+        [Tooltip("The effect's size; 1 is its prefab's own.")]
+        [SerializeField, Min(0.01f)] private float _effectScale = 1f;
+        [Tooltip("The screen shake of a player who sees it go off.")]
+        [SerializeField] private ScreenShakeProfile _shake;
+        [Tooltip("The shake is full at the centre and fades to nothing at this distance from the camera, m.")]
+        [SerializeField, Min(0.1f)] private float _shakeDistance = 25f;
 
         public string DisplayName => _displayName;
         public float Radius => _radius;
@@ -32,8 +40,10 @@ namespace Features.ExplosionModule.Configuration {
         public float UpwardShare => _upwardShare;
         public float KnockdownSeconds => _knockdownSeconds;
         public float KnockdownMinShare => _knockdownMinShare;
-        public float SphereFadeSeconds => _sphereFadeSeconds;
-        public Color SphereColor => _sphereColor;
+        public VfxDefinition Effect => _effect;
+        public float EffectScale => _effectScale;
+        public ScreenShakeProfile Shake => _shake;
+        public float ShakeDistance => _shakeDistance;
 
         // The falloff share at this distance from the centre: the curve's value inside the radius, 0 past it.
         public float ShareAt(float distance) {

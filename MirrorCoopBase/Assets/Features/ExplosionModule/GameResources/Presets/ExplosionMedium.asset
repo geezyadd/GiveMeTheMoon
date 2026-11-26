@@ -43,5 +43,7 @@ MonoBehaviour:
   _upwardShare: 0.5
   _knockdownSeconds: 2.5
   _knockdownMinShare: 0.2
-  _sphereFadeSeconds: 0.3
-  _sphereColor: {r: 1, g: 0.55, b: 0.15, a: 0.45}
+  _effect: {fileID: 11400000, guid: c54970ca018971746a2383c0de184e83, type: 2}
+  _effectScale: 1
+  _shake: {fileID: 11400000, guid: e806a1e324f3c6c43abfd30b89c24ce4, type: 2}
+  _shakeDistance: 25
