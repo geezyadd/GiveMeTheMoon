@@ -10,7 +10,6 @@ namespace Features.AttackModule {
     // of the target's parts, also a target the aim did not pick, so a fingertip on a face always lands), or its reach
     // coming within the attack's hit radius of the aimed target's point (AttackHitRule.DistanceToReach), lands on that
     // target: Target.ReceiveHit, and the target's reactions act on this peer.
-    // Every hit and miss is logged as an error for now.
     public sealed class AttackHitDetector : MonoBehaviour {
         [SerializeField] private Attacker _attacker;
         [Tooltip("The ragdoll limb that lands the attack (the slapping hand).")]
@@ -20,9 +19,6 @@ namespace Features.AttackModule {
 
         private TargetRegistry _registry;
         private int _hitAttackNumber;
-        private int _missLoggedAttackNumber;
-        private int _closestAttackNumber;
-        private float _closestThisAttack = float.PositiveInfinity;
 
         [Inject]
         private void Construct(TargetRegistry registry) =>
@@ -40,21 +36,14 @@ namespace Features.AttackModule {
 
         private void FixedUpdate() {
             Target target = _attacker.Target;
-            if (CanHitNow() == false || target == null || target.IsAvailable == false) {
-                LogMissOnce();
+            if (CanHitNow() == false || target == null || target.IsAvailable == false)
                 return;
-            }
 
             Vector3 limbPosition = _limb.Rigidbody.position;
             Vector3 limbVelocity = _limb.Rigidbody.linearVelocity;
             Vector3 aimPoint = target.AimPoint.position;
             float distance = AttackHitRule.DistanceToReach(limbPosition, limbVelocity, aimPoint,
                 _attacker.Attack.HitReachAhead);
-            if (_closestAttackNumber != _attacker.AttackNumber) {
-                _closestAttackNumber = _attacker.AttackNumber;
-                _closestThisAttack = float.PositiveInfinity;
-            }
-            _closestThisAttack = Mathf.Min(_closestThisAttack, distance);
             if (distance <= _attacker.Attack.HitRadius)
                 Land(target, new TargetHit(_attacker.gameObject, limbVelocity, aimPoint - limbPosition, false));
         }
@@ -80,23 +69,7 @@ namespace Features.AttackModule {
 
         private void Land(Target target, in TargetHit hit) {
             _hitAttackNumber = _attacker.AttackNumber;
-            Debug.LogError($"Attack: {name} landed on {target.name} here ({(hit.IsTouch ? "touched" : "came close")}; " +
-                $"limb {hit.LimbVelocity.magnitude:F1} m/s, {hit.LimbToAimPoint.magnitude:F2} m from its aim point).", this);
             target.ReceiveHit(hit);
-        }
-
-        // Once an attack with a target is past its hit window without landing: how close the limb's reach came.
-        private void LogMissOnce() {
-            int attack = _attacker.AttackNumber;
-            if (_limb == null || _limb.Rigidbody.isKinematic || attack == _hitAttackNumber
-                || attack == _missLoggedAttackNumber || _attacker.Target == null || _attacker.IsPastHitWindow == false)
-                return;
-
-            _missLoggedAttackNumber = attack;
-            string closest = _closestAttackNumber == attack ? $"{_closestThisAttack:F2} m" : "never measured";
-            Debug.LogError($"Attack: {name} missed {_attacker.Target.name} here: the limb's reach came {closest} from " +
-                $"its aim point (hit radius {_attacker.Attack.HitRadius:F2} m, " +
-                $"{_attacker.Attack.HitReachAhead:F2} m ahead of the limb, no touch).", this);
         }
     }
 }

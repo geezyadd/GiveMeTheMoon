@@ -53,8 +53,8 @@ decides the hit by itself for now; a verdict in the packet is the next step.
   target but its own (`RagdollLimb.Touching` on one of the target's parts, `TargetRegistry.FindByPart`; also a
   target the aim did not pick, so a fingertip on a face always lands; the limb's speed is the contact's relative
   speed) or its reach coming within `Hit Radius` of the aimed target's point lands on that target
-  (`Target.ReceiveHit` with a `TargetHit`). Every landing and miss is logged with `Debug.LogError` (prefix
-  `Attack:`) for now.
+  (`Target.ReceiveHit` with a `TargetHit`). Nothing is logged (the temporary `Attack:` / `Slap:` error logs were
+  removed on 2026-11-26).
 - `Attacker` (on the body's prefab, execution order −100: before the ragdoll samples its pose; refs: the definition,
   an `IAttackPresses` and an `IAttackAim` component, the `PlayerAnimationDriver`, the ragdoll's `LimbReach`, the aim
   origin, the middle of its own head): holds one `LimbReach` request for the attack's limb while on. Every physics

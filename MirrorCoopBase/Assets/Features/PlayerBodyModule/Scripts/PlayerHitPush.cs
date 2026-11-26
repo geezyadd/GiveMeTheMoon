@@ -32,11 +32,8 @@ namespace Features.PlayerBodyModule {
             _target.Hit -= HandleHit;
 
         private void HandleHit(TargetHit hit) {
-            if (_movable.IsHeld || _head == null || _head.Rigidbody.isKinematic) {
-                Debug.LogError($"Attack: {name} was hit but not pushed here (held: {_movable.IsHeld}, " +
-                    $"head asleep: {_head == null || _head.Rigidbody.isKinematic}).", this);
+            if (_movable.IsHeld || _head == null || _head.Rigidbody.isKinematic)
                 return;
-            }
 
             Vector3 headVelocity = Vector3.ClampMagnitude(
                 HitPushRule.HeadVelocity(hit.LimbVelocity, hit.LimbToAimPoint, _limbSpeedScale, _minHeadSpeed),

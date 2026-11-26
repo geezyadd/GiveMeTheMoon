@@ -73,8 +73,7 @@ one raised to the minimum along its motion, a still one toward the head).
     asleep): the head jerks, the upper body bends at the hips and the joints bring it back. The head's velocity
     change is the hitting limb's velocity x `Limb Speed Scale` 6, at least `Min Head Speed` 14 m/s, at most
     `Max Head Speed` 40 m/s (`HitPushRule.HeadVelocity`). The slapped player's owner pushes its real body and the
-    others follow its packets; a peer where the hand misses shows no push. A body that is hit but not pushed is
-    logged with `Debug.LogError` (prefix `Attack:`) for now.
+    others follow its packets; a peer where the hand misses shows no push.
   History (2026-11-26): `PlayerSlapAim` did the aim and the reach from `PlayerAnimationDriver.Slapped`, and the
   press count was `IMovementControls.SlapCount` from `CharacterInputBuffer`; the reach went from 0 at the start to 1
   by 0.3, held to 0.45, which pulled the arm straight to the head and lost the wind-up. Then `PlayerAttackAim` and
