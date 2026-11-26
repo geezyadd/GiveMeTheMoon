@@ -70,6 +70,8 @@ namespace Features.ActiveRagdollModule.Editor {
             limb.Configure(limb.GetComponent<Rigidbody>(), joint, LimbColliders(limb, capsule), parent,
                 limbProfile.DriveSpring, damper, limbProfile.Hovered, limbProfile.HeightReference);
             EditorUtility.SetDirty(limb);
+            if (joint != null)
+                RagdollJointLimitsBaker.Apply(body, limb, limbProfile);
         }
 
         // The capsule plus any solid collider the model already has on this bone or below it, short of the next limb:

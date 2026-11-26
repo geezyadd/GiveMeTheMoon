@@ -21,6 +21,12 @@ MonoBehaviour:
     FallbackLength: 0.18143985
     Hovered: 1
     HeightReference: 0
+    Limits:
+      BendAxis: {x: 0, y: 0, z: 0}
+      MinBend: -45
+      MaxBend: 45
+      Twist: 20
+      Swing: 20
   - BonePath: Armature | Humanoid/Hips/Spine
     EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2
     Mass: 35
@@ -29,6 +35,12 @@ MonoBehaviour:
     FallbackLength: 0.18143985
     Hovered: 1
     HeightReference: 0
+    Limits:
+      BendAxis: {x: 1, y: 0, z: 0}
+      MinBend: -20
+      MaxBend: 30
+      Twist: 15
+      Swing: 15
   - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2
     EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/Neck
     Mass: 35
@@ -37,6 +49,12 @@ MonoBehaviour:
     FallbackLength: 0.18143985
     Hovered: 1
     HeightReference: 0
+    Limits:
+      BendAxis: {x: 1, y: 0, z: 0}
+      MinBend: -15
+      MaxBend: 25
+      Twist: 15
+      Swing: 10
   - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/Neck/Head
     EndBonePath: 
     Mass: 25
@@ -45,6 +63,12 @@ MonoBehaviour:
     FallbackLength: 0.26611176
     Hovered: 1
     HeightReference: 1
+    Limits:
+      BendAxis: {x: 1, y: 0, z: 0}
+      MinBend: -40
+      MaxBend: 50
+      Twist: 50
+      Swing: 25
   - BonePath: Armature | Humanoid/Hips/LeftUpLeg
     EndBonePath: Armature | Humanoid/Hips/LeftUpLeg/LeftLeg
     Mass: 25
@@ -53,6 +77,12 @@ MonoBehaviour:
     FallbackLength: 0.18143985
     Hovered: 0
     HeightReference: 0
+    Limits:
+      BendAxis: {x: 1, y: 0, z: 0}
+      MinBend: -100
+      MaxBend: 25
+      Twist: 25
+      Swing: 40
   - BonePath: Armature | Humanoid/Hips/LeftUpLeg/LeftLeg
     EndBonePath: Armature | Humanoid/Hips/LeftUpLeg/LeftLeg/LeftFoot
     Mass: 15
@@ -61,6 +91,12 @@ MonoBehaviour:
     FallbackLength: 0.18143985
     Hovered: 0
     HeightReference: 0
+    Limits:
+      BendAxis: {x: 1, y: 0, z: 0}
+      MinBend: -2
+      MaxBend: 140
+      Twist: 5
+      Swing: 5
   - BonePath: Armature | Humanoid/Hips/LeftUpLeg/LeftLeg/LeftFoot
     EndBonePath: Armature | Humanoid/Hips/LeftUpLeg/LeftLeg/LeftFoot/LeftToeBase
     Mass: 10
@@ -69,6 +105,12 @@ MonoBehaviour:
     FallbackLength: 0.18143985
     Hovered: 0
     HeightReference: 0
+    Limits:
+      BendAxis: {x: 1, y: 0, z: 0}
+      MinBend: -30
+      MaxBend: 45
+      Twist: 10
+      Swing: 20
   - BonePath: Armature | Humanoid/Hips/RightUpLeg
     EndBonePath: Armature | Humanoid/Hips/RightUpLeg/RightLeg
     Mass: 25
@@ -77,6 +119,12 @@ MonoBehaviour:
     FallbackLength: 0.18143985
     Hovered: 0
     HeightReference: 0
+    Limits:
+      BendAxis: {x: 1, y: 0, z: 0}
+      MinBend: -100
+      MaxBend: 25
+      Twist: 25
+      Swing: 40
   - BonePath: Armature | Humanoid/Hips/RightUpLeg/RightLeg
     EndBonePath: Armature | Humanoid/Hips/RightUpLeg/RightLeg/RightFoot
     Mass: 15
@@ -85,6 +133,12 @@ MonoBehaviour:
     FallbackLength: 0.18143985
     Hovered: 0
     HeightReference: 0
+    Limits:
+      BendAxis: {x: 1, y: 0, z: 0}
+      MinBend: -2
+      MaxBend: 140
+      Twist: 5
+      Swing: 5
   - BonePath: Armature | Humanoid/Hips/RightUpLeg/RightLeg/RightFoot
     EndBonePath: Armature | Humanoid/Hips/RightUpLeg/RightLeg/RightFoot/RightToeBase
     Mass: 10
@@ -93,6 +147,12 @@ MonoBehaviour:
     FallbackLength: 0.18143985
     Hovered: 0
     HeightReference: 0
+    Limits:
+      BendAxis: {x: 1, y: 0, z: 0}
+      MinBend: -30
+      MaxBend: 45
+      Twist: 10
+      Swing: 20
   - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/LeftShoulder/LeftArm
     EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/LeftShoulder/LeftArm/LeftForeArm
     Mass: 10
@@ -101,6 +161,12 @@ MonoBehaviour:
     FallbackLength: 0.18143985
     Hovered: 0
     HeightReference: 0
+    Limits:
+      BendAxis: {x: 0, y: 1, z: 0}
+      MinBend: -60
+      MaxBend: 120
+      Twist: 80
+      Swing: 85
   - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/LeftShoulder/LeftArm/LeftForeArm
     EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/LeftShoulder/LeftArm/LeftForeArm/LeftHand
     Mass: 10
@@ -109,6 +175,12 @@ MonoBehaviour:
     FallbackLength: 0.18143985
     Hovered: 0
     HeightReference: 0
+    Limits:
+      BendAxis: {x: 0, y: 1, z: 0}
+      MinBend: -2
+      MaxBend: 145
+      Twist: 70
+      Swing: 5
   - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/LeftShoulder/LeftArm/LeftForeArm/LeftHand
     EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/LeftShoulder/LeftArm/LeftForeArm/LeftHand/LeftHandMiddle1
     Mass: 10
@@ -117,6 +189,12 @@ MonoBehaviour:
     FallbackLength: 0.12095989
     Hovered: 0
     HeightReference: 0
+    Limits:
+      BendAxis: {x: 0, y: 0, z: 1}
+      MinBend: -70
+      MaxBend: 70
+      Twist: 20
+      Swing: 30
   - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/RightShoulder/RightArm
     EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/RightShoulder/RightArm/RightForeArm
     Mass: 10
@@ -125,6 +203,12 @@ MonoBehaviour:
     FallbackLength: 0.18143985
     Hovered: 0
     HeightReference: 0
+    Limits:
+      BendAxis: {x: 0, y: -1, z: 0}
+      MinBend: -60
+      MaxBend: 120
+      Twist: 80
+      Swing: 85
   - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/RightShoulder/RightArm/RightForeArm
     EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/RightShoulder/RightArm/RightForeArm/RightHand
     Mass: 10
@@ -133,6 +217,12 @@ MonoBehaviour:
     FallbackLength: 0.18143985
     Hovered: 0
     HeightReference: 0
+    Limits:
+      BendAxis: {x: 0, y: -1, z: 0}
+      MinBend: -2
+      MaxBend: 145
+      Twist: 70
+      Swing: 5
   - BonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/RightShoulder/RightArm/RightForeArm/RightHand
     EndBonePath: Armature | Humanoid/Hips/Spine/Spine1/Spine2/RightShoulder/RightArm/RightForeArm/RightHand/RightHandMiddle1
     Mass: 10
@@ -141,6 +231,12 @@ MonoBehaviour:
     FallbackLength: 0.12095989
     Hovered: 0
     HeightReference: 0
+    Limits:
+      BendAxis: {x: 0, y: 0, z: 1}
+      MinBend: -70
+      MaxBend: 70
+      Twist: 20
+      Swing: 30
   _massMultiplier: 1
   _damperToSpringRatio: 0.1
   _angularLimit: 177
@@ -202,4 +298,7 @@ MonoBehaviour:
     MaxAirGravity: -500
     UnityGravityBelowControl: 0.9
     VelocityKeptPer60th: 0.85
+  _knockdownRecoverSeconds: 0.6
+  _knockdownJointDamperShare: 0.5
+  _knockdownJointLimitShare: 0.6
   _radiusMultiplier: 1.3

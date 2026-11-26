@@ -341,6 +341,12 @@ namespace Features.ShipModule.Scripts {
                 _ship.Seats.ServerReceiveSeatInput(this, value);
         }
 
+        // Server only: stands this rider up from their seat, as if they had asked to (an explosion's eject).
+        public void ServerStand() {
+            if (NetworkServer.active && _ship != null)
+                _ship.Seats.ServerStand(this);
+        }
+
         [Command]
         private void CmdStand() {
             if (_ship != null)

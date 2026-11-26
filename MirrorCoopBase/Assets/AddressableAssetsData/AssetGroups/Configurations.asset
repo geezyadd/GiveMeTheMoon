@@ -55,6 +55,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5c9f56af9582e7f4e8692a007a56fa1b
+    m_Address: ExplosionConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 63e5913a3be342769214365da29e3e58
     m_Address: WindowsRootConfiguration_Default
     m_ReadOnly: 0

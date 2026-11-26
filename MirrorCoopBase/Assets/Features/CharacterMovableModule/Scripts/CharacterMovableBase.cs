@@ -83,6 +83,12 @@ namespace Features.CharacterMovableModule.Scripts {
             DrivenBody.SetWeightless(isDrifting);
         }
 
+        // The body lies limp (a knockdown, e.g. an explosion): the movement neither walks nor jumps it until it is up.
+        public bool IsKnockedDown { get; private set; }
+
+        public void SetKnockedDown(bool isKnockedDown) =>
+            IsKnockedDown = isKnockedDown;
+
         // Makes the movement drive another body instead of the capsule (null: the capsule again). A drifting player's
         // weightlessness moves over to the new body.
         public void SetDrivenBody(IMovableBody body) {
@@ -140,9 +146,9 @@ namespace Features.CharacterMovableModule.Scripts {
 
             // A body nobody simulates on this peer (a copy before its first state packet) or a kinematic one (seated)
             // does not move. Every simulated body, a remote copy too, pushes items by contact. A drifting body is moved
-            // by its drift.
+            // by its drift; a knocked down one only by physics.
             IMovementControls source = ActiveInput;
-            if (source == null || DrivenBody.IsKinematic || IsHeld || IsDrifting)
+            if (source == null || DrivenBody.IsKinematic || IsHeld || IsDrifting || IsKnockedDown)
                 return;
 
             Simulate(source);

@@ -65,6 +65,7 @@ namespace Features.PlayerBodyModule.Editor {
             AddPart<RagdollDrag>(model);
             AddPart<RagdollCarrierRide>(model);
             AddPart<RagdollCarrierRideStepEnd>(model);
+            AddPart<RagdollKnockdown>(model);
             AddPart<RagdollPoseGizmo>(model);
 
             HumanoidProfileFiller.Fill(body);
@@ -75,6 +76,7 @@ namespace Features.PlayerBodyModule.Editor {
             WireAnimationDriver(player, movable, body);
             WireBodyHider(player, movable, animator);
             WireBodyRendererReaders(player, animator);
+            WireExplosionReaction(player, movable, body);
             return true;
         }
 
@@ -123,6 +125,18 @@ namespace Features.PlayerBodyModule.Editor {
             serialized.FindProperty("_ragdoll").objectReferenceValue = body;
             serialized.FindProperty("_copyDriver").objectReferenceValue = player.GetComponent<BodyCopyDriver>();
             serialized.FindProperty("_drift").objectReferenceValue = player.GetComponent<CharacterDrift>();
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void WireExplosionReaction(GameObject player, CharacterMovableBase movable, RagdollBody body) {
+            PlayerExplosionReaction reaction = player.GetComponent<PlayerExplosionReaction>();
+            if (reaction == null)
+                reaction = player.AddComponent<PlayerExplosionReaction>();
+
+            SerializedObject serialized = new(reaction);
+            serialized.FindProperty("_ragdoll").objectReferenceValue = body;
+            serialized.FindProperty("_knockdown").objectReferenceValue = body.GetComponent<RagdollKnockdown>();
+            serialized.FindProperty("_movable").objectReferenceValue = movable;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

@@ -1,0 +1,22 @@
+{
+    "name": "Features.ExplosionModule",
+    "rootNamespace": "Features.ExplosionModule",
+    "references": [
+        "Mirror",
+        "Zenject",
+        "Features.ExplosionModule.Contracts",
+        "Features.DebugModule.Contracts",
+        "Features.CameraModule",
+        "Features.TargetModule",
+        "Features.EffectPoolModule"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

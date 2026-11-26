@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6778353caa9dc964c9826c7ed2d4922b, type: 3}
+  m_Name: ExplosionConfiguration_Default
+  m_EditorClassIdentifier: 
+  _presets:
+  - {fileID: 11400000, guid: 970623d9690118f4c9b27b0b0d2bcc4e, type: 2}
+  - {fileID: 11400000, guid: 55d7170c0c36e444885221b2a5a82ca5, type: 2}
+  - {fileID: 11400000, guid: 05711f9ecbf9a9343833e7069b1bdd48, type: 2}
+  _affectedLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  _spherePrefab: {fileID: 7301304652632781169, guid: f77964a46f4b5a64eb66781e74e15e4a, type: 3}
+  _debugDistance: 4

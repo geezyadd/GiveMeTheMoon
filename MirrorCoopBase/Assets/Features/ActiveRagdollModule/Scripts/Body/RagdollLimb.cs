@@ -17,6 +17,12 @@ namespace Features.ActiveRagdollModule {
 
         private Quaternion _jointSpace = Quaternion.identity;
         private Vector3 _pendingForce;
+        private float _lowBendLimit;
+        private float _highBendLimit;
+        private float _twistLimit;
+        private float _swingLimit;
+        private float _limitShare = 1f;
+        private bool _hasBakedLimits;
 
         public Rigidbody Rigidbody => _rigidbody;
         public ConfigurableJoint Joint => _joint;
@@ -44,8 +50,15 @@ namespace Features.ActiveRagdollModule {
 
         public void CaptureBindPose() {
             BindRotationInParent = RotationInParent();
-            if (_joint != null)
-                _jointSpace = JointSpace(_joint);
+            if (_joint == null)
+                return;
+
+            _jointSpace = JointSpace(_joint);
+            _lowBendLimit = _joint.lowAngularXLimit.limit;
+            _highBendLimit = _joint.highAngularXLimit.limit;
+            _twistLimit = _joint.angularYLimit.limit;
+            _swingLimit = _joint.angularZLimit.limit;
+            _hasBakedLimits = true;
         }
 
         // Called while the bones stand in the animated pose.
@@ -61,17 +74,33 @@ namespace Features.ActiveRagdollModule {
         }
 
         // Scales the joint drive from limp (0) to the profile's stiffness (1).
-        public void ApplyDriveScale(float scale) {
+        public void ApplyDriveScale(float scale) =>
+            ApplyDriveScale(scale, scale);
+
+        // Scales the drive's spring (the pull toward the pose) and damper (the resistance to turning) apart.
+        public void ApplyDriveScale(float springScale, float damperScale) {
             if (_joint == null)
                 return;
 
             JointDrive drive = new JointDrive {
-                positionSpring = _driveSpring * scale,
-                positionDamper = _driveDamper * scale,
+                positionSpring = _driveSpring * springScale,
+                positionDamper = _driveDamper * damperScale,
                 maximumForce = float.PositiveInfinity
             };
             _joint.angularXDrive = drive;
             _joint.angularYZDrive = drive;
+        }
+
+        // Narrows the joint's limits to this share of the baked ones (1: as baked), counted from the bind pose.
+        public void ScaleLimits(float share) {
+            if (_joint == null || _hasBakedLimits == false || share == _limitShare)
+                return;
+
+            _limitShare = share;
+            _joint.lowAngularXLimit = new SoftJointLimit { limit = _lowBendLimit * share };
+            _joint.highAngularXLimit = new SoftJointLimit { limit = _highBendLimit * share };
+            _joint.angularYLimit = new SoftJointLimit { limit = _twistLimit * share };
+            _joint.angularZLimit = new SoftJointLimit { limit = _swingLimit * share };
         }
 
         // Points the joint drive at the target rotation. A joint's target is relative to its rest pose and

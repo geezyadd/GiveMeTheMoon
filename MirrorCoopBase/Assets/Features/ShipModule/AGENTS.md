@@ -138,7 +138,9 @@ seats a player (`ShipSeats.ServerTrySit` → `ShipRider.BindToSeat` + `ServerLoc
 SyncVars); the owning client binds itself when the synced sockets name it (`ShipSeats.ClientSyncSeat`), every other
 peer from the synced ship (`OnRideShipChanged`). A seated player's copy is left alone by the copy driver while bound.
 On the owner's peer the jump stands up from any seat (`CmdStand`), and so does a station's own stand-up button
-(`OwnerRequestStand`); the helm and turret input goes through `OwnerSendSeatInput`. Standing up:
+(`OwnerRequestStand`); the helm and turret input goes through `OwnerSendSeatInput`. An explosion that knocks a
+seated player down stands them up too: `ShipRiderExplosionEject` (on `DummyPlayer`, an ExplosionModule receiver) calls
+`ShipRider.ServerStand` on the server. Standing up:
 - at a station the server releases the rider on every peer (`ShipRider.ServerRelease`) onto the still deck;
 - in flight the server moves the rider to the standing spot and clears `_seated`; the owner, seeing that, releases the
   binding there (`ReleaseStandingRider`, a client ends the ride on the server with `CmdEndRide`) and leaves with the

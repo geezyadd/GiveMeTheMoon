@@ -15,8 +15,8 @@ as a passive ragdoll. Step 2, the pose from the animator: the animator runs by h
 keeps its target, the bones go back to physics; a gizmo shows the targets. Step 3, following the pose: joint drive,
 torque toward the animated axes and a spring force from the physical root; checked with the root pinned in the air.
 Step 4, standing: ground from the shared support probe and limb contacts, hover on the trunk, own air gravity, drag.
-Step 5: the player's movement can drive the ragdoll (see PlayerBodyModule). Not done yet: the control factor (fixed
-at 1), falling and getting up, network copies.
+Step 5: the player's movement can drive the ragdoll (see PlayerBodyModule). Knockdown (2026-11-26, `demo/explosion`): `RagdollKnockdown` makes
+the body limp for a while and gives the control back. Not done yet: a get-up animation, network copies.
 
 ## Assembly
 `Features.ActiveRagdollModule` (layer 2, references `FloatingControllerModule` for `SupportProbe` and `ICarrier`, and
@@ -30,9 +30,15 @@ at 1), falling and getting up, network copies.
   control 0.9) and drag (velocity kept per 1/60 s, 0.85, turned into the physics rate).
 - `Profile/RagdollLimbProfile`: one limb — bone path from the body root, end bone path for the capsule (or a fallback
   length along the parent limb), mass, joint drive spring, capsule radius, `Hovered` (held up by the hover),
-  `HeightReference` (kept at its animated height above the ground; one per body).
+  `HeightReference` (kept at its animated height above the ground; one per body), `Limits`.
+- `Profile/RagdollJointLimits`: how far a limb's joint may turn from the bind pose (added 2026-11-26: a limp body
+  twisted its bones freely within the ±177° `Angular Limit`): the bend axis in the body root's space (positive bend =
+  flexion; zero = no anatomical limits, the old ±177° on every axis), min / max bend, twist about the bone, swing
+  across. Humanoid defaults (`HumanoidProfileFiller`, a person facing +Z in a T-pose): spine −20..30 / 15 / 15, chest
+  −15..25 / 15 / 10, head −40..50 / 50 / 25, thigh −100..25 / 25 / 40, shin −2..140 / 5 / 5, foot −30..45 / 10 / 20,
+  upper arm −60..120 / 80 / 85, forearm −2..145 / 70 / 5, hand −70..70 / 20 / 30 (bend / twist / swing, degrees).
 - `Body/RagdollBody` (on the creature's root, execution order 100): the limb list and `ControlFactor` (0 limp ..
-  1 follows the animation; fixed at 1 for now); on `Awake` applies max angular velocity, takes each limb's bind
+  1 follows the animation; 1 unless a knockdown runs; `SetControlFactor` also scales the joint drives); on `Awake` applies max angular velocity, takes each limb's bind
   pose, ignores nearby limb collisions and sets the joint drives; on each physics step, after every other ragdoll
   component, hands each limb's summed force to its rigidbody in one call. `ApplyDriveScale`, `StopAllMotion`,
   `SetKinematic`, `SetCollisions` (on again re-ignores nearby limbs), `IgnoreCollisionsWith`, `TotalMass`,
@@ -43,6 +49,18 @@ at 1), falling and getting up, network copies.
   spring / damper; the bind rotation relative to the parent limb (taken on `Awake`) and the current
   `LimbPoseTarget` (rotation relative to the parent limb, world forward / up, world offset from the root limb,
   height above the animator's origin). Reports its contacts through `Touching`. Limbs are listed parents first.
+- `Body/RagdollKnockdown` (execution order −100, before every other ragdoll component): `KnockDown(seconds)` drops the
+  control factor to 0 at once (no pose forces, no hover, no own gravity, no drag, joint drives off: Unity gravity takes
+  over), keeps it there for the seconds (a new knockdown keeps the longer time), then raises it back to 1 over the
+  profile's `Knockdown Recover Seconds` (0.6 s), so the pose forces stand the body up by themselves. While the
+  control is below 1 nothing pulls the limbs toward the animation (the drive spring is the control factor times the
+  limb's spring, so it grows back only while the body gets up), the drives keep the profile's `Knockdown Joint Damper
+  Share` (0.5) of their damper, so the limbs turn heavily instead of flopping, and the joint limits are narrowed to
+  `Knockdown Joint Limit Share` (0.6) of the baked ones, widening back with the control (`RagdollBody.ApplyLimpJoints`,
+  `RagdollLimb.ScaleLimits` from the limits read on `Awake`); both read every step. History (2026-11-26): first the
+  drives kept a share of their spring (0.3, then 0.2), which pulled the lying body toward the animation playing (the
+  jump's), so it was replaced. `IsKnockedDown`
+  while limp or recovering. Turned off, it gives the control back at once.
 - `Body/AnimatedPoseSampler` (on the body root, execution order −95, before any force): takes the animator's graph
   off Unity's update (`Stop` + `DirectorUpdateMode.Manual`), and on each physics step but the first evaluates it by
   `fixedDeltaTime` (turned to `FacingYaw` if the owner sets one, at most at profile `Max Facing Turn Degrees Per
@@ -91,7 +109,12 @@ at 1), falling and getting up, network copies.
 - `Testing/RagdollRootPin`: test helper, makes the root limb kinematic so the body hangs in the air (off by default).
 - `Body/RagdollPoseGizmo`: white = the animated skeleton hung on the physical root limb, red = physical limb to its
   target.
-- Editor: `RagdollBodyInspector` (buttons "Fill profile from Humanoid avatar", "Bake limbs", "Remove limbs"),
+- Editor: `RagdollBodyInspector` (buttons "Fill profile from Humanoid avatar", "Fill Humanoid joint limits" (only the
+  limits, then applies them), "Apply joint limits", "Bake limbs", "Remove limbs"), `RagdollJointLimitsBaker` (the
+  joint's axis is the negated bend axis, its secondary axis the bone's direction, X limit = [min, max] bend, Y = twist,
+  Z = swing; PhysX counts the angle about a joint's axis against Unity's rotation sense, so the negated axis keeps the
+  angles in Unity's sense; checked in a test scene: a knee joint bends back to 140° and not forward; bake applies it
+  too),
   `RagdollBodyBaker` (a limb's colliders are its capsule plus solid colliders the model already has on the bone, short
   of the next limb; removing takes off only the capsule), `LimbCapsuleShaper`, `HumanoidProfileFiller` (15 limbs for a Humanoid avatar: hips, spine,
   chest, head, thigh / shin / foot, upper arm / forearm / hand; the trunk is hovered, the head is the height limb; radii and lengths scale with the hips-to-head

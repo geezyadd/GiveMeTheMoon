@@ -17,7 +17,8 @@
         "Features.GrabModule",
         "Features.TargetModule",
         "InputModule",
-        "InputModuleRalization"
+        "InputModuleRalization",
+        "Features.ExplosionModule.Contracts"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
