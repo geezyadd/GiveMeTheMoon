@@ -1,0 +1,31 @@
+{
+    "name": "Features.PlayerBodyModule",
+    "rootNamespace": "Features.PlayerBodyModule",
+    "references": [
+        "Mirror",
+        "Zenject",
+        "Features.CameraModule",
+        "Features.PlayerReplicaModule",
+        "Features.GameCoreModule.Contracts",
+        "Features.CharacterMovableModule",
+        "Features.ActiveRagdollModule",
+        "Features.PlayerAnimationModule",
+        "Features.FloatingControllerModule",
+        "Unity.Animation.Rigging",
+        "Features.AttackModule",
+        "Features.AttackModule.Contracts",
+        "Features.GrabModule",
+        "Features.TargetModule",
+        "InputModule",
+        "InputModuleRalization"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

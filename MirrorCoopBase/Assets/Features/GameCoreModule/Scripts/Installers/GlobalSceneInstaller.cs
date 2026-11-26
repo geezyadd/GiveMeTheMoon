@@ -1,3 +1,4 @@
+using Features.PlayerReplicaModule.Installers;
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts;
 using Features.CrewInviteModule.Scripts.Installers;
@@ -16,6 +17,7 @@ using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Installers;
 using Features.SonarModule.Scripts.Installers;
 using Features.SpaceHazeModule.Scripts.Installers;
+using Features.TargetModule.Installers;
 using Features.StagePresetModule.Scripts.Installers;
 using Features.TooltipModule.Scripts.Installers;
 using Features.WeaponModule.Scripts;
@@ -28,6 +30,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             GameFlowStateMachineModuleInstaller.Install(Container);
             InputModuleInstaller.Install(Container);
             CharacterMovableModuleInstaller.Install(Container);
+            PlayerReplicaModuleInstaller.Install(Container);
+            TargetModuleInstaller.Install(Container);
             CameraModuleInstaller.Install(Container);
             GrabModuleInstaller.Install(Container);
             ShipModuleInstaller.Install(Container);

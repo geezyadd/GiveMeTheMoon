@@ -18,22 +18,6 @@ namespace Features.CameraModule.Scripts {
 
         public CinemachineCamera VirtualCamera => _virtualCamera;
 
-        public static GameCamera Create(string id, GameCameraKind kind, Transform parent) {
-            var gameObject = new GameObject(id);
-            if (parent != null)
-                gameObject.transform.SetParent(parent, false);
-
-            CinemachineCamera virtualCamera = gameObject.AddComponent<CinemachineCamera>();
-            ApplyPipeline(gameObject, kind);
-
-            GameCamera camera = gameObject.AddComponent<GameCamera>();
-            camera._id = id;
-            camera._kind = kind;
-            camera._virtualCamera = virtualCamera;
-            camera.SetPriority(0);
-            return camera;
-        }
-
         public void Bind(Transform follow, Transform lookAt) {
             CinemachineCamera camera = VirtualCamera;
             if (camera == null)
@@ -79,24 +63,5 @@ namespace Features.CameraModule.Scripts {
                 rotate.Damping = 0f;
         }
 
-        private static void ApplyPipeline(GameObject gameObject, GameCameraKind kind) {
-            if (kind == GameCameraKind.FirstPerson) {
-                gameObject.AddComponent<CinemachineHardLockToTarget>();
-                gameObject.AddComponent<CinemachineRotateWithFollowTarget>();
-                return;
-            }
-
-            CinemachineFollow follow = gameObject.AddComponent<CinemachineFollow>();
-            TrackerSettings tracker = follow.TrackerSettings;
-            tracker.BindingMode = BindingMode.LockToTarget;
-            tracker.PositionDamping = new Vector3(0.12f, 0.18f, 0.12f);
-            tracker.RotationDamping = Vector3.zero;
-            tracker.QuaternionDamping = 0f;
-            follow.TrackerSettings = tracker;
-            follow.FollowOffset = new Vector3(0f, 0.35f, -4.4f);
-
-            CinemachineRotateWithFollowTarget rotate = gameObject.AddComponent<CinemachineRotateWithFollowTarget>();
-            rotate.Damping = 0f;
-        }
     }
 }

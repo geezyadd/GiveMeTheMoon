@@ -14,3 +14,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxConnections: 4
   everyoneReadyDelay: 0.5
+  latencyProfiles:
+  - label: Off
+    latencyMilliseconds: 0
+    jitterMilliseconds: 0
+    lossPercent: 0
+  - label: 80 ms, jitter 10
+    latencyMilliseconds: 80
+    jitterMilliseconds: 10
+    lossPercent: 0
+  - label: 150 ms, jitter 20, loss 5%
+    latencyMilliseconds: 150
+    jitterMilliseconds: 20
+    lossPercent: 5
+  - label: 150 ms, jitter 100, loss 2% (spiky)
+    latencyMilliseconds: 150
+    jitterMilliseconds: 100
+    lossPercent: 2
+  - label: 300 ms, jitter 40, loss 10%
+    latencyMilliseconds: 300
+    jitterMilliseconds: 40
+    lossPercent: 10
+  - label: 150 ms, jitter 250, loss 5% (very spiky)
+    latencyMilliseconds: 150
+    jitterMilliseconds: 250
+    lossPercent: 5

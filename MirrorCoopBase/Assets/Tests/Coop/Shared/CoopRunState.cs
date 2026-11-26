@@ -17,7 +17,10 @@ namespace Tests.Coop.Shared {
         public bool HasLocalPlayer;
         public Vector3 PlayerPosition;
         public uint HeldItemNetId;
+        // Bound to a seat of the ship.
         public bool IsRiding;
+        // On the ship: seated or carried by its deck (SessionQueries.IsAboard).
+        public bool IsAboard;
         public bool IsSeated;
         public bool IsTurretGunner;
         public bool IsKinematic;
@@ -32,7 +35,7 @@ namespace Tests.Coop.Shared {
             $"scene {Scene}, hosting {IsHosting}, preset '{PresetId}', hull {Hull:0.0}/{HullMax:0.0}, "
             + $"broken [{string.Join(CoopObservation.LIST_SEPARATOR, BrokenSockets ?? Array.Empty<string>())}], "
             + $"breaches [{string.Join(CoopObservation.LIST_SEPARATOR, OpenBreaches ?? Array.Empty<string>())}], "
-            + $"players {PlayerCount}, local player {HasLocalPlayer} at {PlayerPosition}: held #{HeldItemNetId}, riding {IsRiding}, seated {IsSeated}, "
+            + $"players {PlayerCount}, local player {HasLocalPlayer} at {PlayerPosition}: held #{HeldItemNetId}, riding {IsRiding}, aboard {IsAboard}, seated {IsSeated}, "
             + $"gunner {IsTurretGunner}, kinematic {IsKinematic}, collisions {DetectsCollisions}, hover {IsHovering}, "
             + $"controls blocked {IsControlBlocked}, on ground {StandsOnGround}, walked {WalkedMeters:0.00} m";
     }

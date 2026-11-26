@@ -91,7 +91,8 @@ namespace Tests.Shared {
 
         private IEnumerator AimAtHandleCoroutine(ShipThrottleInteractable handle) {
             Collider grip = handle.GetComponent<Collider>();
-            if (Player.GetComponent<ShipRider>().IsRiding == false) {
+            // In flight a player aboard stays where it stood at the takeoff; at a station it is put behind the handle.
+            if (_ship.IsFlying == false || SessionQueries.IsAboard(_ship, Player) == false) {
                 StandBehindHandle(grip.bounds.center);
                 // A client's take is checked against its position on the server, which arrives a moment later.
                 yield return _serverCatchUp;

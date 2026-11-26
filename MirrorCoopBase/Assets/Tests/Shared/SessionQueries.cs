@@ -80,6 +80,16 @@ namespace Tests.Shared {
             return ship.DeckGeometry.TryGetDeckSurfaceY(local, out float surfaceY) && local.y > surfaceY - BELOW_DECK_SURFACE_TOLERANCE;
         }
 
+        // On the ship: seated, or a body its deck carries (the player's ICarrierRider rides the ship's ShipCarrier,
+        // standing, walking or in a jump over the deck). A standing player is never bound to the ship, so
+        // ShipRider.IsRiding only tells a seat.
+        public static bool IsAboard(ShipBase ship, NetworkIdentity player) =>
+            ship != null && player != null && player.TryGetComponent(out ShipRider rider) && ship.Riders.IsAboard(rider);
+
+        // The same for the ship of the loaded map.
+        public static bool IsAboard(NetworkIdentity player) =>
+            IsAboard(Object.FindAnyObjectByType<ShipBase>(), player);
+
         public static bool ContainsXZ(Bounds bounds, Vector3 point, float tolerance) =>
             point.x >= bounds.min.x - tolerance && point.x <= bounds.max.x + tolerance
             && point.z >= bounds.min.z - tolerance && point.z <= bounds.max.z + tolerance;

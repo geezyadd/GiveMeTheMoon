@@ -98,41 +98,105 @@ the scene's sceneId still matches). Code in `ShipModule/Scripts/Throttle/`, numb
   as a push would; the loop tests launch through it.
 
 ## Riding the ship
-**Riding the ship.** In flight a player on the deck is not moved by physics: `ShipRider` binds it to the ship
-(kinematic, collisions off) at a ship-local offset, and the owner walks and jumps in that offset. Each peer binds only
-its own player; the others follow the owner's synced offset. When and how a player gets bound:
-- at takeoff (`ShipBase.BeginTakeoff` on the server, `ShipBase.OnClientFlightChanged(true)` on a client)
-  `ShipRiders.BoardRidersOverDeck` boards every player over the deck, from the nose to the stern: at most
-  `BoardingEdgeTolerance` (0.5 m) outside the walk boxes and `BoardingMinHeight`..`BoardingMaxHeight` (-0.5..6 m) above the
-  deck surface under it, so a player in a jump at the lever rides too;
-- the safety net: every frame in flight `ShipRiders.CatchDeckRiders` checks the local player (from
-  `CharacterMovableModel.LocalMovable`, not only on the ride volume's trigger enter) and binds it within a frame when it
-  stands or comes down over the walk boxes, `CatchMinHeight`..`CatchMaxHeight` (-0.5..1.5 m) above the deck surface under
-  it and not rising faster than `CatchMaxRiseSpeed` (0.15 m/s). A standing player's position is 1 m above the deck surface;
-- all heights come from `ShipDeckRideRule`, measured from the deck surface under the player, not from the ship's pivot;
+**Standing and walking on the flying deck.** A player on the deck is a physical body all the time, at a station and in
+flight: the ship is a carrier (`ICarrier`, see [MovingPlatformModule](../MovingPlatformModule/AGENTS.md)) and
+`CarrierRider` carries the body with it, so walking, jumping, landings and the hover spring are the station ones. Other
+players see it through PlayerReplicaModule: the owner's state packets are in the ship's axes and each copy rides its own
+peer's copy of the ship (see [PlayerReplicaModule](../PlayerReplicaModule/AGENTS.md)). Nothing boards a player at the
+takeoff or catches it over the deck any more: the player who stands on the deck when the ship lifts off is carried
+because the float probe stands on the deck, and one who jumps or walks off the edge simply falls. A player counts as
+aboard (`IShipRiders.IsAboard`, `IsLocalPlayerAboard`, used by the impact camera shake and the tests) when it is bound
+to a seat of this ship or its `ICarrierRider.Carrier` is this ship's `ShipCarrier` (`ShipBase.Carrier`).
+Not done yet, postponed to the ragdoll work: the ship's inertia on the bodies (a turn or a speed change carries them
+exactly, nobody is thrown), the ship's hit impulses on players and players pushing players. How smooth a client's copy
+stays on the flying deck with a bad link is checked by `CoopClientDeckWalkLagTest` (see
+[Tests/Coop](../../Tests/Coop/AGENTS.md)).
+While `ShipRider` binds a player to a seat it also marks the movement held (`CharacterMovableBase.SetHeld`), so a
+ragdoll body stands at the seat instead of walking (see PlayerBodyModule).
+
+**The ship as a carrier.** `Riding/ShipCarrier` (`ICarrier`, on the ship's root, runs first in each physics step)
+calls `ShipBase.ServerFlightStep`: the server's flight is stepped once per physics step with the physics step time, and
+the ship's body goes to the flight's pose by `MovePosition` / `MoveRotation`, interpolated in flight (set at takeoff),
+so the ship and the riders, cargo and camera that follow its drawn transform move smoothly. Snaps, landings and world
+shifts still place it at once (`ApplyDisplayPose`). `ShipCarrier` keeps the ship's step poses (`ShipBase.TakeStepPose`: the pose the flight moved the body to in this
+step, since `MovePosition` only lands in the physics step; reading the body gave the last step's pose and made a
+player on a client's deck slide during the autopilot),
+its id is the pose sync's `netId`, and `Holds` is the deck's walk boxes (0.3 m past them) up to 6 m above the deck
+surface. A step longer than 5 m is a placement (the world shift at a landing, a berth snap), not a move:
+the poses before and now are the same then, so nobody is carried by it. The world shift moves the players itself:
+`ShipRunDirector.ServerShiftWorld` calls every player's `IPlayerBodyPlacement.ServerShift` (each owner moves its own
+body, the copies follow; carrying them too dropped both players into the void at a landing). A client's ship moves on physics steps too: `ShipCarrier` calls `ShipBase.ClientFlightStep`, and
+`ShipPoseSync.ClientStep` samples its buffer at the step's show time (a `SmoothServerClock` eased toward
+`NetworkTime.time`, minus the 0.06 s interpolation delay; none for the local pilot) and moves the body there
+(`ShipBase.MoveBody`), interpolated while flying (set in `OnClientFlightChanged`).
+
+**Seats bind.** Only a seat binds a player to the ship: `ShipRider` (the network side: the synced seat offset, ship,
+seat and key, the commands, the order of a frame) with its parts in `Scripts/Riding/`: `ShipRideBody` (binding the
+body: kinematic, no collisions, no interpolation or spring, placed at the seat offset each frame; releasing gives it
+all back) and `ShipSeatRide` (a moving seat point such as a turret's, the standing spot when getting up). The server
+seats a player (`ShipSeats.ServerTrySit` → `ShipRider.BindToSeat` + `ServerLockSeat`: the seat offset and the ship in
+SyncVars); the owning client binds itself when the synced sockets name it (`ShipSeats.ClientSyncSeat`), every other
+peer from the synced ship (`OnRideShipChanged`). A seated player's copy is left alone by the copy driver while bound.
+On the owner's peer the jump stands up from any seat (`CmdStand`), and so does a station's own stand-up button
+(`OwnerRequestStand`); the helm and turret input goes through `OwnerSendSeatInput`. Standing up:
+- at a station the server releases the rider on every peer (`ShipRider.ServerRelease`) onto the still deck;
+- in flight the server moves the rider to the standing spot and clears `_seated`; the owner, seeing that, releases the
+  binding there (`ReleaseStandingRider`, a client ends the ride on the server with `CmdEndRide`) and leaves with the
+  seat's velocity in the world, so the carrier takes the ship's speed off and the player stands still on the deck.
+More about the binding:
 - **the ship going away releases its riders** on every peer (`ShipBase` → `ShipRiders.ReleaseAllOnLeave` →
   `ShipRider.ReleaseFromLeavingShip`): when its map starts to unload (`ConnectionNetworkEvents.MapUnloading`, before the
-  players are teleported to the next map; a hull loss, the whole crew dead or Start) and again in `OnDestroy`. Every
-  rider bound to it there, riding or seated, gets its body back (not kinematic, collisions, hover, network body) where it
-  stands, without the ride's velocity, and none is caught or boarded again; the server also clears the rider's ride and
+  players are moved to the next map; a hull loss, the whole crew dead or Start) and again in `OnDestroy`. Every
+  rider bound to it there gets its body back (not kinematic, collisions, hover) where it
+  stands, without the ride's velocity; the server also clears the rider's ride and
   seat SyncVars, every seat and the throttle. Before 2026-10-26 a hull loss in flight left the crew bound to a ship the
   next map no longer had: frozen in the void of the lobby and unable to walk in the next run;
+- a landing releases every seated rider after the berth snap and the origin shift (`ShipRunService.FinishLanded` →
+  `ShipRiders.ServerReleaseRiders`);
 - a client that spawns the ship while it flies gets the flight state through the `ShipPoseSync._flying` hook: Mirror's
   generated SyncVar deserialization calls the hook on the first spawn too, whenever the value differs from the default;
-  the same holds for `ShipRider._syncedRideShip` of a player already riding;
-- walking or jumping past the deck edge in flight still drops the player off the ship (`DropOffDeck`, with
-  `_confineRidersToDeck` off) and it cannot be caught again for `ReboardDelaySeconds` (0.5 s); the safety net then catches
-  it only if it is over the deck again;
-- in editor and development builds every bind, release and refusal is logged with `[ShipRide]` (`Debug/ShipRideDiagnostics`,
-  compiled only under `UNITY_EDITOR || DEVELOPMENT_BUILD` together with its call sites):
-  who, where on the deck (ship-local, height above the deck), which check refused, flying on this peer, host / client;
-  a refusal only when its reason changes, at most once a second per player.
-- the ride's vertical motion (`RideVertical`) is the station one: the same hover spring formula as
-  `FloatingController` (`HoverSpring`, values from the player's own `FloatingController.Spring`), so a landing sags and
-  springs back as on the station, and the same jump, coyote time, jump buffer and air gravity (`JumpAndAirGravity` with
-  `JumpTuning` from `PlayerStatsConfiguration`, shared with `CharacterMovableBase`). It runs in fixed physics steps
-  (`Time.fixedDeltaTime`) inside the frame and is shown interpolated, so it feels the same at any frame rate and never
-  sinks below the deck; the others see it through the synced offset (`CmdSetRideOffset` / `RideOffset`).
+  the same holds for `ShipRider._syncedRideShip` of a player already seated;
+- in editor and development builds every bind and release is logged with `[ShipRide]` (`Debug/ShipRideDiagnostics`,
+  compiled only under `UNITY_EDITOR || DEVELOPMENT_BUILD` together with its call sites): who, where on the deck
+  (ship-local, height above the deck), flying on this peer, host / client.
+
+The old ways were removed on 2026-11-24: the kinematic standing ride (`ShipDeckWalk` with `RideVertical`, the synced
+standing offset `ShipRideOffsetStream` / `RideOffsetBuffer`, the takeoff boarding and the catch over the deck with
+`ShipDeckRideRule`, the deck edge drop and the reboard delay) and its "Deck ride: new / old" toggle.
+
+## Overboard (drifting in open space)
+A player who leaves the ship in flight, or the ground's areas in the lobby and at a station, does not fall: it drifts
+in open space. Code in `Scripts/Overboard/`, numbers in `ShipOverboardConfiguration_Default` (Addressables
+`Configurations`).
+- **The server decides** (`ShipOverboardSystem`, every tick, asks the pure `ShipOverboardRule.Decide` about every
+  player's `ShipOverboardRider`; synced: overboard and since when). A takeoff or a landing starts the safe space over
+  (`ShipOverboardRider.WasFlying`), so a player left at a station does not go overboard when the ship leaves.
+  - **In flight:** a player who rode the ship in this flight (`IShipRiders.IsAboard`) and is out of the ship's volume
+    (the deck's walk area widened by `VolumeEdgeMeters` 2.5 m, `VolumeMinHeightMeters`..`VolumeMaxHeightMeters`
+    −1.5..8 m over the deck surface) drifts. Back: the owner's peer catches its drifting body over the deck after
+    `MinDriftSecondsBeforeCapture` (1 s) when `ShipCarrier.Holds` it (`ICarrierRider.CatchInAir`: it rides the ship at
+    rest on it), the owner's packets say it rides, and the server ends the drift. Past `MaxDistanceMeters` (400 m) or
+    `MaxDriftSeconds` (240 s): `IShipOverboardEvents.OnDriftLimitReached`, PlayerLifeModule kills it
+    (`DamageType.Drift`).
+  - **On the ground** (no ship: the lobby; or the ship standing at a station): the safe space is any `OverboardArea`
+    or the standing ship's volume. An `OverboardArea` is a list of floor colliders, its space their live bounds
+    widened the same way (`ShipOverboardRule.IsInArea`), so it follows a moving platform, and an optional return
+    point. Placed on the lobby's floors in `LobbyScene` (return point: the lobby's `SpawnPoint`), on `TestPlatform`
+    (MovingPlatformModule) and on `StationPad` (no return point). Lobby areas register in a
+    `ComponentRegistry<OverboardArea>`; a station pad is spawned without a context, so `OverboardAreas` takes the
+    current pad's area from `IShipStationPads.CurrentPad`. A player who was inside and leaves drifts; right over a floor
+    or the standing ship's deck again (inside its bounds, above its top: `IsOverFloor`, `IsOverShipDeck`; beside or
+    under it the gravity would pull the player off again) after `MinDriftSecondsBeforeCapture` the drift ends and it
+    falls back onto the floor; past `AreaMaxDistanceMeters`
+    (100 m from the nearest area) or `AreaMaxDriftSeconds` (60 s) it is put back (`IPlayerBodyPlacement.ServerPlace`)
+    at the nearest area's return point, else on the standing ship's deck spawn point; no death.
+- **The drift** (`CharacterDrift`, CharacterMovableModule): each peer drifts the body it simulates: weightless
+  (`IMovableBody.SetWeightless`), the movement neither walks nor jumps, the speed fades to a slow drift, the owner's
+  move keys push it along the view (3 m/s² up to 4 m/s, times this peer's `DriftPushScaleModel.Scale`: the debug window's Player → "Drift speed"
+  slider, x1..x10, `Debug/ShipOverboardDebugSystem`); the ragdoll turns smoothly to fly head first (PlayerBodyModule). The fall kill
+  skips a drifter (`IShipOverboardQuery`). Ends also on death (`ShipRunRiderService.ServerReleaseRider`). Not restored
+  on a rejoin.
+- Not done yet: the "man overboard" sonar contact.
 
 ## Cargo on the deck
 The flying deck is moved by code, not by physics, so it carries the grabbable items on it itself (`ShipDeckCargo`, run
@@ -185,21 +249,22 @@ by `ShipBase.LateUpdate` on every peer):
 ## Known limits
 - A client that spawns the ship while it flies is not tested: a join in flight is turned away, so no test reaches it;
   it relies on the SyncVar hooks above firing on the first spawn. The server kills a fallen player by its server
-  position (`FallKillSystem`); between the owner binding itself and its `CmdBeginRide` arriving (one round trip at the
-  start of a takeoff) the server still sees it standing where it was, which is far above the 30 m kill depth.
+  position (`FallKillSystem`), which is its copy of the player, the copy delay (0.1 s) plus half a round trip behind
+  the owner.
 - **No world shift in flight.** On loop 4 the ship is ~8-9 km from the origin before the landing recenter (float
   step there is ~1 mm); deck and camera jitter at that distance is not checked yet.
 
 Known issue: in the first cruise of a `DeckFeelHarness` run the player jumps about 136 m in one frame, dies and the
 crew returns to the lobby, so the harness ends with "FAIL ship cannot launch". Seen on 2026-10-06 and again on
-2026-10-16, also on the base commit. The `[ShipRide]` log shows the cause: the harness's walk legs in cruise were written
-for a confined deck and walk the player off the narrow nose of the deck, which drops it off the ship by design
-(`_confineRidersToDeck` off). It is not the rider binding bug; the harness is not fixed yet.
+2026-10-16, also on the base commit. The `[ShipRide]` log showed the cause: the harness's walk legs in cruise were
+written for a confined deck and walk the player off the narrow nose of the deck, which drops it off the ship by design.
+It is not a riding bug; the harness is not fixed yet (and since 2026-11-24 it measures the carried deck, not the bound
+ride it was written for).
 
 ## Key places
 | What | Where |
 |---|---|
-| Ship, flight, riders | `Assets/Features/ShipModule/Scripts/`: `ShipBase` (ties its parts: `ShipDeckGeometry`, `ShipModules`, `ShipRiders`, `ShipSeats`, `ShipFlightControl`, `ShipDeckCargo`), `ShipFlight`, `ShipPoseSync`, `ShipRider` (+ `ShipDeckRideRule`, `ShipRideDiagnostics`, see "Riding the ship" above), `ShipRunDirector`, `ShipRunService` (phase machine) with `ShipStationPads`, `ShipStationDropService`, `ShipRoute`, `ShipFlightStatService`, `ShipWorldShiftService`, `ShipRunRiderService`, `ShipRunBindingModel` |
+| Ship, flight, riders | `Assets/Features/ShipModule/Scripts/`: `ShipBase` (ties its parts: `ShipDeckGeometry`, `ShipModules`, `ShipRiders`, `ShipSeats`, `ShipFlightControl`, `ShipDeckCargo`), `ShipFlight`, `ShipPoseSync`, `ShipRider` (+ `Riding/ShipCarrier`, `Riding/ShipRideBody`, `Riding/ShipSeatRide`, `ShipRideDiagnostics`, see "Riding the ship" above), `ShipRunDirector`, `ShipRunService` (phase machine) with `ShipStationPads`, `ShipStationDropService`, `ShipRoute`, `ShipFlightStatService`, `ShipWorldShiftService`, `ShipRunRiderService`, `ShipRunBindingModel` |
 | Flight and landing settings | `ShipFlightSettings` (+ `ShipFlightConfig_Default.asset`), `ShipRunConfig` |
 | Modules and slots | a module is one `ModuleDefinition` asset (`ShipModule/GameResources/Modules/`: id, slot type, item prefab, slot view, name, price, stat modifiers); `ModuleCatalog` lists them all and resolves a module id (`ModuleCatalogValidator` checks it at startup); `ShipItem`, `ShipSocket` (+ `ShipSocketRule`, state in the `ShipSockets` model), `Ship*Interactable`; catalogs in `ShipModule/GameResources/Configurations/` (Addressables) |
 | Stats | `Assets/Features/StatsModule/`, `ShipStatType` (`DodgeRange` 2, `Armor` 4, `FlightSpeed` 5, `Hull` 6, `SonarRange` 7: assets store the numbers, so never renumber; 1 and 3 were the removed `Thrust` / `Handling`, do not reuse them, and `ShipStatsConfigurationValidator` / `ModuleCatalogValidator` reject a stat number the enum does not define), `ShipStatEntity`, `ShipStatSheet` (server: base values from `ShipAccumulativeStatsConfiguration` plus module modifiers; `Hull` is the only accumulative ship stat: modifiers raise its max), synced `ShipStats` model; player movement stats are `PlayerStatType` / `PlayerStatsConfiguration` in `CharacterMovableModule/Scripts/PlayerStats/` |

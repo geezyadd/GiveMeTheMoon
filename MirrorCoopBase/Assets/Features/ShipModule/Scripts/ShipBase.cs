@@ -1,8 +1,10 @@
 using Features.CharacterMovableModule.Scripts.Models;
+using Features.FloatingControllerModule;
 using Features.GameCoreModule.Contracts;
 using Features.GrabModule.Scripts;
 using Features.ShipModule.Scripts.Generated;
 using Features.ShipModule.Scripts.Hull;
+using Features.ShipModule.Scripts.Riding;
 using Features.ShipModule.Scripts.Throttle;
 using Game.Connection;
 using Mirror;
@@ -34,11 +36,13 @@ namespace Features.ShipModule.Scripts {
         private ShipModules _modules;
         private ShipHullStat _hull;
         private ShipRiders _riders;
-        private ShipDeckRideRule _rideRule;
+        private ShipCarrier _carrier;
         private ShipSeats _seats;
         private ShipSteering _steering;
         private ShipFlightControl _flightControl;
         private int _fixedSteps;
+        private Pose _movedPose;
+        private bool _hasMovedPose;
         private bool _flying;
 
         private IReadOnlyShipRunModel _run;
@@ -52,8 +56,6 @@ namespace Features.ShipModule.Scripts {
         public Transform Destination => _destination;
         public bool IsFlying => _flying;
         internal BoxCollider RideVolume => _rideVolume;
-        internal bool ConfinesRidersToDeck => _flightSettings.ConfineRidersToDeck;
-        internal float ReboardDelaySeconds => _flightSettings.ReboardDelaySeconds;
         internal NetworkIdentity NetIdentity => _poseSync.netIdentity;
         public ShipSocket[] Sockets => _sockets;
         internal ShipSocketsSync SocketStates => _socketStates;
@@ -61,7 +63,8 @@ namespace Features.ShipModule.Scripts {
         internal IShipModules Modules => _modules;
         internal IShipHullStat Hull => _hull;
         public IShipRiders Riders => _riders;
-        internal IShipDeckRideRule RideRule => _rideRule;
+        // The ship as the carrier of the bodies on its deck.
+        internal ICarrier Carrier => _carrier;
         internal IShipSeats Seats => _seats;
         internal IShipFlightControl FlightControl => _flightControl;
         internal IShipDeckCargo Cargo => _cargo;
@@ -71,7 +74,6 @@ namespace Features.ShipModule.Scripts {
         public IShipKnockback Knockback => _flightControl;
         internal ShipThrottleLever Throttle => _throttle;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        internal IShipRidersDebug RidersDebug => _riders;
         // Public for the loop tests: their pilot faces the ship to the destination, as a crew does by radar.
         public IShipFlightControlDebug FlightControlDebug => _flightControl;
 #endif
@@ -123,8 +125,8 @@ namespace Features.ShipModule.Scripts {
             ShipStatSheet statSheet = new ShipStatSheet(_stats);
             _modules = new ShipModules(_sockets, statSheet, _statsSync, _conditionSync, ReadStatsConfiguration);
             _hull = new ShipHullStat(statSheet, _modules);
-            _rideRule = new ShipDeckRideRule(_deckGeometry, ReadFlightSettings);
-            _riders = new ShipRiders(this, _rideRule, ReadCharacterMovables, ReadRiderKeys);
+            _carrier = GetComponent<ShipCarrier>();
+            _riders = new ShipRiders(this, ReadCharacterMovables, ReadRiderKeys);
             _seats = new ShipSeats(this, _sockets, _riders);
             _steering = new ShipSteering(_sockets);
             _flightControl = new ShipFlightControl(ReadFlightSettings, _modules, _steering, ReadThrottle);
@@ -179,11 +181,12 @@ namespace Features.ShipModule.Scripts {
                 dodgeRangeScale,
                 mode);
             SleepBody();
+            if (_body != null)
+                _body.interpolation = RigidbodyInterpolation.Interpolate;
             _flying = true;
             if (_poseSync != null)
                 _poseSync.ServerSetFlying(true);
 
-            _riders.BoardRidersOverDeck();
             _cargo.ServerBoardDeckItems();
         }
 
@@ -268,8 +271,9 @@ namespace Features.ShipModule.Scripts {
 
             // Riders are released by the server (ShipRider.ServerRelease) after the landing snap and origin shift.
             _flying = flying;
-            if (flying)
-                _riders.BoardRidersOverDeck();
+            // A client's ship is moved on physics steps in flight (ClientFlightStep) and drawn between them.
+            if (_body != null)
+                _body.interpolation = flying ? RigidbodyInterpolation.Interpolate : RigidbodyInterpolation.None;
         }
 
         internal void ServerApplyWorldShift(Vector3 delta) {
@@ -301,6 +305,55 @@ namespace Features.ShipModule.Scripts {
             _fixedSteps += 1;
         }
 
+        // The server's flight, once per physics step (ShipCarrier runs it before anything that rides): the ship's body
+        // goes to the flight's pose by MovePosition / MoveRotation and is interpolated between steps, so the ship and all
+        // that follows its drawn pose move smoothly.
+        internal void ServerFlightStep(float dt) {
+            if (_flying == false || NetworkServer.active == false)
+                return;
+
+            _flightControl.ServerStep(dt);
+            if (_flightControl.IsActive == false)
+                return;
+
+            MoveBody(_flightControl.Position, _flightControl.Rotation);
+        }
+
+        // A client's flight, once per physics step (ShipCarrier runs it): the pose from the pose sync's buffer at this
+        // step's time, moved onto the body like the server's, so the ship moves on physics steps on every peer.
+        internal void ClientFlightStep(float dt) {
+            if (_flying == false || NetworkServer.active || _poseSync == null)
+                return;
+
+            _poseSync.ClientStep(dt, _steering.IsSteeredByLocalPlayer());
+        }
+
+        // Moves the ship's body to a pose in this physics step (interpolated while flying), or places it at once without
+        // a body.
+        internal void MoveBody(Vector3 position, Quaternion rotation) {
+            _movedPose = new Pose(position, rotation);
+            _hasMovedPose = true;
+            if (_body == null) {
+                ApplyDisplayPose(position, rotation);
+                return;
+            }
+
+            _body.MovePosition(position);
+            _body.MoveRotation(rotation);
+        }
+
+        // The ship's pose on this physics step, taken once per step after the flight step: the pose the flight moved the
+        // body to (MovePosition only takes effect in the physics step, so the body still has the last step's pose), or,
+        // when nothing moved it, where its body or transform is.
+        internal Pose TakeStepPose() {
+            if (_hasMovedPose) {
+                _hasMovedPose = false;
+                return _movedPose;
+            }
+
+            return _body != null ? new Pose(_body.position, _body.rotation) : new Pose(transform.position, transform.rotation);
+        }
+
         internal int ConsumeFixedSteps() {
             int steps = _fixedSteps;
             _fixedSteps = 0;
@@ -314,24 +367,15 @@ namespace Features.ShipModule.Scripts {
                 _cargo.ServerReleaseGrabbed();
 
             if (_flying && NetworkServer.active) {
-                _flightControl.ServerStep(Time.deltaTime);
-                if (_flightControl.IsActive)
-                    ApplyDisplayPose(_flightControl.Position, _flightControl.Rotation);
-
                 if (_poseSync != null)
                     _poseSync.ServerPublish(transform.position, transform.rotation, _flightControl.Velocity);
 
                 if (_runService != null)
                     _runService.ServerTick();
             }
-            else if (_flying && _poseSync != null) {
-                _poseSync.ApplyInterpolated(_steering.IsSteeredByLocalPlayer());
-            }
 
             _cargo.Follow(NetworkServer.active);
             _riders.FollowRiders(Time.deltaTime);
-            if (_flying)
-                _riders.CatchDeckRiders();
         }
 
         internal Vector3 ToShipLocal(Vector3 worldPosition) =>

@@ -20,11 +20,16 @@ namespace Features.CharacterMovableModule.Scripts {
         public void RefillAirJumps(int extraAirJumps) =>
             _airJumpsLeft = extraAirJumps;
 
-        // Once per rendered frame.
-        public void ReadInput(bool holdingJump, bool supported, float dt) {
+        // Once per rendered frame. A press is the jump key going down since the last call.
+        public void ReadInput(bool holdingJump, bool supported, float dt) =>
+            ReadInput(holdingJump, holdingJump && _jumpHeld == false, supported, dt);
+
+        // Once per rendered frame, with the press given by the caller: a remote copy learns of a press from its owner's
+        // jump counter, which also catches a tap too short to show in the held state.
+        public void ReadInput(bool holdingJump, bool pressedJump, bool supported, float dt) {
             _jumpPressedAgo += dt;
             _airTime = supported ? 0f : _airTime + dt;
-            if (holdingJump && _jumpHeld == false) {
+            if (pressedJump) {
                 _jumpQueued = true;
                 _jumpPressedAgo = 0f;
             }

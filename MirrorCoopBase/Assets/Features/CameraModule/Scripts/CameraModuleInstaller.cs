@@ -14,6 +14,7 @@ namespace Features.CameraModule.Scripts {
             Container.BindInterfacesTo<CameraLookDriver>().AsSingle();
             Container.BindInterfacesTo<CameraSwitchBinder>().AsSingle();
             Container.Bind<ILocalViewpointSource>().To<CameraViewpointSource>().AsSingle();
+            Container.Bind<ILocalViewDirectionSource>().To<CameraViewDirectionSource>().AsSingle();
             Container.Bind<ICameraShakeService>().To<CameraShakeService>().AsSingle();
             Container.Bind<ICameraShakeSampler>().To<CameraShakeSampler>().AsSingle();
             Container.BindInterfacesTo<CameraShakeSystem>().AsSingle();

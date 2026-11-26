@@ -11,6 +11,11 @@ namespace Features.CameraModule.Scripts {
         [SerializeField] private bool _invertY;
         [SerializeField] private GameCamera _fpCameraPrefab;
         [SerializeField] private GameCamera _tpCameraPrefab;
+        [Tooltip("The cameras' root: the output camera (main camera, audio listener, Cinemachine brain in manual " +
+                 "update).")]
+        [SerializeField] private GameObject _cameraRootPrefab;
+        [Tooltip("The look pivot the cameras follow; it rides on the player's eye.")]
+        [SerializeField] private CameraLookRig _lookPivotPrefab;
 
         public string StartupCameraId =>
             string.IsNullOrEmpty(_startupCameraId) ? CameraIds.TPCamera : _startupCameraId;
@@ -22,5 +27,7 @@ namespace Features.CameraModule.Scripts {
         public bool InvertY => _invertY;
         public GameCamera FpCameraPrefab => _fpCameraPrefab;
         public GameCamera TpCameraPrefab => _tpCameraPrefab;
+        public GameObject CameraRootPrefab => _cameraRootPrefab;
+        public CameraLookRig LookPivotPrefab => _lookPivotPrefab;
     }
 }

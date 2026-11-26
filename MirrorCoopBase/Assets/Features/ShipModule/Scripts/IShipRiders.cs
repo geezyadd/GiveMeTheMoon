@@ -8,7 +8,8 @@ namespace Features.ShipModule.Scripts {
         public void UnregisterRider(ShipRider rider);
         public void TrackRider(ShipRider rider);
         public void ServerReleaseRiders();
-        public bool IsLocalPlayerRiding();
+        public bool IsAboard(ShipRider rider);
+        public bool IsLocalPlayerAboard();
         public bool TryFindByKey(PlayerKey key, out ShipRider rider);
     }
 }

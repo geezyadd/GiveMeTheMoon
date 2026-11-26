@@ -2,10 +2,12 @@
     "name": "Features.GameCoreModule",
     "rootNamespace": "Features.GameCoreModule",
     "references": [
+        "Features.TargetModule",
         "GUID:a637b2d2f1cb470a8bea9746a87397c0",
         "GUID:03a835aea0a645a7b43f5f0c61e8d191",
         "GUID:7db74d1a1ce84239aafaf8624bce950c",
         "GUID:28f96731f5c645d89bbee8e9e47e5c58",
+        "GUID:c62938107dda425fa406a9331ebd4b6e",
         "GUID:e48356b2e0ec4f3abf4c45b99a61c2fb",
         "GUID:1f74e8c7b4c74b6ab22be0bd160a9a17",
         "GUID:3f95e70c20ac4340b969848308beba75",
@@ -39,7 +41,8 @@
         "GUID:6b2d1c8f4eaf5f32b7c9d5e3f1024680",
         "GUID:e5c1d2b3a4f64b7c8d9e0f1a2b3c4d55",
         "GUID:66bd8bd70084424bbbcc7a7bc5c73787",
-        "GUID:84d200891cb1452b8e9b453e7052d1af"
+        "GUID:84d200891cb1452b8e9b453e7052d1af",
+        "GUID:e1f9bee6f64241b39869855bd2cc955a"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

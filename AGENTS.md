@@ -10,7 +10,7 @@ module's description lives in its own AGENTS.md.** Change it there, not here; ad
 for a new module. Before working on a module, read its file.
 
 ## The game
-A co-op **friendslop** in the vein of Peak, YAPYAP and Lethal Company. A crew of players flies a platform-ship from
+A co-op **friendslop** in the vein of YAPYAP and Lethal Company. A crew of players flies a platform-ship from
 station to station and upgrades the ship with modules along the way.
 
 ### Core loop (current focus)
@@ -78,7 +78,8 @@ types.
 - DI: **Zenject**. Installers are in `Assets/Features/GameCoreModule/Scripts/Installers/`, configs come from
   Addressables (`ConfigurationInstaller`).
 - UI: in-house MVP (`Assets/Features/MvpModule/`): `WindowBehaviour`, `ViewBehaviour`,
-  `PresenterBehaviour<TView>`, windows are registered in `WindowsModuleInstaller`.
+  `PresenterBehaviour<TView>`, windows are registered in `WindowsModuleInstaller`; the windows' canvas and the UI event system come from the prefabs in
+  `WindowsRootConfiguration` (`MvpModule/GameResources`), not from components added in code.
 - Input: New Input System and the generated `IInputService` wrapper
   (`Assets/Features/InputModule/Realization/`). The code is generated; do not edit it by hand.
 - **Debug actions: never add a debug hotkey.** A debug / cheat action is registered in `IDebugActionRegistry`
@@ -107,15 +108,17 @@ types.
      `Features.CrewInviteModule.Data`, `Features.StagePresetModule.Data`, `Features.FlightFieldModule.Contracts`,
      `Features.WeaponModule.Contracts`, `Features.CameraModule.Contracts`, `Features.EffectPoolModule` (no references),
      `Features.DebugModule.Contracts`, `Features.SonarModule.Contracts`, `Features.SonarModule.Data`,
-     `Features.SpaceHazeModule.Data`; third-party
+     `Features.SpaceHazeModule.Data`, `Features.AttackModule.Contracts`; third-party
      `QuickOutline` also has its own asmdef (the unused `Mini Mapa(Radar)` pack was deleted on 2026-10-25).
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
-     `Features.WeaponModule`, `Features.SpaceHazeModule`.
-  3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`.
+     `Features.WeaponModule`, `Features.SpaceHazeModule`, `Features.ActiveRagdollModule` (FloatingController),
+     `Features.TargetModule`.
+  3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.PlayerReplicaModule`,
+     `Features.PlayerAnimationModule`.
   4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`,
-     `Features.HandWeaponModule`.
-  5. `Features.ShipImpactModule`, `Features.ShipDamageModule`, `Features.TurretModule`, `Features.PlayerLifeModule`,
+     `Features.HandWeaponModule`, `Features.MovingPlatformModule`, `Features.AttackModule`.
+  5. `Features.PlayerBodyModule`, `Features.ShipImpactModule`, `Features.ShipDamageModule`, `Features.TurretModule`, `Features.PlayerLifeModule`,
      `Features.LobbyModule` (Ship, Grab, GameFlow, Mvp, Connection).
   6. `Features.StagePresetModule`, `Features.ShopModule`, `Features.TooltipModule`, `Features.CrewInviteModule`,
      `Features.SonarModule`.
@@ -126,7 +129,7 @@ types.
 ## Module map
 | Module (details) | What it is |
 |---|---|
-| [ShipModule](MirrorCoopBase/Assets/Features/ShipModule/AGENTS.md) | the ship core: hull, flight, riders, slots and modules, seats and the helm, stats, world shift, the run, deck debugging |
+| [ShipModule](MirrorCoopBase/Assets/Features/ShipModule/AGENTS.md) | the ship core: hull, flight, the ship as a carrier of the bodies on its deck, seats (the only binding) and the helm, slots and modules, stats, world shift, the run, deck debugging |
 | [ShipImpactModule](MirrorCoopBase/Assets/Features/ShipImpactModule/AGENTS.md) | the hull's rock and balloon collisions, knockback feedback, impact shake and effects |
 | [ShipDamageModule](MirrorCoopBase/Assets/Features/ShipDamageModule/AGENTS.md) | module breakdowns, hull breaches, the leak, repair with the wrench and the hammer |
 | [TurretModule](MirrorCoopBase/Assets/Features/TurretModule/AGENTS.md) | the turret's seat station (`ShipTurretStation`) and the turret gun tiers |
@@ -135,6 +138,13 @@ types.
 | [HandWeaponModule](MirrorCoopBase/Assets/Features/HandWeaponModule/AGENTS.md) | weapons carried in the hand: the pistol |
 | [SonarModule](MirrorCoopBase/Assets/Features/SonarModule/AGENTS.md) | the navigator's sonar console on the radar |
 | [SpaceHazeModule](MirrorCoopBase/Assets/Features/SpaceHazeModule/AGENTS.md) | the dark space haze: how far the crew sees by eye |
+| [PlayerReplicaModule](MirrorCoopBase/Assets/Features/PlayerReplicaModule/AGENTS.md) | player body sync by state and input, the only one: packet stream, simulated copies with soft correction, carriers, the server's moves of a body |
+| [ActiveRagdollModule](MirrorCoopBase/Assets/Features/ActiveRagdollModule/AGENTS.md) | physical bodies that follow an animation, for any creature (being built) |
+| [PlayerBodyModule](MirrorCoopBase/Assets/Features/PlayerBodyModule/AGENTS.md) | the body the player walks with: the player's own body is the active ragdoll pushed by the movement (being built) |
+| [PlayerAnimationModule](MirrorCoopBase/Assets/Features/PlayerAnimationModule/AGENTS.md) | the player's animator: its controller built from code, the driver that sets its parameters (`Forward`, `Fly`) and plays actions' triggers (`Slap`), and `LimbReach` (a limb pointed at something over the animation) |
+| [TargetModule](MirrorCoopBase/Assets/Features/TargetModule/AGENTS.md) | targets any system can find and act on (`Hittable`, `LookAt`), their registry and the hit event reactions listen to |
+| [AttackModule](MirrorCoopBase/Assets/Features/AttackModule/AGENTS.md) | attacks of any ragdoll body (the slap): the attack as data, its timing, presses, aim, the limb's reach and where it lands |
+| [MovingPlatformModule](MirrorCoopBase/Assets/Features/MovingPlatformModule/AGENTS.md) | riding moving carriers (`CarrierRider`, used by the ship's deck too) and the lobby's test platform flying around a circle, its start / stop button |
 | [DebugModule](MirrorCoopBase/Assets/Features/DebugModule/AGENTS.md) | the in-game debug window and its action registry |
 | [StagePresetModule](MirrorCoopBase/Assets/Features/StagePresetModule/AGENTS.md) | playtest stage presets |
 | [ShopModule](MirrorCoopBase/Assets/Features/ShopModule/AGENTS.md) | the station shop, the crew wallet, buying back a dead crewmate |
@@ -152,7 +162,7 @@ types.
 | [Two-player test](MirrorCoopBase/Assets/Tests/Coop/AGENTS.md) | `CoopTwoProcessTest` with a real second client process |
 | `Features.AddressablesConstantGeneratorModule` | `Address_g.cs`; editor tools and tests load a configuration at its address with `AddressableConfigurationLoader` in `Features.AddressablesConstantGeneratorModule.EditorLoading` |
 | `Features.EffectPoolModule` | `SelfDisablingEffectPool<TEffect>` over `ISelfDisablingEffect`, the pool of effects that disable themselves when over; the rock break and the rock impact effects use it |
-| `Features.CharacterMovableModule` | player movement; tests: `Features.CharacterMovableModule.Editor.Tests` |
+| `Features.CharacterMovableModule` | player movement; it pushes an `IMovableBody` (`CapsuleMovableBody`: the player's rigidbody, floating controller and carrier rider by default, another body through `CharacterMovableBase.SetDrivenBody`; `DrivenBody`, `ActiveControls` and `ShownLookYaw` are what the network copy and the body's owner read; `IsHeld`, set by a ship seat, stops the walk and makes a non-capsule body follow the capsule); a jump reaches its takeoff speed over a short push of the legs (`JumpPush`, stat `JumpPushSeconds` 0.07 s since 2026-11-26, was one physics step), with the gravity of the push taken off so the height stays; the body simulation takes its controls through `IMovementControls` (`KeyboardMovementControls`: keyboard and camera for the player's own body; `PacketMovementControls` in PlayerReplicaModule for remote copies; attack presses are not movement controls: see AttackModule's `IAttackPresses`); tests: `Features.CharacterMovableModule.Editor.Tests` |
 
 Other modules (Menu, Lobby, Mvp, Input, Stats, GameFlow, Bootstrapers, ...) have no file yet; add one when there is
 something to describe.

@@ -1,0 +1,17 @@
+{
+    "name": "Features.ActiveRagdollModule",
+    "rootNamespace": "Features.ActiveRagdollModule",
+    "references": [
+        "Features.FloatingControllerModule",
+        "Unity.Animation.Rigging"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

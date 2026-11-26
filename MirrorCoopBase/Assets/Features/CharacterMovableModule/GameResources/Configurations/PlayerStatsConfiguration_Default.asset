@@ -48,4 +48,6 @@ MonoBehaviour:
     Value: 0
   - Type: 17
     Value: 12
+  - Type: 18
+    Value: 0.07
   _cameraRelative: 1

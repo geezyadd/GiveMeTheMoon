@@ -103,7 +103,7 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.Greater(backOut, nearest + MIN_PUSH_BACK_METERS, $"Rock impact: the large rock {rock.Id} did not push the ship back out (hit at {atHit:0.0} m, nearest {nearest:0.0} m, back to {backOut:0.0} m).");
             Assert.IsTrue(_fieldRockQuery.TryGetRock(rock.Id, out _), $"Rock impact: the large rock {rock.Id} is gone.");
             Assert.IsFalse(_liveFieldModel.BrokenRocks.Contains(rock.Id), $"Rock impact: the large rock {rock.Id} was broken.");
-            Assert.IsTrue(SessionQueries.LocalPlayer.GetComponent<ShipRider>().IsRiding, "Rock impact: the player stopped riding on a large rock hit.");
+            Assert.IsTrue(SessionQueries.IsAboard(ship, SessionQueries.LocalPlayer), "Rock impact: the player is not aboard after a large rock hit.");
             AssertPlayerStandsOnDeck(ship);
             Debug.Log($"[LoopSmoke] large rock hit: {rock.Id} ({rock.SourceId}, {rock.Diameter:0.0} m), distance {atHit:0.0} -> nearest {nearest:0.0} -> back to {backOut:0.0} m");
         }

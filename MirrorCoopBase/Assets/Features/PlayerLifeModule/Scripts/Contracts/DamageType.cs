@@ -1,3 +1,3 @@
 namespace Features.PlayerLifeModule.Scripts {
-    public enum DamageType { Generic = 0, Fall = 1 }
+    public enum DamageType { Generic = 0, Fall = 1, Drift = 2 }
 }

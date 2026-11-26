@@ -79,7 +79,7 @@ namespace Tests.PlayMode.LoopSmoke {
             ShipTurretStation station = FindSeatedStation(_session.Ship);
             Player.GetComponent<UseController>().RequestUse(Socket.GetComponentInChildren<ShipSitInteractable>());
             yield return _session.WaitForCoroutine(() => Socket.HasOccupant == false && station.IsOccupiedByLocalPlayer == false, SEAT_TIMEOUT_SECONDS, "Turret: the host stood up from the minigun");
-            Assert.IsTrue(Player.GetComponent<ShipRider>().IsRiding, "Turret: the host does not ride the ship after standing up in cruise.");
+            Assert.IsTrue(SessionQueries.IsAboard(_session.Ship, Player), "Turret: the host is not aboard the ship after standing up in cruise.");
         }
 
         // The dummy sways from side to side: the turret follows it every frame, as a player would.

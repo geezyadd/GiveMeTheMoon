@@ -339,6 +339,7 @@ MonoBehaviour:
   everyoneReadyDelay: 0.5
   telepathyTransport: {fileID: 1785655858}
   fizzyTransport: {fileID: 1785655860}
+  lagTransportPrefab: {fileID: 2300000000000000003, guid: dc5b31a4b42e4a64b387e70c67722a5a, type: 3}
 --- !u!114 &1785655857
 MonoBehaviour:
   m_ObjectHideFlags: 0

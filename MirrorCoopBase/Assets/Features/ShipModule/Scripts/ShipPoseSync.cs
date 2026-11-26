@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.GameCoreModule.Contracts;
 using Mirror;
 using UnityEngine;
 
@@ -9,6 +10,12 @@ namespace Features.ShipModule.Scripts {
 
         [SerializeField] private Transform _ship;
         [SerializeField] private float _interpolationDelay = 0.06f;
+        [Tooltip("A client's clock for the ship may run this share faster or slower to meet the server time after a stall (0.05 = 5 %).")]
+        [SerializeField, Range(0f, 0.5f)] private float _clockMaxRateChange = 0.05f;
+        [Tooltip("How fast that clock closes a gap to the server time: the share of the gap per second, before the limit above.")]
+        [SerializeField, Min(0f)] private float _clockCatchUpPerSecond = 1f;
+        [Tooltip("A gap to the server time this long, seconds, is closed at once (a long stall).")]
+        [SerializeField, Min(0.05f)] private float _clockJumpGap = 0.5f;
 
         [SyncVar(hook = nameof(OnFlyingChanged))]
         private bool _flying;
@@ -26,10 +33,16 @@ namespace Features.ShipModule.Scripts {
         private readonly List<PoseSample> _samples = new List<PoseSample>(16);
         private float _nextPublish;
         private ShipBase _shipBase;
+        // A client steps the ship's pose by this, evenly per physics step and eased toward the network time, so a stalled
+        // frame does not make the ship (and its riders) leap.
+        private SmoothServerClock _clock;
 
         internal bool IsFlying => _flying;
         internal ShipBase Ship => _shipBase;
         internal WorldShift WorldShift => _worldShift;
+
+        private void Awake() =>
+            _clock = new SmoothServerClock(_clockMaxRateChange, _clockCatchUpPerSecond, _clockJumpGap);
 
         internal void BindShip(ShipBase ship, Transform root) {
             _shipBase = ship;
@@ -80,29 +93,52 @@ namespace Features.ShipModule.Scripts {
             RpcPose(NetworkTime.time, _worldShift, position, rotation, velocity);
         }
 
-        internal void ApplyInterpolated(bool lowLatency) {
-            if (_shipBase == null)
+        // A client, once per physics step: the ship's pose at this step's show time (the smooth server clock minus the
+        // interpolation delay; none for the local pilot), applied to its body.
+        internal void ClientStep(float dt, bool lowLatency) {
+            if (_shipBase == null || _clock.IsStarted == false)
                 return;
 
-            double delay = lowLatency ? 0d : _interpolationDelay;
-            double renderTime = NetworkTime.time - delay;
-            if (_samples.Count == 0) {
-                if (_lateRot.x != 0f || _lateRot.y != 0f || _lateRot.z != 0f || _lateRot.w != 0f)
-                    _shipBase.ApplyDisplayPose(_latePos, _lateRot);
+            _clock.Step(dt);
+            double showTime = _clock.Time - (lowLatency ? 0d : _interpolationDelay);
+            if (TrySamplePose(showTime, out Vector3 position, out Quaternion rotation))
+                _shipBase.MoveBody(position, rotation);
+        }
+
+        private void Update() {
+            if (isServer || NetworkClient.active == false)
+                return;
+
+            if (_clock.IsStarted == false) {
+                _clock.Start(NetworkTime.time);
                 return;
             }
 
+            // The clock stands at the last physics step; the frame is a little later.
+            double clockNow = _clock.Time + (Time.timeAsDouble - Time.fixedTimeAsDouble);
+            _clock.Compare(NetworkTime.time, clockNow);
+        }
+
+        // The pose at a time from the buffered samples: between two of them, a little past the last one, or the last
+        // synced pose when there are none yet.
+        private bool TrySamplePose(double showTime, out Vector3 position, out Quaternion rotation) {
+            position = _latePos;
+            rotation = _lateRot;
+            if (_samples.Count == 0)
+                return _lateRot.x != 0f || _lateRot.y != 0f || _lateRot.z != 0f || _lateRot.w != 0f;
+
             PoseSample last = _samples[_samples.Count - 1];
-            if (renderTime >= last.Time) {
-                float extra = Mathf.Min((float)(renderTime - last.Time), MAX_EXTRAPOLATION);
-                _shipBase.ApplyDisplayPose(last.Position + last.Velocity * extra, ExtrapolateRotation(last, extra));
-                return;
+            if (showTime >= last.Time) {
+                float extra = Mathf.Min((float)(showTime - last.Time), MAX_EXTRAPOLATION);
+                position = last.Position + last.Velocity * extra;
+                rotation = ExtrapolateRotation(last, extra);
+                return true;
             }
 
             PoseSample from = _samples[0];
             PoseSample to = last;
             for (int i = 0; i < _samples.Count - 1; i++) {
-                if (_samples[i].Time <= renderTime && _samples[i + 1].Time >= renderTime) {
+                if (_samples[i].Time <= showTime && _samples[i + 1].Time >= showTime) {
                     from = _samples[i];
                     to = _samples[i + 1];
                     break;
@@ -110,11 +146,11 @@ namespace Features.ShipModule.Scripts {
             }
 
             double span = to.Time - from.Time;
-            float blend = span > 0.0001d ? (float)((renderTime - from.Time) / span) : 1f;
+            float blend = span > 0.0001d ? (float)((showTime - from.Time) / span) : 1f;
             blend = Mathf.Clamp01(blend);
-            _shipBase.ApplyDisplayPose(
-                Vector3.Lerp(from.Position, to.Position, blend),
-                Quaternion.Slerp(from.Rotation, to.Rotation, blend));
+            position = Vector3.Lerp(from.Position, to.Position, blend);
+            rotation = Quaternion.Slerp(from.Rotation, to.Rotation, blend);
+            return true;
         }
 
         public override void OnStartServer() {

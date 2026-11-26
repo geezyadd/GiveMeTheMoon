@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8937f7e1fdc468c4293609f6cf7ec5f3, type: 3}
+  m_Name: SlapAttack
+  m_EditorClassIdentifier: 
+  _animatorTrigger: Slap
+  _limb: 0
+  _reachPriority: 0
+  _timing:
+    _reachStartSeconds: 0.2
+    _reachFullSeconds: 0.34
+    _reachReleaseSeconds: 0.5
+    _reachEndSeconds: 0.8
+    _hitStartSeconds: 0.15
+    _hitEndSeconds: 0.6
+    _durationSeconds: 0.8
+  _maxDistance: 1.3
+  _maxAngle: 60
+  _reachThrough: 0.3

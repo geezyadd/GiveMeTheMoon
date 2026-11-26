@@ -1,6 +1,8 @@
 using Features.CharacterMovableModule.Scripts.Models;
+using Features.GameCoreModule.Contracts;
 using Features.GrabModule.Scripts;
 using Features.NetworkModelModule.Scripts;
+using Features.PlayerBodyModule;
 using Features.PlayerLifeModule.Scripts.Generated;
 using Features.ShipModule.Scripts;
 using Mirror;
@@ -13,15 +15,17 @@ namespace Features.PlayerLifeModule.Scripts {
     public sealed class PlayerLifeBody : NetworkBehaviour, IPlayerLifeActor {
         [SerializeField] private PlayerDamageable _damageable;
         [SerializeField] private Rigidbody _body;
-        [SerializeField] private NetworkRigidbodyUnreliable _networkBody;
         [SerializeField] private Transform _followTarget;
         [SerializeField] private Renderer[] _renderers;
         [SerializeField] private Collider[] _colliders;
+
+        private PlayerRagdollBody _ragdollBody;
 
         private IPlayerBodyRegistry _registry;
         private PlayerControlBlockModel _controlBlock;
         private IShipRiderRelease _shipRiderRelease;
         private IHeldItemRelease _heldItemRelease;
+        private IPlayerBodyPlacement _placement;
         private IReadOnlyPlayerLifeModel _clientLife;
         private RigidbodyConstraints _aliveConstraints;
         private bool _deadShown;
@@ -53,8 +57,10 @@ namespace Features.PlayerLifeModule.Scripts {
         }
 
         private void Awake() {
+            _ragdollBody = GetComponent<PlayerRagdollBody>();
             _aliveConstraints = _body.constraints;
             _heldItemRelease = GetComponent<IHeldItemRelease>();
+            _placement = GetComponent<IPlayerBodyPlacement>();
         }
 
         public override void OnStartServer() =>
@@ -87,10 +93,10 @@ namespace Features.PlayerLifeModule.Scripts {
             _damageable.ServerSetLifeState(state);
 
         // Every peer, the owner whose client moves the body included, jumps straight to the pose instead of
-        // interpolating there from where the player died.
+        // interpolating there from where the player died; the copies wait there for the owner's packets.
         [Server]
         public void ServerTeleport(Pose pose) =>
-            _networkBody.ServerTeleport(pose.position, pose.rotation);
+            _placement.ServerPlace(pose);
 
         [Server]
         public void ServerApplyDeath() {
@@ -108,6 +114,9 @@ namespace Features.PlayerLifeModule.Scripts {
                 return;
 
             _deadShown = dead;
+            // The ragdoll sleeps (and hides) first, so the capsule set up below for the dead stays that way.
+            if (_ragdollBody != null)
+                _ragdollBody.SetSuspended(dead);
             for (int i = 0; i < _renderers.Length; i++)
                 _renderers[i].enabled = dead == false;
 

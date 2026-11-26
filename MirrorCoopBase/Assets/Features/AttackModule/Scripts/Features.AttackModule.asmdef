@@ -1,0 +1,20 @@
+{
+    "name": "Features.AttackModule",
+    "rootNamespace": "Features.AttackModule",
+    "references": [
+        "Features.AttackModule.Contracts",
+        "Features.PlayerAnimationModule",
+        "Features.ActiveRagdollModule",
+        "Features.TargetModule",
+        "Zenject"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

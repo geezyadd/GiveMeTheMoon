@@ -1,4 +1,6 @@
+using Features.MvpModule;
 using Features.AddressablesConstantsGenerator.Generated;
+using Features.PlayerReplicaModule.Configuration;
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.FlightFieldModule.Scripts.Configuration;
@@ -11,6 +13,8 @@ using Features.ShipDamageModule.Scripts.Damage;
 using Features.ShipImpactModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Hull;
+using Features.ShipModule.Scripts.Overboard;
+using Features.PlayerAnimationModule;
 using Features.ShipModule.Scripts.Throttle;
 using Features.ShopModule.Scripts.Configurations;
 using Features.SonarModule.Scripts.Configurations;
@@ -38,6 +42,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<ShipHullHudConfiguration>(Address.Configurations.ShipHullHudConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShipRockImpactConfiguration>(Address.Configurations.ShipRockImpactConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShipThrottleConfiguration>(Address.Configurations.ShipThrottleConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ShipOverboardConfiguration>(Address.Configurations.ShipOverboardConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<PlayerAnimationConfiguration>(Address.Configurations.PlayerAnimationConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShopCatalog>(Address.Configurations.ShopCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WalletConfiguration>(Address.Configurations.WalletConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShopKioskConfiguration>(Address.Configurations.ShopKioskConfiguration_Default).AsSingle();
@@ -51,7 +57,10 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<ShipStationCatalog>(Address.Configurations.ShipStationCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<SonarConfiguration>(Address.Configurations.SonarConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<SpaceHazeConfiguration>(Address.Configurations.SpaceHazeConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ReplicaConfiguration>(Address.Configurations.ReplicaConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<CameraCatalog>(Address.Configurations.CameraCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<WindowsRootConfiguration>(
+                Address.Configurations.WindowsRootConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FlightFieldConfiguration>(Address.Configurations.FlightFieldConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FieldStructureCatalog>(Address.Configurations.FieldStructureCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<FlightFieldDecorConfiguration>(Address.Configurations.FlightFieldDecorConfiguration_Default).AsSingle();

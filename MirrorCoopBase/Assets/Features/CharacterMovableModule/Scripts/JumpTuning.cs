@@ -12,6 +12,8 @@ namespace Features.CharacterMovableModule.Scripts {
         public readonly float ShortHopGravity;
         public readonly float FallGravity;
         public readonly int ExtraAirJumps;
+        // How long the legs push off, seconds: the takeoff speed is reached over this time, not in one step.
+        public readonly float JumpPushSeconds;
 
         public JumpTuning(
             float jumpHeight,
@@ -21,7 +23,9 @@ namespace Features.CharacterMovableModule.Scripts {
             float riseGravity,
             float shortHopGravity,
             float fallGravity,
-            int extraAirJumps) {
+            int extraAirJumps,
+            float jumpPushSeconds = 0f) {
+            JumpPushSeconds = jumpPushSeconds;
             JumpHeight = jumpHeight;
             JumpCooldown = jumpCooldown;
             CoyoteTime = coyoteTime;
@@ -41,6 +45,7 @@ namespace Features.CharacterMovableModule.Scripts {
                 stats.Read(PlayerStatType.RiseGravity),
                 stats.Read(PlayerStatType.ShortHopGravity),
                 stats.Read(PlayerStatType.FallGravity),
-                Mathf.RoundToInt(stats.Read(PlayerStatType.ExtraAirJumps)));
+                Mathf.RoundToInt(stats.Read(PlayerStatType.ExtraAirJumps)),
+                stats.Read(PlayerStatType.JumpPushSeconds));
     }
 }

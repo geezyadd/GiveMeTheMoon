@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239216fb5ec84a86b29b28ae37d8d28d, type: 3}
+  m_Name: ReplicaConfiguration_Default
+  m_EditorClassIdentifier: 
+  _packetRate: 30
+  _restingPacketRate: 5
+  _restingSpeed: 0.05
+  _copyDelaySeconds: 0.1
+  _placementWaitSeconds: 1
+  _visualCatchUpThreshold: 0.05
+  _visualCatchUpMaxDistance: 10
+  _visualCatchUpSeconds: 0.1
+  _pullShare: 0.1
+  _restingTolerance: 0.15
+  _restingPullShare: 0.02
+  _heightToleranceStart: 0.3
+  _heightToleranceFull: 0.6
+  _heightStepLimit: 0.1
+  _leadLimitSeconds: 0.15
+  _teleportDistance: 3
+  _groundMismatchSeconds: 0.5

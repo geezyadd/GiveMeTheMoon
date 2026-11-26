@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 64afc01b4e7549b4898ddab877a0bd88
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 224793
+  packageName: Humanoid Demo
+  packageVersion: 1.0
+  assetPath: Assets/Humanoid Demo/Prefabs/humanoid demo.prefab
+  uploadId: 508759

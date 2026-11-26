@@ -1,0 +1,19 @@
+{
+    "name": "Features.PlayerAnimationModule",
+    "rootNamespace": "Features.PlayerAnimationModule",
+    "references": [
+        "Zenject",
+        "Features.CharacterMovableModule",
+        "Features.ActiveRagdollModule",
+        "Unity.Animation.Rigging"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

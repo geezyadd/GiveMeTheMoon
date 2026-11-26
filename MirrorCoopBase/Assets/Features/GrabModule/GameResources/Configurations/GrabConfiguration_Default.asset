@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: GrabConfiguration_Default
   m_EditorClassIdentifier: 
   _aimRange: 4
+  _aimHoldSeconds: 0.1
   _interactableMask:
     serializedVersion: 2
     m_Bits: 128

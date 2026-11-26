@@ -1,3 +1,5 @@
+using Features.CharacterMovableModule.Scripts.Body;
+using Features.CharacterMovableModule.Scripts.MovementControls;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.FloatingControllerModule;
 using Mirror;
@@ -6,53 +8,123 @@ using Zenject;
 
 namespace Features.CharacterMovableModule.Scripts {
     public abstract class CharacterMovableBase : NetworkBehaviour {
-        private const int LAYER_COUNT = 32;
-
         [Header("Body")]
         [SerializeField] private Rigidbody _rb;
-        [SerializeField] private CapsuleCollider _capsuleCollider;
         [SerializeField] private FloatingController _floatingController;
         [SerializeField] private Transform _rotatablePart;
         [SerializeField] private PlayerStatEntity _stats;
 
-        [Header("Proxy Shove")]
-        [SerializeField] private float _proxyReach = 0.2f;
-        [SerializeField] private float _proxyPadding = 0.1f;
-
-        [SyncVar] private float _pushStrength;
-        [SyncVar] private Vector3 _pushHeading;
-        [SyncVar] private float _pushSpeed;
         [SyncVar] private float _facingYaw;
-
-        private static readonly Collider[] OverlapScratch = new Collider[32];
 
         [Inject]
         private CharacterInputBuffer _input;
+        private IMovementControls _ownInput;
+        private IMovementControls _remoteInput;
+        private bool _hasRemoteLook;
+        private float _remoteLookYaw;
         private float _moveSpeed;
         private readonly JumpAndAirGravity _jump = new JumpAndAirGravity();
-        private Vector3 _weight;
-        private int _shoveMask;
+        private readonly JumpPush _jumpPush = new JumpPush();
+        private IMovableBody _capsuleBody;
+        private IMovableBody _drivenBody;
 
         public Rigidbody Body => _rb;
 
+        // What the movement pushes and the network copy corrects: the capsule, or another body put in by SetDrivenBody.
+        public IMovableBody DrivenBody =>
+            _drivenBody ?? (_capsuleBody ??= new CapsuleMovableBody(
+                _rb, _floatingController, GetComponent<ICarrierRider>()));
+
+        // The controls the body is simulated from on this peer: the keyboard of the owner, a copy's packets, or null.
+        public IMovementControls ActiveControls => ActiveInput;
+
+        // The look the body shows on this peer, degrees around the up axis: a copy's packet look while it has one.
+        public float ShownLookYaw => _hasRemoteLook && ControlsSelf == false ? _remoteLookYaw : _facingYaw;
+
+        // Grows by one on every takeoff of this body (wraps at 255): the state packet carries it, so a remote copy sees
+        // every jump even when the packet of that moment is lost.
+        public byte JumpCount { get; private set; }
+
+        // The synced look direction around the up axis, degrees.
+        public float LookYaw => _facingYaw;
+
+        // Whether the body stands on something right now (the float probe's support).
+        public bool IsSupported => HasSupport();
+
         private bool ControlsSelf => isOwned;
 
-        protected virtual void Awake() {
-            CacheWeight();
-            CacheShoveMask();
+        // The controls this peer simulates the body from: its own keyboard, a remote copy's source, or none (the body is
+        // moved by someone else).
+        private IMovementControls ActiveInput => ControlsSelf ? OwnInput : _remoteInput;
+
+        // The keyboard source of the player's own body, made on first use: the input buffer is injected after Awake.
+        // Null on peers that do not own this body.
+        public IMovementControls OwnInput {
+            get {
+                if (_ownInput == null && _input != null && ControlsSelf)
+                    _ownInput = new KeyboardMovementControls(_input, _stats);
+
+                return _ownInput;
+            }
+        }
+
+        // A ride or a seat holds the player in place (it moves the capsule itself): the movement does not walk the
+        // body, and a body other than the capsule follows the capsule instead of leading it.
+        public bool IsHeld { get; private set; }
+
+        public void SetHeld(bool isHeld) =>
+            IsHeld = isHeld;
+
+        // The body drifts in open space (CharacterDrift moves it): weightless, and the movement neither walks nor jumps.
+        public bool IsDrifting { get; private set; }
+
+        public void SetDrifting(bool isDrifting) {
+            IsDrifting = isDrifting;
+            DrivenBody.SetWeightless(isDrifting);
+        }
+
+        // Makes the movement drive another body instead of the capsule (null: the capsule again). A drifting player's
+        // weightlessness moves over to the new body.
+        public void SetDrivenBody(IMovableBody body) {
+            if (IsDrifting)
+                DrivenBody.SetWeightless(false);
+
+            _drivenBody = body;
+            if (IsDrifting)
+                DrivenBody.SetWeightless(true);
         }
 
         public override void OnStartLocalPlayer() {
             _moveSpeed = ReadStat(PlayerStatType.WalkSpeed);
             _jump.RefillAirJumps(ExtraAirJumps);
-            CacheWeight();
         }
 
-        private void Update() {
-            if (ControlsSelf == false)
+        // On a peer that does not own this body: simulate it as a copy from these controls (null: stop, the body is
+        // moved by someone else again). The body must be dynamic for the simulation to move it.
+        public void SetRemoteInput(IMovementControls source) {
+            _remoteInput = source;
+            if (source == null)
                 return;
 
-            _jump.ReadInput(_input.JumpHeld, HasSupport(), Time.deltaTime);
+            _jump.RefillAirJumps(ExtraAirJumps);
+        }
+
+        // On a peer that does not own this body: the look to turn toward instead of the synced one, degrees around the
+        // up axis, so a simulated copy turns at the same moment as it walks. ClearRemoteLook goes back to the synced one.
+        public void SetRemoteLook(float yaw) {
+            _remoteLookYaw = yaw;
+            _hasRemoteLook = true;
+        }
+
+        public void ClearRemoteLook() =>
+            _hasRemoteLook = false;
+
+        private void Update() {
+            IMovementControls source = ActiveInput;
+            if (source == null)
+                return;
+
+            _jump.ReadInput(source.JumpHeld, source.ConsumeJumpPress(), HasSupport(), Time.deltaTime);
         }
 
         private void LateUpdate() {
@@ -66,49 +138,33 @@ namespace Features.CharacterMovableModule.Scripts {
             if (_rb == null)
                 return;
 
-            // The server copy of a client-owned player is kinematic (its NetworkRigidbody follows the owner), so it
-            // never pushes by contact: the proxy shove has to run for it, while only the owner simulates a dynamic body.
-            if (ControlsSelf == false) {
-                if (isServer)
-                    ShoveNearbyBodies();
+            // A body nobody simulates on this peer (a copy before its first state packet) or a kinematic one (seated)
+            // does not move. Every simulated body, a remote copy too, pushes items by contact. A drifting body is moved
+            // by its drift.
+            IMovementControls source = ActiveInput;
+            if (source == null || DrivenBody.IsKinematic || IsHeld || IsDrifting)
                 return;
-            }
 
-            if (_rb.isKinematic) {
-                StopPushing();
-                return;
-            }
-
-            SimulateOwner();
+            Simulate(source);
         }
 
-        // A kinematic owner (bound to the ship) does not simulate: the last walk would stay in the synced push and the
-        // server would keep shoving bodies next to a player who stands still.
-        private void StopPushing() {
-            _pushStrength = 0f;
-            _pushSpeed = 0f;
-        }
-
-        private void SimulateOwner() {
-            if (_input == null)
+        // One physics step of the body from its controls: walk or brake, then jump and the extra air gravity.
+        private void Simulate(IMovementControls source) {
+            if (source == null)
                 return;
 
-            Vector3 planar = Flatten(_rb.linearVelocity);
-            _moveSpeed = _input.SprintHeld ? ReadStat(PlayerStatType.SprintSpeed) : ReadStat(PlayerStatType.WalkSpeed);
+            Vector3 planar = Flatten(DrivenBody.Velocity);
+            _moveSpeed = source.SprintHeld ? ReadStat(PlayerStatType.SprintSpeed) : ReadStat(PlayerStatType.WalkSpeed);
 
-            Vector3 wish = ReadWishDirection();
+            Vector3 wish = ReadWishDirection(source);
             DrivePlanar(wish, planar);
             ApplyJumpAndAirGravity();
         }
 
-        private Vector3 ReadWishDirection() {
-            Vector2 stick = _input.MoveStick;
-            Vector3 wish = _stats.CameraRelative
-                ? CameraPlanar(stick)
-                : new Vector3(stick.x, 0f, stick.y);
-
+        private Vector3 ReadWishDirection(IMovementControls source) {
+            Vector3 wish = source.ReadWish();
             if (HasSupport())
-                wish = Vector3.ProjectOnPlane(wish, _floatingController.SupportNormal);
+                wish = Vector3.ProjectOnPlane(wish, DrivenBody.SupportNormal);
 
             if (wish.sqrMagnitude > 1f)
                 wish.Normalize();
@@ -143,78 +199,46 @@ namespace Features.CharacterMovableModule.Scripts {
             Vector3 next = Vector3.MoveTowards(planar, desired, rate * Time.fixedDeltaTime);
             Vector3 accel = (next - planar) / Time.fixedDeltaTime;
             accel.y = 0f;
-            Vector3 force = Vector3.ClampMagnitude(accel, forceCap) * _rb.mass;
-            _rb.AddForce(force);
-
-            _pushStrength = force.magnitude;
-            _pushHeading = wish;
-            _pushSpeed = steering ? _moveSpeed : 0f;
+            Vector3 drive = Vector3.ClampMagnitude(accel, forceCap);
+            DrivenBody.AddAcceleration(drive);
         }
 
         private void ApplyJumpAndAirGravity() {
-            if (_floatingController == null)
+            IMovableBody body = DrivenBody;
+            if (body.SensesGround == false)
                 return;
 
             JumpTuning tuning = JumpTuning.Read(_stats);
             bool supported = HasSupport();
-            if (_jump.TryTakeoff(tuning, supported, _rb.linearVelocity.y, Physics.gravity.y, Time.fixedDeltaTime,
+            if (_jump.TryTakeoff(tuning, supported, body.Velocity.y, Physics.gravity.y, Time.fixedDeltaTime,
                     out float speedChange)) {
-                _floatingController.PauseSupport();
-                _rb.AddForce(new Vector3(0f, speedChange, 0f) * _rb.mass, ForceMode.Impulse);
+                body.PauseSupport();
+                _jumpPush.Begin(speedChange, tuning.JumpPushSeconds);
+                JumpCount = unchecked((byte)(JumpCount + 1));
             }
 
-            _jump.Land(tuning, supported, _rb.linearVelocity.y);
+            if (_jumpPush.IsPushing) {
+                PushOff(body, supported);
+                return;
+            }
+
+            _jump.Land(tuning, supported, body.Velocity.y);
             if (supported)
                 return;
 
-            float extra = _jump.AirGravityExtra(tuning, _rb.linearVelocity.y);
+            float extra = _jump.AirGravityExtra(tuning, body.Velocity.y);
             if (extra > 0f)
-                _rb.AddForce(_weight * extra);
+                body.AddAcceleration(Physics.gravity * extra);
         }
 
-        private void ShoveNearbyBodies() {
-            // Gated on the push intent, not on speed: a client walking into an item is stopped by its own copy of it,
-            // so its speed drops to zero exactly while it pushes.
-            if (_pushHeading.sqrMagnitude < 0.0001f || _pushStrength < 0.01f || _capsuleCollider == null)
-                return;
-
-            Vector3 shove = _pushHeading * Mathf.Max(_pushStrength, 0.1f);
-            Vector3 shoveDirection = shove.normalized;
-            Vector3 center = _capsuleCollider.transform.TransformPoint(_capsuleCollider.center);
-            float radius = _capsuleCollider.radius;
-            float height = _capsuleCollider.height;
-            Vector3 up = _capsuleCollider.transform.up;
-            Vector3 lead = Vector3.ClampMagnitude(shove, 1f) * _proxyReach;
-            if (connectionToClient != null)
-                lead += lead.normalized * (float)connectionToClient.rtt * 0.5f;
-
-            Vector3 origin = center + lead;
-            Vector3 top = origin + up * (height * 0.5f - radius);
-            Vector3 bottom = origin - up * (height * 0.5f - radius);
-            int count = Physics.OverlapCapsuleNonAlloc(
-                top,
-                bottom,
-                radius + _proxyPadding,
-                OverlapScratch,
-                _shoveMask,
-                QueryTriggerInteraction.Ignore);
-
-            for (int i = 0; i < count; i++) {
-                Rigidbody other = OverlapScratch[i].attachedRigidbody;
-                if (other == null || other.isKinematic || other == _rb || other.TryGetComponent(out CharacterMovableBase _))
-                    continue;
-
-                Vector3 contact = OverlapScratch[i].ClosestPoint(center);
-                Vector3 away = (contact - center).normalized;
-                if (Vector3.Dot(away, shoveDirection) <= 0.1f)
-                    continue;
-
-                // Bounded like a body contact: the drive force is shared by player and item by mass, and the item is never
-                // pushed faster than the player moves.
-                Vector3 impulse = Vector3.Project(shove, away) * (other.mass / (other.mass + _rb.mass));
-                if (Vector3.Dot(other.linearVelocity, shoveDirection) < _pushSpeed)
-                    other.AddForceAtPosition(impulse, contact);
-            }
+        // One step of the legs' push: this step's share of the takeoff speed, with the gravity of the step taken off
+        // (the body already left the ground, so it falls meanwhile), so the push ends at the full takeoff speed and the
+        // jump keeps its height. Neither landing nor the extra air gravity counts until the push is over.
+        private void PushOff(IMovableBody body, bool supported) {
+            float speed = _jumpPush.Step(Time.fixedDeltaTime);
+            body.AddVelocityChange(new Vector3(0f, speed, 0f));
+            if (supported == false)
+                body.AddAcceleration(-Physics.gravity);
         }
 
         private void CaptureFacingYaw() {
@@ -238,28 +262,10 @@ namespace Features.CharacterMovableModule.Scripts {
             if (_rotatablePart == null)
                 return;
 
-            Quaternion target = Quaternion.Euler(0f, _facingYaw, 0f);
+            float yaw = ShownLookYaw;
+            Quaternion target = Quaternion.Euler(0f, yaw, 0f);
             float t = 1f - Mathf.Exp(-ReadStat(PlayerStatType.LookTurnRate) * Time.deltaTime);
             _rotatablePart.rotation = Quaternion.Slerp(_rotatablePart.rotation, target, t);
-        }
-
-        private static Vector3 CameraPlanar(Vector2 stick) {
-            Transform cameraTransform = Camera.main != null ? Camera.main.transform : null;
-            if (cameraTransform == null || stick.sqrMagnitude < 0.0001f)
-                return Vector3.zero;
-
-            Vector3 forward = cameraTransform.forward;
-            Vector3 right = cameraTransform.right;
-            forward.y = 0f;
-            right.y = 0f;
-            if (forward.sqrMagnitude < 0.0001f || right.sqrMagnitude < 0.0001f)
-                return new Vector3(stick.x, 0f, stick.y);
-
-            Vector3 world = forward.normalized * stick.y + right.normalized * stick.x;
-            if (world.sqrMagnitude > 1f)
-                world.Normalize();
-
-            return world;
         }
 
         private static Vector3 Flatten(Vector3 velocity) {
@@ -267,7 +273,7 @@ namespace Features.CharacterMovableModule.Scripts {
         }
 
         private bool HasSupport() {
-            return _floatingController != null && _floatingController.HasSupport;
+            return DrivenBody.HasSupport;
         }
 
         private float ReadStat(PlayerStatType type) =>
@@ -275,21 +281,5 @@ namespace Features.CharacterMovableModule.Scripts {
 
         private int ExtraAirJumps =>
             Mathf.RoundToInt(ReadStat(PlayerStatType.ExtraAirJumps));
-
-        // The shove stands in for the body contact of a client-owned player, so it reaches every layer that body collides
-        // with (items lie on Interactable), not only the ground the float probe stands on. Players never shove players.
-        private void CacheShoveMask() {
-            int layer = _capsuleCollider != null ? _capsuleCollider.gameObject.layer : gameObject.layer;
-            _shoveMask = 0;
-            for (int other = 0; other < LAYER_COUNT; other++) {
-                if (Physics.GetIgnoreLayerCollision(layer, other) == false)
-                    _shoveMask |= 1 << other;
-            }
-        }
-
-        private void CacheWeight() {
-            if (_rb != null)
-                _weight = Physics.gravity * _rb.mass;
-        }
     }
 }

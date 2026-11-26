@@ -7,6 +7,10 @@ the editor is the host, a Windows development build of the game is the client. O
 `Invoke-AgentEditor.ps1 -AgentDir . -Command run-tests -Mode PlayMode -Filter CoopTwoProcess`
 (or Test Runner → PlayMode → `CoopTwoProcessTest`). It takes about 70 s, plus about 30-80 s when the client is rebuilt.
 
+A standing player is carried by the flying deck, not bound to it: a check that a player rides the ship reads
+`IsAboard` (`CoopRunState.IsAboard`, `CoopObservation.IsAboard`, on the server `IShipRiders.IsAboard` of the client's
+copy; see `SessionQueries.IsAboard`), and `IsRiding` (bound to a seat) only for seats and the release in the lobby.
+
 - **The client build.** Before Play mode the test's `PrebuildSetup` (`CoopClientBuild`, editor) builds Addressables
   content and a Win64 development player of the Build Settings scenes into `MirrorCoopBase/Builds/CoopClient/`
   (git-ignored). It skips the build when the content of `Assets`, `Packages` and `ProjectSettings` is the same as
@@ -67,7 +71,7 @@ the editor is the host, a Windows development build of the game is the client. O
   loop tests, the coop host test and the client build (no NUnit there); the host side reuses `LoopSmokeSession`,
   `LoopSmokeFlight` and `LoopSmokeShipRunConfigOverride`.
 ## Coop flight tests (the client flies and navigates)
-Four host tests in `Tests/Coop/Host/`, one scenario each, the client doing the action and the host checking it; each
+Five host tests in `Tests/Coop/Host/`, one scenario each, the client doing the action and the host checking it; each
 starts its own client build process with its own `-scenario` and takes about 1.5-2.5 min. **Run one test class per
 Test Runner run** (`-Filter CoopClientThrottleAndHelmTest`, ...): the fast-timings config override needs a fresh
 `ProjectContext`, so a second test in the same play session fails in its SetUp ("ProjectContext exists before the test").
@@ -96,6 +100,15 @@ Test Runner run** (`-Filter CoopClientThrottleAndHelmTest`, ...): the fast-timin
   inside a small rock's data sphere and clear of its contact sphere gives no impact on either peer and no new damage.
   Then the hull is destroyed in that cruise: host and client are back in the lobby, free of the ship and walking
   (`Tests.Shared.PlayerReleaseProbe`). Client screenshot: `client-rock-impact`.
+- `CoopClientDeckWalkLagTest` (`deck-walk-lag`, `CoopDeckWalkLagClient`): the smoothness of a client's copy on the
+  flying deck with a bad link. In the first cruise the client sends with the latency profile "150 ms, jitter 20, loss
+  5%" (`ConnectionConfig.LatencyProfiles` by its label, applied to the client's own outgoing messages through
+  `ConnectionNetworkManager.LatencySimulation`; the host sends without lag), stands in the deck's middle, settles 2 s
+  and walks short legs there and back with stops (2 rounds of forward, back, right, left, 0.8 s each, through the
+  scripted move input). Over the walk the host reads the server copy's `BodyStateReceiveStats` (`TakeReport` at the
+  start and the end): no snap, the copy's error to the owner's packet (at the copy's delay) under 0.3 m on average;
+  the client walked at least 4 m on the deck and is aboard on both peers. The numbers go to the log (`[CoopTest] the
+  client's copy while it walked`). The client sends without lag again after its report.
 - Shared parts: `CoopFlightHostHarness` (host, client process, reports, commands, finish), `CoopScenarioClientBot` (the client's base:
   join, board, wait for commands, report, screenshots, finish), `CoopClientScenarios` (scenario name → bot), step and
   command names in `CoopFlightSteps`, the extra observed fields in `CoopObservation.Flight.cs` / `CoopFlightObserver`.

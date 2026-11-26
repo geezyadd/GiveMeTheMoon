@@ -57,6 +57,7 @@ namespace Tests.Coop.Shared {
             state.HeldItemNetId = hand.Held != null ? hand.Held.netId : 0u;
             ShipRider rider = player.GetComponent<ShipRider>();
             state.IsRiding = rider.IsRiding;
+            state.IsAboard = SessionQueries.IsAboard(ship, player);
             state.IsSeated = rider.IsSeated;
             state.IsTurretGunner = ship != null && CoopTurret.TryFindStation(ship, out ShipTurretStation turret) && turret.IsOccupiedByLocalPlayer;
             Rigidbody body = player.GetComponent<Rigidbody>();

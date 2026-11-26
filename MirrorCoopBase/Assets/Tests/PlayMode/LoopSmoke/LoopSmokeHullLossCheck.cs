@@ -89,7 +89,6 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.IsFalse(body.isKinematic, $"Hull loss: the host's body is kinematic {where}.");
             Assert.IsTrue(body.detectCollisions, $"Hull loss: the host's body has its collisions off {where}.");
             Assert.IsTrue(Player.GetComponent<FloatingController>().HoverEnabled, $"Hull loss: the host's hover is off {where}.");
-            Assert.IsTrue(Player.GetComponent<NetworkRigidbodyUnreliable>().enabled, $"Hull loss: the host's network body is silenced {where}.");
             Assert.IsFalse(Player.GetComponent<PlayerLifeBody>().Damageable.IsDead, $"Hull loss: the host is dead {where}.");
             Assert.IsFalse(SessionQueries.Resolve<CharacterInputBuffer>().IsBlocked, $"Hull loss: the host's controls are blocked {where}.");
         }

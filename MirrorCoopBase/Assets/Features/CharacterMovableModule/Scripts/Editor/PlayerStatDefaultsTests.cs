@@ -33,6 +33,7 @@ namespace Features.CharacterMovableModule.Scripts.Editor {
         private const float SHORT_HOP_GRAVITY = 2f;
         private const float EXTRA_AIR_JUMPS = 0f;
         private const float LOOK_TURN_RATE = 12f;
+        private const float JUMP_PUSH_SECONDS = 0.07f;
 
         private const float SPRINT_SPEED_BONUS = 0.5f;
         private const float SPRINT_SPEED_WITH_BONUS = 12f;
@@ -59,6 +60,7 @@ namespace Features.CharacterMovableModule.Scripts.Editor {
             Assert.AreEqual(SHORT_HOP_GRAVITY, DefaultOf(configuration, PlayerStatType.ShortHopGravity), TOLERANCE);
             Assert.AreEqual(EXTRA_AIR_JUMPS, DefaultOf(configuration, PlayerStatType.ExtraAirJumps), TOLERANCE);
             Assert.AreEqual(LOOK_TURN_RATE, DefaultOf(configuration, PlayerStatType.LookTurnRate), TOLERANCE);
+            Assert.AreEqual(JUMP_PUSH_SECONDS, DefaultOf(configuration, PlayerStatType.JumpPushSeconds), TOLERANCE);
         }
 
         [Test]

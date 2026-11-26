@@ -1,0 +1,23 @@
+{
+    "name": "Features.PlayerReplicaModule",
+    "rootNamespace": "Features.PlayerReplicaModule",
+    "references": [
+        "Features.AttackModule.Contracts",
+        "GUID:30817c1a0e6d646d99c048fc403f5979",
+        "GUID:72872094b21c16e48b631b2224833d49",
+        "GUID:0d8beb7f090555447a6cf5ce9e54dbb4",
+        "GUID:28f96731f5c645d89bbee8e9e47e5c58",
+        "GUID:fdd0b9d0874240ecb4326459ad87a585",
+        "GUID:d3b0c1a2e4f54a6b9c8d7e6f5a4b3c21",
+        "GUID:a637b2d2f1cb470a8bea9746a87397c0"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

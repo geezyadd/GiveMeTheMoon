@@ -8,6 +8,9 @@ namespace Features.GrabModule.Scripts {
         [Tooltip("How far the player reaches, measured from the eye along the view, not from the camera.")]
         [SerializeField, Min(0f)] private float _aimRange = 4f;
 
+        [Tooltip("For this long, seconds, a target the aim just slipped off stays aimed at: on a moving deck the ray can miss for a frame and the outline would flicker.")]
+        [SerializeField, Min(0f)] private float _aimHoldSeconds = 0.1f;
+
         [Tooltip("Layers of the things the player can grab or use.")]
         [SerializeField] private LayerMask _interactableMask = 1 << 7;
 
@@ -22,6 +25,9 @@ namespace Features.GrabModule.Scripts {
 
         public float AimRange =>
             _aimRange;
+
+        public float AimHoldSeconds =>
+            _aimHoldSeconds;
 
         public LayerMask InteractableMask =>
             _interactableMask;

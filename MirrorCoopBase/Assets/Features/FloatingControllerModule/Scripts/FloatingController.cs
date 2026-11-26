@@ -26,14 +26,20 @@ namespace Features.FloatingControllerModule {
         [SerializeField] private Rigidbody _rb;
         [SerializeField] private bool _pushSupportBody = true;
 
+        private readonly SupportProbe _probe = new();
         private RaycastHit _supportHit;
+        private ICarrier _carrierLookup;
         private Vector3 _supportNormal = Vector3.up;
         private bool _hasSupport;
         private float _lockoutLeft;
 
         public bool HasSupport => _hasSupport && _lockoutLeft <= 0f;
+        // The moving carrier under the body (on the support's object or a parent of it), or null on still ground.
+        public ICarrier SupportCarrier => HasSupport ? _carrierLookup : null;
         public Vector3 SupportNormal => _supportNormal;
         public bool HoverEnabled { get; set; } = true;
+        // On a peer that does not own the body: probe and hover anyway, because this peer simulates a copy of it.
+        public bool SimulatesCopy { get; set; }
         public float StandHeight =>
             _hoverClearance - (ProbeStart().y - transform.position.y);
         public HoverSpringSettings Spring => new HoverSpringSettings(
@@ -44,7 +50,7 @@ namespace Features.FloatingControllerModule {
             _capsuleCollider.center + Vector3.down * (_capsuleCollider.height * 0.5f))).y;
 
         private void FixedUpdate() {
-            if (isOwned == false)
+            if (isOwned == false && SimulatesCopy == false)
                 return;
 
             if (_lockoutLeft > 0f) {
@@ -67,34 +73,11 @@ namespace Features.FloatingControllerModule {
         }
 
         private void SampleSupport() {
-            Vector3 origin = ProbeStart();
             Vector3 direction = transform.TransformDirection(_probeLocal.normalized);
-            float radius = Mathf.Max(_probeRadius, 0.05f);
-            float castDistance = Mathf.Max(_probeLength - radius, 0.01f);
-
-            int hits = Physics.SphereCastNonAlloc(
-                origin,
-                radius,
-                direction,
-                _hits,
-                castDistance,
-                _supportMask,
-                QueryTriggerInteraction.Ignore);
-
-            float nearest = float.MaxValue;
-            bool found = false;
-            for (int i = 0; i < hits; i++) {
-                RaycastHit candidate = _hits[i];
-                if (BelongsToSelf(candidate) || candidate.distance >= nearest)
-                    continue;
-
-                nearest = candidate.distance;
-                _supportHit = candidate;
-                found = true;
-            }
-
+            bool found = _probe.TryCast(ProbeStart(), direction, _probeRadius, _probeLength, _supportMask, transform,
+                _rb, out RaycastHit hit);
             if (found)
-                _supportHit.distance += radius;
+                _supportHit = hit;
 
             if (found == false
                 || Vector3.Angle(Vector3.up, _supportHit.normal) > _maxSlope
@@ -106,6 +89,7 @@ namespace Features.FloatingControllerModule {
 
             _hasSupport = true;
             _supportNormal = _supportHit.normal;
+            _carrierLookup = _probe.CarrierOf(_supportHit.collider);
         }
 
         private void HoldClearance() {
@@ -117,7 +101,9 @@ namespace Features.FloatingControllerModule {
             if (HoverSpring.Holds(spring, velocity.y) == false)
                 return;
 
-            Vector3 supportVelocity = _supportHit.rigidbody != null
+            // A body on a carrier moves with it by its rider and keeps a velocity relative to it, so the carrier's own
+            // motion is no closing speed.
+            Vector3 supportVelocity = _supportHit.rigidbody != null && _carrierLookup == null
                 ? _supportHit.rigidbody.linearVelocity
                 : Vector3.zero;
             float closingSpeed = Vector3.Dot(Vector3.up, velocity - supportVelocity);
@@ -141,17 +127,6 @@ namespace Features.FloatingControllerModule {
             return _rb != null ? _rb.position : transform.position;
         }
 
-        private bool BelongsToSelf(RaycastHit hit) {
-            if (hit.collider == null)
-                return true;
-
-            if (_rb != null && hit.rigidbody == _rb)
-                return true;
-
-            Transform hitTransform = hit.collider.transform;
-            return hitTransform == transform || hitTransform.IsChildOf(transform);
-        }
-
         private void OnDrawGizmosSelected() {
             Vector3 origin = ProbeStart();
             Vector3 direction = transform.TransformDirection(_probeLocal.normalized);
@@ -160,7 +135,5 @@ namespace Features.FloatingControllerModule {
             Gizmos.color = Color.white;
             Gizmos.DrawWireSphere(origin + direction * _hoverClearance, 0.05f);
         }
-
-        private readonly RaycastHit[] _hits = new RaycastHit[8];
     }
 }

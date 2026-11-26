@@ -816,6 +816,7 @@ GameObject:
   - component: {fileID: 6173248887525586839}
   - component: {fileID: 5191726982804064033}
   - component: {fileID: 2247813451485441810}
+  - component: {fileID: 8823100000000000001}
   m_Layer: 0
   m_Name: StationPad
   m_TagString: Untagged
@@ -1780,3 +1781,18 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_renderer: {fileID: 1070624638658187526}
   m_maskType: 0
+--- !u!114 &8823100000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 956412859401598705}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ea5b385b2fa4d45b9af80aed291f89c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _floors:
+  - {fileID: 8215378165358305546}
+  _returnPoint: {fileID: 0}

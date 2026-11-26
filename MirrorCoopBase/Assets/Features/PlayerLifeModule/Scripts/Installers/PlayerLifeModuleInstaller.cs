@@ -10,6 +10,7 @@ namespace Features.PlayerLifeModule.Scripts.Installers {
             Container.BindInterfacesTo<AllDeadRule>().AsSingle();
             Container.BindInterfacesTo<PlayerLifeStateMachineFactory>().AsSingle();
             Container.BindInterfacesTo<FallKillSystem>().AsSingle();
+            Container.BindInterfacesTo<DriftLimitKillSystem>().AsSingle();
             Container.BindInterfacesTo<PlayerLifeSystem>().AsSingle();
             Container.BindInterfacesTo<PlayerLifeQuery>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

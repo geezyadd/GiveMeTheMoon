@@ -17,6 +17,7 @@ namespace Features.CharacterMovableModule.Scripts.PlayerStats {
         FallGravity = 14,
         ShortHopGravity = 15,
         ExtraAirJumps = 16,
-        LookTurnRate = 17
+        LookTurnRate = 17,
+        JumpPushSeconds = 18
     }
 }

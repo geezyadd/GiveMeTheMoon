@@ -2,6 +2,11 @@
 
 `LoopSmokeTest` and its checks, the ride test and the soak test. Read the [root AGENTS.md](../../../../../AGENTS.md) first. The two-player test is in [Tests/Coop](../../Coop/AGENTS.md).
 
+**Riding in the tests.** A standing player is never bound to the flying ship: the deck carries it as a physical body.
+So "rides" / "aboard" in a check means `SessionQueries.IsAboard` (seated, or the player's `ICarrierRider.Carrier` is the
+ship's `ShipCarrier`, also in a jump over the deck, through `IShipRiders.IsAboard`); `ShipRider.IsRiding` means bound
+to a seat and is only checked for seats and for the release after a run ends.
+
 ## Loop autotest
 The PlayMode test `LoopSmokeTest` (`Assets/Tests/PlayMode/LoopSmoke/`) plays the M1 loop on a host by itself:
 menu → Host → lobby → Start → `GameScene`, installs 2 engines, takes the radar off, drops, picks up and reinstalls it by hand through the real third-person
@@ -29,7 +34,7 @@ point, window closes when walking away, the bought items come to rest within a t
 and destroys the hull in that cruise (`LoopSmokeRunEnd.HullLossInCruise`, `LoopSmokeSession.ReturnToLobbyByHullLossCoroutine`:
 hull 0 -> the crew in the lobby; `LoopSmokeHullLossCheck`: the host stands by the minigun before the takeoff and sits at it
 in the cruise through the seat's use command, so the hull is lost with the host seated and riding; back in the lobby
-it is not riding, not seated, not kinematic, has collisions, hover and its network body back, is alive with unblocked
+it is not riding, not seated, not kinematic, has collisions and hover back, is alive with unblocked
 controls, stands still on the lobby scene's ground and walks under the scripted move input; at the first station of
 run 3 it walks on the deck under that input and stays on it), returns to the menu and checks that there are no
 errors in the log. Before that check `LoopSmokeRejectCheck` joins a silent loopback "host", hands the client an
@@ -53,7 +58,7 @@ it is in the live field's `BrokenRocks`, `RockDestroyed` fired once (a second br
 hidden on the host, and after landing the broken list is empty. In the same cruise `LoopSmokeRockImpactCheck` flies
 into rocks through `IShipRockImpactDebug` (the debug window's rock aim entry; the hit is the real server check): a small rock breaks
 once (broken list, `RockDestroyed` once), the synced hull drops and a small impact arrives; a large rock gives a large
-impact, stays whole, the ship never gets within the contact radius and moves back out, and the player still rides on the
+impact, stays whole, the ship never gets within the contact radius and moves back out, and the player is still aboard on the
 deck (in ship space); then the ship goes back and faces the destination. Every
 takeoff logs its longest frame (`[LoopSmoke] loop N takeoff`). The test shortens flight timings with its own copy of
 `ShipRunConfig` and adds the debug networked beacon to its own copy of `FieldStructureCatalog` and, as a giant class of its own, to its own copies of the field configuration's difficulty profiles (weight 2 against about 1 of the game's classes, so nearly every short test field has a networked
@@ -90,9 +95,9 @@ ring empty); after the landing the dropped pistol is removed.
 through the real camera, holds E (`LocalPlayerInteraction.Interact`) and moves the mouse forward through the
 interaction's look input (`MoveHeldControl`) until the ship takes off and the handle is at Full (the server gave it to the
 host's key, the view was locked while held, it let go and stayed at Full on release; the steps are the shared
-`Tests.Shared.ShipThrottleHandling`, also used by the coop client); in that cruise the riding host pulls the handle back
+`Tests.Shared.ShipThrottleHandling`, also used by the coop client); in that cruise the host aboard pulls the handle back
 to Stop by hand (the ship stops within 6 s and stays still for 2 s) and pushes it to Full again (it flies again), both
-with the player riding on the deck; after the landing the handle is
+with the player aboard on the deck; after the landing the handle is
 back at Stop and free. `LoopSmokeRockNearPassCheck` (run 1 cruise 1, after the rock impacts): "Show impact volume" clicked on through the debug window, the ship is put to pass the biggest lone small rock with its side halfway between the rock's contact and data spheres; the hull must come inside the data sphere, and the rock may break only if the hull came within the contact sphere; then the toggle off and the ship back. `LoopSmokeDeckItemCheck` (run 2 flight 3): before the takeoff the host grabs two free items with a box
 collider nearest to the deck's middle (in practice the wrench and the hammer of the tool rack; some station drops lie
 under the deck, out of reach, so an item the aim cannot take is skipped and the list is tried up to 3 times) through
@@ -135,8 +140,8 @@ its own file merges without conflicts. To change the scenario itself (one more r
 The ride test `ShipRideTest` (`Assets/Tests/PlayMode/ShipRide/`, about 75 s, `-Filter ShipRide`) flies six loops on a host on the
 same fast timings, one per spot of the deck found from its geometry (`ShipRideDeckSpots`): the nose, the stern, both
 side edges, the centre and the stern in a jump at the lever (the lever is pulled at the top of a real jump through
-`CharacterInputBuffer`). After takeoff and in cruise the player must ride, be alive and stay on the deck; in cruise it
-jumps (from the centre with a sideways hop) and must land back on the deck still riding.
+`CharacterInputBuffer`). After takeoff and in cruise the player must be aboard, alive and on the deck; in cruise it
+jumps (from the centre with a sideways hop) and must land back on the deck still aboard.
 
 ## Soak test
 The soak test `LoopSoakTest` (`Assets/Tests/PlayMode/LoopSoak/`, `[Category("Soak")]`, about 3 minutes) flies 15
