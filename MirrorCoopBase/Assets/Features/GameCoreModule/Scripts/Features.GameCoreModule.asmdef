@@ -2,6 +2,7 @@
     "name": "Features.GameCoreModule",
     "rootNamespace": "Features.GameCoreModule",
     "references": [
+        "Features.TargetModule",
         "GUID:a637b2d2f1cb470a8bea9746a87397c0",
         "GUID:03a835aea0a645a7b43f5f0c61e8d191",
         "GUID:7db74d1a1ce84239aafaf8624bce950c",

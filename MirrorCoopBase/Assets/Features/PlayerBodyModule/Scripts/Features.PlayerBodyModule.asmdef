@@ -15,6 +15,7 @@
         "Features.AttackModule",
         "Features.AttackModule.Contracts",
         "Features.GrabModule",
+        "Features.TargetModule",
         "InputModule",
         "InputModuleRalization"
     ],

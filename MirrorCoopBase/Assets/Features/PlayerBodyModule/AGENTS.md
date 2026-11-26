@@ -18,13 +18,11 @@ stay capsules; the feel numbers are not tuned. The animator and its parameters a
 ## Assembly
 `Features.PlayerBodyModule` (layer 5; references Mirror, Zenject, `CharacterMovableModule`, `ActiveRagdollModule`,
 `FloatingControllerModule`, `CameraModule`, `PlayerReplicaModule`, `PlayerAnimationModule`, `GameCoreModule.Contracts`,
-`Unity.Animation.Rigging`, `AttackModule`, `AttackModule.Contracts`, `GrabModule`, `InputModule`,
+`Unity.Animation.Rigging`, `AttackModule`, `AttackModule.Contracts`, `GrabModule`, `TargetModule`, `InputModule`,
 `InputModuleRalization`). No installer: nothing is bound. Editor code in `Features.PlayerBodyModule.Editor`; tests in
-`Features.PlayerBodyModule.Editor.Tests` (`SlapAimRuleTests`: no head near or behind, the nearer of two, facing
-sideways, a head right below; `PlayerAttackPressRuleTests`: a free press counts, an item in the hand, a seat, a
-control block, a free cursor or a running attack refuse it; `SlapHitRuleTests`: a fast hand scaled, a slow one
-raised to the minimum along its motion, a still one toward the head; the reach's distance to a head ahead, beside,
-behind, and from a still hand).
+`Features.PlayerBodyModule.Editor.Tests` (`PlayerAttackPressRuleTests`: a free press counts, an item in the hand, a
+seat, a control block, a free cursor or a running attack refuse it; `HitPushRuleTests`: a fast limb scaled, a slow
+one raised to the minimum along its motion, a still one toward the head).
 - `PlayerRagdollBody` (on `DummyPlayer`, execution order −190: after the carriers take their step pose, before what
   reads the body): wakes the ragdoll while the player is owned here or its `BodyCopyDriver` simulates it as a copy,
   and it is not suspended; keeps it asleep otherwise.
@@ -58,52 +56,36 @@ behind, and from a still hand).
   builds and evaluates it right after the animator) with `SlapArmReach` (`TwoBoneIKConstraint`: right arm → forearm →
   hand, position only) and its target `SlapReachTarget` on the `DummyPlayer` root (not under the model, which the
   sampler turns while sampling).
-- The slap is AttackModule's `Attacker` on `DummyPlayer` with `SlapAttack` (aim origin `SlapHeadCenter`, an empty
-  point on the head bone in the middle of the head, 0.14 local up from the bone: the head limb's own pivot is down at
-  the neck, and slaps aimed there hit the neck). The player's parts of it:
+- The slap is AttackModule's `Attacker` on `DummyPlayer` with `SlapAttack`, `TargetAttackAim` (origin
+  `SlapHeadCenter`, facing the movement's `RotatablePart`, which turns to the shown look on every peer) and
+  `AttackHitDetector` (the `RightHand` limb). The player is a target too: TargetModule's `Target` on `DummyPlayer`
+  (`Hittable`, aim point `SlapHeadCenter`, an empty point on the head bone in the middle of the head, 0.14 local up
+  from the bone: the head limb's own pivot is down at the neck, and slaps aimed there hit the neck; part: the `Head`
+  limb's rigidbody; only while simulated). The player's own parts of it:
   - `PlayerAttackPresses` (`IAttackPresses`; refs: the movement, `BodyCopyDriver`, `GrabController`, the `Attacker`):
     on the owner's peer the fire button, counted only when `PlayerAttackPressRule` allows it (an empty hand: an item
     in the hand takes the fire button, a pistol fires and nothing slaps; not seated; the controls not blocked; the
     cursor not free; no attack running), so a refused press never reaches the copies; on another peer the owner's
     count in the packet the copy shows, while the copy is simulated.
-  - `PlayerAttackAim` (`IAttackAim`; refs: the movement, its own `PlayerSlapHit`): the nearest head of another
-    player (`BodyStateChannelRegistry`, awake ragdolls only) in front (`SlapAimRule.PickHead`: within the attack's
-    `Max Distance` of its own head, at most `Max Angle` off the shown look on the ground plane); the heads are the
-    players' `PlayerSlapHit` until the TargetModule.
+  - `PlayerHitPush` (refs: its `Target`, the movement, the `Head` and `Spine2` limbs): the reaction to a hit on its
+    target, on the peer where the hit landed: the head limb gets a velocity change at the aim point
+    (`AddForceAtPosition`, so the head also tips away) and the chest `Chest Share` 0.6 of it (not while held or
+    asleep): the head jerks, the upper body bends at the hips and the joints bring it back. The head's velocity
+    change is the hitting limb's velocity x `Limb Speed Scale` 6, at least `Min Head Speed` 14 m/s, at most
+    `Max Head Speed` 40 m/s (`HitPushRule.HeadVelocity`). The slapped player's owner pushes its real body and the
+    others follow its packets; a peer where the hand misses shows no push. A body that is hit but not pushed is
+    logged with `Debug.LogError` (prefix `Attack:`) for now.
   History (2026-11-26): `PlayerSlapAim` did the aim and the reach from `PlayerAnimationDriver.Slapped`, and the
   press count was `IMovementControls.SlapCount` from `CharacterInputBuffer`; the reach went from 0 at the start to 1
-  by 0.3, held to 0.45, which pulled the arm straight to the head and lost the wind-up.
-- `PlayerSlapHit` (on `DummyPlayer`; refs: the `Attacker`, `PlayerAttackAim` (its `PickedHead` is the target: the
-  head's transform alone does not lead back to its player, an awake ragdoll's model is a scene root of its own), the
-  movement, the player's own head `RagdollLimb` and
-  `SlapHeadCenter` (`HeadCenter`; it is also this player's head as a target of others' slaps), the right hand's and
-  the chest's `RagdollLimb`): the hit is played on every peer by itself, nothing goes over the network. Wherever the slapper's
-  body is simulated (the owner's own; a copy elsewhere, which slaps when the owner's packets say so and aims on that
-  peer), in the attack's hit window (`Attacker.IsInHitWindow`), once per attack, when that hand touches the
-  head of any other player (`RagdollLimb.Touching`: a contact with a head limb's rigidbody, face included, found among
-  the players of `BodyStateChannelRegistry`; also a head the aim did not pick, so a fingertip on a face always lands;
-  2026-11-26 was the aimed head only, and a head outside the aim at the press got touched with no hit; the hand's
-  speed is the contact's relative speed) or its reach comes within `Hit Radius` 0.7 m of the aimed head's centre (the reach is the
-  segment from the hand's centre `Hit Reach Ahead` 0.6 m along its motion, `SlapHitRule.DistanceToReach`: the hit zone
-  is a capsule stretched the way the hand swings, so slaps land more easily; 2026-11-26 was a 0.6 m sphere around the
-  hand, then 0.6 m with 0.4 m ahead, where fingers touching the face still missed), it pushes the slapped
-  player's body on this peer: the head limb gets a velocity change at `HeadCenter` (`AddForceAtPosition`, so the head
-  also tips away) and the chest limb (`Spine2`) `Chest Share` 0.6 of it (not while held or asleep): the head jerks,
-  the upper body bends at the hips and the joints bring it back. The head's velocity change is the hand's velocity ×
-  `Hand Speed Scale` 6, at least `Min Head Speed` 14 m/s, at most `Max Head Speed` 40 m/s
-  (`SlapHitRule.HeadVelocity`). So the push comes exactly when the hand reaches the head as each peer shows it; the
-  slapped player's owner pushes its real body and the others follow its packets, and a peer where the hand misses
-  shows no push.
-  History (2026-11-26): first the slapper's owner alone detected the hit and sent it by a command and a `ClientRpc`
-  to every peer, which pushed the head when the message came, out of step with the slapping copy's hand there; the hit
-  radius was 0.25, then 0.4 m, which a colliding hand could never reach (the player is scaled 1.76: the head capsule
-  is 0.39 m round and the hand 0.09 m, so a touching hand stays about 0.48 m from the centre), so no slap ever hit;
-  the hand aimed at the head limb's pivot at the neck and eased to a stop there; strength went scale 1 / 2.5 / 4 → 6,
-  minimum none / 6 / 9 → 14, max 10 / 20 / 30 → 40 m/s, head only → head and chest (the head alone, 25 of the body's
-  305 kg, only swayed the body: its push spreads over the whole mass).
-  For now every slap is logged with `Debug.LogError` (prefix `Slap:`): on every peer the hit here (touched or came close, hand
-  and head speed, distance) or the miss (how close the hand came), and why a hit body was not pushed. Nothing else of
-  the body is pushed.
+  by 0.3, held to 0.45, which pulled the arm straight to the head and lost the wind-up. Then `PlayerAttackAim` and
+  `PlayerSlapHit` aimed at and hit the players' heads over `BodyStateChannelRegistry`, until the TargetModule. First
+  the slapper's owner alone detected the hit and sent it by a command and a `ClientRpc` to every peer, which pushed
+  the head when the message came, out of step with the slapping copy's hand there; the hit radius was 0.25, then
+  0.4 m, which a colliding hand could never reach (the player is scaled 1.76: the head capsule is 0.39 m round and
+  the hand 0.09 m, so a touching hand stays about 0.48 m from the centre), so no slap ever hit; the hand aimed at the
+  head limb's pivot at the neck and eased to a stop there; strength went scale 1 / 2.5 / 4 -> 6, minimum none / 6 /
+  9 -> 14, max 10 / 20 / 30 -> 40 m/s, head only -> head and chest (the head alone, 25 of the body's 305 kg, only
+  swayed the body: its push spreads over the whole mass).
 - `CapsuleColliders`: the capsule's colliders (not the ragdoll's), turned off, kept off and restored.
 - `RagdollMovableBody`: `IMovableBody` over `RagdollBody` + `RagdollGroundSensor` + `RagdollCarrierRide` (root limb
   position, mass-weighted velocity, total mass, acceleration and velocity change on every limb, `PauseSupport` = the

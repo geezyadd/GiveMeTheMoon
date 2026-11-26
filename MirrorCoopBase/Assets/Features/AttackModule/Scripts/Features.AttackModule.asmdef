@@ -3,7 +3,10 @@
     "rootNamespace": "Features.AttackModule",
     "references": [
         "Features.AttackModule.Contracts",
-        "Features.PlayerAnimationModule"
+        "Features.PlayerAnimationModule",
+        "Features.ActiveRagdollModule",
+        "Features.TargetModule",
+        "Zenject"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

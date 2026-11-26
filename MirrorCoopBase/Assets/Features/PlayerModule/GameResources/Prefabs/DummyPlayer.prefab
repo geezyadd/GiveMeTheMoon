@@ -70,10 +70,12 @@ GameObject:
   - component: {fileID: 7209845104136634601}
   - component: {fileID: 7209845104136634602}
   - component: {fileID: 7209845104136634603}
-  - component: {fileID: 6290574641071763115}
   - component: {fileID: 2340632800929653560}
   - component: {fileID: 3688231683049855381}
-  - component: {fileID: 5280801056556762471}
+  - component: {fileID: 8502467644027034660}
+  - component: {fileID: 8426254678274869613}
+  - component: {fileID: 6222763569682566764}
+  - component: {fileID: 5197233016674642156}
   m_Layer: 0
   m_Name: DummyPlayer
   m_TagString: Untagged
@@ -612,31 +614,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _movable: {fileID: 2109845104136634489}
   _ragdoll: {fileID: 334446075228949800}
---- !u!114 &6290574641071763115
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1091338388048282597}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 88cfb0a9e7674274bbc1a2b48ca350cb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _attacker: {fileID: 2340632800929653560}
-  _aim: {fileID: 5280801056556762471}
-  _movable: {fileID: 2109845104136634489}
-  _head: {fileID: 759872354341130232}
-  _headCenter: {fileID: 3531564585735275323}
-  _hand: {fileID: 2695458734983113549}
-  _chest: {fileID: 6293829724816084365}
-  _hitRadius: 0.7
-  _hitReachAhead: 0.6
-  _handSpeedScale: 6
-  _minHeadSpeed: 14
-  _maxHeadSpeed: 40
-  _chestShare: 0.6
 --- !u!114 &2340632800929653560
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -651,7 +628,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _attack: {fileID: 11400000, guid: 409281448457315478507c6b4d5d6d5c, type: 2}
   _presses: {fileID: 3688231683049855381}
-  _aim: {fileID: 5280801056556762471}
+  _aim: {fileID: 8426254678274869613}
   _animation: {fileID: 7209845104136634603}
   _reach: {fileID: 1884149545872864412}
   _aimOrigin: {fileID: 3531564585735275323}
@@ -671,7 +648,7 @@ MonoBehaviour:
   _copy: {fileID: 8419845104136634502}
   _hand: {fileID: 7209845104136634493}
   _attacker: {fileID: 2340632800929653560}
---- !u!114 &5280801056556762471
+--- !u!114 &8502467644027034660
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -680,11 +657,64 @@ MonoBehaviour:
   m_GameObject: {fileID: 1091338388048282597}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc45043cb6da1b940b65ae6a3afa217a, type: 3}
+  m_Script: {fileID: 11500000, guid: e2e7b9c4217d01c4589eda0d87fb0915, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _kinds: 1
+  _aimPoint: {fileID: 3531564585735275323}
+  _parts:
+  - {fileID: 6190701511037021893}
+  _onlyWhileSimulated: 1
+--- !u!114 &8426254678274869613
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 476cc423be56f0c45a6352f3438d9889, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _origin: {fileID: 3531564585735275323}
+  _facing: {fileID: 3734261479117514419}
+  _own: {fileID: 8502467644027034660}
+--- !u!114 &6222763569682566764
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52172730014b56c42971a5f6ef93e4af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _attacker: {fileID: 2340632800929653560}
+  _limb: {fileID: 2695458734983113549}
+  _own: {fileID: 8502467644027034660}
+--- !u!114 &5197233016674642156
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1c8e218d090322428207893bf3e48d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _target: {fileID: 8502467644027034660}
   _movable: {fileID: 2109845104136634489}
-  _ownHead: {fileID: 6290574641071763115}
+  _head: {fileID: 759872354341130232}
+  _chest: {fileID: 6293829724816084365}
+  _limbSpeedScale: 6
+  _minHeadSpeed: 14
+  _maxHeadSpeed: 40
+  _chestShare: 0.6
 --- !u!1 &1653071117312433485
 GameObject:
   m_ObjectHideFlags: 0

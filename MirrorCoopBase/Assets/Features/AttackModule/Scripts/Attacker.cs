@@ -2,6 +2,7 @@ using System;
 using Features.AttackModule.Contracts;
 using Features.PlayerAnimationModule;
 using Features.PlayerAnimationModule.Reach;
+using Features.TargetModule;
 using UnityEngine;
 
 namespace Features.AttackModule {
@@ -9,7 +10,7 @@ namespace Features.AttackModule {
     // (IAttackPresses: the owner's button, a copy's packets). A press starts the attack when none is running and the
     // body can animate: the attack's animator trigger fires, the target is picked once (IAttackAim), and the attack's
     // limb reaches for it through the body's LimbReach as AttackTimeline says. A press during an attack is ignored.
-    // Hits and their effects are not decided here: others read the attack's state (Target, IsInHitWindow) and events.
+    // Where it lands is AttackHitDetector's, what a hit does is the target's reactions.
     // Runs before the ragdoll samples its pose in the same physics step.
     [DefaultExecutionOrder(-100)]
     public sealed class Attacker : MonoBehaviour {
@@ -39,7 +40,7 @@ namespace Features.AttackModule {
         // Goes up by one with each attack.
         public int AttackNumber { get; private set; }
         // What the last attack went for; null when there was nothing in reach. Kept after the attack is over.
-        public Transform Target { get; private set; }
+        public Target Target { get; private set; }
         public float SecondsSinceStart => Time.time - _startedAt;
         public bool IsInHitWindow => IsAttacking && AttackTimeline.IsInHitWindow(_attack.Timing, SecondsSinceStart);
         public bool IsPastHitWindow => AttackTimeline.IsPastHitWindow(_attack.Timing, SecondsSinceStart);
@@ -95,7 +96,7 @@ namespace Features.AttackModule {
                 ? AttackTimeline.ReachWeight(_attack.Timing, SecondsSinceStart)
                 : 0f;
             if (weight > 0f)
-                _limbReach.SetGoal(ReachPoint(Target.position));
+                _limbReach.SetGoal(ReachPoint(Target.AimPoint.position));
 
             _limbReach.Weight = weight;
         }

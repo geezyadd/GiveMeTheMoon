@@ -27,6 +27,12 @@ namespace Features.AttackModule {
         [Tooltip("The limb aims this far past the target, along the line from the aim origin through it, metres: it swings through the target at speed instead of slowing down on it.")]
         [SerializeField, Min(0f)] private float _reachThrough = 0.3f;
 
+        [Header("Hit")]
+        [Tooltip("Besides a touch, the limb lands when its reach comes this close to the aimed target's point, metres. A head is big (a player's is about 0.4 m round), so a touching hand stays about 0.5 m from its middle.")]
+        [SerializeField, Min(0f)] private float _hitRadius = 0.7f;
+        [Tooltip("The hit zone reaches this far ahead of the limb along its motion, metres: a limb swinging toward the target lands a little earlier, so attacks land more easily.")]
+        [SerializeField, Min(0f)] private float _hitReachAhead = 0.6f;
+
         private int _animatorTriggerHash;
         private string _hashedTrigger;
 
@@ -36,6 +42,8 @@ namespace Features.AttackModule {
         public float MaxDistance => _maxDistance;
         public float MaxAngle => _maxAngle;
         public float ReachThrough => _reachThrough;
+        public float HitRadius => _hitRadius;
+        public float HitReachAhead => _hitReachAhead;
 
         public int AnimatorTriggerHash {
             get {
