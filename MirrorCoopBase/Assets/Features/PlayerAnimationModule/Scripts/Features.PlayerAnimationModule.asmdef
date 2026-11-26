@@ -5,8 +5,7 @@
         "Zenject",
         "Features.CharacterMovableModule",
         "Features.ActiveRagdollModule",
-        "InputModule",
-        "InputModuleRalization"
+        "Unity.Animation.Rigging"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

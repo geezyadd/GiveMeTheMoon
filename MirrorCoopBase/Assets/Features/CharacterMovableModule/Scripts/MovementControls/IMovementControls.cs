@@ -14,5 +14,11 @@ namespace Features.CharacterMovableModule.Scripts.MovementControls {
 
         // True once for each new jump press; called once per rendered frame.
         bool ConsumeJumpPress();
+
+        // Grows by one with every slap press; what the owner sends to the copies.
+        byte SlapCount { get; }
+
+        // True once for each new slap press (once for several missed ones); called once per rendered frame.
+        bool ConsumeSlapPress();
     }
 }

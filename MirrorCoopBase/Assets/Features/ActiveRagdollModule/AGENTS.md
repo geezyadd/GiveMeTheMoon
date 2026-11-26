@@ -19,7 +19,8 @@ Step 5: the player's movement can drive the ragdoll (see PlayerBodyModule). Not 
 at 1), falling and getting up, network copies.
 
 ## Assembly
-`Features.ActiveRagdollModule` (layer 2, references `FloatingControllerModule` for `SupportProbe` and `ICarrier`). Editor code in `Features.ActiveRagdollModule.Editor`.
+`Features.ActiveRagdollModule` (layer 2, references `FloatingControllerModule` for `SupportProbe` and `ICarrier`, and
+`Unity.Animation.Rigging` for the sampler's optional rig). Editor code in `Features.ActiveRagdollModule.Editor`.
 - `Profile/RagdollBodyProfile` (ScriptableObject, Create > Ragdoll > Body Profile): the limbs and the numbers shared by
   all of them (mass multiplier, capsule radius multiplier, damper to spring ratio, joint angular limit, angular damping, max angular velocity,
   ignoring collisions between nearby limbs), pose force, damping and torque, and `Stand` settings. The first limb is the root
@@ -46,7 +47,7 @@ at 1), falling and getting up, network copies.
   off Unity's update (`Stop` + `DirectorUpdateMode.Manual`), and on each physics step but the first evaluates it by
   `fixedDeltaTime` (turned to `FacingYaw` if the owner sets one, at most at profile `Max Facing Turn Degrees Per
   Second` (0: at once; 540 in `PlayerRagdollProfile` since 2026-11-26, so a fast spin of the look does not whirl the
-  body and fling its legs out); the graph is taken again each time the animator is turned on), captures every limb's target, then puts every limb back on its rigidbody. Root motion is off and the animator always animates (no culling: the pose is the body's target, needed off screen
+  body and fling its legs out); the graph is taken again each time the animator is turned on), with the optional rig in it (`Rig`: an Animation Rigging `RigBuilder` on the animator's object, kept off, built into the animator's own graph each time the graph is taken, so one evaluation runs the animation and then the constraints; a rig graph of its own evaluated apart starts from the avatar's default pose with the hips at the origin and the body sinks to sit; before each evaluation `RigEvaluating` passes the previous sample's offset from the root limb's rigidbody to the animated root limb, for world targets, then the rig's weights are synced); the rig's nodes and outputs are taken out of the animator's graph again (everything it added after the animator's own outputs) before the rig is rebuilt, when the sampler is turned off (the body falls asleep) and when it is destroyed, and the graph is taken anew when the animator dropped it: `RigBuilder.Clear` frees its jobs but leaves its nodes in a graph it did not create, and evaluating or rebinding that graph crashed the player (2026-11-26, build `2026-11-26-slap`), captures every limb's target, then puts every limb back on its rigidbody. Root motion is off and the animator always animates (no culling: the pose is the body's target, needed off screen
   too).
   Animator parameters are set by the body's owner in `Update`; they apply at the next evaluation.
 - `Body/AnimatedPoseFollower` (execution order −90, after the sampler): per limb, the joint drive target (target

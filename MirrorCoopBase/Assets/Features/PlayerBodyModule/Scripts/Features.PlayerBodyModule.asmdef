@@ -9,7 +9,9 @@
         "Features.GameCoreModule.Contracts",
         "Features.CharacterMovableModule",
         "Features.ActiveRagdollModule",
-        "Features.FloatingControllerModule"
+        "Features.PlayerAnimationModule",
+        "Features.FloatingControllerModule",
+        "Unity.Animation.Rigging"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

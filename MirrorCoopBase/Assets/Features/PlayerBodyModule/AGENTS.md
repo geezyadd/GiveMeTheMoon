@@ -17,8 +17,11 @@ stay capsules; the feel numbers are not tuned. The animator and its parameters a
 
 ## Assembly
 `Features.PlayerBodyModule` (layer 4; references Mirror, Zenject, `CharacterMovableModule`, `ActiveRagdollModule`,
-`FloatingControllerModule`, `CameraModule`, `PlayerReplicaModule`, `GameCoreModule.Contracts`). No installer: nothing
-is bound. Editor code in `Features.PlayerBodyModule.Editor`.
+`FloatingControllerModule`, `CameraModule`, `PlayerReplicaModule`, `PlayerAnimationModule`, `GameCoreModule.Contracts`,
+`Unity.Animation.Rigging`). No installer: nothing is bound. Editor code in `Features.PlayerBodyModule.Editor`; tests in
+`Features.PlayerBodyModule.Editor.Tests` (`SlapAimRuleTests`: no head near or behind, the nearer of two, facing
+sideways, a head right below, the reach weight over the slap; `SlapHitRuleTests`: a fast hand scaled, a slow one
+raised to the minimum along its motion, a still one toward the head).
 - `PlayerRagdollBody` (on `DummyPlayer`, execution order −190: after the carriers take their step pose, before what
   reads the body): wakes the ragdoll while the player is owned here or its `BodyCopyDriver` simulates it as a copy,
   and it is not suspended; keeps it asleep otherwise.
@@ -47,6 +50,49 @@ is bound. Editor code in `Features.PlayerBodyModule.Editor`.
   - `SetSuspended` (from `PlayerLifeBody` for a dead player): falls asleep at once and hides the model's renderers.
   - A turned-off player object turns its detached ragdoll off too; destroyed while awake, it destroys it. A ragdoll
     lost under a live player hands the walking back to the capsule.
+- The slap aims at a head through PlayerAnimationModule's `LimbReach` (on the ragdoll's root), whose `RightHand` chain
+  is the rig `SlapRig` on the humanoid in `DummyPlayer` (a `RigBuilder`, kept off; the ragdoll's `AnimatedPoseSampler`
+  builds and evaluates it right after the animator) with `SlapArmReach` (`TwoBoneIKConstraint`: right arm → forearm →
+  hand, position only) and its target `SlapReachTarget` on the `DummyPlayer` root (not under the model, which the
+  sampler turns while sampling).
+- `PlayerSlapAim` (on `DummyPlayer`, execution order −100, before the sampler; refs: `PlayerAnimationDriver`, the
+  movement, the ragdoll's `LimbReach`, the player's own head `RagdollLimb` and `SlapHeadCenter`, an empty point on the head bone in the
+  middle of the head, 0.14 local up from the bone: the head limb's own pivot is down at the neck, and slaps aimed there
+  hit the neck; every head position below is this point, `HeadCenter`): on every peer that simulates the body, on
+  `PlayerAnimationDriver.Slapped` picks the nearest head of another player (`BodyStateChannelRegistry`, awake ragdolls
+  only) in front (`SlapAimRule.PickHead`: within `Max Distance` 1.3 m of its own head, at most `Max Angle` 60° off the
+  shown look on the ground plane). It holds one `RightHand` request (priority 0) while on; every physics step it puts the
+  request's goal past that head (`Reach Through` 0.3 m further along the line from its own head through it, so the
+  hand swings through the head at speed instead of easing to a stop on it) and sets its weight (`SlapAimRule.Weight`:
+  0 until `Start At Seconds` 0.2, so the slap starts as the plain animation and keeps its wind-up (the clip winds up
+  at 0.22 s and hits at 0.36 s); then eases in to 1 by `Full At Seconds` 0.34, holds to `Release At Seconds` 0.5, eases
+  out to 0 by `End At Seconds` 0.8; 2026-11-26 was: from 0 at the start to 1 by 0.3, held to 0.45, which pulled the
+  arm straight to the head and lost the wind-up).
+  No head in front: weight 0, the plain slap animation.
+- `PlayerSlapHit` (on `DummyPlayer`; refs: `PlayerSlapAim`, the movement, the right hand's and the chest's
+  `RagdollLimb`): the hit is played on every peer by itself, nothing goes over the network. Wherever the slapper's
+  body is simulated (the owner's own; a copy elsewhere, which slaps when the owner's packets say so and aims on that
+  peer), from `Hit Start Seconds` 0.15 to `Hit End Seconds` 0.6 of a slap, once per slap, when that hand touches the
+  aimed head (`RagdollLimb.Touching`: a contact with the head limb's rigidbody, face included; the hand's speed is the
+  contact's relative speed) or its centre comes within `Hit Radius` 0.6 m of the head's centre, it pushes the slapped
+  player's body on this peer: the head limb gets a velocity change at `HeadCenter` (`AddForceAtPosition`, so the head
+  also tips away) and the chest limb (`Spine2`) `Chest Share` 0.6 of it (not while held or asleep): the head jerks,
+  the upper body bends at the hips and the joints bring it back. The head's velocity change is the hand's velocity ×
+  `Hand Speed Scale` 6, at least `Min Head Speed` 14 m/s, at most `Max Head Speed` 40 m/s
+  (`SlapHitRule.HeadVelocity`). So the push comes exactly when the hand reaches the head as each peer shows it; the
+  slapped player's owner pushes its real body and the others follow its packets, and a peer where the hand misses
+  shows no push.
+  History (2026-11-26): first the slapper's owner alone detected the hit and sent it by a command and a `ClientRpc`
+  to every peer, which pushed the head when the message came, out of step with the slapping copy's hand there; the hit
+  radius was 0.25, then 0.4 m, which a colliding hand could never reach (the player is scaled 1.76: the head capsule
+  is 0.39 m round and the hand 0.09 m, so a touching hand stays about 0.48 m from the centre), so no slap ever hit;
+  the hand aimed at the head limb's pivot at the neck and eased to a stop there; strength went scale 1 / 2.5 / 4 → 6,
+  minimum none / 6 / 9 → 14, max 10 / 20 / 30 → 40 m/s, head only → head and chest (the head alone, 25 of the body's
+  305 kg, only swayed the body: its push spreads over the whole mass).
+  For now every slap is logged with `Debug.LogError` (prefix `Slap:`): on every peer the aim (`PlayerSlapAim`: the
+  head aimed at, or none with every awake head's distance and angle), then the hit here (touched or came close, hand
+  and head speed, distance) or the miss (how close the hand came), and why a hit body was not pushed. Nothing else of
+  the body is pushed.
 - `CapsuleColliders`: the capsule's colliders (not the ragdoll's), turned off, kept off and restored.
 - `RagdollMovableBody`: `IMovableBody` over `RagdollBody` + `RagdollGroundSensor` + `RagdollCarrierRide` (root limb
   position, mass-weighted velocity, total mass, acceleration and velocity change on every limb, `PauseSupport` = the

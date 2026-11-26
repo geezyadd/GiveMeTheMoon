@@ -11,11 +11,11 @@ and follows the pose; how the pose is turned (the look, flying head first) stays
 
 ## Status
 Being built on `demo/active-ragdoll`. Parameters: `Forward`, `Fly` and `Slap`. The clips are the KevinIglesias idle,
-walk and fall and our own `PlayerSlap`; no jump, sprint or seated clips yet. The slap is seen only by its owner:
-the copies of the others get no slap over the network yet.
+walk and fall and our own `PlayerSlap`; no jump, sprint or seated clips yet. Every player sees every slap: its press
+count rides the replica packets.
 
 ## Assembly
-`Features.PlayerAnimationModule` (layer 3; references Zenject, `CharacterMovableModule`, `ActiveRagdollModule`, Input).
+`Features.PlayerAnimationModule` (layer 3; references Zenject, `CharacterMovableModule`, `ActiveRagdollModule`, `Unity.Animation.Rigging`).
 Editor code in `Features.PlayerAnimationModule.Editor`.
 - `PlayerAnimatorParameters`: every parameter's name (what the controller is built with) and hash (what the driver
   sets). A new parameter is a line here, a line in `PlayerAnimatorBuilder` and a line in `PlayerAnimationDriver`.
@@ -26,9 +26,32 @@ Editor code in `Features.PlayerAnimationModule.Editor`.
     always drifts a little); under `ForwardIdleCutoff` it is 0; damped by `ForwardDampingSeconds`; 0 while held (a seat).
   - `Fly` (bool): the ragdoll's ground sensor has seen no ground for `FlyDelaySeconds` (`AirborneDelay`), so a step or
     a bump does not turn it on; off at once on the ground; never while held.
-  - `Slap` (trigger): the fire button on the owner's own body (`OwnInput` is set; not while held or while the controls
-    are blocked) fires it; the driver does not touch the `Slap` layer's weight. A click with a hand weapon in the hand slaps too for now.
+  - `Slap` (trigger): a slap press of the active controls (`IMovementControls.ConsumeSlapPress`: on the owner the fire
+    button counted by `CharacterInputBuffer.SlapCount` while the controls are free; on a copy the slap counter of the
+    owner's packets, PlayerReplicaModule, so every player sees every slap with the copy delay), not while held; raises
+    `Slapped` (PlayerBodyModule's `PlayerSlapAim` points the arm at a head in front, `PlayerSlapHit` jerks that head). The
+    press is taken every frame, also while the ragdoll sleeps, so none fires later. A click with a hand weapon in the
+    hand slaps too for now.
 - `AirborneDelay`: the delay itself, pure.
+- `Reach/LimbReach` (on the ragdoll's root, next to its `AnimatedPoseSampler`; refs: the sampler and its chains): lets
+  any system point a limb at something over the animation (a slap's hand at a head; later a hand on an item, a hand
+  dragged by something, the head looking at a thing), on any humanoid ragdoll that has the chains. A system takes a
+  `LimbReachRequest` (`Request(LimbId, priority)`), sets its `Weight` (0..1) and goal (`SetGoal`: a transform with a
+  local offset, or a world point) every physics step and calls `Release` when done. On every sample
+  (`AnimatedPoseSampler.RigEvaluating`) each chain follows its winner (`LimbReachRule.PickWinner`: the highest priority
+  among the requests for that limb with a weight above 0 and a goal, the latest on a tie; a waiting request at weight 0
+  does not take the limb), its shown weight eased (`Blend Seconds` 0.08 for the whole 0 → 1) and its goal smoothed
+  (`Goal Smoothing Seconds` 0.03; snapped when the weight was 0), the goal moved by the offset between the real and the
+  animated root limb. A release eases the limb back to the animation, keeping its last goal. One step after a request
+  changes, unless its owner runs before the sampler (−95).
+  - `Reach/LimbId`: `RightHand`, `LeftHand`, `Head`. A body reaches only with the limbs it has a chain for (a request
+    for another is logged as an error and never shown); `DummyPlayer` has only `RightHand` so far.
+  - `Reach/LimbReachChain` (serialized in `LimbReach`): a limb, its rig constraint (any `IRigConstraint`: a
+    `TwoBoneIKConstraint` for a hand, a `MultiAimConstraint` for the head) and the constraint's target (not under the
+    animated model). Only `LimbReach` moves the target and sets the weight.
+  - `Reach/LimbReachRule`: the pure winner pick, weight blend and goal smoothing.
+  - Physically holding a limb (something dragging a player by the hand) is not here: it will be a joint on the ragdoll
+    (ActiveRagdollModule), with a reach request so the pose matches.
 - `PlayerAnimationConfiguration` (Addressables `PlayerAnimationConfiguration_Default`, bound in
   `ConfigurationInstaller`): `ForwardDampingSeconds` 0.125, `ForwardIdleCutoff` 0.125, `FlyDelaySeconds` 0.3.
 - `GameResources/PlayerAnimator.controller`: built from code, never edited by hand. Three layers: `Base Layer` with
@@ -51,3 +74,5 @@ Editor code in `Features.PlayerAnimationModule.Editor`.
 ## Tests
 - `Features.PlayerAnimationModule.Editor.Tests`: `AirborneDelayTests` (on the ground, a short lift, a long enough one,
   landing ends it at once, short lifts do not add up, zero delay).
+  `LimbReachRuleTests` (no weight, another limb, no goal, priority, a waiting higher request, the latest on a tie, a
+  released request, the weight blend, the goal smoothing).

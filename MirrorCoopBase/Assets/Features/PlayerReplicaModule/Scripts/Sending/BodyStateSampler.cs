@@ -49,7 +49,8 @@ namespace Features.PlayerReplicaModule.Sending {
                 WalkDirection = new Vector2(walk.x, walk.z),
                 LookYaw = YawCompression.Pack(look),
                 States = ReadStates(input),
-                JumpCount = _movable.JumpCount
+                JumpCount = _movable.JumpCount,
+                SlapCount = input != null ? input.SlapCount : (byte)0
             };
         }
 

@@ -1,8 +1,7 @@
+using System;
 using Features.ActiveRagdollModule;
 using Features.CharacterMovableModule.Scripts;
-using Features.CharacterMovableModule.Scripts.Models;
 using Features.CharacterMovableModule.Scripts.MovementControls;
-using Features.InputModule.Realization.Scripts.Generated;
 using UnityEngine;
 using Zenject;
 
@@ -13,8 +12,9 @@ namespace Features.PlayerAnimationModule {
     //   and would shuffle); weak input is cut so the idle stays still; a held player (a seat) stands still.
     // - Fly: the body has been off the ground for the configured delay; never while held. The fall layer's weight
     //   fades in with it and out when it is off.
-    // - Slap: the fire button on the owner's own body (not while held or blocked) fires the trigger. Only the owner
-    //   sees it for now: the copies of the others get no slap over the network yet.
+    // - Slap: a slap press of the active controls (the owner's fire button; on a copy, the slap counter of the owner's
+    //   packets) fires the trigger, not while held, and raises Slapped. Presses are taken every frame, so none is kept
+    //   for later.
     // Works only while the ragdoll is awake (its animator is on): the ragdoll samples the animator once a physics step
     // (AnimatedPoseSampler), so the values apply from the next step.
     public sealed class PlayerAnimationDriver : MonoBehaviour {
@@ -24,23 +24,17 @@ namespace Features.PlayerAnimationModule {
         private readonly AirborneDelay _airborneDelay = new();
 
         private PlayerAnimationConfiguration _configuration;
-        private IInputService _inputService;
-        private PlayerControlBlockModel _controlBlock;
         private Animator _animator;
         private RagdollGroundSensor _ground;
         private RuntimeAnimatorController _layerController;
         private int _flyLayer = -1;
-        private bool _isSlapRequested;
+
+        // On every peer that simulates the body, when a slap starts.
+        public event Action Slapped;
 
         [Inject]
-        private void Construct(
-            PlayerAnimationConfiguration configuration,
-            IInputService inputService,
-            PlayerControlBlockModel controlBlock) {
+        private void Construct(PlayerAnimationConfiguration configuration) =>
             _configuration = configuration;
-            _inputService = inputService;
-            _controlBlock = controlBlock;
-        }
 
         private void Awake() {
             AnimatedPoseSampler sampler = _ragdoll.GetComponent<AnimatedPoseSampler>();
@@ -50,18 +44,10 @@ namespace Features.PlayerAnimationModule {
             _ground = _ragdoll.GetComponent<RagdollGroundSensor>();
         }
 
-        private void Start() =>
-            _inputService.Fire.Started += HandleFireStarted;
-
-        private void OnDestroy() {
-            if (_inputService != null)
-                _inputService.Fire.Started -= HandleFireStarted;
-        }
-
         private void Update() {
+            bool isSlapPressed = ConsumeSlapPress();
             if (_ragdoll == null || _animator == null || _animator.isActiveAndEnabled == false) {
                 _airborneDelay.Reset();
-                _isSlapRequested = false;
                 return;
             }
 
@@ -71,9 +57,10 @@ namespace Features.PlayerAnimationModule {
             bool isFlying = _airborneDelay.Step(isInAir, _configuration.FlyDelaySeconds, deltaTime);
             _animator.SetBool(PlayerAnimatorParameters.Fly, isFlying);
             FadeFlyLayer(isFlying, deltaTime);
-            if (_isSlapRequested)
+            if (isSlapPressed && _movable.IsHeld == false) {
                 _animator.SetTrigger(PlayerAnimatorParameters.Slap);
-            _isSlapRequested = false;
+                Slapped?.Invoke();
+            }
         }
 
         // The fall layer over the locomotion fades in while flying and out on the feet; at weight 0 it changes nothing.
@@ -101,10 +88,9 @@ namespace Features.PlayerAnimationModule {
             return _flyLayer;
         }
 
-        // Only the body this peer owns has its own keyboard controls.
-        private void HandleFireStarted() {
-            if (_movable.OwnInput != null && _movable.IsHeld == false && _controlBlock.IsBlocked == false)
-                _isSlapRequested = true;
+        private bool ConsumeSlapPress() {
+            IMovementControls controls = _movable.ActiveControls;
+            return controls != null && controls.ConsumeSlapPress();
         }
 
         private float ReadForward() {

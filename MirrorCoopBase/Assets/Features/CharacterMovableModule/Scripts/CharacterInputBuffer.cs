@@ -19,6 +19,8 @@ namespace Features.CharacterMovableModule.Scripts {
         public Vector2 MoveStick { get; private set; }
         public bool JumpHeld { get; private set; }
         public bool SprintHeld { get; private set; }
+        // Grows by one with every press of the fire button while the controls are free (a slap); wraps at 255.
+        public byte SlapCount { get; private set; }
         public bool IsBlocked => _controlBlock.IsBlocked;
 
         public void BeginScripted() {
@@ -53,6 +55,7 @@ namespace Features.CharacterMovableModule.Scripts {
             _inputService.Jump.Canceled += OnJumpCanceled;
             _inputService.Sprint.Started += OnSprintStarted;
             _inputService.Sprint.Canceled += OnSprintCanceled;
+            _inputService.Fire.Started += OnFireStarted;
             _controlBlock.OnChanged += OnControlBlockChanged;
         }
 
@@ -63,6 +66,7 @@ namespace Features.CharacterMovableModule.Scripts {
             _inputService.Jump.Canceled -= OnJumpCanceled;
             _inputService.Sprint.Started -= OnSprintStarted;
             _inputService.Sprint.Canceled -= OnSprintCanceled;
+            _inputService.Fire.Started -= OnFireStarted;
             _controlBlock.OnChanged -= OnControlBlockChanged;
         }
 
@@ -118,6 +122,13 @@ namespace Features.CharacterMovableModule.Scripts {
                 return;
 
             JumpHeld = false;
+        }
+
+        private void OnFireStarted() {
+            if (_scripted || _controlBlock.IsBlocked)
+                return;
+
+            SlapCount = unchecked((byte)(SlapCount + 1));
         }
 
         private void OnSprintStarted() {

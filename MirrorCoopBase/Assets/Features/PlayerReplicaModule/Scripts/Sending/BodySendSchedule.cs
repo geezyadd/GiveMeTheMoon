@@ -30,6 +30,7 @@ namespace Features.PlayerReplicaModule.Sending {
             (fresh.WalkDirection == Vector2.zero) != (_lastSent.WalkDirection == Vector2.zero)
             || fresh.States != _lastSent.States
             || fresh.JumpCount != _lastSent.JumpCount
+            || fresh.SlapCount != _lastSent.SlapCount
             || fresh.CarrierId != _lastSent.CarrierId;
 
         private bool IsActive(in BodyStatePacket fresh, float idleSpeed) =>

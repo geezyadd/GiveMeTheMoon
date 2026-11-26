@@ -63,6 +63,14 @@ namespace Features.PlayerReplicaModule.Editor.Tests {
         }
 
         [Test]
+        public void WhenTheOwnerSlapped_ThenThePacketGoesAtOnce() {
+            _schedule.MarkSent(Standing, START);
+            var slapped = new BodyStatePacket { SlapCount = 1 };
+
+            Assert.IsTrue(IsDue(slapped, START));
+        }
+
+        [Test]
         public void WhenTheOwnerStartsOrStopsWalking_ThenThePacketGoesAtOnce() {
             _schedule.MarkSent(Standing, START);
             Assert.IsTrue(IsDue(Walking, START));

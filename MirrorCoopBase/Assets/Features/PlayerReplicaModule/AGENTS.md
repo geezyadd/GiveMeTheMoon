@@ -6,7 +6,7 @@ here, not in the root file.
 ## The idea
 Every player's body is simulated on every peer. The owner simulates their own from the keyboard and about 30 times a
 second sends an unreliable, always complete state packet: position and velocity in the axes of the platform they
-stand on, walk input, look, flags and a jump counter. The server stamps when the owner took it and forwards it. Every
+stand on, walk input, look, flags, a jump counter and a slap counter. The server stamps when the owner took it and forwards it. Every
 other peer runs a dynamic copy of that body with the same controller, driven by the input from the last packet, so
 the copy keeps moving between packets and never waits for one. A copy lives a little in the past (the copy delay,
 0.1 s): a packet's controls and position apply together when the show time reaches its stamp, so the copy stops where
@@ -44,7 +44,7 @@ The body is the one the movement drives (`CharacterMovableBase.DrivenBody`): the
   and the reconciled velocity apply on the step they are due): on a non-owner it holds the body still (kinematic)
   until the first packet, then makes it dynamic, turns on `FloatingController.SimulatesCopy` and gives
   `CharacterMovableBase.SetRemoteInput` a `PacketMovementControls` (the newest packet's controls, a jump press from the
-  jump counter). Packets wait in a `PacketDelayBuffer` until the show time (server time minus `CopyDelaySeconds`)
+  jump counter, a slap press from the slap counter). Packets wait in a `PacketDelayBuffer` until the show time (server time minus `CopyDelaySeconds`)
   reaches their stamp; the current one gives the controls and the target. After each physics step it pulls the body
   toward the target (`PositionCorrection`), reconciles the velocity once per packet (only slowing the copy while the owner presses no
   walk key) and snaps past the snap distance (counted in the
@@ -64,7 +64,7 @@ The body is the one the movement drives (`CharacterMovableBase.DrivenBody`): the
   (`CharacterMovableBase.SetRemoteLook`), so it turns at the same moment it walks.
 - `BodyStateChannel` (on `DummyPlayer`): the owner samples its body each physics step and sends a packet when
   `BodySendSchedule` says so (at once when a control changes: walk pressed or released, sprint, jump held, support, a
-  jump; `PacketRate` while anything moves or the look turns; `RestingPacketRate` while it stands); the
+  jump, a slap; `PacketRate` while anything moves or the look turns; `RestingPacketRate` while it stands); the
   command and the RPC go on the unreliable channel. The server stamps `ServerTime` = its time minus half the owner's
   round trip, keeps the packet for its own copy and forwards it to everyone else (the host's own player goes out from
   the server directly). Each non-owner keeps the newest packet (`Latest`) through `PacketSequenceFilter` and counts
@@ -77,7 +77,7 @@ The body is the one the movement drives (`CharacterMovableBase.DrivenBody`): the
   pose on every peer, and its copies hold still there until its first packet.
 - `BodyStateChannelRegistry`: the channels spawned on this peer.
 - `Sending/`: `BodyStateSampler` (packet from the body, the owner's `IMovementControls`, the look, support and
-  `CharacterMovableBase.JumpCount`; on a carrier the position and velocity in its axes of the last step, the walk and
+  `CharacterMovableBase.JumpCount`, the controls' `SlapCount`; on a carrier the position and velocity in its axes of the last step, the walk and
   look in its heading, and its id as `CarrierId`), `BodySendSchedule`.
 - `Receiving/`: `PacketMovementControls`, `PacketDelayBuffer`, `CopyCarrierFrame`, `PlacementFence`, `BodyStateReceiveStats` + `BodyStateReceiveReport` (also counts snaps and averages the copy's error to the
   owner's packet, the distance the correction sees each physics step, with its largest value; the two-player test
@@ -86,7 +86,7 @@ The body is the one the movement drives (`CharacterMovableBase.DrivenBody`): the
   ("Replicas: stats": per other player to the console, packets a second, dropped, snaps, average and last age, the
   average and largest error to the owner).
 - `Configuration/ReplicaConfiguration` (Addressables `ReplicaConfiguration_Default`, bound in
-  `ConfigurationInstaller`): send rates, the placement wait and the correction numbers.
+  `ConfigurationInstaller`): send rates, the placement wait, the push limits and the correction numbers.
 - `Packets/`: `BodyStatePacket` (public fields so the network layer serializes it), `BodyStateFlags`,
   `YawCompression` (look angle in two bytes), `PacketSequenceFilter` (drops older and out-of-order packets, number
   wraps), `JumpCounterTracker` (a copy jumps once for any number of missed jumps).
@@ -98,7 +98,7 @@ The body is the one the movement drives (`CharacterMovableBase.DrivenBody`): the
 - `Features.PlayerReplicaModule.Editor.Tests`: yaw packing and wrap, flags, sequence order and wrap, jump counter (missed
   jumps, wrap), target extrapolation and its cap, horizontal share, vertical dead zone and cap, no overshoot, snap,
   velocity reconciliation per axis (and only slowing while the owner steers nothing), ground mismatch timer, send schedule (moving, idle, a change after idle), receive
-  stats (with the error average and largest), packet input source (controls, jump press from the counter, reset), delay buffer (waits, newest due one,
-  restart), the gentle pull while the owner stands, sending at once when a control changes, the visual lag offset
+  stats (with the error average and largest), packet input source (controls, jump and slap presses from the counters, reset), delay buffer (waits, newest due one,
+  restart), the gentle pull while the owner stands, sending at once when a control changes (a slap too), the visual lag offset
   (hide, tiny and huge jumps, fade, sum), the placement fence (old packets blocked, the move's packet and the
   ones after it pass, the wait runs out, the number wraps, clear).
