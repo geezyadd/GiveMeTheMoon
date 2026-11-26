@@ -13,8 +13,6 @@ namespace Features.HandWeaponModule.Scripts {
         [SerializeField] private long _price;
         [SerializeField] private HandWeaponItem _itemPrefab;
         [SerializeField] private WeaponDefinition _weapon;
-        [Tooltip("A press is reported as held at least this long, so every other peer sees even a short click.")]
-        [SerializeField, Min(0f)] private float _minTriggerReportSeconds = 0.25f;
         [Tooltip("What the crosshair's ray can rest on; the shot flies from the muzzle to that point. Use the weapon's hit layers.")]
         [SerializeField] private LayerMask _crosshairLayers;
         [Tooltip("Where the weapon sits in its holder's own first-person view, in the view's frame (right, up, forward).")]
@@ -29,7 +27,6 @@ namespace Features.HandWeaponModule.Scripts {
         public long Price => _price;
         public HandWeaponItem ItemPrefab => _itemPrefab;
         public WeaponDefinition Weapon => _weapon;
-        public float MinTriggerReportSeconds => _minTriggerReportSeconds;
         public LayerMask CrosshairLayers => _crosshairLayers;
         public Vector3 ViewOffset => _viewOffset;
         public Vector3 HandOffset => _handOffset;

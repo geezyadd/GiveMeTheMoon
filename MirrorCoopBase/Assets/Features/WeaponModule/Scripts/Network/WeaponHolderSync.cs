@@ -1,19 +1,23 @@
 using Features.NetworkModelModule.Scripts;
+using Features.WeaponModule.Scripts.Core;
 using Features.WeaponModule.Scripts.Definitions;
 using Features.WeaponModule.Scripts.Hits;
+using Features.WeaponModule.Scripts.Impacts;
 using Features.WeaponModule.Scripts.Parts.Delivery;
 using Features.WeaponModule.Scripts.Parts.Holding;
+using Features.WeaponModule.Scripts.Projectiles;
 using Features.WeaponModule.Scripts.Shooting;
 using Mirror;
 using UnityEngine;
 using Zenject;
 
 namespace Features.WeaponModule.Scripts.Network {
-    // A player's weapon on the network, one path for every weapon: the owner sends whether the trigger is held and
-    // where it aims (the holder throttles it), and its target hits in batches at most once per network tick; the
-    // server checks every hit against what it knows about the holding. Other peers read the trigger and the aim and
-    // replay the fire themselves: no message per bullet.
-    public sealed class WeaponHolderSync : NetworkBehaviour, IWeaponHitReporter {
+    // A player's weapon on the network, one path for every weapon. A hand or a turret equips the weapon on every peer.
+    // On the holder's own peer the weapon system pulls the trigger: each shot is shown at once and sent to the server
+    // (CmdShot), which checks it against what it knows (holding, rounds, the hit rule), applies a target hit, launches
+    // the real projectile and tells every other peer, which shows the same shot (RpcShot). The trigger and the aim are
+    // also synced, throttled, for what lasts between shots (barrel spin, the weapon's pose in other players' views).
+    public sealed class WeaponHolderSync : NetworkBehaviour {
         [SyncVar]
         private bool _isTriggerHeld;
 
@@ -21,61 +25,190 @@ namespace Features.WeaponModule.Scripts.Network {
         [SyncVar]
         private Vector3 _aimDirection = Vector3.forward;
 
-        private readonly WeaponHitQueue _pendingHits = new WeaponHitQueue();
+        private readonly WeaponHolderColliders _ownColliders = new WeaponHolderColliders();
 
         private IWeaponHitService _weaponHitService;
         private IPlayerIdentityService _playerIdentityService;
+        private IWeaponShooterFactory _weaponShooterFactory;
+        private IWeaponCatalogIndexService _weaponCatalogIndexService;
+        private IWeaponService _weaponService;
+        private IWeaponImpactLookup _impactLookup;
+        private IProjectileSpawner _projectileSpawner;
+        private WeaponShotPresenter _shotPresenter;
+        private WeaponCatalog _weaponCatalog;
+
+        private IWeapon _weapon;
+        private IWeaponAim _aim;
+        private WeaponShooter _shooter;
         private ServerWeaponHolding _serverHolding;
-        private int _ownerWeaponIndex = -1;
-        private double _nextHitSendTime;
+        private int _weaponIndex = -1;
+        private ushort _sequence;
+        private bool _isSentTriggerHeld;
+        private bool _isDebugTriggerHeld;
+        private Vector3 _ownerFrameAim = Vector3.forward;
 
         public bool IsTriggerHeld => _isTriggerHeld;
+        // The trigger as the holder's own peer last sent it.
+        public bool OwnerIsTriggerHeld => _isSentTriggerHeld;
         public Vector3 AimDirection => _aimDirection;
+        public IWeapon Weapon => IsAlive(_weapon) ? _weapon : null;
+
+        // How ready the held weapon's next shot is on the holder's peer: the reload while one runs.
+        public float OwnerReadiness {
+            get {
+                if (_shooter == null)
+                    return 0f;
+
+                if (_weapon.TryGetCapability(out IWeaponMagazine magazine)) {
+                    if (magazine.IsReloading)
+                        return magazine.ReloadProgress;
+
+                    if (magazine.Rounds <= 0)
+                        return 0f;
+                }
+
+                return _shooter.Readiness;
+            }
+        }
 
         [Inject]
-        private void InjectDependencies(IWeaponHitService weaponHitService, IPlayerIdentityService playerIdentityService) {
+        private void InjectDependencies(
+            IWeaponHitService weaponHitService,
+            IPlayerIdentityService playerIdentityService,
+            IWeaponShooterFactory weaponShooterFactory,
+            IWeaponCatalogIndexService weaponCatalogIndexService,
+            IWeaponService weaponService,
+            IWeaponImpactLookup impactLookup,
+            IProjectileSpawner projectileSpawner,
+            WeaponShotPresenter shotPresenter,
+            WeaponCatalog weaponCatalog) {
             _weaponHitService = weaponHitService;
             _playerIdentityService = playerIdentityService;
+            _weaponShooterFactory = weaponShooterFactory;
+            _weaponCatalogIndexService = weaponCatalogIndexService;
+            _weaponService = weaponService;
+            _impactLookup = impactLookup;
+            _projectileSpawner = projectileSpawner;
+            _shotPresenter = shotPresenter;
+            _weaponCatalog = weaponCatalog;
         }
 
-        private void LateUpdate() {
-            if (isOwned == false || _pendingHits.Count == 0 || NetworkTime.localTime < _nextHitSendTime)
+        private void OnDestroy() =>
+            _weaponService?.Unequip(this);
+
+        // Every other peer moves the held weapon's fire mode from the synced trigger, only for what lasts between
+        // shots (a minigun's barrels spin up); its shots come from the server.
+        private void Update() {
+            if (_shooter == null || isOwned || IsAlive(_weapon) == false)
                 return;
 
-            _nextHitSendTime = NetworkTime.localTime + NetworkClient.sendInterval;
-            CmdReportHits(_pendingHits.DequeueBatch(_ownerWeaponIndex));
+            _shooter.Advance(_isTriggerHeld && _weapon.IsUsable, Time.deltaTime, _weapon.Feel);
         }
 
-        public void OwnerBeginHolding(int weaponIndex) {
-            _ownerWeaponIndex = weaponIndex;
-            _pendingHits.Clear();
+        // On every peer, by what holds the weapon (a hand, a turret seat).
+        public void Equip(IWeapon weapon, IWeaponAim aim) {
+            Unequip();
+            _weapon = weapon;
+            _aim = aim;
+            _weaponIndex = _weaponCatalogIndexService.GetIndex(weapon.Definition);
+            _shooter = _weaponShooterFactory.Create(weapon.Definition);
+            _ownColliders.Collect(_impactLookup, netId, weapon as Object);
+            if (isServer)
+                _serverHolding = new ServerWeaponHolding(weapon.Definition, _weaponIndex, _playerIdentityService.GetKey(connectionToClient), aim);
+
+            if (isOwned == false)
+                return;
+
+            _isSentTriggerHeld = false;
+            _weaponService.Equip(weapon, this);
+            weapon.Feel.SetViewOwned(true);
         }
 
-        public void OwnerEndHolding() {
-            _ownerWeaponIndex = -1;
-            _pendingHits.Clear();
-        }
+        // The weapon may already be gone (installed, destroyed with its scene) when it is let go.
+        public void Unequip() {
+            if (_shooter == null)
+                return;
 
-        public void OwnerSendAim(Vector3 aimDirection, bool isTriggerHeld) {
+            if (isOwned) {
+                if (_isSentTriggerHeld)
+                    SendAim(_ownerFrameAim, false);
+
+                _weaponService.Unequip(this);
+                if (IsAlive(_weapon))
+                    _weapon.Feel.SetViewOwned(false);
+            }
+
             if (isServer) {
-                ServerSetAim(aimDirection, isTriggerHeld);
+                _serverHolding = null;
+                _isTriggerHeld = false;
+            }
+
+            _weapon = null;
+            _aim = null;
+            _shooter = null;
+            _weaponIndex = -1;
+            _isDebugTriggerHeld = false;
+            _ownColliders.Clear();
+        }
+
+        // The holder's aim in its own frame, kept by what holds the weapon; it goes out with the next trigger change.
+        public void OwnerSetAim(Vector3 frameAimDirection) =>
+            _ownerFrameAim = frameAimDirection;
+
+        // A holder that aims a lot (a turret) sends its aim on its own schedule too.
+        public void OwnerSendAim(Vector3 frameAimDirection, bool isTriggerHeld) {
+            _ownerFrameAim = frameAimDirection;
+            SendAim(frameAimDirection, isTriggerHeld);
+        }
+
+        public void OwnerAdvance(bool isTriggerHeld, float deltaTime) {
+            if (_shooter == null || IsAlive(_weapon) == false)
+                return;
+
+            bool isHeld = (isTriggerHeld || _isDebugTriggerHeld) && _weapon.IsUsable;
+            bool hasMagazine = _weapon.TryGetCapability(out IWeaponMagazine magazine);
+            int shots = _shooter.Advance(isHeld && (hasMagazine == false || magazine.HasRound), deltaTime, _weapon.Feel);
+            for (int i = 0; i < shots; i++) {
+                if (hasMagazine) {
+                    if (magazine.HasRound == false)
+                        break;
+
+                    magazine.SpendRound();
+                }
+
+                FireOwnerShot();
+            }
+
+            if (isHeld != _isSentTriggerHeld)
+                SendAim(_ownerFrameAim, isHeld);
+        }
+
+        public void OwnerRequestReload() {
+            if (_shooter != null && _weapon.TryGetCapability(out IWeaponMagazine magazine) && magazine.IsReloading == false
+                && magazine.Rounds < magazine.Capacity)
+                CmdReload();
+        }
+
+        // Test hook for the loop autotest: holds the trigger of the weapon the owner holds.
+        public void DebugHoldTrigger(bool isHeld) =>
+            _isDebugTriggerHeld = isHeld;
+
+        private void FireOwnerShot() {
+            WeaponShotOutcome outcome = _shooter.Fire(_aim.Origin, _aim.Direction, netId);
+            WeaponShotMessage message = WeaponShotMessage.From(outcome, _weaponIndex, ++_sequence);
+            _shotPresenter.Present(_weapon.Definition, _weapon.Feel, outcome, ProjectileId(message.Sequence), spawnsCopy: isServer == false,
+                _ownColliders.Colliders);
+            CmdShot(message);
+        }
+
+        private void SendAim(Vector3 frameAimDirection, bool isTriggerHeld) {
+            _isSentTriggerHeld = isTriggerHeld;
+            if (isServer) {
+                ServerSetAim(frameAimDirection, isTriggerHeld);
                 return;
             }
 
-            CmdSetAim(aimDirection, isTriggerHeld);
-        }
-
-        public void ReportTargetHit(in WeaponShotOutcome outcome) =>
-            _pendingHits.TryEnqueue(new WeaponHitReport(outcome.TargetId, outcome.EndPoint, outcome.Normal));
-
-        [Server]
-        public void ServerBeginHolding(WeaponDefinition weapon, int weaponIndex, IWeaponAim aim) =>
-            _serverHolding = new ServerWeaponHolding(weapon, weaponIndex, _playerIdentityService.GetKey(connectionToClient), aim);
-
-        [Server]
-        public void ServerEndHolding() {
-            _serverHolding = null;
-            _isTriggerHeld = false;
+            CmdSetAim(frameAimDirection, isTriggerHeld);
         }
 
         // Only a player who holds a weapon on the server may fire it.
@@ -89,12 +222,59 @@ namespace Features.WeaponModule.Scripts.Network {
             ServerSetAim(aimDirection, isTriggerHeld);
 
         [Command]
-        private void CmdReportHits(WeaponHitBatch batch) {
-            if (_serverHolding == null)
+        private void CmdReload() {
+            if (_serverHolding != null && IsAlive(_weapon) && _weapon.TryGetCapability(out IWeaponMagazine magazine))
+                magazine.ServerBeginReload();
+        }
+
+        [Command]
+        private void CmdShot(WeaponShotMessage message) {
+            if (_serverHolding == null || IsAlive(_weapon) == false || message.WeaponIndex != _weaponIndex)
                 return;
 
-            for (int i = 0; i < batch.Count && i < WeaponHitBatch.CAPACITY; i++)
-                _weaponHitService.ServerApplyReportedHit(_serverHolding, batch.WeaponIndex, batch.Get(i), NetworkTime.time);
+            if (_weapon.TryGetCapability(out IWeaponMagazine magazine) && magazine.ServerTrySpendRound() == false)
+                return;
+
+            if (message.IsTargetHit)
+                _weaponHitService.ServerApplyReportedHit(_serverHolding, message.WeaponIndex,
+                    new WeaponHitReport(message.TargetId, message.EndPoint, message.Normal), NetworkTime.time);
+
+            ProjectileDefinition projectile = _serverHolding.Weapon.Projectile;
+            if (projectile != null)
+                _projectileSpawner.ServerSpawn(projectile, message.Origin, message.Direction * projectile.Speed, ProjectileId(message.Sequence),
+                    _ownColliders.Colliders, ServerEndProjectile);
+
+            RpcShot(message);
         }
+
+        [ClientRpc(includeOwner = false)]
+        private void RpcShot(WeaponShotMessage message) {
+            if (message.WeaponIndex < 0 || message.WeaponIndex >= _weaponCatalog.Weapons.Count)
+                return;
+
+            WeaponDefinition weapon = _weaponCatalog.Weapons[message.WeaponIndex];
+            bool isHeldHere = _shooter != null && IsAlive(_weapon) && _weaponIndex == message.WeaponIndex;
+            WeaponShotOutcome outcome = _shotPresenter.Rebuild(weapon, message);
+            _shotPresenter.Present(weapon, isHeldHere ? _weapon.Feel : null, outcome, ProjectileId(message.Sequence), spawnsCopy: isServer == false,
+                _ownColliders.Colliders);
+        }
+
+        // The holder object may be gone (its player left) by the time a projectile it launched goes off.
+        private void ServerEndProjectile(ulong projectileId) {
+            if (this != null && NetworkServer.active)
+                RpcProjectileEnded(projectileId);
+        }
+
+        [ClientRpc]
+        private void RpcProjectileEnded(ulong projectileId) {
+            if (isServer == false)
+                _projectileSpawner.EndCopy(projectileId);
+        }
+
+        private ulong ProjectileId(ushort sequence) =>
+            ((ulong)netId << 16) | sequence;
+
+        private static bool IsAlive(IWeapon weapon) =>
+            weapon != null && (weapon is not Object unityObject || unityObject != null);
     }
 }

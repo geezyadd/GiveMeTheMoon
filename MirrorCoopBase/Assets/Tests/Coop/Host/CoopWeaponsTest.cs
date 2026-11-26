@@ -29,10 +29,10 @@ using Steps = Tests.Coop.Shared.CoopWeaponsEconomySteps;
 
 namespace Tests.Coop.Host {
     // The weapons with a real second client process shooting (CoopWeaponsEconomyClientScenarios) and the host checking
-    // what arrived: at the station the client fires the pistol at the debug dummy (a click within the 2 s cooldown fires
+    // what arrived: at the station the client fires the pistol at the debug dummy (a click while it reloads fires
     // nothing; the host sees the pistol in the client's hand, its trigger and a tracer) and each turret tier from the
-    // seat (the host sees the trigger, the tracers and the server's accepted hits; the hits come in batched reports,
-    // never more than one per network tick, and each tier keeps to its own fire rate); in the cruise the client breaks a
+    // seat (the host sees the trigger, the tracers and the server's accepted hits; each shot goes to the server once,
+    // with the hit it struck, and each tier keeps to its own fire rate); in the cruise the client breaks a
     // small rock and pops a balloon with the heavy gun, sees a balloon the ship flies into popped, and breaks a rock and
     // pops a balloon with the pistol. Every rock breaks and every balloon pops once, by the client's key and weapon, is
     // paid once and is gone on both peers.
@@ -131,8 +131,8 @@ namespace Tests.Coop.Host {
             Assert.IsTrue(hasSeenTrigger, "The host never saw the client's pistol trigger.");
             Assert.IsTrue(hasSeenTracer, "The host did not replay the client's pistol shot (no tracer).");
             Assert.Less(pistolDistance, PISTOL_AT_HAND_METERS, "The host does not show the pistol in the client's hand.");
-            Assert.That(dummy.Hits, Is.InRange(1, 2), "The server must accept one hit per pistol shot: the client fired twice and clicked once within the cooldown.");
-            Debug.Log($"[CoopTest] the client's pistol: {dummy.Hits} accepted hits, a click within the cooldown blocked, the pistol {pistolDistance:0.00} m from the client's arm on the host");
+            Assert.That(dummy.Hits, Is.InRange(1, 2), "The server must accept one hit per pistol shot: the client fired twice and clicked once during a reload.");
+            Debug.Log($"[CoopTest] the client's pistol: {dummy.Hits} accepted hits, a click during the reload blocked, the pistol {pistolDistance:0.00} m from the client's arm on the host");
             dummies.DebugDespawnTarget();
             _host.AssertSameView(false, true);
 

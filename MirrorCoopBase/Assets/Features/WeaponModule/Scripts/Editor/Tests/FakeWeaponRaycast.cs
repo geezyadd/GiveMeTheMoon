@@ -16,7 +16,7 @@ namespace Features.WeaponModule.Editor.Tests {
             _hit = hit;
         }
 
-        public bool TryRaycast(Vector3 origin, Vector3 direction, float maxDistance, out WeaponRaycastHit hit) {
+        public bool TryRaycast(Vector3 origin, Vector3 direction, float maxDistance, uint ignoredReceiverId, out WeaponRaycastHit hit) {
             _directions.Add(direction);
             hit = _hit;
             return _isHitting;

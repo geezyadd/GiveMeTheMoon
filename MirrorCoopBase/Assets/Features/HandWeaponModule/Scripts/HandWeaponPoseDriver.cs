@@ -52,13 +52,13 @@ namespace Features.HandWeaponModule.Scripts {
 
         public void Advance() {
             if (IsInFirstPersonView == false)
-                _item.SetPose(_pose.InHand(_arm, _aim.Direction, _item.Definition.HandOffset));
+                _item.SetPose(_pose.InHand(_arm, _aim.Direction, _item.HandDefinition.HandOffset));
         }
 
         // The item may be gone between the hand's update and the camera's.
         private void OnLookApplied() {
             if (_item != null && IsInFirstPersonView)
-                _item.SetPose(_pose.InView(_arm, _gameCameraModel.LookPivot, _item.Definition.ViewOffset));
+                _item.SetPose(_pose.InView(_arm, _gameCameraModel.LookPivot, _item.HandDefinition.ViewOffset));
         }
     }
 }

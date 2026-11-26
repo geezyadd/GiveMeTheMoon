@@ -246,7 +246,7 @@ namespace Tests.Coop.Host {
         private static bool IsEntryItem(Grabbable item, string entryId) =>
             (item.TryGetComponent(out ShipItem module) && module.Module.Id == entryId)
             || (item.TryGetComponent(out RepairTool tool) && tool.Definition.Id == entryId)
-            || (item.TryGetComponent(out HandWeaponItem weapon) && weapon.Definition.Id == entryId);
+            || (item.TryGetComponent(out HandWeaponItem weapon) && weapon.HandDefinition.Id == entryId);
     }
 }
 #endif

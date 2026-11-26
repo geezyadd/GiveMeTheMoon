@@ -2,20 +2,14 @@ using Features.WeaponModule.Scripts.Parts.Holding;
 using UnityEngine;
 
 namespace Features.TurretModule.Scripts {
-    // The player seated in a turret as the weapon's holder: the trigger is the seated player's (read live on the
-    // owner, synced on the others) and the aim is the turret's muzzle along its barrels.
-    public sealed class ShipTurretWeaponHolder : IWeaponHolder, IWeaponAim {
+    // The turret's aim: shots leave its muzzle along its barrels.
+    public sealed class ShipTurretWeaponHolder : IWeaponAim {
         private readonly Transform _muzzle;
 
-        public bool IsTriggerHeld { get; private set; }
-        public IWeaponAim Aim => this;
         public Vector3 Origin => _muzzle.position;
         public Vector3 Direction => _muzzle.forward;
 
         public ShipTurretWeaponHolder(Transform muzzle) =>
             _muzzle = muzzle;
-
-        public void SetTriggerHeld(bool isTriggerHeld) =>
-            IsTriggerHeld = isTriggerHeld;
     }
 }

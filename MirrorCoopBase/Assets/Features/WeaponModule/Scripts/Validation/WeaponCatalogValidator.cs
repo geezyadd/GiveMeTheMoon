@@ -47,7 +47,8 @@ namespace Features.WeaponModule.Scripts.Validation {
             if (weapon.Delivery == null)
                 throw new InvalidOperationException($"{_weaponCatalog.name}: weapon {weapon.Id} has no shot delivery.");
 
-            if (weapon.HitEffects.Count == 0)
+            // A projectile's harm is its explosion; only a weapon whose shots land at once needs a hit effect.
+            if (weapon.HitEffects.Count == 0 && weapon.Projectile == null)
                 throw new InvalidOperationException($"{_weaponCatalog.name}: weapon {weapon.Id} has no hit effect.");
 
             for (int i = 0; i < weapon.HitEffects.Count; i++)

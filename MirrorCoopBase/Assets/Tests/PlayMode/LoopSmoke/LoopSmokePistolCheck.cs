@@ -14,6 +14,7 @@ using Features.HandWeaponModule.Scripts;
 using Features.NetworkModelModule.Scripts;
 using Features.ShipModule.Scripts.Debug;
 using Features.WeaponModule.Contracts;
+using Features.WeaponModule.Scripts.Core;
 using Features.WeaponModule.Scripts.Readiness;
 using Mirror;
 using NUnit.Framework;
@@ -23,7 +24,7 @@ using UnityEngine;
 namespace Tests.PlayMode.LoopSmoke {
     // The pistol the way a player uses it: bought at the kiosk and picked up by hand at the station after loop 4 of
     // run 2; in that cruise the host aims the camera through the look input and clicks the fire button (the input service's
-    // Fire action, as the mouse sends it). One shot hits the debug dummy, a second click within the 2 s cooldown fires
+    // Fire action, as the mouse sends it). One shot hits the debug dummy, a click while the pistol reloads fires
     // nothing, the HUD ring fills up again, and one shot breaks a small field rock as a Weapon break by the host with
     // the pistol. Then the host drops it on the deck.
     public sealed class LoopSmokePistolCheck {
@@ -90,7 +91,7 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.IsTrue(Hand.Held != null && Hand.Held.TryGetComponent(out HandWeaponItem _), "Pistol: the host does not hold the pistol in cruise.");
             try {
                 CameraLookDriver.DebugPitchOverride = true;
-                yield return ShootDummyAndBlockSecondShotCoroutine();
+                yield return ShootDummyAndBlockShotWhileReloadingCoroutine();
                 yield return ShootSmallRockCoroutine();
             } finally {
                 CameraLookDriver.DebugPitchOverride = false;
@@ -114,7 +115,7 @@ namespace Tests.PlayMode.LoopSmoke {
                 NetworkServer.Destroy(item.gameObject);
         }
 
-        private IEnumerator ShootDummyAndBlockSecondShotCoroutine() {
+        private IEnumerator ShootDummyAndBlockShotWhileReloadingCoroutine() {
             IWeaponDebugTargets targets = SessionQueries.Resolve<IWeaponDebugTargets>();
             HeldWeaponReadinessModel readiness = SessionQueries.Resolve<HeldWeaponReadinessModel>();
             WeaponDebugTarget target = targets.DebugSpawnTarget();
@@ -142,16 +143,22 @@ namespace Tests.PlayMode.LoopSmoke {
             Assert.Less(readiness.Readiness, READY, "Pistol: the HUD ring shows it ready right after a shot.");
             yield return LoopSmokeReviveCheck.CaptureScreenshotCoroutine(PISTOL_SCREENSHOT);
 
+            // A reload takes the pistol out for its time: a click while it runs fires nothing.
+            IWeaponService weapons = SessionQueries.Resolve<IWeaponService>();
+            yield return _session.WaitForCoroutine(() => readiness.Readiness >= READY, COOLDOWN_TIMEOUT_SECONDS, "Pistol: ready again after the shot");
+            weapons.Holder.OwnerRequestReload();
+            yield return _session.WaitForCoroutine(() => weapons.TryGetCapability(out IWeaponMagazine magazine) && magazine.IsReloading,
+                COMMAND_TIMEOUT_SECONDS, "Pistol: reloading after the reload request");
             yield return HandWeaponAiming.ClickFireCoroutine();
             for (float waited = 0f; waited < BLOCKED_SHOT_WAIT_SECONDS; waited += Time.deltaTime) {
                 HandWeaponAiming.KeepAiming(TargetCenter(target));
                 yield return null;
             }
 
-            Assert.AreEqual(1, target.Hits, "Pistol: a second click within the 2 s cooldown fired again.");
-            yield return _session.WaitForCoroutine(() => readiness.Readiness >= READY, COOLDOWN_TIMEOUT_SECONDS, "Pistol: ready again after the cooldown");
+            Assert.AreEqual(1, target.Hits, "Pistol: a click during the reload fired.");
+            yield return _session.WaitForCoroutine(() => readiness.Readiness >= READY, COOLDOWN_TIMEOUT_SECONDS, "Pistol: ready again after the reload");
             targets.DebugDespawnTarget();
-            Debug.Log("[LoopSmoke] pistol: one hit on the dummy, the click within the cooldown was blocked");
+            Debug.Log("[LoopSmoke] pistol: one hit on the dummy, the click during the reload was blocked");
         }
 
         private IEnumerator ShootSmallRockCoroutine() {
@@ -244,7 +251,7 @@ namespace Tests.PlayMode.LoopSmoke {
             target.GetComponentInChildren<Collider>().bounds.center;
 
         private static bool IsLoosePistol(HandWeaponItem item) =>
-            item.Definition.Id == PISTOL_ID && item.GetComponent<Grabbable>().CanBeGrabbed;
+            item.HandDefinition.Id == PISTOL_ID && item.GetComponent<Grabbable>().CanBeGrabbed;
     }
 }
 #endif

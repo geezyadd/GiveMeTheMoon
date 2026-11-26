@@ -21,6 +21,18 @@ namespace Features.WeaponModule.Scripts.Definitions {
         [SerializeReference, WeaponPartPicker] private IShotDeliveryDefinition _delivery;
         [SerializeReference, WeaponPartPicker] private IHitEffect[] _hitEffects = Array.Empty<IHitEffect>();
         [SerializeField] private WeaponFeelProfile _feelProfile;
+        [Header("Magazine")]
+        [Tooltip("Rounds in a full magazine; 0: the weapon never runs out and never reloads (a turret).")]
+        [SerializeField, Min(0)] private int _magazineCapacity;
+        [SerializeField, Min(0f)] private float _reloadSeconds;
+        [Header("Bodies struck")]
+        [Tooltip("Velocity change a struck body part gets along the shot, m/s (a player's ragdoll limb).")]
+        [SerializeField, Min(0f)] private float _impactPushSpeed;
+        [Tooltip("How long a struck body goes limp, s; 0 only pushes it.")]
+        [SerializeField, Min(0f)] private float _impactKnockdownSeconds;
+        [Header("Projectile")]
+        [Tooltip("The projectile each shot launches; empty for a weapon whose shots land at once (hitscan).")]
+        [SerializeField] private ProjectileDefinition _projectile;
 
         public string Id => _id;
         public string DisplayName => _displayName;
@@ -31,5 +43,10 @@ namespace Features.WeaponModule.Scripts.Definitions {
         public IShotDeliveryDefinition Delivery => _delivery;
         public IReadOnlyList<IHitEffect> HitEffects => _hitEffects;
         public WeaponFeelProfile FeelProfile => _feelProfile;
+        public int MagazineCapacity => _magazineCapacity;
+        public float ReloadSeconds => _reloadSeconds;
+        public float ImpactPushSpeed => _impactPushSpeed;
+        public float ImpactKnockdownSeconds => _impactKnockdownSeconds;
+        public ProjectileDefinition Projectile => _projectile;
     }
 }

@@ -40,7 +40,10 @@ namespace Features.WeaponModule.Editor.Tests {
             foreach (WeaponDefinition weapon in _weaponCatalog.Weapons) {
                 Assert.IsNotNull(weapon.FireMode, $"{weapon.name} has no fire mode.");
                 Assert.IsNotNull(weapon.Delivery, $"{weapon.name} has no shot delivery.");
-                Assert.IsNotEmpty(weapon.HitEffects, $"{weapon.name} has no hit effect.");
+                if (weapon.Projectile == null)
+                    Assert.IsNotEmpty(weapon.HitEffects, $"{weapon.name} has no hit effect.");
+                else
+                    Assert.IsNotNull(weapon.Projectile.Prefab, $"{weapon.name} launches a projectile with no prefab.");
                 Assert.IsFalse(weapon.HitEffects.Any(effect => effect == null), $"{weapon.name} has an empty hit effect.");
                 Assert.IsNotNull(weapon.FeelProfile, $"{weapon.name} has no feel profile.");
             }

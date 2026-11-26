@@ -17,6 +17,7 @@ namespace Features.InputModule.Realization.Scripts.Generated {
         public InputDefaultActions Grab { get; set; } = new();
         public InputDefaultActions Fire { get; set; } = new();
         public InputDefaultActions Release { get; set; } = new();
+        public InputDefaultActions Reload { get; set; } = new();
         public InputDefaultActions ToggleCursor { get; set; } = new();
         public InputDefaultActions CloseWindow { get; set; } = new();
         public InputDefaultActions SpectatePrev { get; set; } = new();
@@ -133,6 +134,12 @@ namespace Features.InputModule.Realization.Scripts.Generated {
             if(context.started)Release.Started?.Invoke();
             if(context.performed)Release.Performed?.Invoke();
             if(context.canceled)Release.Canceled?.Invoke();
+        }
+        public void OnReload(InputAction.CallbackContext context)
+         {
+            if(context.started)Reload.Started?.Invoke();
+            if(context.performed)Reload.Performed?.Invoke();
+            if(context.canceled)Reload.Canceled?.Invoke();
         }
         public void OnToggleCursor(InputAction.CallbackContext context)
          {

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _id: pistol
   _displayName: Pistol
-  _shotsPerSecond: 0.5
+  _shotsPerSecond: 3
   _damagePerHit: 12
   _rangeMeters: 150
   _fireMode:
@@ -24,6 +24,11 @@ MonoBehaviour:
   _hitEffects:
   - rid: 3002219236546576462
   _feelProfile: {fileID: 11400000, guid: 3dc62d15723009540b39ca39c140abb0, type: 2}
+  _magazineCapacity: 8
+  _reloadSeconds: 1.5
+  _impactPushSpeed: 8
+  _impactKnockdownSeconds: 0
+  _projectile: {fileID: 0}
   references:
     version: 2
     RefIds:
@@ -33,7 +38,7 @@ MonoBehaviour:
         _spreadDegrees: 0
         _hitLayers:
           serializedVersion: 2
-          m_Bits: 256
+          m_Bits: 833
     - rid: 3002219236546576462
       type: {class: DamageHitEffect, ns: Features.WeaponModule.Scripts.Parts.Effects, asm: Features.WeaponModule}
       data: 

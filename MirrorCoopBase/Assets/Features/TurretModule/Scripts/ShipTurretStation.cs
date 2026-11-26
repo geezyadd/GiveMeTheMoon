@@ -5,21 +5,22 @@ using Features.InputModule.Realization.Scripts.Generated;
 using Features.NetworkModelModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Contracts;
+using Features.WeaponModule.Scripts.Core;
 using Features.WeaponModule.Scripts.Definitions;
 using Features.WeaponModule.Scripts.Feel;
 using Features.WeaponModule.Scripts.Network;
-using Features.WeaponModule.Scripts.Shooting;
 using Mirror;
 using UnityEngine;
 using Zenject;
 
 namespace Features.TurretModule.Scripts {
-    // A turret's slot view as a seat station. On the seated owner's peer the mouse turns it at once, the fire button
-    // fires and the view rides the camera point behind the gun; on every other peer the turret follows the synced aim,
-    // smoothed, and replays the fire from the synced trigger. On the server the seated player holds the weapon, so
-    // its hit reports are accepted. A broken turret module does not fire until it is repaired. The seat point turns with
-    // the gun, and the seated player's body follows it on every peer.
-    public sealed class ShipTurretStation : MonoBehaviour, ISeatStation {
+    // A turret's slot view as a seat station and as the weapon its gunner holds. On every peer the seated player's
+    // weapon holder holds this turret (WeaponHolderSync.Equip), so the gunner's weapon system fires it and every other
+    // peer shows the shots the server passes on. On the seated owner's peer the mouse turns it at once and the view
+    // rides the camera point behind the gun; on every other peer the turret follows the synced aim, smoothed. A broken
+    // turret module does not fire until it is repaired. The seat point turns with the gun, and the seated player's body
+    // follows it on every peer.
+    public sealed class ShipTurretStation : MonoBehaviour, ISeatStation, IWeapon {
         [SerializeField] private ShipTurretDefinition _definition;
         [SerializeField] private WeaponDefinition _weapon;
         [SerializeField] private Transform _yawPivot;
@@ -31,8 +32,6 @@ namespace Features.TurretModule.Scripts {
         private readonly SeatedOwnerBody _ownerBody = new SeatedOwnerBody();
 
         private IGameCameraService _gameCameraService;
-        private IWeaponShooterFactory _weaponShooterFactory;
-        private IWeaponCatalogIndexService _weaponCatalogIndexService;
         private IShipModuleCondition _shipModuleCondition;
         private TurretOwnerInput _ownerInput;
 
@@ -44,23 +43,19 @@ namespace Features.TurretModule.Scripts {
         private TurretAimSmoothing _remoteAim;
         private TurretAimSendSchedule _aimSendSchedule;
         private ShipTurretWeaponHolder _holder;
-        private WeaponShooter _replayShooter;
-        private WeaponShooter _ownerShooter;
         private Quaternion _yawRest;
         private Quaternion _pitchRest;
         private Transform _seatPoint;
-        private int _weaponIndex;
         private PlayerKey _occupant;
         private WeaponHolderSync _occupantWeapon;
         private ShipRider _occupantRider;
         private bool _isOwner;
-        private bool _isServerHolding;
         private bool _isWorking = true;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        private bool _isDebugTriggerHeld;
-#endif
 
         public bool IsOccupiedByLocalPlayer => _isOwner;
+        public WeaponDefinition Definition => _weapon;
+        public IWeaponFeelPresenter Feel => _feel;
+        public bool IsUsable => _isWorking;
 
         [Inject]
         private void InjectDependencies(
@@ -68,12 +63,8 @@ namespace Features.TurretModule.Scripts {
             CursorModel cursorModel,
             HoveredInteractableModel hoveredInteractableModel,
             IGameCameraService gameCameraService,
-            IWeaponShooterFactory weaponShooterFactory,
-            IWeaponCatalogIndexService weaponCatalogIndexService,
             IShipModuleCondition shipModuleCondition) {
             _gameCameraService = gameCameraService;
-            _weaponShooterFactory = weaponShooterFactory;
-            _weaponCatalogIndexService = weaponCatalogIndexService;
             _shipModuleCondition = shipModuleCondition;
             _ownerInput = new TurretOwnerInput(inputService, cursorModel, hoveredInteractableModel);
         }
@@ -90,9 +81,7 @@ namespace Features.TurretModule.Scripts {
             _yawRest = _yawPivot.localRotation;
             _pitchRest = _pitchPivot.localRotation;
             _seatPoint = _seat.SitPoint;
-            _weaponIndex = _weaponCatalogIndexService.GetIndex(_weapon);
             _feel.Bind(_weapon.FeelProfile, new ShipDeckFeelFloor(_ship.transform, _ship.DeckGeometry));
-            _replayShooter = _weaponShooterFactory.Create(_weapon, _feel, new ShownShotOutcomes(_feel));
             _hands.SetActive(false);
             _shipModuleCondition.OnConditionChanged += OnConditionChanged;
             OnConditionChanged();
@@ -114,7 +103,9 @@ namespace Features.TurretModule.Scripts {
                 AdvanceReplay(deltaTime);
 
             ApplyPose();
-            CurrentShooter().Advance(_holder, deltaTime);
+            if (_occupantWeapon == null)
+                _feel.PresentFiring(false, 0f);
+
             _feel.Advance(deltaTime);
         }
 
@@ -129,18 +120,16 @@ namespace Features.TurretModule.Scripts {
             if (_isOwner)
                 EndOwnerControl();
 
-            if (_isServerHolding && _occupantWeapon != null)
-                _occupantWeapon.ServerEndHolding();
+            if (_occupantWeapon != null)
+                _occupantWeapon.Unequip();
 
             // The rider may already be gone with its player object.
             if (_occupantRider != null)
                 _occupantRider.StopFollowingSeatPoint(_seatPoint);
 
-            _isServerHolding = false;
             _occupant = default;
             _occupantWeapon = null;
             _occupantRider = null;
-            _holder.SetTriggerHeld(false);
             _remoteAim.Reset();
             // OnDestroy reaches here too, when the hands may already be gone with the view.
             if (_hands != null)
@@ -152,9 +141,14 @@ namespace Features.TurretModule.Scripts {
         public void DebugAimAt(Vector3 worldPoint) =>
             _aim.SetDirection(Quaternion.Inverse(_yawPivot.parent.rotation) * (worldPoint - _pitchPivot.position));
 
-        public void DebugHoldTrigger(bool isHeld) =>
-            _isDebugTriggerHeld = isHeld;
+        public void DebugHoldTrigger(bool isHeld) {
+            if (_isOwner && _occupantWeapon != null)
+                _occupantWeapon.DebugHoldTrigger(isHeld);
+        }
 #endif
+
+        public bool TryGetCapability<TCapability>(out TCapability capability) where TCapability : class =>
+            WeaponCapabilities.TryGet(this, this, out capability);
 
         // The occupant's player object may spawn on this peer after the seat state (a late join): taken when it is there.
         private void TryTakeOccupant() {
@@ -164,11 +158,7 @@ namespace Features.TurretModule.Scripts {
             _occupantWeapon = weapon;
             _occupantRider = rider;
             _occupantRider.FollowSeatPoint(_seatPoint);
-
-            if (NetworkServer.active) {
-                weapon.ServerBeginHolding(_weapon, _weaponIndex, _holder);
-                _isServerHolding = true;
-            }
+            weapon.Equip(this, _holder);
 
             if (rider.isOwned)
                 BeginOwnerControl();
@@ -181,9 +171,6 @@ namespace Features.TurretModule.Scripts {
             _ownerInput.Listen();
             _gameCameraService.BeginFixedView(_cameraPoint);
             _ownerBody.Hide(_occupantWeapon);
-            _occupantWeapon.OwnerBeginHolding(_weaponIndex);
-            _ownerShooter = _weaponShooterFactory.Create(_weapon, _feel, new ReportedShotOutcomes(_feel, _occupantWeapon));
-            _feel.SetViewOwned(true);
         }
 
         private void EndOwnerControl() {
@@ -191,34 +178,17 @@ namespace Features.TurretModule.Scripts {
             _ownerInput.StopListening();
             _gameCameraService.EndFixedView();
             _ownerBody.Show();
-            _feel.SetViewOwned(false);
-            _ownerShooter = null;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            _isDebugTriggerHeld = false;
-#endif
-            if (_occupantWeapon == null)
-                return;
-
-            _occupantWeapon.OwnerSendAim(_aim.Direction, false);
-            _occupantWeapon.OwnerEndHolding();
+            if (_occupantWeapon != null)
+                _occupantWeapon.OwnerSendAim(_aim.Direction, false);
         }
 
         private void AdvanceOwner() {
             _aim.Turn(_ownerInput.ConsumeLook());
-            bool isTriggerHeld = IsOwnerTriggerHeld() && _isWorking;
-            _holder.SetTriggerHeld(isTriggerHeld);
             _remoteAim.SnapTo(_aim.Yaw, _aim.Pitch);
-            SendAimIfDue(isTriggerHeld);
+            _occupantWeapon.OwnerSetAim(_aim.Direction);
+            SendAimIfDue(_occupantWeapon.OwnerIsTriggerHeld);
             if (_ownerInput.ConsumeStandRequest() && _occupantRider != null)
                 _occupantRider.OwnerRequestStand();
-        }
-
-        private bool IsOwnerTriggerHeld() {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (_isDebugTriggerHeld)
-                return true;
-#endif
-            return _ownerInput.IsFireHeld;
         }
 
         private void SendAimIfDue(bool isTriggerHeld) {
@@ -231,9 +201,7 @@ namespace Features.TurretModule.Scripts {
         }
 
         private void AdvanceReplay(float deltaTime) {
-            bool hasOccupant = _occupantWeapon != null;
-            _holder.SetTriggerHeld(hasOccupant && _occupantWeapon.IsTriggerHeld && _isWorking);
-            if (hasOccupant)
+            if (_occupantWeapon != null)
                 _receivedAim.SetDirection(_occupantWeapon.AimDirection);
 
             _remoteAim.Advance(_receivedAim.Yaw, _receivedAim.Pitch, deltaTime);
@@ -245,9 +213,6 @@ namespace Features.TurretModule.Scripts {
             _yawPivot.localRotation = _yawRest * Quaternion.Euler(0f, yaw, 0f);
             _pitchPivot.localRotation = _pitchRest * Quaternion.Euler(-pitch, 0f, 0f);
         }
-
-        private WeaponShooter CurrentShooter() =>
-            _ownerShooter ?? _replayShooter;
 
         private void OnConditionChanged() =>
             _isWorking = _shipModuleCondition.IsWorking(_socket.SocketId);

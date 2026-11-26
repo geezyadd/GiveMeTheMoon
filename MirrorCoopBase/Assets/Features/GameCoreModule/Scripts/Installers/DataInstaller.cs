@@ -52,6 +52,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<HoveredInteractableModel>().AsSingle();
             Container.Bind<HoldUseModel>().AsSingle();
             Container.Bind<HeldWeaponReadinessModel>().AsSingle();
+            Container.Bind<Features.WeaponModule.Scripts.Core.WeaponModel>().AsSingle();
             Container.Bind<SpectatorModel>().AsSingle();
             Container.Bind<ShopVisitModel>().AsSingle();
             Container.Bind<DeadCrewModel>().AsSingle();

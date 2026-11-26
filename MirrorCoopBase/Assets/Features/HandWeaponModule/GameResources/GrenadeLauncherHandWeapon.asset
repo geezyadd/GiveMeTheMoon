@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d515f51a45f3804994dd0211f758ee3, type: 3}
+  m_Name: GrenadeLauncherHandWeapon
+  m_EditorClassIdentifier: 
+  _id: grenade-launcher
+  _displayName: Grenade launcher
+  _icon: {fileID: 0}
+  _description: Lobs grenades along an arc; they bounce and go off after 2 s or on
+    a body. 4 rounds, R reloads.
+  _price: 300
+  _itemPrefab: {fileID: 2192727742419377178, guid: 506e30d622e30ff4e9cd96be8285ad18, type: 3}
+  _weapon: {fileID: 11400000, guid: 96d78d282e5a6de46a01968cfeafebe2, type: 2}
+  _crosshairLayers:
+    serializedVersion: 2
+    m_Bits: 833
+  _viewOffset: {x: 0.17, y: -0.16, z: 0.42}
+  _handOffset: {x: 0.55, y: -0.05, z: -0.15}

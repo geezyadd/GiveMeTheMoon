@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b605cd8debde17c4994371d03cc65001, type: 3}
+  m_Name: RocketLauncher
+  m_EditorClassIdentifier: 
+  _id: rocket-launcher
+  _displayName: Rocket launcher
+  _shotsPerSecond: 1
+  _damagePerHit: 0
+  _rangeMeters: 100
+  _fireMode:
+    rid: 3002219298932916297
+  _delivery:
+    rid: 3820456068793761879
+  _hitEffects: []
+  _feelProfile: {fileID: 11400000, guid: f87b0493d1020d64eaaad0b67555567b, type: 2}
+  _magazineCapacity: 1
+  _reloadSeconds: 2
+  _impactPushSpeed: 0
+  _impactKnockdownSeconds: 0
+  _projectile: {fileID: 11400000, guid: 94f02a36e873b1341a07683e4beff8b5, type: 2}
+  references:
+    version: 2
+    RefIds:
+    - rid: 3002219298932916297
+      type: {class: SingleShotFireModeDefinition, ns: Features.WeaponModule.Scripts.Parts.FireModes, asm: Features.WeaponModule}
+      data: 
+    - rid: 3820456068793761879
+      type: {class: LaunchDeliveryDefinition, ns: Features.WeaponModule.Scripts.Parts.Delivery, asm: Features.WeaponModule}
+      data:
+        _spreadDegrees: 0

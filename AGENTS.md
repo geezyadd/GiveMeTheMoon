@@ -112,18 +112,19 @@ types.
      `QuickOutline` also has its own asmdef (the unused `Mini Mapa(Radar)` pack was deleted on 2026-10-25).
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
-     `Features.WeaponModule`, `Features.SpaceHazeModule`, `Features.ActiveRagdollModule` (FloatingController),
+     `Features.SpaceHazeModule`, `Features.ActiveRagdollModule` (FloatingController),
      `Features.TargetModule`.
   3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.PlayerReplicaModule`,
      `Features.PlayerAnimationModule`.
   4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`,
-     `Features.HandWeaponModule`, `Features.MovingPlatformModule`, `Features.AttackModule`,
-     `Features.ExplosionModule`.
-  5. `Features.PlayerBodyModule`, `Features.ShipImpactModule`, `Features.ShipDamageModule`, `Features.TurretModule`, `Features.PlayerLifeModule`,
-     `Features.LobbyModule` (Ship, Grab, GameFlow, Mvp, Connection).
-  6. `Features.StagePresetModule`, `Features.ShopModule`, `Features.TooltipModule`, `Features.CrewInviteModule`,
+     `Features.MovingPlatformModule`, `Features.AttackModule`, `Features.ExplosionModule`.
+  5. `Features.WeaponModule` (since 2026-11-26: it uses the input, the camera, the movement's control block and the
+     explosions), `Features.PlayerBodyModule`, `Features.ShipImpactModule`, `Features.ShipDamageModule`, `Features.PlayerLifeModule`.
+  6. `Features.HandWeaponModule`, `Features.TurretModule`, `Features.LobbyModule` (Ship, Grab, GameFlow, Mvp, Connection,
+     WeaponModule).
+  7. `Features.StagePresetModule`, `Features.ShopModule`, `Features.TooltipModule`, `Features.CrewInviteModule`,
      `Features.SonarModule`.
-  7. Composition root: `Features.GameCoreModule`, `Features.BootstrapersModule` (Contracts, GameFlow, SceneLoader).
+  8. Composition root: `Features.GameCoreModule`, `Features.BootstrapersModule` (Contracts, GameFlow, SceneLoader).
   Every feature module's tests are a test assembly `Features.<Module>.Editor.Tests` (and `Game.Connection.Editor.Tests`,
   `NetworkModelModule.Editor.Tests`); its file says what they cover.
 
@@ -135,8 +136,8 @@ types.
 | [ShipDamageModule](MirrorCoopBase/Assets/Features/ShipDamageModule/AGENTS.md) | module breakdowns, hull breaches, the leak, repair with the wrench and the hammer |
 | [TurretModule](MirrorCoopBase/Assets/Features/TurretModule/AGENTS.md) | the turret's seat station (`ShipTurretStation`) and the turret gun tiers |
 | [FlightFieldModule](MirrorCoopBase/Assets/Features/FlightFieldModule/AGENTS.md) | the flight field: generation, breakable rocks, target balloons |
-| [WeaponModule](MirrorCoopBase/Assets/Features/WeaponModule/AGENTS.md) | the weapon core, its network path, the client feel |
-| [HandWeaponModule](MirrorCoopBase/Assets/Features/HandWeaponModule/AGENTS.md) | weapons carried in the hand: the pistol |
+| [WeaponModule](MirrorCoopBase/Assets/Features/WeaponModule/AGENTS.md) | the weapon system (ported from FLEXUS: weapons with capabilities, the weapon service and system, projectiles and their pool), its one network path, the client feel |
+| [HandWeaponModule](MirrorCoopBase/Assets/Features/HandWeaponModule/AGENTS.md) | weapons carried in the hand: the pistol, the knockdown gun, the grenade and rocket launchers |
 | [SonarModule](MirrorCoopBase/Assets/Features/SonarModule/AGENTS.md) | the navigator's sonar console on the radar |
 | [SpaceHazeModule](MirrorCoopBase/Assets/Features/SpaceHazeModule/AGENTS.md) | the dark space haze: how far the crew sees by eye |
 | [PlayerReplicaModule](MirrorCoopBase/Assets/Features/PlayerReplicaModule/AGENTS.md) | player body sync by state and input, the only one: packet stream, simulated copies with soft correction, carriers, the server's moves of a body |
