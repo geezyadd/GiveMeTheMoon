@@ -29,5 +29,8 @@ namespace Features.ActiveRagdollModule {
         [Tooltip("The limb whose height above the ground is kept at its animated height (for a person: the head). " +
                  "One per body.")]
         public bool HeightReference;
+
+        [Tooltip("How far the joint may turn (applied when baked or by the inspector's \"Apply joint limits\").")]
+        public RagdollJointLimits Limits = new();
     }
 }

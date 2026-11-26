@@ -20,6 +20,15 @@ namespace Features.ActiveRagdollModule.Editor {
                         HumanoidProfileFiller.Fill(body);
                 }
 
+                using (new EditorGUI.DisabledScope(HumanoidProfileFiller.CanFill(body) == false)) {
+                    if (GUILayout.Button("Fill Humanoid joint limits")) {
+                        HumanoidProfileFiller.FillLimits(body);
+                        RagdollJointLimitsBaker.ApplyAll(body);
+                    }
+                }
+
+                if (GUILayout.Button("Apply joint limits"))
+                    RagdollJointLimitsBaker.ApplyAll(body);
                 if (GUILayout.Button("Bake limbs"))
                     RagdollBodyBaker.Bake(body);
                 if (GUILayout.Button("Remove limbs"))

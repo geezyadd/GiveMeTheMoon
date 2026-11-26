@@ -44,6 +44,18 @@ namespace Features.ActiveRagdollModule {
 
         [SerializeField] private RagdollStandSettings _stand = new();
 
+        [Header("Knockdown")]
+        [Tooltip("After a knockdown's limp time the body gets its control back over this many seconds: the pose forces " +
+                 "and joint drives grow from 0 to full and the body stands up by itself. Read every physics step.")]
+        [SerializeField, Min(0f)] private float _knockdownRecoverSeconds = 0.6f;
+        [Tooltip("While knocked down the joint drives keep this share of their damper and none of their spring: the " +
+                 "limbs hold no pose (nothing pulls them toward the animation) but turn heavily instead of flopping " +
+                 "(0: free). Read every physics step, so it can be tuned in Play mode.")]
+        [SerializeField, Range(0f, 1f)] private float _knockdownJointDamperShare = 0.5f;
+        [Tooltip("While knocked down the joint limits are narrowed to this share of the baked ones (1: as baked); they " +
+                 "widen back as the body gets up. Read every physics step, so it can be tuned in Play mode.")]
+        [SerializeField, Range(0.1f, 1f)] private float _knockdownJointLimitShare = 0.6f;
+
         [Header("Baking")]
         [Tooltip("Multiplies every limb's capsule radius when the body is baked.")]
         [SerializeField] private float _radiusMultiplier = 1.3f;
@@ -56,6 +68,9 @@ namespace Features.ActiveRagdollModule {
         public float RootSwingDamping => _rootSwingDamping;
         public float MaxFacingTurnDegreesPerSecond => _maxFacingTurnDegreesPerSecond;
         public RagdollStandSettings Stand => _stand;
+        public float KnockdownRecoverSeconds => _knockdownRecoverSeconds;
+        public float KnockdownJointDamperShare => _knockdownJointDamperShare;
+        public float KnockdownJointLimitShare => _knockdownJointLimitShare;
         public float MassMultiplier => _massMultiplier;
         public float DamperToSpringRatio => _damperToSpringRatio;
         public float AngularLimit => _angularLimit;

@@ -15,7 +15,7 @@ namespace Features.PlayerBodyModule {
             Animator = Sampler.Animator != null ? Sampler.Animator : body.GetComponentInChildren<Animator>();
             _running = new Behaviour[] {
                 body, Sampler, body.GetComponent<AnimatedPoseFollower>(), Ground, body.GetComponent<RagdollHover>(),
-                Gravity, Drag, Ride, body.GetComponent<RagdollCarrierRideStepEnd>()
+                Gravity, Drag, Ride, body.GetComponent<RagdollCarrierRideStepEnd>(), body.GetComponent<RagdollKnockdown>()
             };
         }
 

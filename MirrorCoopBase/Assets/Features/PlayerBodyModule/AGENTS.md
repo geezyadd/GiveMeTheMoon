@@ -69,8 +69,8 @@ one raised to the minimum along its motion, a still one toward the head).
     count in the packet the copy shows, while the copy is simulated.
   - `PlayerHitPush` (refs: its `Target`, the movement, the `Head` and `Spine2` limbs): the reaction to a hit on its
     target, on the peer where the hit landed: the head limb gets a velocity change at the aim point
-    (`AddForceAtPosition`, so the head also tips away) and the chest `Chest Share` 0.6 of it (not while held or
-    asleep): the head jerks, the upper body bends at the hips and the joints bring it back. The head's velocity
+    (`AddForceAtPosition`, so the head also tips away) and the chest `Chest Share` 0.6 of it (a seated player too, since
+    2026-11-26; not while asleep): the head jerks, the upper body bends at the hips and the joints bring it back. The head's velocity
     change is the hitting limb's velocity x `Limb Speed Scale` 6, at least `Min Head Speed` 14 m/s, at most
     `Max Head Speed` 40 m/s (`HitPushRule.HeadVelocity`). The slapped player's owner pushes its real body and the
     others follow its packets; a peer where the hand misses shows no push.
@@ -85,6 +85,13 @@ one raised to the minimum along its motion, a still one toward the head).
   head limb's pivot at the neck and eased to a stop there; strength went scale 1 / 2.5 / 4 -> 6, minimum none / 6 /
   9 -> 14, max 10 / 20 / 30 -> 40 m/s, head only -> head and chest (the head alone, 25 of the body's 305 kg, only
   swayed the body: its push spreads over the whole mass).
+- `PlayerExplosionReaction` (on `DummyPlayer`; refs: the ragdoll, its `RagdollKnockdown`, the movement): an
+  ExplosionModule receiver (parts: every limb and the capsule). On every peer that simulates this ragdoll it gives every
+  limb the wave's velocity change at the limb (away from the centre, tipped up) and, when the hit knocks down, calls
+  `RagdollKnockdown.KnockDown`; while knocked down the movement is `SetKnockedDown` and neither walks nor jumps. A hit on
+  a held (seated) player waits up to `Held Wait Seconds` (1 s) for the seat to let go (ShipModule's
+  `ShipRiderExplosionEject` stands them up on the server). A sleeping ragdoll is not thrown. The baker adds
+  `RagdollKnockdown` to the ragdoll and wires this component.
 - `CapsuleColliders`: the capsule's colliders (not the ragdoll's), turned off, kept off and restored.
 - `RagdollMovableBody`: `IMovableBody` over `RagdollBody` + `RagdollGroundSensor` + `RagdollCarrierRide` (root limb
   position, mass-weighted velocity, total mass, acceleration and velocity change on every limb, `PauseSupport` = the

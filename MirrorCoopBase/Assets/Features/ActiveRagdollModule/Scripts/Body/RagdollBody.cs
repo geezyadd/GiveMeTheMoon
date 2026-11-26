@@ -15,7 +15,7 @@ namespace Features.ActiveRagdollModule {
         public RagdollLimb Root => _limbs.Count > 0 ? _limbs[0] : null;
         // The limb kept at its animated height above the ground (the head of a person); the root if none is marked.
         public RagdollLimb HeightLimb => _limbs.Find(limb => limb.IsHeightReference) ?? Root;
-        // 0 = a limp ragdoll, 1 = fully follows the animation. Always 1 until falling and getting up are built.
+        // 0 = a limp ragdoll, 1 = fully follows the animation. Set by a knockdown (RagdollKnockdown), 1 otherwise.
         public float ControlFactor { get; private set; } = 1f;
         // Open space: neither gravity nor the hover act on the body; it still senses the ground it touches.
         public bool IsWeightless { get; set; }
@@ -44,6 +44,26 @@ namespace Features.ActiveRagdollModule {
         private void FixedUpdate() {
             foreach (RagdollLimb limb in _limbs)
                 limb.ApplyPendingForce();
+        }
+
+        // Sets how much the body follows its animation (clamped to 0..1) and scales the joint drives with it.
+        public void SetControlFactor(float controlFactor) {
+            float clamped = Mathf.Clamp01(controlFactor);
+            // Exact compare: an approximate one stopped a recovery at 0.9999994, short of 1, for good.
+            if (clamped == ControlFactor)
+                return;
+
+            ControlFactor = clamped;
+            ApplyDriveScale(clamped);
+        }
+
+        // While knocked down: the drives pull with this share of their spring, resist with this share of their damper,
+        // and the joint limits are this share of the baked ones.
+        public void ApplyLimpJoints(float springScale, float damperScale, float limitShare) {
+            foreach (RagdollLimb limb in _limbs) {
+                limb.ApplyDriveScale(springScale, damperScale);
+                limb.ScaleLimits(limitShare);
+            }
         }
 
         public void ApplyDriveScale(float scale) {

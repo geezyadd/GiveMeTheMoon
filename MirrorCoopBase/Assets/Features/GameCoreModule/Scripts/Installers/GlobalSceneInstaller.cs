@@ -18,6 +18,7 @@ using Features.ShopModule.Scripts.Installers;
 using Features.SonarModule.Scripts.Installers;
 using Features.SpaceHazeModule.Scripts.Installers;
 using Features.TargetModule.Installers;
+using Features.ExplosionModule.Installers;
 using Features.StagePresetModule.Scripts.Installers;
 using Features.TooltipModule.Scripts.Installers;
 using Features.WeaponModule.Scripts;
@@ -32,6 +33,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             CharacterMovableModuleInstaller.Install(Container);
             PlayerReplicaModuleInstaller.Install(Container);
             TargetModuleInstaller.Install(Container);
+            ExplosionModuleInstaller.Install(Container);
             CameraModuleInstaller.Install(Container);
             GrabModuleInstaller.Install(Container);
             ShipModuleInstaller.Install(Container);
@@ -55,6 +57,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindInterfacesTo<GameplaySessionLifecycle>().AsSingle();
             Container.BindInterfacesTo<SessionDroppedMenuSystem>().AsSingle();
             Container.BindInterfacesTo<FieldNetworkedPrefabSystem>().AsSingle();
+            Container.BindInterfacesTo<ExplosionNetworkChannelSystem>().AsSingle();
         }
     }
 }

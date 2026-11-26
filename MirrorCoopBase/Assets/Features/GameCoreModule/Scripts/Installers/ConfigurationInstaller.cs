@@ -2,6 +2,7 @@ using Features.MvpModule;
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.PlayerReplicaModule.Configuration;
 using Features.CameraModule.Scripts;
+using Features.ExplosionModule.Configuration;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Structures;
@@ -70,6 +71,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<StagePresetCatalog>(Address.Configurations.StagePresetCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WeaponCatalog>(Address.Configurations.WeaponCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WeaponHitRuleConfiguration>(Address.Configurations.WeaponHitRuleConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ExplosionConfiguration>(Address.Configurations.ExplosionConfiguration_Default).AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                         Container.BindConfigurationFromAddressables<Features.ShipModule.Scripts.Debug.WeaponDebugTargetConfiguration>(Address.Configurations.WeaponDebugTargetConfiguration_Default).AsSingle();
 #endif
