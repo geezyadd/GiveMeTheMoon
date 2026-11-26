@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Features.WeaponModule.Scripts.Projectiles {
     // The projectiles of every kind on this peer, kept for reuse: no Instantiate or Destroy while firing. They live
-    // under one root that goes away with its scene; then the pool starts over.
+    // under one root kept across scene changes; if it is gone anyway (play mode ended), the pool starts over.
     public sealed class ProjectilePool {
         private const string ROOT_NAME = "Projectiles";
 
@@ -61,6 +61,9 @@ namespace Features.WeaponModule.Scripts.Projectiles {
             _prefabByProjectile.Clear();
             _active.Clear();
             _root = new GameObject(ROOT_NAME).transform;
+            // A scene change (lobby -> game) must not take projectiles in flight with it.
+            if (Application.isPlaying)
+                Object.DontDestroyOnLoad(_root.gameObject);
         }
     }
 }

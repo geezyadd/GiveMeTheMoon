@@ -1,17 +1,15 @@
-using Features.CameraModule.Scripts;
-using Features.CameraModule.Scripts.Models;
 using Features.CameraModule.Scripts.Services;
 using Features.WeaponModule.Scripts.Parts.Holding;
 using UnityEngine;
 
 namespace Features.HandWeaponModule.Scripts {
-    // Keeps a held hand weapon where its holder and everyone else should see it: in the local holder's first-person
-    // view it is placed right after the look is applied, so it turns with the view on the same frame; otherwise (the
-    // holder in third person, every other peer) it is held out at the arm along the aim. A weapon let go of gets its
-    // model back on the item.
+    // Keeps a held hand weapon in its holder's real right hand, the same for the holder in either view and for every
+    // other peer: the grip in the palm (HandWeaponGrip), the barrel along the aim, while the arm reaches along it. On the
+    // holder's own peer it is placed right after the look is applied, so it turns with the view on the same frame. A
+    // weapon let go of gets its model back on the item.
     public sealed class HandWeaponPoseDriver {
         private readonly IGameCameraService _gameCameraService;
-        private readonly GameCameraModel _gameCameraModel;
+        private readonly HandWeaponGrip _grip;
         private readonly HandWeaponPose _pose = new HandWeaponPose();
 
         private HandWeaponItem _item;
@@ -19,12 +17,9 @@ namespace Features.HandWeaponModule.Scripts {
         private IWeaponAim _aim;
         private bool _isOwner;
 
-        private bool IsInFirstPersonView =>
-            _isOwner && _gameCameraModel.ActiveId == CameraIds.FPCamera && _gameCameraModel.FixedViewEye == null && _gameCameraModel.LookPivot != null;
-
-        public HandWeaponPoseDriver(IGameCameraService gameCameraService, GameCameraModel gameCameraModel) {
+        public HandWeaponPoseDriver(IGameCameraService gameCameraService, HandWeaponGrip grip) {
             _gameCameraService = gameCameraService;
-            _gameCameraModel = gameCameraModel;
+            _grip = grip;
         }
 
         public void Begin(HandWeaponItem item, Transform arm, IWeaponAim aim, bool isOwner) {
@@ -32,6 +27,7 @@ namespace Features.HandWeaponModule.Scripts {
             _arm = arm;
             _aim = aim;
             _isOwner = isOwner;
+            _grip.Begin(aim);
             if (isOwner)
                 _gameCameraService.LookApplied += OnLookApplied;
         }
@@ -41,6 +37,7 @@ namespace Features.HandWeaponModule.Scripts {
             if (_isOwner)
                 _gameCameraService.LookApplied -= OnLookApplied;
 
+            _grip.End();
             if (_item != null)
                 _item.ResetPose();
 
@@ -51,14 +48,17 @@ namespace Features.HandWeaponModule.Scripts {
         }
 
         public void Advance() {
-            if (IsInFirstPersonView == false)
-                _item.SetPose(_pose.InHand(_arm, _aim.Direction, _item.HandDefinition.HandOffset));
+            if (_isOwner == false)
+                Apply();
         }
 
         // The item may be gone between the hand's update and the camera's.
         private void OnLookApplied() {
-            if (_item != null && IsInFirstPersonView)
-                _item.SetPose(_pose.InView(_arm, _gameCameraModel.LookPivot, _item.HandDefinition.ViewOffset));
+            if (_item != null)
+                Apply();
         }
+
+        private void Apply() =>
+            _item.SetPose(_pose.AtGrip(_arm, _grip.GripPoint, _aim.Direction, _item.HandDefinition.GripOffset));
     }
 }

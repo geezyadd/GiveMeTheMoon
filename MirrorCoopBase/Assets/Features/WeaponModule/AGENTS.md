@@ -19,7 +19,8 @@ ported, on purpose).
   the weapon itself or a component on its object). A hand weapon item (`HandWeaponItem`) and a turret
   (`ShipTurretStation`) are weapons. Capabilities now: `IWeaponMagazine` (`WeaponMagazine`, a `NetworkBehaviour` on
   the item: rounds and the reload's end as SyncVars, server writes, the holding peer spends its rounds at once and
-  takes the server's count when it arrives; capacity and reload time from the definition).
+  takes the server's count when it arrives; capacity and reload time from the definition; capacity 0 = unlimited:
+  never runs out, never reloads).
 - **`WeaponModel`** (local, `DataInstaller`) + **`IWeaponService`** (`WeaponService`): the local player's current
   weapon and the holder that fires it; `TryGetCapability` on the current weapon.
 - **`WeaponSystem`** (`IInitializable`, `ITickable`): the local player's controls of whatever they hold: `Fire` (LMB)
@@ -56,15 +57,21 @@ ported, on purpose).
 - Data rules: a weapon with a projectile needs no hit effect (`WeaponCatalogValidator`, `WeaponCatalogGuardTests`).
 
 ## Hand weapons now (lobby, `WeaponRack` row at x -3.5..-1.1, z 1.5)
-| Weapon (id) | Fire | Magazine / reload | Hits | Body struck |
+| Weapon (id) | Fire | Magazine | Hits | Body struck |
 |---|---|---|---|---|
-| Pistol (`pistol`) | single shot, 3 / s (was 0.5 / s, 2026-11-26) | 8 / 1.5 s | ray, 12 damage, FieldRock + PlayerRagdoll + Default + Ground (was FieldRock only) | pushed 8 m/s |
-| Knockdown gun (`knockdown-gun`) | single shot, 1 / s | 3 / 2.5 s | ray, 4 damage, 60 m | pushed 14 m/s, limp 2.5 s |
-| Grenade launcher (`grenade-launcher`) | single shot, 1.25 / s | 4 / 2.5 s | `GrenadeProjectile`: 18 m/s, ballistic, bounces (`GrenadeBounce`), goes off after 2 s or on a moving body | `ExplosionMedium` |
-| Rocket launcher (`rocket-launcher`) | single shot, 1 / s | 1 / 2 s | `RocketProjectile`: 28 m/s straight, goes off on any impact or after 3.5 s | `ExplosionLarge` |
+| Pistol (`pistol`) | single shot, 3 / s (was 0.5 / s, 2026-11-26) | unlimited | ray, 12 damage, FieldRock + PlayerRagdoll + Default + Ground (was FieldRock only) | pushed 8 m/s |
+| Knockdown gun (`knockdown-gun`) | single shot, 1 / s | unlimited | ray, 4 damage, 60 m | pushed 14 m/s, limp 2.5 s |
+| Grenade launcher (`grenade-launcher`) | single shot, 1.25 / s | unlimited | `GrenadeProjectile`: 18 m/s, ballistic, bounces (`GrenadeBounce`), goes off after 2 s or on a moving body | `ExplosionMedium` |
+| Rocket launcher (`rocket-launcher`) | single shot, 1 / s | unlimited | `RocketProjectile`: 28 m/s straight, goes off on any impact or after 3.5 s | `ExplosionLarge` |
 
-The new three are not in the shop (lobby only for now); their models are primitives (copies of the pistol item with
-other shapes and colours), their tooltip is still the pistol's.
+Every hand weapon's magazine is unlimited (capacity 0) since 2026-11-26 on the user's request; the magazine, its
+reload (R) and the reload ring stay in the code for a weapon that sets a capacity. The new three are not in the shop (lobby only for now); their tooltip is still the pistol's. Models (2026-11-26): ThePolynestLab Cosmic Retro Blasters in
+`Global/Packages/ThePolynestLab/Cosmic_Retro_Blasters` (only the 4 used FBX, their 8x8 palette textures imported
+with point filter, no mips, uncompressed, and side-view icons as the hand weapons' `Icon`): pistol = Blaster_1,
+knockdown gun = Blaster_11, grenade launcher = Blaster_2_5, rocket launcher = Blaster_2_12; URP materials
+`HandWeaponModule/GameResources/Materials/CosmicRetroBlaster1/2` (base + emission). In each item the model sits under
+`RecoilRoot/<Name>View`, barrel along +Z; the muzzle is at the barrel's front face and the item's box collider is the
+model's bounds.
 
 ## Tiers, the pistol and their parts
 - Weapons in `WeaponCatalog_Default`: `Minigun`, `LightMachineGun`, `HeavyGun` (the turret tiers, see [TurretModule](../TurretModule/AGENTS.md)) and `Pistol` (see [HandWeaponModule](../HandWeaponModule/AGENTS.md)).

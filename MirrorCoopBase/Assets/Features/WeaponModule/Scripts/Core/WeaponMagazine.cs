@@ -4,7 +4,8 @@ using UnityEngine;
 namespace Features.WeaponModule.Scripts.Core {
     // A networked weapon item's magazine, by its weapon's definition (capacity, reload time). The rounds and the
     // reload's end stay with the item, so a dropped gun keeps what is left in it; only the server changes them. The
-    // holding peer spends a round at once with each shot and takes the server's count whenever it arrives.
+    // holding peer spends a round at once with each shot and takes the server's count whenever it arrives. A capacity
+    // of 0 is an unlimited magazine: it never runs out and never reloads.
     [RequireComponent(typeof(NetworkIdentity))]
     public sealed class WeaponMagazine : NetworkBehaviour, IWeaponMagazine {
         [SyncVar(hook = nameof(HandleRoundsChanged))]
@@ -18,9 +19,10 @@ namespace Features.WeaponModule.Scripts.Core {
         private int _predictedRounds = -1;
 
         public int Capacity => Weapon != null ? Weapon.Definition.MagazineCapacity : 0;
+        public bool IsUnlimited => Capacity <= 0;
         public int Rounds => _predictedRounds >= 0 ? _predictedRounds : Mathf.Max(0, _rounds);
         public bool IsReloading => _reloadEndTime > 0d;
-        public bool HasRound => IsReloading == false && Rounds > 0;
+        public bool HasRound => IsUnlimited || (IsReloading == false && Rounds > 0);
 
         public float ReloadProgress {
             get {
@@ -47,11 +49,16 @@ namespace Features.WeaponModule.Scripts.Core {
             }
         }
 
-        public void SpendRound() =>
-            _predictedRounds = Mathf.Max(0, Rounds - 1);
+        public void SpendRound() {
+            if (IsUnlimited == false)
+                _predictedRounds = Mathf.Max(0, Rounds - 1);
+        }
 
         [Server]
         public bool ServerTrySpendRound() {
+            if (IsUnlimited)
+                return true;
+
             if (IsReloading || _rounds <= 0)
                 return false;
 
@@ -62,7 +69,7 @@ namespace Features.WeaponModule.Scripts.Core {
 
         [Server]
         public void ServerBeginReload() {
-            if (IsReloading || _rounds >= Capacity)
+            if (IsUnlimited || IsReloading || _rounds >= Capacity)
                 return;
 
             _reloadEndTime = NetworkTime.time + Mathf.Max(0f, Weapon.Definition.ReloadSeconds);

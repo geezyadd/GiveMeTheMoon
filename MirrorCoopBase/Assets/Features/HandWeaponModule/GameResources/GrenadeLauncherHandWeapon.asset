@@ -16,12 +16,14 @@ MonoBehaviour:
   _displayName: Grenade launcher
   _icon: {fileID: 0}
   _description: Lobs grenades along an arc; they bounce and go off after 2 s or on
-    a body. 4 rounds, R reloads.
+    a body.
   _price: 300
   _itemPrefab: {fileID: 2192727742419377178, guid: 506e30d622e30ff4e9cd96be8285ad18, type: 3}
   _weapon: {fileID: 11400000, guid: 96d78d282e5a6de46a01968cfeafebe2, type: 2}
   _crosshairLayers:
     serializedVersion: 2
     m_Bits: 833
-  _viewOffset: {x: 0.17, y: -0.16, z: 0.42}
-  _handOffset: {x: 0.55, y: -0.05, z: -0.15}
+  _gripOffset: {x: 0, y: -0.19616267, z: 0.006463187}
+  _aimSendIntervalSeconds: 0.05
+  _aimSendMinDegrees: 1
+  _remoteAimSmoothingSeconds: 0.08

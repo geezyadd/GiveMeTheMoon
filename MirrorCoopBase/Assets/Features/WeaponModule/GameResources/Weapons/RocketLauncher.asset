@@ -23,7 +23,7 @@ MonoBehaviour:
     rid: 3820456068793761879
   _hitEffects: []
   _feelProfile: {fileID: 11400000, guid: f87b0493d1020d64eaaad0b67555567b, type: 2}
-  _magazineCapacity: 1
+  _magazineCapacity: 0
   _reloadSeconds: 2
   _impactPushSpeed: 0
   _impactKnockdownSeconds: 0

@@ -16,12 +16,14 @@ MonoBehaviour:
   _displayName: Rocket launcher
   _icon: {fileID: 0}
   _description: Fires a rocket straight ahead; it goes off where it strikes or after
-    3.5 s. 1 round, R reloads.
+    3.5 s.
   _price: 400
   _itemPrefab: {fileID: 2192727742419377178, guid: 6c59f1d5dabcbb444b564655abe1a45c, type: 3}
   _weapon: {fileID: 11400000, guid: 8448889d4118d354eade6cfc19cea954, type: 2}
   _crosshairLayers:
     serializedVersion: 2
     m_Bits: 833
-  _viewOffset: {x: 0.17, y: -0.16, z: 0.42}
-  _handOffset: {x: 0.55, y: -0.05, z: -0.15}
+  _gripOffset: {x: 0, y: -0.21383472, z: -0.12110281}
+  _aimSendIntervalSeconds: 0.05
+  _aimSendMinDegrees: 1
+  _remoteAimSmoothingSeconds: 0.08

@@ -24,7 +24,7 @@ MonoBehaviour:
   _hitEffects:
   - rid: 3002219236546576462
   _feelProfile: {fileID: 11400000, guid: 63fa4bfdb69eec1458735b5b00922c0a, type: 2}
-  _magazineCapacity: 3
+  _magazineCapacity: 0
   _reloadSeconds: 2.5
   _impactPushSpeed: 14
   _impactKnockdownSeconds: 2.5

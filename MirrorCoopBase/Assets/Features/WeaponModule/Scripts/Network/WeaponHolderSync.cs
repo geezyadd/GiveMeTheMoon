@@ -63,7 +63,7 @@ namespace Features.WeaponModule.Scripts.Network {
                     if (magazine.IsReloading)
                         return magazine.ReloadProgress;
 
-                    if (magazine.Rounds <= 0)
+                    if (magazine.HasRound == false)
                         return 0f;
                 }
 
@@ -105,9 +105,10 @@ namespace Features.WeaponModule.Scripts.Network {
             _shooter.Advance(_isTriggerHeld && _weapon.IsUsable, Time.deltaTime, _weapon.Feel);
         }
 
-        // On every peer, by what holds the weapon (a hand, a turret seat).
+        // On every peer, by what holds the weapon (a hand, a turret seat). The latest one wins: a turret seat takes over
+        // from a weapon in the hand, which the hand equips again once the holder is free (HandWeaponWielder).
         public void Equip(IWeapon weapon, IWeaponAim aim) {
-            Unequip();
+            ClearHolding();
             _weapon = weapon;
             _aim = aim;
             _weaponIndex = _weaponCatalogIndexService.GetIndex(weapon.Definition);
@@ -124,8 +125,14 @@ namespace Features.WeaponModule.Scripts.Network {
             weapon.Feel.SetViewOwned(true);
         }
 
-        // The weapon may already be gone (installed, destroyed with its scene) when it is let go.
-        public void Unequip() {
+        // Lets go of this weapon only: what holds another one (a turret seat over a hand) keeps it. The weapon may
+        // already be gone (installed, destroyed with its scene) when it is let go.
+        public void Unequip(IWeapon weapon) {
+            if (_shooter != null && ReferenceEquals(weapon, _weapon))
+                ClearHolding();
+        }
+
+        private void ClearHolding() {
             if (_shooter == null)
                 return;
 

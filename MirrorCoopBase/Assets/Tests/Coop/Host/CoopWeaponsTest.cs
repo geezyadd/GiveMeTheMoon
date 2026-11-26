@@ -29,8 +29,7 @@ using Steps = Tests.Coop.Shared.CoopWeaponsEconomySteps;
 
 namespace Tests.Coop.Host {
     // The weapons with a real second client process shooting (CoopWeaponsEconomyClientScenarios) and the host checking
-    // what arrived: at the station the client fires the pistol at the debug dummy (a click while it reloads fires
-    // nothing; the host sees the pistol in the client's hand, its trigger and a tracer) and each turret tier from the
+    // what arrived: at the station the client fires the pistol at the debug dummy (twice; the host sees the pistol in the client's hand, its trigger and a tracer) and each turret tier from the
     // seat (the host sees the trigger, the tracers and the server's accepted hits; each shot goes to the server once,
     // with the hit it struck, and each tier keeps to its own fire rate); in the cruise the client breaks a
     // small rock and pops a balloon with the heavy gun, sees a balloon the ship flies into popped, and breaks a rock and
@@ -43,7 +42,8 @@ namespace Tests.Coop.Host {
         private const string WEAPON_FEEL_EFFECTS = "WeaponFeelEffects";
         private const string TRACER_PREFIX = "Tracer";
         private const string HIDDEN = "hidden";
-        // The pistol model sits at the holder's side (HandWeaponDefinition.HandOffset, about 0.6 m from the arm point).
+        // The pistol model sits in the holder's right hand, the arm reaching along the aim (HandWeaponGrip; about 0.5 m
+        // from the arm point).
         private const float PISTOL_AT_HAND_METERS = 1.2f;
         private const float FIRE_WINDOW_SECONDS = 2f;
         // The server's fire rate budget lets a little burst through (WeaponHitRuleConfiguration).
@@ -131,8 +131,8 @@ namespace Tests.Coop.Host {
             Assert.IsTrue(hasSeenTrigger, "The host never saw the client's pistol trigger.");
             Assert.IsTrue(hasSeenTracer, "The host did not replay the client's pistol shot (no tracer).");
             Assert.Less(pistolDistance, PISTOL_AT_HAND_METERS, "The host does not show the pistol in the client's hand.");
-            Assert.That(dummy.Hits, Is.InRange(1, 2), "The server must accept one hit per pistol shot: the client fired twice and clicked once during a reload.");
-            Debug.Log($"[CoopTest] the client's pistol: {dummy.Hits} accepted hits, a click during the reload blocked, the pistol {pistolDistance:0.00} m from the client's arm on the host");
+            Assert.That(dummy.Hits, Is.InRange(1, 2), "The server must accept one hit per pistol shot: the client fired twice.");
+            Debug.Log($"[CoopTest] the client's pistol: {dummy.Hits} accepted hits, the pistol {pistolDistance:0.00} m from the client's arm on the host");
             dummies.DebugDespawnTarget();
             _host.AssertSameView(false, true);
 

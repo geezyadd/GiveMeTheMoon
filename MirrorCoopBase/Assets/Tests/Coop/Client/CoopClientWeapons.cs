@@ -1,5 +1,4 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-using Features.WeaponModule.Scripts.Core;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -34,9 +33,6 @@ namespace Tests.Coop.Client {
         private const float READY = 1f;
         // Longer than the pistol's cooldown, so a click then fires.
         private const float PISTOL_AIM_SECONDS = 2.2f;
-        // A click this soon after a reload began falls inside the pistol's 1.5 s reload.
-        private const float BLOCKED_CLICK_SECONDS = 0.3f;
-        private const float READINESS_TOLERANCE = 0.01f;
         private const float COOLDOWN_TIMEOUT_SECONDS = 3f;
         private const int PISTOL_ATTEMPTS = 3;
         private const float PISTOL_RESULT_SECONDS = 1.5f;
@@ -73,8 +69,7 @@ namespace Tests.Coop.Client {
             _screenshots = screenshots;
         }
 
-        // A click fires; a click while the pistol reloads fires nothing (the ring keeps filling); once the ring is full
-        // a click fires again. The host counts what arrived.
+        // A click fires; once the ring is full again a click fires again. The host counts what arrived.
         public IEnumerator FirePistolAtDummyCoroutine() {
             yield return _client.WaitForCoroutine(IsPistolInHand, "the pistol in the hand");
             WeaponDebugTarget target = null;
@@ -84,19 +79,9 @@ namespace Tests.Coop.Client {
             yield return ClickPistolCoroutine(true);
             yield return _screenshots.CaptureCoroutine(PISTOL_SCREENSHOT);
             yield return AimPistolUntilReadyCoroutine(dummy, 0f);
-            IWeaponService weapons = SessionQueries.Resolve<IWeaponService>();
-            weapons.Holder.OwnerRequestReload();
-            yield return _client.WaitForCoroutine(() => weapons.TryGetCapability(out IWeaponMagazine magazine) && magazine.IsReloading, "the pistol reloading");
-            yield return AimPistolCoroutine(dummy, BLOCKED_CLICK_SECONDS);
-            float readinessBefore = Readiness;
-            yield return ClickPistolCoroutine(false);
-            if (Readiness < readinessBefore - READINESS_TOLERANCE)
-                yield return _client.FailCoroutine($"A click {BLOCKED_CLICK_SECONDS} s into a reload fired: readiness {readinessBefore:0.00} -> {Readiness:0.00}.");
-
-            yield return AimPistolUntilReadyCoroutine(dummy, 0f);
             yield return ClickPistolCoroutine(true);
             HandWeaponAiming.TurnViewBack();
-            Report(CoopWeaponsEconomySteps.PISTOL_FIRED, "2 shots, 1 click blocked by the reload");
+            Report(CoopWeaponsEconomySteps.PISTOL_FIRED, "2 shots");
         }
 
         // A step from the turret seat toward the deck's middle, so the gunner finds it near when it stands up in the

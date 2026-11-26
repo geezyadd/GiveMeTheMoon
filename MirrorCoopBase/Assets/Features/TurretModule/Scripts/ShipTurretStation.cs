@@ -121,7 +121,7 @@ namespace Features.TurretModule.Scripts {
                 EndOwnerControl();
 
             if (_occupantWeapon != null)
-                _occupantWeapon.Unequip();
+                _occupantWeapon.Unequip(this);
 
             // The rider may already be gone with its player object.
             if (_occupantRider != null)
