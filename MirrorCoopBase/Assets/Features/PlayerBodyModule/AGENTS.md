@@ -69,8 +69,8 @@ one raised to the minimum along its motion, a still one toward the head).
     count in the packet the copy shows, while the copy is simulated.
   - `PlayerHitPush` (refs: its `Target`, the movement, the `Head` and `Spine2` limbs): the reaction to a hit on its
     target, on the peer where the hit landed: the head limb gets a velocity change at the aim point
-    (`AddForceAtPosition`, so the head also tips away) and the chest `Chest Share` 0.6 of it (not while held or
-    asleep): the head jerks, the upper body bends at the hips and the joints bring it back. The head's velocity
+    (`AddForceAtPosition`, so the head also tips away) and the chest `Chest Share` 0.6 of it (a seated player too, since
+    2026-11-26; not while asleep): the head jerks, the upper body bends at the hips and the joints bring it back. The head's velocity
     change is the hitting limb's velocity x `Limb Speed Scale` 6, at least `Min Head Speed` 14 m/s, at most
     `Max Head Speed` 40 m/s (`HitPushRule.HeadVelocity`). The slapped player's owner pushes its real body and the
     others follow its packets; a peer where the hand misses shows no push.
