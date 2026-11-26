@@ -44,19 +44,5 @@ namespace Features.PlayerBodyModule.Editor.Tests {
 
             Assert.AreEqual(0, picked);
         }
-
-        [TestCase(-0.1f, 0f)]
-        [TestCase(0f, 0f)]
-        [TestCase(0.1f, 0f)]
-        [TestCase(0.2f, 0f)]
-        [TestCase(0.27f, 0.5f)]
-        [TestCase(0.34f, 1f)]
-        [TestCase(0.45f, 1f)]
-        [TestCase(0.65f, 0.5f)]
-        [TestCase(0.8f, 0f)]
-        [TestCase(1f, 0f)]
-        public void TheReachWeight_WaitsForTheWindUpThenEasesInHoldsAndEasesOut(float sinceSlap, float expected) {
-            Assert.AreEqual(expected, SlapAimRule.Weight(sinceSlap, 0.2f, 0.34f, 0.5f, 0.8f), 0.001f);
-        }
     }
 }

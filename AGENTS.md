@@ -108,7 +108,7 @@ types.
      `Features.CrewInviteModule.Data`, `Features.StagePresetModule.Data`, `Features.FlightFieldModule.Contracts`,
      `Features.WeaponModule.Contracts`, `Features.CameraModule.Contracts`, `Features.EffectPoolModule` (no references),
      `Features.DebugModule.Contracts`, `Features.SonarModule.Contracts`, `Features.SonarModule.Data`,
-     `Features.SpaceHazeModule.Data`; third-party
+     `Features.SpaceHazeModule.Data`, `Features.AttackModule.Contracts`; third-party
      `QuickOutline` also has its own asmdef (the unused `Mini Mapa(Radar)` pack was deleted on 2026-10-25).
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
@@ -116,8 +116,8 @@ types.
   3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.PlayerReplicaModule`,
      `Features.PlayerAnimationModule`.
   4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`,
-     `Features.HandWeaponModule`, `Features.MovingPlatformModule`, `Features.PlayerBodyModule`.
-  5. `Features.ShipImpactModule`, `Features.ShipDamageModule`, `Features.TurretModule`, `Features.PlayerLifeModule`,
+     `Features.HandWeaponModule`, `Features.MovingPlatformModule`, `Features.AttackModule`.
+  5. `Features.PlayerBodyModule`, `Features.ShipImpactModule`, `Features.ShipDamageModule`, `Features.TurretModule`, `Features.PlayerLifeModule`,
      `Features.LobbyModule` (Ship, Grab, GameFlow, Mvp, Connection).
   6. `Features.StagePresetModule`, `Features.ShopModule`, `Features.TooltipModule`, `Features.CrewInviteModule`,
      `Features.SonarModule`.
@@ -140,7 +140,8 @@ types.
 | [PlayerReplicaModule](MirrorCoopBase/Assets/Features/PlayerReplicaModule/AGENTS.md) | player body sync by state and input, the only one: packet stream, simulated copies with soft correction, carriers, the server's moves of a body |
 | [ActiveRagdollModule](MirrorCoopBase/Assets/Features/ActiveRagdollModule/AGENTS.md) | physical bodies that follow an animation, for any creature (being built) |
 | [PlayerBodyModule](MirrorCoopBase/Assets/Features/PlayerBodyModule/AGENTS.md) | the body the player walks with: the player's own body is the active ragdoll pushed by the movement (being built) |
-| [PlayerAnimationModule](MirrorCoopBase/Assets/Features/PlayerAnimationModule/AGENTS.md) | the player's animator: its controller built from code and the driver that sets its parameters (`Forward`, `Fly`, `Slap`) |
+| [PlayerAnimationModule](MirrorCoopBase/Assets/Features/PlayerAnimationModule/AGENTS.md) | the player's animator: its controller built from code, the driver that sets its parameters (`Forward`, `Fly`) and plays actions' triggers (`Slap`), and `LimbReach` (a limb pointed at something over the animation) |
+| [AttackModule](MirrorCoopBase/Assets/Features/AttackModule/AGENTS.md) | attacks of any ragdoll body (the slap): the attack as data, its timing, presses and target, the limb's reach |
 | [MovingPlatformModule](MirrorCoopBase/Assets/Features/MovingPlatformModule/AGENTS.md) | riding moving carriers (`CarrierRider`, used by the ship's deck too) and the lobby's test platform flying around a circle, its start / stop button |
 | [DebugModule](MirrorCoopBase/Assets/Features/DebugModule/AGENTS.md) | the in-game debug window and its action registry |
 | [StagePresetModule](MirrorCoopBase/Assets/Features/StagePresetModule/AGENTS.md) | playtest stage presets |
@@ -159,7 +160,7 @@ types.
 | [Two-player test](MirrorCoopBase/Assets/Tests/Coop/AGENTS.md) | `CoopTwoProcessTest` with a real second client process |
 | `Features.AddressablesConstantGeneratorModule` | `Address_g.cs`; editor tools and tests load a configuration at its address with `AddressableConfigurationLoader` in `Features.AddressablesConstantGeneratorModule.EditorLoading` |
 | `Features.EffectPoolModule` | `SelfDisablingEffectPool<TEffect>` over `ISelfDisablingEffect`, the pool of effects that disable themselves when over; the rock break and the rock impact effects use it |
-| `Features.CharacterMovableModule` | player movement; it pushes an `IMovableBody` (`CapsuleMovableBody`: the player's rigidbody, floating controller and carrier rider by default, another body through `CharacterMovableBase.SetDrivenBody`; `DrivenBody`, `ActiveControls` and `ShownLookYaw` are what the network copy and the body's owner read; `IsHeld`, set by a ship seat, stops the walk and makes a non-capsule body follow the capsule); a jump reaches its takeoff speed over a short push of the legs (`JumpPush`, stat `JumpPushSeconds` 0.07 s since 2026-11-26, was one physics step), with the gravity of the push taken off so the height stays; the body simulation takes its controls through `IMovementControls` (`KeyboardMovementControls`: keyboard and camera for the player's own body; `PacketMovementControls` in PlayerReplicaModule for remote copies; they also carry the slap presses: `SlapCount`, `ConsumeSlapPress`, counted from the fire button by `CharacterInputBuffer`); tests: `Features.CharacterMovableModule.Editor.Tests` |
+| `Features.CharacterMovableModule` | player movement; it pushes an `IMovableBody` (`CapsuleMovableBody`: the player's rigidbody, floating controller and carrier rider by default, another body through `CharacterMovableBase.SetDrivenBody`; `DrivenBody`, `ActiveControls` and `ShownLookYaw` are what the network copy and the body's owner read; `IsHeld`, set by a ship seat, stops the walk and makes a non-capsule body follow the capsule); a jump reaches its takeoff speed over a short push of the legs (`JumpPush`, stat `JumpPushSeconds` 0.07 s since 2026-11-26, was one physics step), with the gravity of the push taken off so the height stays; the body simulation takes its controls through `IMovementControls` (`KeyboardMovementControls`: keyboard and camera for the player's own body; `PacketMovementControls` in PlayerReplicaModule for remote copies; attack presses are not movement controls: see AttackModule's `IAttackPresses`); tests: `Features.CharacterMovableModule.Editor.Tests` |
 
 Other modules (Menu, Lobby, Mvp, Input, Stats, GameFlow, Bootstrapers, ...) have no file yet; add one when there is
 something to describe.

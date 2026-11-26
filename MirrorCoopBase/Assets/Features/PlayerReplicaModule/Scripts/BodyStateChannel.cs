@@ -1,4 +1,5 @@
 using System;
+using Features.AttackModule.Contracts;
 using Features.PlayerReplicaModule.Configuration;
 using Features.PlayerReplicaModule.Packets;
 using Features.PlayerReplicaModule.Receiving;
@@ -49,7 +50,7 @@ namespace Features.PlayerReplicaModule {
 
         private void Awake() {
             _carrierRider = GetComponent<ICarrierRider>();
-            _sampler = new BodyStateSampler(_movable);
+            _sampler = new BodyStateSampler(_movable, GetComponent<IAttackPresses>());
         }
 
         public override void OnStartClient() =>

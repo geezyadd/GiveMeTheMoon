@@ -11,7 +11,12 @@
         "Features.ActiveRagdollModule",
         "Features.PlayerAnimationModule",
         "Features.FloatingControllerModule",
-        "Unity.Animation.Rigging"
+        "Unity.Animation.Rigging",
+        "Features.AttackModule",
+        "Features.AttackModule.Contracts",
+        "Features.GrabModule",
+        "InputModule",
+        "InputModuleRalization"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

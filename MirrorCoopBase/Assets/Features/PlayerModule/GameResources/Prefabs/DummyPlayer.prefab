@@ -70,8 +70,10 @@ GameObject:
   - component: {fileID: 7209845104136634601}
   - component: {fileID: 7209845104136634602}
   - component: {fileID: 7209845104136634603}
-  - component: {fileID: 168289381899011533}
   - component: {fileID: 6290574641071763115}
+  - component: {fileID: 2340632800929653560}
+  - component: {fileID: 3688231683049855381}
+  - component: {fileID: 5280801056556762471}
   m_Layer: 0
   m_Name: DummyPlayer
   m_TagString: Untagged
@@ -610,30 +612,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _movable: {fileID: 2109845104136634489}
   _ragdoll: {fileID: 334446075228949800}
---- !u!114 &168289381899011533
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1091338388048282597}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1b3396ff31930e842a877c5e0554990d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _animation: {fileID: 7209845104136634603}
-  _movable: {fileID: 2109845104136634489}
-  _reach: {fileID: 1884149545872864412}
-  _head: {fileID: 759872354341130232}
-  _headCenter: {fileID: 3531564585735275323}
-  _maxDistance: 1.3
-  _maxAngle: 60
-  _reachThrough: 0.3
-  _startAtSeconds: 0.2
-  _fullAtSeconds: 0.34
-  _releaseAtSeconds: 0.5
-  _endAtSeconds: 0.8
 --- !u!114 &6290574641071763115
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -646,17 +624,67 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88cfb0a9e7674274bbc1a2b48ca350cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _aim: {fileID: 168289381899011533}
+  _attacker: {fileID: 2340632800929653560}
+  _aim: {fileID: 5280801056556762471}
   _movable: {fileID: 2109845104136634489}
+  _head: {fileID: 759872354341130232}
+  _headCenter: {fileID: 3531564585735275323}
   _hand: {fileID: 2695458734983113549}
   _chest: {fileID: 6293829724816084365}
-  _hitStartSeconds: 0.15
-  _hitEndSeconds: 0.6
-  _hitRadius: 0.6
+  _hitRadius: 0.7
+  _hitReachAhead: 0.6
   _handSpeedScale: 6
   _minHeadSpeed: 14
   _maxHeadSpeed: 40
   _chestShare: 0.6
+--- !u!114 &2340632800929653560
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73a2097c866b38740949664d42131ee3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _attack: {fileID: 11400000, guid: 409281448457315478507c6b4d5d6d5c, type: 2}
+  _presses: {fileID: 3688231683049855381}
+  _aim: {fileID: 5280801056556762471}
+  _animation: {fileID: 7209845104136634603}
+  _reach: {fileID: 1884149545872864412}
+  _aimOrigin: {fileID: 3531564585735275323}
+--- !u!114 &3688231683049855381
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a6dea14ef4eee1488b033e2f476d1a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _movable: {fileID: 2109845104136634489}
+  _copy: {fileID: 8419845104136634502}
+  _hand: {fileID: 7209845104136634493}
+  _attacker: {fileID: 2340632800929653560}
+--- !u!114 &5280801056556762471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc45043cb6da1b940b65ae6a3afa217a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _movable: {fileID: 2109845104136634489}
+  _ownHead: {fileID: 6290574641071763115}
 --- !u!1 &1653071117312433485
 GameObject:
   m_ObjectHideFlags: 0

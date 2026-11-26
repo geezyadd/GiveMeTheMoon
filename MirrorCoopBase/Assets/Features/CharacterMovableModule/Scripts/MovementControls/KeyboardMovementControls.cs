@@ -3,23 +3,19 @@ using UnityEngine;
 
 namespace Features.CharacterMovableModule.Scripts.MovementControls {
     // The player's own controls: the keyboard from CharacterInputBuffer, turned by this peer's camera when the stats
-    // say walking is camera-relative. A jump press is the jump key going down since the last frame; a slap press is the
-    // slap count changing since the last frame.
+    // say walking is camera-relative. A jump press is the jump key going down since the last frame.
     public sealed class KeyboardMovementControls : IMovementControls {
         private readonly CharacterInputBuffer _input;
         private readonly PlayerStatEntity _stats;
         private bool _wasJumpHeld;
-        private byte _consumedSlapCount;
 
         public KeyboardMovementControls(CharacterInputBuffer input, PlayerStatEntity stats) {
             _input = input;
             _stats = stats;
-            _consumedSlapCount = input.SlapCount;
         }
 
         public bool SprintHeld => _input.SprintHeld;
         public bool JumpHeld => _input.JumpHeld;
-        public byte SlapCount => _input.SlapCount;
 
         public Vector3 ReadWish() {
             Vector2 stick = _input.MoveStick;
@@ -32,12 +28,6 @@ namespace Features.CharacterMovableModule.Scripts.MovementControls {
             bool held = _input.JumpHeld;
             bool pressed = held && _wasJumpHeld == false;
             _wasJumpHeld = held;
-            return pressed;
-        }
-
-        public bool ConsumeSlapPress() {
-            bool pressed = _input.SlapCount != _consumedSlapCount;
-            _consumedSlapCount = _input.SlapCount;
             return pressed;
         }
 

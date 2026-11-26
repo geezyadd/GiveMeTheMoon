@@ -56,6 +56,9 @@ namespace Features.PlayerReplicaModule {
         // Whether this peer simulates the body as a copy right now (the body is dynamic and driven by packets).
         public bool IsSimulating => _isSimulating;
 
+        // The owner's attack count in the packet the copy shows now (see IAttackPresses); 0 while not driving.
+        public byte ShownAttackCount => _isDriving ? _delayBuffer.Current.AttackCount : (byte)0;
+
         private void OnEnable() {
             _channel.OnPacketAccepted += OnPacketAccepted;
             _channel.OnPlaced += OnPlaced;

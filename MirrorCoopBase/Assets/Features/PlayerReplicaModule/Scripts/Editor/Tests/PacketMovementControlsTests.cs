@@ -45,35 +45,6 @@ namespace Features.PlayerReplicaModule.Editor.Tests {
         }
 
         [Test]
-        public void WhenTheFirstPacketArrives_ThenThereIsNoSlapPress() {
-            _source.Apply(new BodyStatePacket { SlapCount = 4 });
-
-            Assert.IsFalse(_source.ConsumeSlapPress());
-        }
-
-        [Test]
-        public void WhenTheSlapCounterGrows_ThenThereIsOnePressUntilConsumed() {
-            _source.Apply(new BodyStatePacket { SlapCount = 4 });
-            _source.Apply(new BodyStatePacket { SlapCount = 6 });
-
-            Assert.IsTrue(_source.ConsumeSlapPress());
-            Assert.IsFalse(_source.ConsumeSlapPress());
-            Assert.AreEqual(6, _source.SlapCount);
-        }
-
-        [Test]
-        public void WhenTheSourceIsReset_ThenThePendingSlapIsGoneAndTheNextPacketOnlySetsTheCount() {
-            _source.Apply(new BodyStatePacket { SlapCount = 1 });
-            _source.Apply(new BodyStatePacket { SlapCount = 2 });
-
-            _source.Reset();
-
-            Assert.IsFalse(_source.ConsumeSlapPress());
-            _source.Apply(new BodyStatePacket { SlapCount = 3 });
-            Assert.IsFalse(_source.ConsumeSlapPress());
-        }
-
-        [Test]
         public void WhenTheSourceIsReset_ThenTheControlsAndThePendingPressAreGone() {
             _source.Apply(new BodyStatePacket { JumpCount = 1, WalkDirection = Vector2.up });
             _source.Apply(new BodyStatePacket { JumpCount = 2, WalkDirection = Vector2.up });

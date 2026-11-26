@@ -18,8 +18,9 @@ namespace Features.PlayerReplicaModule.Packets {
         public BodyStateFlags States;
         // Grows by one with every jump, so a copy sees a jump even when the packet of that moment was lost.
         public byte JumpCount;
-        // Grows by one with every slap press, so a copy slaps even when the packet of that moment was lost.
-        public byte SlapCount;
+        // Grows by one with every attack press (IAttackPresses), so a copy attacks even when the packet of that moment
+        // was lost.
+        public byte AttackCount;
         // The number of the server's last move of this body (BodyStateChannel.ServerPlace / ServerShift), so a copy can
         // tell packets sent before a move from those sent after it.
         public byte PlaceCount;

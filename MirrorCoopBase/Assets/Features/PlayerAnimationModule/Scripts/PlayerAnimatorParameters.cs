@@ -20,6 +20,5 @@ namespace Features.PlayerAnimationModule {
 
         public static readonly int Forward = Animator.StringToHash(ForwardName);
         public static readonly int Fly = Animator.StringToHash(FlyName);
-        public static readonly int Slap = Animator.StringToHash(SlapName);
     }
 }

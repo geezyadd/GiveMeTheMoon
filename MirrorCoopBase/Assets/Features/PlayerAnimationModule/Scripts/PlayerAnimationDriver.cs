@@ -1,4 +1,3 @@
-using System;
 using Features.ActiveRagdollModule;
 using Features.CharacterMovableModule.Scripts;
 using Features.CharacterMovableModule.Scripts.MovementControls;
@@ -12,9 +11,7 @@ namespace Features.PlayerAnimationModule {
     //   and would shuffle); weak input is cut so the idle stays still; a held player (a seat) stands still.
     // - Fly: the body has been off the ground for the configured delay; never while held. The fall layer's weight
     //   fades in with it and out when it is off.
-    // - Slap: a slap press of the active controls (the owner's fire button; on a copy, the slap counter of the owner's
-    //   packets) fires the trigger, not while held, and raises Slapped. Presses are taken every frame, so none is kept
-    //   for later.
+    // - An action's trigger (an attack's, from the AttackModule's Attacker) fires through Play while the animator runs.
     // Works only while the ragdoll is awake (its animator is on): the ragdoll samples the animator once a physics step
     // (AnimatedPoseSampler), so the values apply from the next step.
     public sealed class PlayerAnimationDriver : MonoBehaviour {
@@ -29,8 +26,8 @@ namespace Features.PlayerAnimationModule {
         private RuntimeAnimatorController _layerController;
         private int _flyLayer = -1;
 
-        // On every peer that simulates the body, when a slap starts.
-        public event Action Slapped;
+        // Whether the animator runs, so an action played now shows (the ragdoll is awake).
+        public bool CanPlay => _animator != null && _animator.isActiveAndEnabled;
 
         [Inject]
         private void Construct(PlayerAnimationConfiguration configuration) =>
@@ -45,7 +42,6 @@ namespace Features.PlayerAnimationModule {
         }
 
         private void Update() {
-            bool isSlapPressed = ConsumeSlapPress();
             if (_ragdoll == null || _animator == null || _animator.isActiveAndEnabled == false) {
                 _airborneDelay.Reset();
                 return;
@@ -57,10 +53,12 @@ namespace Features.PlayerAnimationModule {
             bool isFlying = _airborneDelay.Step(isInAir, _configuration.FlyDelaySeconds, deltaTime);
             _animator.SetBool(PlayerAnimatorParameters.Fly, isFlying);
             FadeFlyLayer(isFlying, deltaTime);
-            if (isSlapPressed && _movable.IsHeld == false) {
-                _animator.SetTrigger(PlayerAnimatorParameters.Slap);
-                Slapped?.Invoke();
-            }
+        }
+
+        // Fires an action's trigger (an attack's); nothing while the animator does not run.
+        public void Play(int triggerHash) {
+            if (CanPlay)
+                _animator.SetTrigger(triggerHash);
         }
 
         // The fall layer over the locomotion fades in while flying and out on the feet; at weight 0 it changes nothing.
@@ -86,11 +84,6 @@ namespace Features.PlayerAnimationModule {
             }
 
             return _flyLayer;
-        }
-
-        private bool ConsumeSlapPress() {
-            IMovementControls controls = _movable.ActiveControls;
-            return controls != null && controls.ConsumeSlapPress();
         }
 
         private float ReadForward() {

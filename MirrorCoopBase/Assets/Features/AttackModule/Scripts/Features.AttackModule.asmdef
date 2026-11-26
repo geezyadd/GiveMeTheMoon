@@ -1,0 +1,17 @@
+{
+    "name": "Features.AttackModule",
+    "rootNamespace": "Features.AttackModule",
+    "references": [
+        "Features.AttackModule.Contracts",
+        "Features.PlayerAnimationModule"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

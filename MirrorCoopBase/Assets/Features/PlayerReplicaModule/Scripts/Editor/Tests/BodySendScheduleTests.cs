@@ -63,11 +63,11 @@ namespace Features.PlayerReplicaModule.Editor.Tests {
         }
 
         [Test]
-        public void WhenTheOwnerSlapped_ThenThePacketGoesAtOnce() {
+        public void WhenTheOwnerAttacked_ThenThePacketGoesAtOnce() {
             _schedule.MarkSent(Standing, START);
-            var slapped = new BodyStatePacket { SlapCount = 1 };
+            var attacked = new BodyStatePacket { AttackCount = 1 };
 
-            Assert.IsTrue(IsDue(slapped, START));
+            Assert.IsTrue(IsDue(attacked, START));
         }
 
         [Test]

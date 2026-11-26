@@ -1,3 +1,4 @@
+using Features.AttackModule.Contracts;
 using Features.CharacterMovableModule.Scripts;
 using Features.CharacterMovableModule.Scripts.Body;
 using Features.CharacterMovableModule.Scripts.MovementControls;
@@ -11,14 +12,17 @@ namespace Features.PlayerReplicaModule.Sending {
     // moving platform) everything is in the carrier's axes and the carrier's id goes along, so a copy can stand on the
     // same spot of its own copy of the carrier; on the still world (carrier 0) it is in world axes. The position, the
     // velocity and the walk direction follow the carrier's pose of the last physics step, which is where the body was
-    // carried to; walking and looking follow its heading only.
+    // carried to; walking and looking follow its heading only. The attack count comes from the body's attack presses,
+    // when it has them.
     public sealed class BodyStateSampler {
         private const uint WORLD_CARRIER = 0;
 
         private readonly CharacterMovableBase _movable;
+        private readonly IAttackPresses _attackPresses;
 
-        public BodyStateSampler(CharacterMovableBase movable) {
+        public BodyStateSampler(CharacterMovableBase movable, IAttackPresses attackPresses) {
             _movable = movable;
+            _attackPresses = attackPresses;
         }
 
         public BodyStatePacket Sample(ushort number) {
@@ -50,7 +54,7 @@ namespace Features.PlayerReplicaModule.Sending {
                 LookYaw = YawCompression.Pack(look),
                 States = ReadStates(input),
                 JumpCount = _movable.JumpCount,
-                SlapCount = input != null ? input.SlapCount : (byte)0
+                AttackCount = _attackPresses != null ? _attackPresses.AttackCount : (byte)0
             };
         }
 

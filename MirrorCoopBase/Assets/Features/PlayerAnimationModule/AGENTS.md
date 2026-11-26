@@ -12,7 +12,7 @@ and follows the pose; how the pose is turned (the look, flying head first) stays
 ## Status
 Being built on `demo/active-ragdoll`. Parameters: `Forward`, `Fly` and `Slap`. The clips are the KevinIglesias idle,
 walk and fall and our own `PlayerSlap`; no jump, sprint or seated clips yet. Every player sees every slap: its press
-count rides the replica packets.
+count rides the replica packets (AttackModule).
 
 ## Assembly
 `Features.PlayerAnimationModule` (layer 3; references Zenject, `CharacterMovableModule`, `ActiveRagdollModule`, `Unity.Animation.Rigging`).
@@ -26,12 +26,9 @@ Editor code in `Features.PlayerAnimationModule.Editor`.
     always drifts a little); under `ForwardIdleCutoff` it is 0; damped by `ForwardDampingSeconds`; 0 while held (a seat).
   - `Fly` (bool): the ragdoll's ground sensor has seen no ground for `FlyDelaySeconds` (`AirborneDelay`), so a step or
     a bump does not turn it on; off at once on the ground; never while held.
-  - `Slap` (trigger): a slap press of the active controls (`IMovementControls.ConsumeSlapPress`: on the owner the fire
-    button counted by `CharacterInputBuffer.SlapCount` while the controls are free; on a copy the slap counter of the
-    owner's packets, PlayerReplicaModule, so every player sees every slap with the copy delay), not while held; raises
-    `Slapped` (PlayerBodyModule's `PlayerSlapAim` points the arm at a head in front, `PlayerSlapHit` jerks that head). The
-    press is taken every frame, also while the ragdoll sleeps, so none fires later. A click with a hand weapon in the
-    hand slaps too for now.
+  - An action's trigger (`Slap`) fires through `Play(triggerHash)`, called by AttackModule's `Attacker` when an
+    attack starts; `CanPlay` says whether the animator runs (the ragdoll is awake), and nothing fires while it does
+    not. The presses, who may attack and when are AttackModule's.
 - `AirborneDelay`: the delay itself, pure.
 - `Reach/LimbReach` (on the ragdoll's root, next to its `AnimatedPoseSampler`; refs: the sampler and its chains): lets
   any system point a limb at something over the animation (a slap's hand at a head; later a hand on an item, a hand
