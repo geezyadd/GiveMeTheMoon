@@ -52,7 +52,7 @@ Shader "Features/ConstellationModule/ConstellationAtInfinity" {
             #define LINE_GLOW_SHARPNESS 2.2
             #define MIN_CLIP_W 0.0001
             // Matches ConstellationMeshBuilder.MAX_REVEAL_STEPS.
-            #define MAX_REVEAL_STEPS 32
+            #define MAX_REVEAL_STEPS 256
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;

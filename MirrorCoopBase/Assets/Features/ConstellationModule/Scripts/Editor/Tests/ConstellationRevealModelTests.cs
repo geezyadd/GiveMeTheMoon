@@ -5,6 +5,7 @@ namespace Features.ConstellationModule.Editor.Tests {
     public sealed class ConstellationRevealModelTests {
         private const int ORION = 0;
         private const int BIG_DIPPER = 1;
+        private const int ALL = ConstellationRevealModel.ALL_CONSTELLATIONS;
         private const double START_TIME = 100d;
         private const float TOLERANCE = 0.001f;
 
@@ -105,6 +106,76 @@ namespace Features.ConstellationModule.Editor.Tests {
             model.EndFading();
 
             Assert.IsFalse(model.HasFading);
+        }
+
+        [Test]
+        public void WhenAllAreShown_ThenAllAreShownFromTheirStart() {
+            ConstellationRevealModel model = new();
+
+            model.Show(ALL, START_TIME, START_TIME);
+            model.SetTime(START_TIME + 0.5d);
+
+            Assert.IsTrue(model.HasShown);
+            Assert.AreEqual(ALL, model.ShownConstellation);
+            Assert.AreEqual(0.5f, model.ShownRevealSeconds, TOLERANCE);
+        }
+
+        [Test]
+        public void WhenAllWereShownBeforeAJoin_ThenTheirRevealIsAsFarAsTheTimeSinceTheirStart() {
+            ConstellationRevealModel model = new();
+
+            model.Show(ALL, START_TIME, START_TIME);
+            model.SetTime(START_TIME + 3.5d);
+
+            Assert.AreEqual(3.5f, model.ShownRevealSeconds, TOLERANCE);
+            Assert.IsFalse(model.HasFading);
+        }
+
+        [Test]
+        public void WhenOneIsShownWhileAllAreShown_ThenAllFadeFromWhereTheirRevealWas() {
+            ConstellationRevealModel model = new();
+            model.Show(ALL, START_TIME, START_TIME);
+
+            model.Show(ORION, START_TIME + 2.3d, START_TIME + 2d);
+
+            Assert.AreEqual(ORION, model.ShownConstellation);
+            Assert.AreEqual(ALL, model.FadingConstellation);
+            Assert.AreEqual(2f, model.FadingRevealSeconds, TOLERANCE);
+        }
+
+        [Test]
+        public void WhenAllAreShownWhileOneIsShown_ThenItFadesAndAllAreShown() {
+            ConstellationRevealModel model = new();
+            model.Show(ORION, START_TIME, START_TIME);
+
+            model.Show(ALL, START_TIME + 2.3d, START_TIME + 2d);
+
+            Assert.AreEqual(ALL, model.ShownConstellation);
+            Assert.AreEqual(ORION, model.FadingConstellation);
+        }
+
+        [Test]
+        public void WhenAllAreReplayed_ThenAllFadeAndAreShownAgain() {
+            ConstellationRevealModel model = new();
+            model.Show(ALL, START_TIME, START_TIME);
+
+            model.Show(ALL, START_TIME + 3.8d, START_TIME + 3d);
+            model.SetTime(START_TIME + 3.8d);
+
+            Assert.AreEqual(ALL, model.ShownConstellation);
+            Assert.AreEqual(ALL, model.FadingConstellation);
+            Assert.AreEqual(0f, model.ShownRevealSeconds, TOLERANCE);
+        }
+
+        [Test]
+        public void WhenAllAreHidden_ThenAllFadeAndNothingIsShown() {
+            ConstellationRevealModel model = new();
+            model.Show(ALL, START_TIME, START_TIME);
+
+            model.Hide(START_TIME + 1d);
+
+            Assert.IsFalse(model.HasShown);
+            Assert.AreEqual(ALL, model.FadingConstellation);
         }
 
         private void OnFiguresChanged() =>

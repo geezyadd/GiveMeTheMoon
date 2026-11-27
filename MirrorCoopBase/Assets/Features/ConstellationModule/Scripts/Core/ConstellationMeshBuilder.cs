@@ -5,20 +5,23 @@ using Features.ConstellationModule.Scripts.Definitions;
 using UnityEngine;
 
 namespace Features.ConstellationModule.Scripts.Core {
-    // Builds the highlight mesh of a constellation: a quad per star and a strip per figure segment. Every vertex is a
-    // world direction, not a point: ConstellationAtInfinity.shader projects it like the skybox, so the figure stays on
-    // the painted stars wherever the camera stands.
+    // Builds the highlight mesh of one or more constellations: a quad per star and a strip per figure segment. Every
+    // vertex is a world direction, not a point: ConstellationAtInfinity.shader projects it like the skybox, so the
+    // figure stays on the painted stars wherever the camera stands.
     // Vertex streams: UV0 of a star is (shape x, shape y, brightness, twinkle phase), the shape in degrees of a
     // reference-magnitude star; UV0 of a line is (side -1..1, degrees from the line's start, line length in degrees,
     // +1 at the start / -1 at the end). UV1.xyz is the direction of a line's other end, so the shader can widen the line
     // on screen (zero for a star); UV1.w is the reveal step: the star's index in the star list or the line's index in
-    // the line list, which picks the vertex's progress from the shader's per-step array.
+    // the line list, counted on from the figures before it, which picks the vertex's progress from the shader's
+    // per-step array.
     public sealed class ConstellationMeshBuilder : IConstellationMeshBuilder {
         public const int STAR_SUBMESH = 0;
         public const int LINE_SUBMESH = 1;
         // Matches MAX_REVEAL_STEPS in ConstellationAtInfinity.shader: the size of the per-step progress array.
-        public const int MAX_REVEAL_STEPS = 32;
+        public const int MAX_REVEAL_STEPS = 256;
 
+        private const string MESH_NAME = "ConstellationFigures";
+        private const string TOO_MANY_STEPS_FORMAT = "The constellations hold {0} stars or lines, more than {1}, the shader's reveal step limit.";
         private const int SUBMESH_COUNT = 2;
         // The vertices lie around the object's origin, but the shader draws them at infinity: bounds this large keep
         // the renderer from being frustum-culled wherever the camera is.
@@ -49,16 +52,17 @@ namespace Features.ConstellationModule.Scripts.Core {
             _constellationHighlightConfiguration = constellationHighlightConfiguration;
         }
 
-        public Mesh Build(ConstellationDefinition constellation) {
-            CheckStepCount(constellation, constellation.Stars.Count);
-            CheckStepCount(constellation, constellation.Lines.Count);
+        public Mesh Build(IReadOnlyList<ConstellationDefinition> constellations) {
             Clear();
-            for (int i = 0; i < constellation.Stars.Count; i++)
-                AddStar(constellation.Stars[i], i);
-            for (int i = 0; i < constellation.Lines.Count; i++)
-                AddLine(GetStarIndex(constellation, constellation.Lines[i].FromStar), GetStarIndex(constellation, constellation.Lines[i].ToStar), i);
+            int firstLine = 0;
+            foreach (ConstellationDefinition constellation in constellations) {
+                AddFigure(constellation, _starDirections.Count, firstLine);
+                firstLine += constellation.Lines.Count;
+            }
+            CheckStepCount(_starDirections.Count);
+            CheckStepCount(firstLine);
 
-            Mesh mesh = new() { name = constellation.name, hideFlags = HideFlags.DontSave };
+            Mesh mesh = new() { name = MESH_NAME, hideFlags = HideFlags.DontSave };
             mesh.SetVertices(_vertices);
             mesh.SetUVs(0, _shapes);
             mesh.SetUVs(1, _otherEndsAndSteps);
@@ -69,9 +73,18 @@ namespace Features.ConstellationModule.Scripts.Core {
             return mesh;
         }
 
-        private static void CheckStepCount(ConstellationDefinition constellation, int count) {
+        // A figure's stars and lines take the reveal steps after the figures before it; its twinkle phases start from
+        // its own first star, so a figure twinkles the same alone or with others.
+        private void AddFigure(ConstellationDefinition constellation, int firstStar, int firstLine) {
+            for (int i = 0; i < constellation.Stars.Count; i++)
+                AddStar(constellation.Stars[i], i, firstStar + i);
+            for (int i = 0; i < constellation.Lines.Count; i++)
+                AddLine(firstStar + GetStarIndex(constellation, constellation.Lines[i].FromStar), firstStar + GetStarIndex(constellation, constellation.Lines[i].ToStar), firstLine + i);
+        }
+
+        private static void CheckStepCount(int count) {
             if (count > MAX_REVEAL_STEPS)
-                throw new ArgumentOutOfRangeException(nameof(constellation), count, $"Constellation {constellation.name} has more than {MAX_REVEAL_STEPS} stars or lines, the shader's reveal step limit.");
+                throw new ArgumentOutOfRangeException(nameof(count), count, string.Format(TOO_MANY_STEPS_FORMAT, count, MAX_REVEAL_STEPS));
         }
 
         private Vector3 GetWorldDirection(ConstellationStar star) =>
@@ -99,7 +112,7 @@ namespace Features.ConstellationModule.Scripts.Core {
         }
 
         // The quad is as large as the halo or the spikes, whichever reaches further; its axes are the spikes' axes.
-        private void AddStar(ConstellationStar star, int index) {
+        private void AddStar(ConstellationStar star, int indexInFigure, int step) {
             Vector3 direction = GetWorldDirection(star);
             float scale = GetMagnitudeFactor(star.Magnitude, _constellationHighlightConfiguration.MagnitudeSizeExponent, _constellationHighlightConfiguration.StarScaleRange);
             float brightness = GetMagnitudeFactor(star.Magnitude, _constellationHighlightConfiguration.MagnitudeBrightnessExponent, _constellationHighlightConfiguration.StarBrightnessRange);
@@ -109,12 +122,12 @@ namespace Features.ConstellationModule.Scripts.Core {
             GetSpikeAxes(direction, out Vector3 spikeRight, out Vector3 spikeUp);
             float extentDegrees = Mathf.Max(_constellationHighlightConfiguration.HaloRadiusDegrees, _constellationHighlightConfiguration.SpikeLengthDegrees);
             float extent = Mathf.Tan(extentDegrees * scale * Mathf.Deg2Rad);
-            float twinklePhase = index * TWINKLE_PHASE_STEP_RADIANS;
+            float twinklePhase = indexInFigure * TWINKLE_PHASE_STEP_RADIANS;
             int first = _vertices.Count;
             foreach (Vector2 corner in QUAD_CORNERS) {
                 _vertices.Add((direction + (spikeRight * corner.x + spikeUp * corner.y) * extent).normalized);
                 _shapes.Add(new Vector4(corner.x * extentDegrees, corner.y * extentDegrees, brightness, twinklePhase));
-                _otherEndsAndSteps.Add(new Vector4(0f, 0f, 0f, index));
+                _otherEndsAndSteps.Add(new Vector4(0f, 0f, 0f, step));
             }
             foreach (int corner in QUAD_TRIANGLES)
                 _starIndices.Add(first + corner);

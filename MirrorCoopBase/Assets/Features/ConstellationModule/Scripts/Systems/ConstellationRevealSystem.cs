@@ -55,10 +55,16 @@ namespace Features.ConstellationModule.Scripts.Systems {
                 return;
             }
 
-            if (_constellationCatalog.TryFindIndex(state.ConstellationId, out int constellation) == false)
-                throw new InvalidOperationException(string.Format(UNKNOWN_CONSTELLATION_FORMAT, state.ConstellationId));
+            _constellationRevealModel.Show(FindShownConstellation(state.ConstellationId), state.RevealStartTime, state.ChangeTime);
+        }
 
-            _constellationRevealModel.Show(constellation, state.RevealStartTime, state.ChangeTime);
+        private int FindShownConstellation(string constellationId) {
+            if (constellationId == ConstellationSkyIds.ALL_CONSTELLATIONS)
+                return ConstellationRevealModel.ALL_CONSTELLATIONS;
+            if (_constellationCatalog.TryFindIndex(constellationId, out int constellation) == false)
+                throw new InvalidOperationException(string.Format(UNKNOWN_CONSTELLATION_FORMAT, constellationId));
+
+            return constellation;
         }
 
         private ConstellationSkyState ReadSkyState() =>

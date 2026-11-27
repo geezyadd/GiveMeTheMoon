@@ -3,7 +3,8 @@ using Features.ConstellationModule.Data.Generated;
 namespace Features.ConstellationModule.Scripts.Core {
     // What the lobby sky's synced state becomes on a pick or a hide at a network time: the change time is when the
     // figure shown before starts to fade out on every peer, the reveal start is when the new figure's reveal begins
-    // (later than the change while it waits for the fade, as the fade rule says). No id means nothing is shown.
+    // (later than the change while it waits for the fade, as the fade rule says). No id means nothing is shown;
+    // ConstellationSkyIds.ALL_CONSTELLATIONS shows the whole catalog, so picking it again is a replay like any id.
     public sealed class ConstellationSkyStateRule : IConstellationSkyStateRule {
         private readonly IConstellationFadeRule _constellationFadeRule;
 

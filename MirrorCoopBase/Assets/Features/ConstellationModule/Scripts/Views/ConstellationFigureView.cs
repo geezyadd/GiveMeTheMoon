@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Features.ConstellationModule.Scripts.Configurations;
 using Features.ConstellationModule.Scripts.Core;
 using Features.ConstellationModule.Scripts.Definitions;
@@ -5,9 +6,9 @@ using UnityEngine;
 using Zenject;
 
 namespace Features.ConstellationModule.Scripts.Views {
-    // Draws one constellation figure: its mesh, the star and line look per submesh (property blocks; _IsLine picks the
-    // look in the shader), and every frame each star's light and each line's drawn share as the shader's per-step
-    // array, times the whole figure's alpha.
+    // Draws one or more constellation figures as one mesh: the star and line look per submesh (property blocks; _IsLine
+    // picks the look in the shader), and every frame each star's light and each line's drawn share as the shader's
+    // per-step array, in the mesh's figure order, times the whole drawing's alpha.
     public sealed class ConstellationFigureView : MonoBehaviour {
         private const float STAR_PART = 0f;
         private const float LINE_PART = 1f;
@@ -35,12 +36,12 @@ namespace Features.ConstellationModule.Scripts.Views {
 
         private readonly float[] _starLights = new float[ConstellationMeshBuilder.MAX_REVEAL_STEPS];
         private readonly float[] _lineProgress = new float[ConstellationMeshBuilder.MAX_REVEAL_STEPS];
+        private readonly List<ConstellationDefinition> _shownConstellations = new();
 
         private IConstellationMeshBuilder _constellationMeshBuilder;
         private ConstellationHighlightConfiguration _constellationHighlightConfiguration;
         private MaterialPropertyBlock _starBlock;
         private MaterialPropertyBlock _lineBlock;
-        private ConstellationDefinition _shownConstellation;
         private Mesh _mesh;
 
         [Inject]
@@ -58,30 +59,53 @@ namespace Features.ConstellationModule.Scripts.Views {
         private void OnDestroy() =>
             DestroyMesh();
 
-        public void Show(ConstellationDefinition constellation) {
-            if (_shownConstellation == constellation)
+        public void Show(IReadOnlyList<ConstellationDefinition> constellations) {
+            if (IsShowing(constellations))
                 return;
 
             DestroyMesh();
-            _mesh = _constellationMeshBuilder.Build(constellation);
+            _mesh = _constellationMeshBuilder.Build(constellations);
             _meshFilter.sharedMesh = _mesh;
-            _shownConstellation = constellation;
+            _shownConstellations.Clear();
+            _shownConstellations.AddRange(constellations);
             _meshRenderer.enabled = true;
         }
 
         public void Clear() {
             _meshRenderer.enabled = false;
-            _shownConstellation = null;
+            _shownConstellations.Clear();
             DestroyMesh();
         }
 
-        public void Draw(ConstellationRevealTimeline timeline, float revealSeconds, float alpha) {
-            for (int i = 0; i < timeline.StarCount; i++)
-                _starLights[i] = timeline.GetStarLight(i, revealSeconds);
-            for (int i = 0; i < timeline.LineCount; i++)
-                _lineProgress[i] = timeline.GetLineProgress(i, revealSeconds);
+        // One timeline per shown figure, in the order the figures were shown; every figure is at the same reveal time.
+        public void Draw(IReadOnlyList<ConstellationRevealTimeline> timelines, float revealSeconds, float alpha) {
+            int firstStar = 0;
+            int firstLine = 0;
+            for (int i = 0; i < timelines.Count; i++) {
+                FillProgress(timelines[i], revealSeconds, firstStar, firstLine);
+                firstStar += timelines[i].StarCount;
+                firstLine += timelines[i].LineCount;
+            }
             ApplyProgress(_starBlock, _starLights, alpha, ConstellationMeshBuilder.STAR_SUBMESH);
             ApplyProgress(_lineBlock, _lineProgress, alpha, ConstellationMeshBuilder.LINE_SUBMESH);
+        }
+
+        private bool IsShowing(IReadOnlyList<ConstellationDefinition> constellations) {
+            if (_shownConstellations.Count != constellations.Count)
+                return false;
+            for (int i = 0; i < constellations.Count; i++) {
+                if (_shownConstellations[i] != constellations[i])
+                    return false;
+            }
+
+            return true;
+        }
+
+        private void FillProgress(ConstellationRevealTimeline timeline, float revealSeconds, int firstStar, int firstLine) {
+            for (int i = 0; i < timeline.StarCount; i++)
+                _starLights[firstStar + i] = timeline.GetStarLight(i, revealSeconds);
+            for (int i = 0; i < timeline.LineCount; i++)
+                _lineProgress[firstLine + i] = timeline.GetLineProgress(i, revealSeconds);
         }
 
         private void ApplyProgress(MaterialPropertyBlock block, float[] stepProgress, float alpha, int submesh) {

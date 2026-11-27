@@ -2,11 +2,14 @@ using System.Collections.Generic;
 using System.Linq;
 using Features.AddressablesConstantGeneratorModule.EditorLoading;
 using Features.AddressablesConstantsGenerator.Generated;
+using Features.ConstellationModule.Data;
+using Features.ConstellationModule.Scripts.Core;
 using Features.ConstellationModule.Scripts.Definitions;
 using NUnit.Framework;
 
 namespace Features.ConstellationModule.Editor.Tests {
-    // The synced lobby sky names a constellation by its id, so every catalog constellation has one and no two share it.
+    // The synced lobby sky names a constellation by its id, so every catalog constellation has one, no two share it and
+    // none takes a reserved sky id; "Show all" draws the whole catalog in one mesh, so it fits the shader's step array.
     public sealed class ConstellationCatalogGuardTests {
         private const string ORION = "orion";
         private const string LEO = "leo";
@@ -23,6 +26,19 @@ namespace Features.ConstellationModule.Editor.Tests {
 
             Assert.IsTrue(ids.All(id => string.IsNullOrEmpty(id) == false), "A catalog constellation has no id.");
             CollectionAssert.AllItemsAreUnique(ids, "Two catalog constellations share an id.");
+        }
+
+        [Test]
+        public void WhenTheCatalogIsChecked_ThenNoConstellationTakesTheAllId() =>
+            Assert.IsFalse(_catalog.TryFindIndex(ConstellationSkyIds.ALL_CONSTELLATIONS, out _));
+
+        [Test]
+        public void WhenTheWholeCatalogIsCounted_ThenItsStarsAndLinesFitTheRevealSteps() {
+            int stars = _catalog.Constellations.Sum(constellation => constellation.Stars.Count);
+            int lines = _catalog.Constellations.Sum(constellation => constellation.Lines.Count);
+
+            Assert.LessOrEqual(stars, ConstellationMeshBuilder.MAX_REVEAL_STEPS);
+            Assert.LessOrEqual(lines, ConstellationMeshBuilder.MAX_REVEAL_STEPS);
         }
 
         [Test]

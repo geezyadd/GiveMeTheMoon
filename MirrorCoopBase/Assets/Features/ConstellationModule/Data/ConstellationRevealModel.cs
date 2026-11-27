@@ -1,11 +1,13 @@
 using System;
 
 namespace Features.ConstellationModule.Data {
-    // Which catalog constellation this peer's sky draws and how far its reveal is, plus the one fading out after a
-    // switch. Filled from the synced ConstellationSky model; times are network times, so every peer's reveal is in step.
-    // The reveal seconds are below zero while the reveal waits for the old figure's fade.
+    // Which catalog constellation this peer's sky draws (or all of them at once) and how far its reveal is, plus the
+    // one fading out after a switch. Filled from the synced ConstellationSky model; times are network times, so every
+    // peer's reveal is in step. The reveal seconds are below zero while the reveal waits for the old figure's fade.
     public sealed class ConstellationRevealModel {
         public const int NO_CONSTELLATION = -1;
+        // Every catalog constellation, each revealed from the same start.
+        public const int ALL_CONSTELLATIONS = -2;
 
         private double _shownRevealStartTime;
         private double _fadeStartTime;

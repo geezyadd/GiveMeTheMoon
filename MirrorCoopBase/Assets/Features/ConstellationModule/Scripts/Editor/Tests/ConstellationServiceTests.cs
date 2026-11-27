@@ -12,6 +12,7 @@ namespace Features.ConstellationModule.Editor.Tests {
     public sealed class ConstellationServiceTests {
         private const string ORION = "orion";
         private const string UNKNOWN = "no_such_constellation";
+        private const string ALL = ConstellationSkyIds.ALL_CONSTELLATIONS;
 
         private ConstellationSkyBindingModel _bindingModel;
         private FakeConstellationSkyWriter _writer;
@@ -34,6 +35,38 @@ namespace Features.ConstellationModule.Editor.Tests {
 
             Assert.AreEqual(ORION, _writer.State.ConstellationId);
         }
+
+        [Test]
+        public void WhenAllAreShown_ThenTheSkyShowsTheAllId() {
+            _bindingModel.Bind(_writer);
+
+            _service.ServerShowAll();
+
+            Assert.AreEqual(ALL, _writer.State.ConstellationId);
+        }
+
+        [Test]
+        public void WhenAllAreShownAndHidden_ThenTheSkyShowsNothing() {
+            _bindingModel.Bind(_writer);
+            _service.ServerShowAll();
+
+            _service.ServerHide();
+
+            Assert.AreEqual(string.Empty, _writer.State.ConstellationId);
+            Assert.AreEqual(2, _writer.Writes);
+        }
+
+        [Test]
+        public void WhenTheAllIdIsShownAsOneConstellation_ThenItThrowsAndNothingIsWritten() {
+            _bindingModel.Bind(_writer);
+
+            Assert.Throws<ArgumentException>(() => _service.ServerShow(ALL));
+            Assert.AreEqual(0, _writer.Writes);
+        }
+
+        [Test]
+        public void WhenNoWriterIsBound_ThenShowingAllThrows() =>
+            Assert.Throws<InvalidOperationException>(() => _service.ServerShowAll());
 
         [Test]
         public void WhenAnEmptySkyIsHidden_ThenNothingIsWritten() {

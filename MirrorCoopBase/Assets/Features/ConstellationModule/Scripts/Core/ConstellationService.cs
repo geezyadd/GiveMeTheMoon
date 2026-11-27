@@ -5,8 +5,8 @@ using Features.ConstellationModule.Scripts.Definitions;
 using Mirror;
 
 namespace Features.ConstellationModule.Scripts.Core {
-    // Server: the one place that changes the lobby sky every peer sees. Showing the shown constellation again replays
-    // it; hiding an empty sky changes nothing.
+    // Server: the one place that changes the lobby sky every peer sees. Showing the shown constellation (or all of
+    // them) again replays it; hiding an empty sky changes nothing.
     public sealed class ConstellationService : IConstellationService {
         private const string UNKNOWN_CONSTELLATION_FORMAT = "No constellation with id '{0}' in the catalog.";
         private const string NO_WRITER_MESSAGE = "The lobby sky is written on the server only, while the lobby's sky sync is spawned.";
@@ -25,9 +25,11 @@ namespace Features.ConstellationModule.Scripts.Core {
             if (_constellationCatalog.TryFindIndex(constellationId, out _) == false)
                 throw new ArgumentException(string.Format(UNKNOWN_CONSTELLATION_FORMAT, constellationId), nameof(constellationId));
 
-            IConstellationSkyWriter writer = GetWriter();
-            writer.ServerSetState(_constellationSkyStateRule.CreateShown(writer.State, constellationId, NetworkTime.time));
+            WriteShown(constellationId);
         }
+
+        public void ServerShowAll() =>
+            WriteShown(ConstellationSkyIds.ALL_CONSTELLATIONS);
 
         public void ServerHide() {
             IConstellationSkyWriter writer = GetWriter();
@@ -36,6 +38,11 @@ namespace Features.ConstellationModule.Scripts.Core {
                 return;
 
             writer.ServerSetState(_constellationSkyStateRule.CreateHidden(current, NetworkTime.time));
+        }
+
+        private void WriteShown(string constellationId) {
+            IConstellationSkyWriter writer = GetWriter();
+            writer.ServerSetState(_constellationSkyStateRule.CreateShown(writer.State, constellationId, NetworkTime.time));
         }
 
         private IConstellationSkyWriter GetWriter() {

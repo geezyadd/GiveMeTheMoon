@@ -1,3 +1,4 @@
+using Features.ConstellationModule.Data;
 using Features.ConstellationModule.Data.Generated;
 using Features.ConstellationModule.Scripts.Configurations;
 using Features.ConstellationModule.Scripts.Core;
@@ -9,6 +10,7 @@ namespace Features.ConstellationModule.Editor.Tests {
     public sealed class ConstellationSkyStateRuleTests {
         private const string ORION = "orion";
         private const string BIG_DIPPER = "big_dipper";
+        private const string ALL = ConstellationSkyIds.ALL_CONSTELLATIONS;
         private const float FADE_OUT_SECONDS = 0.8f;
         private const float SWITCH_REVEAL_DELAY_SECONDS = 0.3f;
         private const double START_TIME = 100d;
@@ -65,6 +67,47 @@ namespace Features.ConstellationModule.Editor.Tests {
         [Test]
         public void WhenTheSkyIsHidden_ThenNothingIsShownFromTheHide() {
             ConstellationSkyState state = _rule.CreateHidden(_rule.CreateShown(default, ORION, START_TIME), CHANGE_TIME);
+
+            Assert.IsFalse(_rule.IsShown(state));
+            Assert.AreEqual(CHANGE_TIME, state.ChangeTime, TOLERANCE);
+        }
+
+        [Test]
+        public void WhenAllAreShownOnAnEmptySky_ThenTheirRevealStartsAtThePick() {
+            ConstellationSkyState state = _rule.CreateShown(default, ALL, START_TIME);
+
+            Assert.IsTrue(_rule.IsShown(state));
+            Assert.AreEqual(ALL, state.ConstellationId);
+            Assert.AreEqual(START_TIME, state.RevealStartTime, TOLERANCE);
+        }
+
+        [Test]
+        public void WhenOneIsPickedWhileAllAreShown_ThenItsRevealStartsAfterTheSwitchDelay() {
+            ConstellationSkyState state = _rule.CreateShown(_rule.CreateShown(default, ALL, START_TIME), ORION, CHANGE_TIME);
+
+            Assert.AreEqual(ORION, state.ConstellationId);
+            Assert.AreEqual(CHANGE_TIME + SWITCH_REVEAL_DELAY_SECONDS, state.RevealStartTime, TOLERANCE);
+            Assert.AreEqual(CHANGE_TIME, state.ChangeTime, TOLERANCE);
+        }
+
+        [Test]
+        public void WhenAllAreShownWhileOneIsShown_ThenTheirRevealStartsAfterTheSwitchDelay() {
+            ConstellationSkyState state = _rule.CreateShown(_rule.CreateShown(default, ORION, START_TIME), ALL, CHANGE_TIME);
+
+            Assert.AreEqual(ALL, state.ConstellationId);
+            Assert.AreEqual(CHANGE_TIME + SWITCH_REVEAL_DELAY_SECONDS, state.RevealStartTime, TOLERANCE);
+        }
+
+        [Test]
+        public void WhenAllAreShownAgain_ThenTheirRevealWaitsForTheWholeFadeOut() {
+            ConstellationSkyState state = _rule.CreateShown(_rule.CreateShown(default, ALL, START_TIME), ALL, CHANGE_TIME);
+
+            Assert.AreEqual(CHANGE_TIME + FADE_OUT_SECONDS, state.RevealStartTime, TOLERANCE);
+        }
+
+        [Test]
+        public void WhenAllAreHidden_ThenNothingIsShownFromTheHide() {
+            ConstellationSkyState state = _rule.CreateHidden(_rule.CreateShown(default, ALL, START_TIME), CHANGE_TIME);
 
             Assert.IsFalse(_rule.IsShown(state));
             Assert.AreEqual(CHANGE_TIME, state.ChangeTime, TOLERANCE);
