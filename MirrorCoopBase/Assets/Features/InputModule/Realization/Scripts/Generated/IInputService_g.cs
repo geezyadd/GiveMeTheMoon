@@ -14,6 +14,7 @@ namespace Features.InputModule.Realization.Scripts.Generated {
         public InputDefaultActions Release { get; set; }
         public InputDefaultActions Reload { get; set; }
         public InputDefaultActions ToggleCursor { get; set; }
+        public InputDefaultActions Emote { get; set; }
         public InputDefaultActions CloseWindow { get; set; }
         public InputDefaultActions SpectatePrev { get; set; }
         public InputDefaultActions SpectateNext { get; set; }

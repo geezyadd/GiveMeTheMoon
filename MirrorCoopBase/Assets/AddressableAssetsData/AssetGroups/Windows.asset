@@ -35,6 +35,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 55b8ae401ea151c4d8db9659edeb2a8a
+    m_Address: EmoteWheelWindow
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e338f63978985174ea63a6e91ddb9b11
     m_Address: DebugWindow
     m_ReadOnly: 0

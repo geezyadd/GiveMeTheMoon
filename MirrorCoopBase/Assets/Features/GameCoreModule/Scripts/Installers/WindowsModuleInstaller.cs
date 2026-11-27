@@ -1,3 +1,4 @@
+using Features.EmoteModule.UI;
 using Features.LobbyModule.Scripts;
 using Features.MenuModule.Scripts;
 using Features.MvpModule;
@@ -15,6 +16,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindInterfacesAndSelfTo<GameHudWindow>().AsSingle();
             Container.BindInterfacesAndSelfTo<ShopWindow>().AsSingle();
             Container.BindInterfacesAndSelfTo<SonarWindow>().AsSingle();
+            Container.BindInterfacesAndSelfTo<EmoteWheelWindow>().AsSingle();
             Container.BindInterfacesTo<GameFlowWindowsSystem>().AsSingle();
         }
     }

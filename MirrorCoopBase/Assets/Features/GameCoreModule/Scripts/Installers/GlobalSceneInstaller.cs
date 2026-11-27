@@ -2,6 +2,7 @@ using Features.PlayerReplicaModule.Installers;
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts;
 using Features.CrewInviteModule.Scripts.Installers;
+using Features.EmoteModule;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using Features.DebugModule.Scripts.Installers;
 #endif
@@ -49,6 +50,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             PlayerProfileModuleInstaller.Install(Container);
             ShopModuleInstaller.Install(Container);
             SonarModuleInstaller.Install(Container);
+            EmoteModuleInstaller.Install(Container);
             SpaceHazeModuleInstaller.Install(Container);
             StagePresetModuleInstaller.Install(Container);
             TooltipModuleInstaller.Install(Container);

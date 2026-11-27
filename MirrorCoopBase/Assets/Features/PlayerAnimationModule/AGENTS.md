@@ -10,13 +10,15 @@ animator controller and everything that sets its parameters. The ragdoll only sa
 and follows the pose; how the pose is turned (the look, flying head first) stays with `PlayerRagdollBody`.
 
 ## Status
-Being built on `demo/active-ragdoll`. Parameters: `Forward`, `Fly` and `Slap`. The clips are the KevinIglesias idle,
-walk and fall and our own `PlayerSlap`; no jump, sprint or seated clips yet. Every player sees every slap: its press
-count rides the replica packets (AttackModule).
+Being built on `demo/active-ragdoll`. Parameters: `Forward`, `Fly`, `Slap`, `EmoteStop` and one trigger per emote of
+the emote catalog ([EmoteModule](../EmoteModule/AGENTS.md)). The clips are the KevinIglesias idle, walk and fall and our
+own `PlayerSlap`; no jump, sprint or seated clips yet; the emotes are KevinIglesias and Mixamo dances. Every player sees every slap
+and every emote: their counts ride the replica packets (AttackModule, EmoteModule).
 
 ## Assembly
 `Features.PlayerAnimationModule` (layer 3; references Zenject, `CharacterMovableModule`, `ActiveRagdollModule`, `Unity.Animation.Rigging`).
-Editor code in `Features.PlayerAnimationModule.Editor`.
+Editor code in `Features.PlayerAnimationModule.Editor` (also references `EmoteModule.Data` and the Addressables
+constants, to build the Emote layer from the emote catalog).
 - `PlayerAnimatorParameters`: every parameter's name (what the controller is built with) and hash (what the driver
   sets). A new parameter is a line here, a line in `PlayerAnimatorBuilder` and a line in `PlayerAnimationDriver`.
 - `PlayerAnimationDriver` (on `DummyPlayer`, references the movement and the ragdoll): every frame, on every peer that
@@ -28,7 +30,11 @@ Editor code in `Features.PlayerAnimationModule.Editor`.
     a bump does not turn it on; off at once on the ground; never while held.
   - An action's trigger (`Slap`) fires through `Play(triggerHash)`, called by AttackModule's `Attacker` when an
     attack starts; `CanPlay` says whether the animator runs (the ragdoll is awake), and nothing fires while it does
-    not. The presses, who may attack and when are AttackModule's.
+    not. The presses, who may attack and when are AttackModule's. An emote's trigger (EmoteModule's `EmotePlayer`) goes
+    the same way; `ResetTrigger(triggerHash)` takes back a trigger not taken yet (an emote stopped in the frame it
+    started, a stale `EmoteStop`).
+  - `IsWalking` (the walk input was above `ForwardIdleCutoff` at the last update) and `IsFlying` (`Fly` was on): what
+    the last update saw, false while the animator does not run; an emote stops on them.
 - `AirborneDelay`: the delay itself, pure.
 - `Reach/LimbReach` (on the ragdoll's root, next to its `AnimatedPoseSampler`; refs: the sampler and its chains): lets
   any system point a limb at something over the animation (a slap's hand at a head; later a hand on an item, a hand
@@ -51,11 +57,19 @@ Editor code in `Features.PlayerAnimationModule.Editor`.
     (ActiveRagdollModule), with a reach request so the pose matches.
 - `PlayerAnimationConfiguration` (Addressables `PlayerAnimationConfiguration_Default`, bound in
   `ConfigurationInstaller`): `ForwardDampingSeconds` 0.125, `ForwardIdleCutoff` 0.125, `FlyDelaySeconds` 0.3.
-- `GameResources/PlayerAnimator.controller`: built from code, never edited by hand. Three layers: `Base Layer` with
+- `GameResources/PlayerAnimator.controller`: built from code, never edited by hand. Four layers: `Base Layer` with
   `Locomotion` (1D blend by `Forward`, idle 0 → walk 1), and `Fly` (override, weight 0 by default) with only `Fall`.
   `PlayerAnimationDriver` fades the `Fly` layer's weight to 1 while `Fly` is on (`FlyBlendInSeconds` 0.15) and back to 0
   when it is off (`FlyBlendOutSeconds` 0.2). No empty state: an empty state in an override layer freezes the layer's
-  last pose (and with written defaults pulls the body to its rest pose). `Slap` (override, mask
+  last pose (and with written defaults pulls the body to its rest pose). `Emote` (override, no mask, weight 1):
+  `Empty` (default, a blend tree with no motions, as in `Slap`) and one state per emote of the emote catalog, named by
+  its trigger, playing the catalog entry's clip (the idle without one); Any State goes to an emote on its trigger (no
+  exit time, can go to itself), a one-shot emote goes back to `Empty` at its exit time, a
+  looping one (a dance) plays on, both go back on `EmoteStop` (no exit time); an emote with an intro clip goes
+  through a `<Trigger>Intro` state first, which goes on to the emote at its end with no blend; the
+  contract and where the real clips go are in [EmoteModule](../EmoteModule/AGENTS.md). Whole body because an emote
+  stops as soon as the player walks, jumps or is in the air, and the `Slap` layer above it still shows a slap on the
+  upper body. `Slap` (override, mask
   `GameResources/PlayerUpperBody.mask`: trunk, head, arms, fingers, hand IK; not the root and the legs, so the legs
   keep walking or falling; weight 1): `Empty` (default, a blend tree with no motions) and `Slap` (`PlayerSlap`);
   `Empty` goes to `Slap` on the `Slap` trigger (no exit time), `Slap` goes back to `Empty` at its exit time; both
@@ -65,7 +79,7 @@ Editor code in `Features.PlayerAnimationModule.Editor`.
   spine twist keyed: wind-up at 0.22 s, hit at 0.36 s, follow-through at 0.5 s, back to the idle at 0.9 s); after that it
   is edited by hand in the Animation window (muscles, not bone rotations) and the builder never touches it.
 - Editor: `PlayerAnimatorBuilder` (Tools > Animation > Build Player Animator): rebuilds the controller in place (the
-  asset keeps its GUID) and puts it on the humanoid in `DummyPlayer`; before that it builds the upper body mask and creates the slap clip if it is missing (created once, then changed in place). The ragdoll baker (PlayerBodyModule) takes the
+  asset keeps its GUID) and puts it on the humanoid in `DummyPlayer`; before that it builds the upper body mask and creates the slap clip if it is missing (created once, then changed in place). The Emote layer comes from the emote catalog (`EmoteCatalog_Default`, read at its address with `AddressableConfigurationLoader`); an emote without a trigger name, or with one that is taken, is logged and left out. The ragdoll baker (PlayerBodyModule) takes the
   controller from here too.
 
 ## Tests

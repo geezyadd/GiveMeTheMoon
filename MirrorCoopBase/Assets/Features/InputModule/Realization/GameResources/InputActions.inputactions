@@ -95,6 +95,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Emote",
+                    "type": "Button",
+                    "id": "3d90b21d-384a-4ad2-aed7-81b12c57f71a",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -304,6 +313,17 @@
                     "processors": "",
                     "groups": "Keyboard and Mouse",
                     "action": "ToggleCursor",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "6199c2c5-8d59-41bb-8fee-62cf7b4cf40e",
+                    "path": "<Keyboard>/g",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard and Mouse",
+                    "action": "Emote",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

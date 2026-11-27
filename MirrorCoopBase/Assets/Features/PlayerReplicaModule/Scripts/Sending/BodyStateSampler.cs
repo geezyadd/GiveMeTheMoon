@@ -1,5 +1,6 @@
 using Features.AttackModule.Contracts;
 using Features.CharacterMovableModule.Scripts;
+using Features.EmoteModule.Contracts;
 using Features.CharacterMovableModule.Scripts.Body;
 using Features.CharacterMovableModule.Scripts.MovementControls;
 using Features.FloatingControllerModule;
@@ -13,16 +14,18 @@ namespace Features.PlayerReplicaModule.Sending {
     // same spot of its own copy of the carrier; on the still world (carrier 0) it is in world axes. The position, the
     // velocity and the walk direction follow the carrier's pose of the last physics step, which is where the body was
     // carried to; walking and looking follow its heading only. The attack count comes from the body's attack presses,
-    // when it has them.
+    // the emote count and emote from its emote plays, when it has them.
     public sealed class BodyStateSampler {
         private const uint WORLD_CARRIER = 0;
 
         private readonly CharacterMovableBase _movable;
         private readonly IAttackPresses _attackPresses;
+        private readonly IEmotePlays _emotePlays;
 
-        public BodyStateSampler(CharacterMovableBase movable, IAttackPresses attackPresses) {
+        public BodyStateSampler(CharacterMovableBase movable, IAttackPresses attackPresses, IEmotePlays emotePlays) {
             _movable = movable;
             _attackPresses = attackPresses;
+            _emotePlays = emotePlays;
         }
 
         public BodyStatePacket Sample(ushort number) {
@@ -54,7 +57,9 @@ namespace Features.PlayerReplicaModule.Sending {
                 LookYaw = YawCompression.Pack(look),
                 States = ReadStates(input),
                 JumpCount = _movable.JumpCount,
-                AttackCount = _attackPresses != null ? _attackPresses.AttackCount : (byte)0
+                AttackCount = _attackPresses != null ? _attackPresses.AttackCount : (byte)0,
+                EmoteCount = _emotePlays != null ? _emotePlays.EmoteCount : (byte)0,
+                EmoteIndex = _emotePlays != null ? _emotePlays.EmoteIndex : (byte)0
             };
         }
 
@@ -66,6 +71,8 @@ namespace Features.PlayerReplicaModule.Sending {
                 flags |= BodyStateFlags.JumpHeld;
             if (_movable.IsSupported)
                 flags |= BodyStateFlags.Grounded;
+            if (_emotePlays != null && _emotePlays.IsEmoting)
+                flags |= BodyStateFlags.Emoting;
 
             return flags;
         }

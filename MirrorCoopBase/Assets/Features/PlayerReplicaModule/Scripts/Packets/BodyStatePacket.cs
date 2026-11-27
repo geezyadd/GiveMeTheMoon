@@ -21,6 +21,10 @@ namespace Features.PlayerReplicaModule.Packets {
         // Grows by one with every attack press (IAttackPresses), so a copy attacks even when the packet of that moment
         // was lost.
         public byte AttackCount;
+        // Grows by one with every emote played (IEmotePlays), so a copy emotes even when the packet of that moment was
+        // lost; EmoteIndex is the catalog index of the emote played last.
+        public byte EmoteCount;
+        public byte EmoteIndex;
         // The number of the server's last move of this body (BodyStateChannel.ServerPlace / ServerShift), so a copy can
         // tell packets sent before a move from those sent after it.
         public byte PlaceCount;

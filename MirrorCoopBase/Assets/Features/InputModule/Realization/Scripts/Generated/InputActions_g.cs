@@ -181,6 +181,15 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Emote"",
+                    ""type"": ""Button"",
+                    ""id"": ""3d90b21d-384a-4ad2-aed7-81b12c57f71a"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -392,6 +401,17 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""action"": ""ToggleCursor"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""6199c2c5-8d59-41bb-8fee-62cf7b4cf40e"",
+                    ""path"": ""<Keyboard>/g"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and Mouse"",
+                    ""action"": ""Emote"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -497,6 +517,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         m_MovementMap_Release = m_MovementMap.FindAction("Release", throwIfNotFound: true);
         m_MovementMap_Reload = m_MovementMap.FindAction("Reload", throwIfNotFound: true);
         m_MovementMap_ToggleCursor = m_MovementMap.FindAction("ToggleCursor", throwIfNotFound: true);
+        m_MovementMap_Emote = m_MovementMap.FindAction("Emote", throwIfNotFound: true);
         // UiMap
         m_UiMap = asset.FindActionMap("UiMap", throwIfNotFound: true);
         m_UiMap_CloseWindow = m_UiMap.FindAction("CloseWindow", throwIfNotFound: true);
@@ -596,6 +617,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_MovementMap_Release;
     private readonly InputAction m_MovementMap_Reload;
     private readonly InputAction m_MovementMap_ToggleCursor;
+    private readonly InputAction m_MovementMap_Emote;
     /// <summary>
     /// Provides access to input actions defined in input action map "MovementMap".
     /// </summary>
@@ -647,6 +669,10 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "MovementMap/ToggleCursor".
         /// </summary>
         public InputAction @ToggleCursor => m_Wrapper.m_MovementMap_ToggleCursor;
+        /// <summary>
+        /// Provides access to the underlying input action "MovementMap/Emote".
+        /// </summary>
+        public InputAction @Emote => m_Wrapper.m_MovementMap_Emote;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -703,6 +729,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @ToggleCursor.started += instance.OnToggleCursor;
             @ToggleCursor.performed += instance.OnToggleCursor;
             @ToggleCursor.canceled += instance.OnToggleCursor;
+            @Emote.started += instance.OnEmote;
+            @Emote.performed += instance.OnEmote;
+            @Emote.canceled += instance.OnEmote;
         }
 
         /// <summary>
@@ -744,6 +773,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @ToggleCursor.started -= instance.OnToggleCursor;
             @ToggleCursor.performed -= instance.OnToggleCursor;
             @ToggleCursor.canceled -= instance.OnToggleCursor;
+            @Emote.started -= instance.OnEmote;
+            @Emote.performed -= instance.OnEmote;
+            @Emote.canceled -= instance.OnEmote;
         }
 
         /// <summary>
@@ -1083,6 +1115,13 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnToggleCursor(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Emote" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnEmote(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UiMap" which allows adding and removing callbacks.

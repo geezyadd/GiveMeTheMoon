@@ -9,6 +9,8 @@ namespace Features.PlayerReplicaModule.Packets {
         Grounded = 1 << 1,
         JumpHeld = 1 << 2,
         Seated = 1 << 3,
-        Dead = 1 << 4
+        Dead = 1 << 4,
+        // The owner's emote plays (IEmotePlays.IsEmoting); a copy stops its emote as soon as this is off.
+        Emoting = 1 << 5
     }
 }

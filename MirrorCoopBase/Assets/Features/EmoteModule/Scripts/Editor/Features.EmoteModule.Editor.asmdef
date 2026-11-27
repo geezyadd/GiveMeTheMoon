@@ -1,0 +1,28 @@
+{
+    "name": "Features.EmoteModule.Editor",
+    "rootNamespace": "Features.EmoteModule.Editor",
+    "references": [
+        "Features.EmoteModule",
+        "Features.EmoteModule.Data",
+        "Features.PlayerAnimationModule",
+        "Features.PlayerAnimationModule.Editor",
+        "Features.PlayerReplicaModule",
+        "Features.CharacterMovableModule",
+        "Features.MvpModule",
+        "Mirror",
+        "UnityEngine.UI",
+        "Unity.Addressables",
+        "Unity.Addressables.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

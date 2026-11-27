@@ -80,6 +80,8 @@ GameObject:
   - component: {fileID: 1714120081177050516}
   - component: {fileID: 7185294456933218277}
   - component: {fileID: 1039691336111523414}
+  - component: {fileID: 2930160212994642451}
+  - component: {fileID: 2710958139693108351}
   m_Layer: 0
   m_Name: DummyPlayer
   m_TagString: Untagged
@@ -786,6 +788,36 @@ MonoBehaviour:
   _fingers: {fileID: 5434198419766341581}
   _palmShare: 0.5
   _reachShare: 0.85
+--- !u!114 &2930160212994642451
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cb5b0c66fb41e34bbef56271bbd13a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _driver: {fileID: 7209845104136634603}
+  _movable: {fileID: 2109845104136634489}
+  _plays: {fileID: 2710958139693108351}
+--- !u!114 &2710958139693108351
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92fdd849a3e148149ab48d65edbcbd12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _movable: {fileID: 2109845104136634489}
+  _copy: {fileID: 8419845104136634502}
+  _player: {fileID: 2930160212994642451}
 --- !u!1 &1653071117312433485
 GameObject:
   m_ObjectHideFlags: 0

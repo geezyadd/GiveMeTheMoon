@@ -2,7 +2,10 @@
     "name": "Features.PlayerAnimationModule.Editor",
     "rootNamespace": "Features.PlayerAnimationModule.Editor",
     "references": [
-        "Features.PlayerAnimationModule"
+        "Features.PlayerAnimationModule",
+        "Features.EmoteModule.Data",
+        "Features.AddressablesConstantGeneratorModule",
+        "Features.AddressablesConstantGeneratorModule.EditorLoading"
     ],
     "includePlatforms": [
         "Editor"

@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ee2fc1e5a08be44cbd0f3daf091a91f, type: 3}
+  m_Name: EmoteCatalog_Default
+  m_EditorClassIdentifier: 
+  _emotes:
+  - _displayName: 1
+    _icon: {fileID: 0}
+    _triggerName: EmoteDance1
+    _clip: {fileID: -8694131350697414543, guid: f44f70b2354508c4cb2534cc3f6bce94, type: 3}
+    _introClip: {fileID: 0}
+  - _displayName: 2
+    _icon: {fileID: 0}
+    _triggerName: EmoteDance2
+    _clip: {fileID: 7953628815959492046, guid: e5f076b9f28f36749bd359fcd1080a45, type: 3}
+    _introClip: {fileID: 0}
+  - _displayName: 3
+    _icon: {fileID: 0}
+    _triggerName: EmoteDance3
+    _clip: {fileID: 8184403081425726023, guid: 74c3000d92f64c94bb8c57d8068d8d28, type: 3}
+    _introClip: {fileID: 0}
+  - _displayName: 4
+    _icon: {fileID: 0}
+    _triggerName: EmoteDance6
+    _clip: {fileID: 356202678852349402, guid: 222eef03c20abc240ac012ef5925d416, type: 3}
+    _introClip: {fileID: 0}
+  - _displayName: 5
+    _icon: {fileID: 0}
+    _triggerName: EmoteHipHop
+    _clip: {fileID: -203655887218126122, guid: 8e400ee5697d10a4880846c095408f63, type: 3}
+    _introClip: {fileID: 0}
+  - _displayName: 6
+    _icon: {fileID: 0}
+    _triggerName: EmoteTwerk
+    _clip: {fileID: -203655887218126122, guid: f253671da163331458bb521394f0a121, type: 3}
+    _introClip: {fileID: 0}
+  - _displayName: 7
+    _icon: {fileID: 0}
+    _triggerName: EmoteBreakdance
+    _clip: {fileID: -203655887218126122, guid: 8a522f21b25964c45988f3297422a070, type: 3}
+    _introClip: {fileID: 0}
+  - _displayName: 8
+    _icon: {fileID: 0}
+    _triggerName: EmoteFreezes
+    _clip: {fileID: -203655887218126122, guid: 1e2266770724e064ea6f21bfc50bf5b7, type: 3}
+    _introClip: {fileID: 0}
+  - _displayName: 9
+    _icon: {fileID: 0}
+    _triggerName: EmotePose
+    _clip: {fileID: -203655887218126122, guid: 431445f465b530e42b2aed58f5765b20, type: 3}
+    _introClip: {fileID: 0}
+  - _displayName: 10
+    _icon: {fileID: 0}
+    _triggerName: EmoteFlair
+    _clip: {fileID: -203655887218126122, guid: b55183db32eab5846a5c0ddd7fbcbc58, type: 3}
+    _introClip: {fileID: -203655887218126122, guid: be65668643da31442880b75ef5ceed31, type: 3}

@@ -16,6 +16,8 @@ using Features.ShipModule.Scripts;
 using Features.ShipModule.Scripts.Hull;
 using Features.ShipModule.Scripts.Overboard;
 using Features.PlayerAnimationModule;
+using Features.EmoteModule;
+using Features.EmoteModule.Data;
 using Features.ShipModule.Scripts.Throttle;
 using Features.ShopModule.Scripts.Configurations;
 using Features.SonarModule.Scripts.Configurations;
@@ -45,6 +47,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<ShipThrottleConfiguration>(Address.Configurations.ShipThrottleConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShipOverboardConfiguration>(Address.Configurations.ShipOverboardConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<PlayerAnimationConfiguration>(Address.Configurations.PlayerAnimationConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<EmoteCatalog>(Address.Configurations.EmoteCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<EmoteWheelConfiguration>(Address.Configurations.EmoteWheelConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShopCatalog>(Address.Configurations.ShopCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WalletConfiguration>(Address.Configurations.WalletConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShopKioskConfiguration>(Address.Configurations.ShopKioskConfiguration_Default).AsSingle();
