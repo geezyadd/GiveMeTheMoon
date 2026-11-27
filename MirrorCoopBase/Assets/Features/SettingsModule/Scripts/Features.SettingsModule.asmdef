@@ -10,7 +10,9 @@
         "UnityEngine.UI",
         "InputModuleRalization",
         "InputModule",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Features.SavingSystemModule.Contracts",
+        "UniTask"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

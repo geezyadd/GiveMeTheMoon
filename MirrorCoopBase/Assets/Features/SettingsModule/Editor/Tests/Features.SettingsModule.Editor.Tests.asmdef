@@ -4,6 +4,9 @@
     "references": [
         "GUID:642e5f5d83f8412582e514965bb91152",
         "Features.SettingsModule",
+        "Features.SavingSystemModule",
+        "Features.SavingSystemModule.Contracts",
+        "UniTask",
         "GUID:03a835aea0a645a7b43f5f0c61e8d191",
         "GUID:5d6793be2d204514a9702ab824c001ed",
         "GUID:27619889b8ba8c24980f49ee34dbb44a",

@@ -1,11 +1,11 @@
 # SettingsModule
 
-The player's settings of this machine (local, not networked): video, controls, gameplay. Built 2026-11-27; saves are not
-here yet (see Data).
+The player's settings of this machine (local, not networked): video, controls, gameplay. Built 2026-11-27.
 
 ## Assemblies
 - `Features.SettingsModule.Data` (layer 1, no module references): definitions, catalog, model, keys.
-- `Features.SettingsModule` (layer 2; Zenject, URP, Mvp, UI, Input, SettingsModule.Data): the video appliers, the
+- `Features.SettingsModule` (layer 2; Zenject, URP, Mvp, UI, Input, UniTask, SettingsModule.Data,
+  SavingSystemModule.Contracts): the video appliers, the
   settings window and its service (`SettingsModuleInstaller`, called from `GlobalSceneInstaller`; the window is
   registered in `WindowsModuleInstaller`).
 
@@ -23,9 +23,13 @@ here yet (see Data).
   defaults: `GetToggle / GetSlider / GetChoice`, `SetToggle / SetSlider / SetChoice` (a slider value is normalized, an
   unknown choice option throws), `ResetToDefault`, `OnValueChanged(key)` only on a real change.
 - `SettingKeys` holds the keys the modules that apply settings read by.
-- **Saves are not here.** Another module will plug in: it writes loaded values with the setters (checking
-  `AcceptsOption` for a choice) and reads the values to save for each of `SettingsModel.Definitions`. Modules that
-  apply a setting react to `OnValueChanged`, so loading after startup is enough.
+- **Saves** (`Scripts/Saving`, through SavingSystemModule's `ISaveService`): `SettingsSaveSystem` runs first among
+  GlobalScene's initializables (execution order -100 in `SettingsModuleInstaller`): it calls `LoadFiles` (it is the
+  save service's first caller; move that to a shared startup step when a second module saves) and
+  `SettingsSaveStore.Load` writes the saved values into the live model before the appliers apply them. One ID
+  `settings` in the file `settings.sav` (`SettingsSaveData`: toggles, sliders, choices by key). A value that no
+  longer fits (removed key, other kind, gone option) keeps its default; an unreadable save keeps every default. The
+  settings window saves after Apply and again when a display change is kept or reverted.
 
 ## Settings now
 | Key | Kind | Default |
@@ -106,5 +110,7 @@ it.
 - `SettingsModelTests` also: scale to default, `ResolutionOptionId`, copying the values of another model.
 - `VideoSettingsGuardTests`: every window mode, MSAA, shadow and FPS option of the definitions means something in
   `VideoSettingsConfiguration`.
+- `SettingsSaveStoreTests`: a save round trip through the real save service (temporary folder), no save, values
+  that no longer fit, a corrupt file.
 - `SettingsCatalogGuardTests`: the catalog asset at its address has no empty entries, unique keys, labels, a
   definition for every `SettingKeys` key, slider defaults in range and on a step, choice defaults among the options.

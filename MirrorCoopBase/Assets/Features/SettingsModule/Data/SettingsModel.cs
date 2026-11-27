@@ -5,9 +5,8 @@ namespace Features.SettingsModule.Data {
     // The current value of every player setting of this machine (local, not networked). It starts from the
     // definitions' defaults. Modules that apply a setting read its value and listen to OnValueChanged.
     //
-    // Save system seam: loaded values are written with SetToggle / SetSlider / SetChoice (check AcceptsOption of a
-    // choice first), and the values to save are read the same way for each of Definitions. A module that applies a
-    // setting reacts to the change event, so writing loaded values after startup is enough.
+    // Saves (SettingsModule's SettingsSaveStore) read the values by kind and write loaded values back with the
+    // setters; a module that applies a setting reacts to the change event.
     public sealed class SettingsModel {
         private readonly Dictionary<string, SettingDefinition> _definitionByKey = new();
         private readonly List<SettingDefinition> _definitions = new();
@@ -19,6 +18,9 @@ namespace Features.SettingsModule.Data {
         public event Action<string> OnValueChanged;
 
         public IReadOnlyList<SettingDefinition> Definitions => _definitions;
+        public IReadOnlyDictionary<string, bool> ToggleValues => _toggleValues;
+        public IReadOnlyDictionary<string, float> SliderValues => _sliderValues;
+        public IReadOnlyDictionary<string, string> ChoiceValues => _choiceValues;
 
         public SettingsModel(SettingsCatalog catalog) {
             if (catalog == null)
