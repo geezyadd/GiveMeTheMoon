@@ -15,6 +15,8 @@ using Features.FlightFieldModule.Scripts.Targets;
 using Features.GrabModule.Scripts;
 using Features.GrabModule.Scripts.Generated;
 using Features.GrabModule.Scripts.Hold;
+using Features.InventoryModule.Scripts;
+using Features.InventoryModule.Scripts.Generated;
 using Features.MvpModule;
 using Features.PlayerLifeModule.Scripts.Generated;
 using Features.PlayerProfileModule.Data.Generated;
@@ -59,6 +61,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<ShipRiderKeyModel>().AsSingle();
             Container.Bind<HoveredInteractableModel>().AsSingle();
             Container.Bind<HoldUseModel>().AsSingle();
+            Container.Bind<LocalInventoryBindingModel>().AsSingle();
             Container.Bind<HeldWeaponReadinessModel>().AsSingle();
             Container.Bind<Features.WeaponModule.Scripts.Core.WeaponModel>().AsSingle();
             Container.Bind<SpectatorModel>().AsSingle();
@@ -72,6 +75,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             WalletModelInstaller.Install(Container);
             PlayerLifeModelInstaller.Install(Container);
             PlayerHandModelInstaller.Install(Container);
+            PlayerInventoryModelInstaller.Install(Container);
             PlayerProfileModelInstaller.Install(Container);
             ShipRunModelInstaller.Install(Container);
             ShipSocketsModelInstaller.Install(Container);

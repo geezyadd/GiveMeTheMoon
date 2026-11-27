@@ -1,0 +1,32 @@
+{
+    "name": "Features.InventoryModule.Editor.Tests",
+    "rootNamespace": "Features.InventoryModule.Editor.Tests",
+    "references": [
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3",
+        "GUID:02d03f5af45f9bb4d87e86cebeb3b59a",
+        "GUID:1f74e8c7b4c74b6ab22be0bd160a9a17",
+        "GUID:03a835aea0a645a7b43f5f0c61e8d191",
+        "GUID:5d6793be2d204514a9702ab824c001ed",
+        "GUID:b6dfe6b104334a39bf4687b18f26a0bf",
+        "GUID:b07a8bb06a154c5ebc940c9f1f25fb10",
+        "GUID:fa5e19f70cae49a1a3443dcc15f65118",
+        "GUID:3b5eff428eda466ebde9ed0aa64229c5",
+        "GUID:30817c1a0e6d646d99c048fc403f5979"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

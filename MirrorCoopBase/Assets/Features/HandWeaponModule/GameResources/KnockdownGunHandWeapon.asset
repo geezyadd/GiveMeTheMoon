@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _id: knockdown-gun
   _displayName: Knockdown gun
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 0ed62acfc3785ad419c696733a93ada8, type: 3}
   _description: A shot knocks a player flat for 2.5 s.
   _price: 250
   _itemPrefab: {fileID: 2192727742419377178, guid: 100d9debfbfb0b64c80e6a6386ec4ba1, type: 3}

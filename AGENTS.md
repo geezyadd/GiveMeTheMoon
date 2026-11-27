@@ -111,18 +111,20 @@ types.
      `Features.PoolModule` (no references),
      `Features.SpaceHazeModule.Data`, `Features.AttackModule.Contracts`, `Features.ExplosionModule.Contracts`,
      `Features.EmoteModule.Contracts`, `Features.EmoteModule.Data` (no references), `Features.CoroutineRunnerModule`,
-     `Features.LoadingScreenModule.Contracts` (no references), `Features.SettingsModule.Data` (no references); third-party
+     `Features.LoadingScreenModule.Contracts` (no references), `Features.SettingsModule.Data` (no references),
+     `Features.SavingSystemModule.Contracts`; third-party
      `QuickOutline` also has its own asmdef (the unused `Mini Mapa(Radar)` pack was deleted on 2026-10-25).
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
      `Features.SpaceHazeModule`, `Features.ActiveRagdollModule` (FloatingController),
      `Features.TargetModule`, `Features.VfxModule` (PoolModule), `Features.LoadingScreenModule`,
-     `Features.ScreenShakeModule` (SettingsModule.Data), `Features.SettingsModule` (the video settings and the settings
-     window; see its file).
+     `Features.SavingSystemModule`, `Features.ScreenShakeModule` (SettingsModule.Data), `Features.SettingsModule` (the video
+     settings and the settings window; see its file).
   3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.PlayerReplicaModule`,
      `Features.PlayerAnimationModule`.
   4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`,
-     `Features.MovingPlatformModule`, `Features.AttackModule`, `Features.ExplosionModule`, `Features.EmoteModule`.
+     `Features.MovingPlatformModule`, `Features.AttackModule`, `Features.ExplosionModule`, `Features.EmoteModule`,
+     `Features.InventoryModule`.
   5. `Features.WeaponModule` (since 2026-11-26: it uses the input, the camera, the movement's control block and the
      explosions), `Features.PlayerBodyModule`, `Features.ShipImpactModule`, `Features.ShipDamageModule`, `Features.PlayerLifeModule`.
   6. `Features.HandWeaponModule`, `Features.TurretModule`, `Features.LobbyModule` (Ship, Grab, GameFlow, Mvp, Connection,
@@ -153,6 +155,7 @@ types.
 | [AttackModule](MirrorCoopBase/Assets/Features/AttackModule/AGENTS.md) | attacks of any ragdoll body (the slap): the attack as data, its timing, presses, aim, the limb's reach and where it lands |
 | [EmoteModule](MirrorCoopBase/Assets/Features/EmoteModule/AGENTS.md) | the emote wheel (hold G, pick with the mouse, release) and the player's emotes, played through the animator on every peer from the replica packets |
 | [LoadingScreenModule](MirrorCoopBase/Assets/Features/LoadingScreenModule/AGENTS.md) | the screen that covers scene changes: fade in / fade out with an action after, on host / join, lobby ↔ game, leave to the menu |
+| [SavingSystemModule](MirrorCoopBase/Assets/Features/SavingSystemModule/AGENTS.md) | local save files by ID: commit to encrypted `.sav` files per Steam user, load, delete; Steam Auto-Cloud (PC only) |
 | [SettingsModule](MirrorCoopBase/Assets/Features/SettingsModule/AGENTS.md) | the player's local settings: a definition asset per setting, their catalog, `SettingsModel` with change events, the appliers (each in the module it changes), the settings window with tabs, keyboard / gamepad navigation of windows |
 | Pause menu (LobbyModule, `Scripts/Pause`) | Esc in the lobby and the game: Continue, Settings, Leave (the `LeaveSessionView` moved here from the HUD); the game goes on, the local player's movement and look are off and the cursor is free while it is open; Esc closes an open shop / sonar / emote wheel / settings window first (`PauseMenuEscapeSystem`; windows that stay open the whole session implement `IBackgroundWindow`: the HUD, the debug overlay) |
 | [CoroutineRunnerModule](MirrorCoopBase/Assets/Features/CoroutineRunnerModule/AGENTS.md) | `ICoroutineRunner`: plain classes run coroutines from one object in GlobalScene |
@@ -164,6 +167,7 @@ types.
 | [StagePresetModule](MirrorCoopBase/Assets/Features/StagePresetModule/AGENTS.md) | playtest stage presets |
 | [ShopModule](MirrorCoopBase/Assets/Features/ShopModule/AGENTS.md) | the station shop, the crew wallet, buying back a dead crewmate |
 | [GrabModule](MirrorCoopBase/Assets/Features/GrabModule/AGENTS.md) | interaction: aim, grab, use, hold to use |
+| [InventoryModule](MirrorCoopBase/Assets/Features/InventoryModule/AGENTS.md) | the player's inventory: 4 slots for hand weapons and tools, the selected slot in the hand, keys 1–4 and the wheel, Q drop / throw, the HUD bar |
 | [CameraModule](MirrorCoopBase/Assets/Features/CameraModule/AGENTS.md) | the camera and the camera shake |
 | [PlayerLifeModule](MirrorCoopBase/Assets/Features/PlayerLifeModule/AGENTS.md) | death, damage, spectator |
 | [Connection](MirrorCoopBase/Assets/Features/Connection/AGENTS.md) | connection, authentication, joining a running session |
