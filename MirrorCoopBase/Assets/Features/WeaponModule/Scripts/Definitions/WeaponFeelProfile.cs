@@ -1,4 +1,5 @@
 using Features.CameraModule.Contracts;
+using Features.VfxModule;
 using UnityEngine;
 
 namespace Features.WeaponModule.Scripts.Definitions {
@@ -74,6 +75,10 @@ namespace Features.WeaponModule.Scripts.Definitions {
         [SerializeField, Min(0)] private int _tracerPoolSize;
 
         [Header("Impact")]
+        [Tooltip("An effect played where a shot strikes, turned up along the surface normal, in place of the sparks, chips, dust and flash below. Empty: those are shown.")]
+        [SerializeField] private VfxDefinition _impactEffect;
+        [Tooltip("The impact effect's size; 1 is its prefab's own.")]
+        [SerializeField, Min(0.01f)] private float _impactEffectScale = 1f;
         [SerializeField, Min(0)] private int _impactSparkCount;
         [SerializeField, Min(0f)] private float _impactSparkSpeed;
         [SerializeField, Min(0)] private int _impactDebrisCount;
@@ -128,6 +133,8 @@ namespace Features.WeaponModule.Scripts.Definitions {
         public float TracerWidthMeters => _tracerWidthMeters;
         public float TracerLengthMeters => _tracerLengthMeters;
         public int TracerPoolSize => _tracerPoolSize;
+        public VfxDefinition ImpactEffect => _impactEffect;
+        public float ImpactEffectScale => _impactEffectScale;
         public int ImpactSparkCount => _impactSparkCount;
         public float ImpactSparkSpeed => _impactSparkSpeed;
         public int ImpactDebrisCount => _impactDebrisCount;

@@ -1,3 +1,4 @@
+using Features.ActiveRagdollModule;
 using Features.CameraModule.Scripts.Services;
 using Features.GrabModule.Scripts;
 using Features.WeaponModule.Scripts.Network;
@@ -10,11 +11,14 @@ namespace Features.HandWeaponModule.Scripts {
     // player's weapon holder holds it (WeaponHolderSync.Equip): the local player's weapon system then fires it. On the
     // holder's own peer the shot goes from the muzzle to where the crosshair points, and that aim is sent on as the
     // view turns (HandWeaponAimSync); every other peer turns the weapon smoothly along the synced aim. Everything ends
-    // when the item leaves the hand or is gone.
+    // when the item leaves the hand or is gone. A player knocked down into the ragdoll drops the weapon: the server
+    // lets go of it.
     public sealed class HandWeaponWielder : MonoBehaviour {
         [SerializeField] private GrabController _grab;
         [SerializeField] private WeaponHolderSync _weaponSync;
         [SerializeField] private HandWeaponGrip _grip;
+        [Tooltip("The player's ragdoll: knocked down, the player drops the weapon.")]
+        [SerializeField] private RagdollKnockdown _knockdown;
 
         private IGameCameraService _gameCameraService;
         private IShotDeliveryContext _shotDeliveryContext;
@@ -48,6 +52,11 @@ namespace Features.HandWeaponModule.Scripts {
 
             if (_item == null)
                 return;
+
+            if (_grab.isServer && _knockdown != null && _knockdown.IsKnockedDown) {
+                _grab.ServerReleaseHeld();
+                return;
+            }
 
             // A turret seat took the holder over and has let go: the weapon in the hand is held again.
             if (_weaponSync.Weapon == null)

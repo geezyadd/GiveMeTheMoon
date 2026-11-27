@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aef5ea88c9de6794b88529bf09347e49, type: 3}
   m_Name: ScreenShake_ExplosionLarge
   m_EditorClassIdentifier: 
-  _amplitude: 1
+  _amplitude: 6
   _frequency: 1
   _duration: 0.45

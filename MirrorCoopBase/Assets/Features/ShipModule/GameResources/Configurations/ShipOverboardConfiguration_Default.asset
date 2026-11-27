@@ -27,3 +27,6 @@ MonoBehaviour:
   _maxDriftSeconds: 240
   _areaMaxDistanceMeters: 100
   _areaMaxDriftSeconds: 60
+  _itemDriftLinearDamping: 1.2
+  _itemDriftAngularDamping: 0.4
+  _itemMaxDistanceMeters: 100
