@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 167ee8bcf16beb84f8cdca1cd1cd523f, type: 3}
-  m_Name: ExplosionGroundSmallVfx
+  m_Name: ExplosionGroundV2LargeVfx
   m_EditorClassIdentifier: 
-  _prefab: {fileID: 1199291141288661320, guid: fde2e16ada90ab843a753a6386a42bb1, type: 3}
+  _prefab: {fileID: 444960270052651933, guid: 634506a3628e3b14f8c218436319ac45, type: 3}
   _prewarmCount: 1
   _maxCount: 6
   _minLifetime: 0.5
