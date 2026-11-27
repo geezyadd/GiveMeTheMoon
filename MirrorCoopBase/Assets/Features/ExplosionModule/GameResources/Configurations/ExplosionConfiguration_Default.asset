@@ -19,5 +19,10 @@ MonoBehaviour:
   _affectedLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  _spherePrefab: {fileID: 7301304652632781169, guid: f77964a46f4b5a64eb66781e74e15e4a, type: 3}
   _debugDistance: 4
+  _groundLayers:
+    serializedVersion: 2
+    m_Bits: 321
+  _groundProbeDistance: 1
+  _groundMaxSlopeDegrees: 40
+  _groundFlatTolerance: 0.6

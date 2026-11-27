@@ -466,6 +466,7 @@ MonoBehaviour:
   _grab: {fileID: 7209845104136634493}
   _weaponSync: {fileID: 6948430025197362347}
   _grip: {fileID: 1039691336111523414}
+  _knockdown: {fileID: 6423245533352839334}
 --- !u!114 &8419845104136634501
 MonoBehaviour:
   m_ObjectHideFlags: 0

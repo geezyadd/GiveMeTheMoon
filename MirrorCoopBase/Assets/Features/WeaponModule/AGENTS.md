@@ -64,7 +64,7 @@ ported, on purpose).
 |---|---|---|---|---|
 | Pistol (`pistol`) | single shot, 3 / s (was 0.5 / s, 2026-11-26) | unlimited | ray, 12 damage, FieldRock + PlayerRagdoll + Default + Ground (was FieldRock only) | pushed 8 m/s |
 | Knockdown gun (`knockdown-gun`) | single shot, 1 / s | unlimited | ray, 4 damage, 60 m | pushed 14 m/s, limp 2.5 s |
-| Grenade launcher (`grenade-launcher`) | single shot, 1.25 / s | unlimited | `GrenadeProjectile`: 18 m/s, ballistic, bounces (`GrenadeBounce`), goes off after 2 s or on a moving body | `ExplosionMedium` |
+| Grenade launcher (`grenade-launcher`) | single shot, 1.25 / s | unlimited | `GrenadeProjectile`: 18 m/s, ballistic, goes off at the first thing it strikes (since 2026-11-27; it bounced on `GrenadeBounce` until then) or after 2 s | `ExplosionMedium` |
 | Rocket launcher (`rocket-launcher`) | single shot, 1 / s | unlimited | `RocketProjectile`: 28 m/s straight, goes off on any impact or after 3.5 s | `ExplosionLarge` |
 
 Every hand weapon's magazine is unlimited (capacity 0) since 2026-11-26 on the user's request; the magazine, its
@@ -82,6 +82,11 @@ model's bounds.
 - The turret tiers have no magazine (capacity 0): they never run out.
 - `WeaponFeelProfile` got `RecoilKickMeters` / `RecoilKickDegrees` (a single shot's kick, `RecoilKick`), `ShotShake` (the holder's view kick per shot of a single-shot weapon). `HandGunFeel` is the feel presenter of a gun in the hand (a muzzle flash per shot, kick, tracer, impact, view kick).
 - `IWeaponCatalogIndexService` (`WeaponCatalogIndexService`) gives a weapon's catalog index **by id**: in a player build a scene spawn prefab holds its own copy of a definition, apart from the Addressables catalog's (a reference match threw `KeyNotFoundException` on the coop client). The turret station uses it too.
+- Impact effect (2026-11-27): `WeaponFeelProfile.ImpactEffect` (a `VfxDefinition`, + `ImpactEffectScale`) is played by
+  `HandGunFeel` through `IVfxService` where a shot strikes, turned up along the surface normal, in place of the
+  `ImpactBursts` sparks / chips / dust / flash (those stay for a profile without one and for the turrets). The pistol
+  and the knockdown gun use `PistolImpactVfx` (`GameResources/Weapons/PistolImpact.prefab`: the user's
+  `vfx_pistol_impact` from the GabrielAguiarProductions pack with a `ParticleSystemVfx`, Play Once; pool 4..16, 3 s).
 - `HeldWeaponReadinessModel` (bound in `DataInstaller`, local): the local player's weapon in hand for the HUD ring around the crosshair (`HeldWeaponReadinessView` in `GameHudWindow`, LobbyModule).
 
 ## Tests

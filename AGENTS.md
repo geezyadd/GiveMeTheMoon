@@ -224,6 +224,11 @@ How the sync flow, atomic models, `Scope` / `PerPlayer` registries and the gener
   assets and unused heavy textures. Do not edit pack files; the one allowed exception is fixing a hard-coded
   `Assets/<Pack>/...` path (e.g. a shader `#include`) after the move. Our own prefabs and materials built from a pack
   live in the feature module, not in the pack folder.
+- **Every physical item levitates outside the platforms.** Any loose physical object (an item, a module, a prop: a
+  rigidbody the physics moves) that leaves the ship and every overboard area drifts weightless like a player: it
+  does not fall forever, it hangs and slows down, falls behind a flying ship and is removed once far away
+  (`ShipOverboardItemSystem`, see "Overboard" in [ShipModule](MirrorCoopBase/Assets/Features/ShipModule/AGENTS.md)).
+  A new physical object must be covered by it, not get a drift of its own.
 - New tuning numbers go into configs (ScriptableObject), not into `const`.
 - **All configurations (ScriptableObject configs and catalogs that code receives through DI) are loaded only through
   Addressables and bound only in `ConfigurationInstaller`** (`Container.BindConfigurationFromAddressables<T>(...)`).

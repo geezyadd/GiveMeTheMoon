@@ -49,6 +49,8 @@ MonoBehaviour:
   _tracerWidthMeters: 0.12
   _tracerLengthMeters: 6
   _tracerPoolSize: 4
+  _impactEffect: {fileID: 11400000, guid: 099db22847cfa474896d06d6dcb526dd, type: 2}
+  _impactEffectScale: 1
   _impactSparkCount: 12
   _impactSparkSpeed: 7
   _impactDebrisCount: 5

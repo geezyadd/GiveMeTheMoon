@@ -60,6 +60,21 @@ namespace Features.ShipModule.Scripts.Overboard {
             return state.IsOverboard ? DecideDriftingOnGround(state) : DecideOnGround(state);
         }
 
+        // A loose item drifts like a player once it is outside every safe space (the ship's volume, any overboard
+        // area), in flight and on the ground alike, so one thrown off the flying ship hangs where it was and falls
+        // behind. Right over a floor again after a moment, it gets gravity back; too far from all of them, it is gone.
+        public ShipOverboardItemDecision DecideItem(in ShipOverboardItemState state) {
+            if (state.IsDrifting == false)
+                return state.IsInSafeSpace ? ShipOverboardItemDecision.None : ShipOverboardItemDecision.BeginDrift;
+
+            if (state.IsOverFloor && state.DriftSeconds >= _shipOverboardConfiguration.MinDriftSecondsBeforeCapture)
+                return ShipOverboardItemDecision.EndDrift;
+
+            return state.DistanceMeters > _shipOverboardConfiguration.ItemMaxDistanceMeters
+                ? ShipOverboardItemDecision.Remove
+                : ShipOverboardItemDecision.None;
+        }
+
         private bool IsInHeightBand(float height) =>
             height >= _shipOverboardConfiguration.VolumeMinHeightMeters && height <= _shipOverboardConfiguration.VolumeMaxHeightMeters;
 

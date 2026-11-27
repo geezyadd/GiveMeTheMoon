@@ -7,7 +7,7 @@ namespace Features.CharacterMovableModule.Scripts.Drift {
     // A player's body drifting in open space, on every peer that simulates it. The body the movement drives (the
     // ragdoll, or the capsule) is weightless and the movement neither walks nor jumps; each physics step the velocity
     // fades to a slow drift (CharacterDriftMotion). On the owner's peer the move keys also push it a little along the
-    // view. A copy of someone else's body only drifts: the owner's push reaches it through the packets' velocity.
+    // view, but not while the body lies limp in a knockdown: then it only drifts. A copy of someone else's body only drifts: the owner's push reaches it through the packets' velocity.
     // Who starts and ends a drift is the ship's overboard rule.
     public sealed class CharacterDrift : MonoBehaviour {
         [SerializeField] private CharacterMovableBase _movable;
@@ -48,7 +48,7 @@ namespace Features.CharacterMovableModule.Scripts.Drift {
             if (body.IsKinematic)
                 return;
 
-            Vector3 push = _movable.isOwned ? ReadPushDirection() : Vector3.zero;
+            Vector3 push = _movable.isOwned && _movable.IsKnockedDown == false ? ReadPushDirection() : Vector3.zero;
             body.SetVelocity(_motion.Step(body.Velocity, push, _settings, Time.fixedDeltaTime, _driftPushScaleModel.Scale));
         }
 

@@ -1,13 +1,14 @@
 using Features.CameraModule.Contracts;
 using Features.WeaponModule.Scripts.Definitions;
+using Features.VfxModule;
 using Features.WeaponModule.Scripts.Parts.Delivery;
 using UnityEngine;
 using Zenject;
 
 namespace Features.WeaponModule.Scripts.Feel {
     // How a single-shot gun in a hand looks and feels on one peer, by its WeaponFeelProfile: a muzzle flash and a
-    // recoil kick on every shot, a tracer to where it landed, an impact burst and, for the player who holds it, a short
-    // view kick. Every effect comes from a pool made at Bind. The holder drives it every frame with
+    // recoil kick on every shot, a tracer to where it landed, an impact (the profile's impact effect when it has one,
+    // the burst of sparks, chips and dust otherwise) and, for the player who holds it, a short view kick. Every effect comes from a pool made at Bind. The holder drives it every frame with
     // Advance.
     public sealed class HandGunFeel : MonoBehaviour, IWeaponFeelPresenter {
         private const string EFFECTS_ROOT_NAME = "WeaponFeelEffects";
@@ -23,6 +24,7 @@ namespace Features.WeaponModule.Scripts.Feel {
         [SerializeField] private ParticleSystem _impactDust;
 
         private ICameraShakeService _cameraShakeService;
+        private IVfxService _vfxService;
 
         private WeaponFeelProfile _profile;
         private Transform _effectsRoot;
@@ -36,8 +38,10 @@ namespace Features.WeaponModule.Scripts.Feel {
         public Transform Muzzle => _muzzle;
 
         [Inject]
-        private void InjectDependencies(ICameraShakeService cameraShakeService) =>
+        private void InjectDependencies(ICameraShakeService cameraShakeService, IVfxService vfxService) {
             _cameraShakeService = cameraShakeService;
+            _vfxService = vfxService;
+        }
 
         private void OnDestroy() {
             if (_effectsRoot != null)
@@ -83,7 +87,15 @@ namespace Features.WeaponModule.Scripts.Feel {
             _tracers.Advance(deltaTime);
         }
 
-        private void PresentImpact(in WeaponShotOutcome outcome) =>
-            _impacts.Emit(outcome.EndPoint, outcome.Normal);
+        private void PresentImpact(in WeaponShotOutcome outcome) {
+            VfxDefinition effect = _profile.ImpactEffect;
+            if (effect == null) {
+                _impacts.Emit(outcome.EndPoint, outcome.Normal);
+                return;
+            }
+
+            Vector3 normal = outcome.Normal.sqrMagnitude > 0f ? outcome.Normal : Vector3.up;
+            _vfxService.Play(effect, outcome.EndPoint, Quaternion.FromToRotation(Vector3.up, normal), _profile.ImpactEffectScale);
+        }
     }
 }
