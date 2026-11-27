@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bbb3c0e3991e5c4a9922716d26f42ab, type: 3}
+  m_Name: AmbienceConfiguration_Default
+  m_EditorClassIdentifier: 
+  _sessionMusic:
+    Guid:
+      Data1: -946933449
+      Data2: 1181458976
+      Data3: 1210191000
+      Data4: 1764947408
+    Path: event:/Music/tension_music

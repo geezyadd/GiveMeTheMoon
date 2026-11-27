@@ -13,7 +13,7 @@ Used only by explosions for now. The older camera shake (`ICameraShakeService`, 
 is separate and still in use; the two add up on screen.
 
 ## Assembly
-`Features.ScreenShakeModule` (layer 1; references Zenject, Unity.Cinemachine). Bindings: `ScreenShakeModuleInstaller`
+`Features.ScreenShakeModule` (layer 2; references Zenject, Unity.Cinemachine, SettingsModule.Data). Bindings: `ScreenShakeModuleInstaller`
 (service, system), called from GameCore's `GlobalSceneInstaller`; `ScreenShakeModel` is bound in `DataInstaller`.
 
 ## Parts
@@ -26,7 +26,11 @@ is separate and still in use; the two add up on screen.
 - `CameraShaker`: on the FP and TP camera prefabs (CameraModule), next to their `CinemachineBasicMultiChannelPerlin`
   (amplitude 0 at rest). The game cameras are not made through the container, so `GameCameraService` binds it to the
   model when it spawns a camera (`Bind`); it is listed while it is on.
+- `ScreenShakeModel.StrengthScale`: the player's screen shake setting multiplies the amplitude the cameras show (1 =
+  as authored, 0 = off); `ScreenShakeStrengthSettingApplier` sets it from `SettingsModel` (`gameplay.screen_shake`,
+  value over the default 50 %: 100 % = 2x). The camera shake of CameraModule has its own scale from the same setting.
 
 ## Tests
 `Features.ScreenShakeModule.Editor.Tests`: `ScreenShakeSystemTests` (only the strongest is shown, a weaker longer one
-goes on with its own fade after the strong one ends, the cameras stop when every shake ended).
+goes on with its own fade after the strong one ends, the cameras stop when every shake ended, the strength scale
+multiplies the shown amplitude).

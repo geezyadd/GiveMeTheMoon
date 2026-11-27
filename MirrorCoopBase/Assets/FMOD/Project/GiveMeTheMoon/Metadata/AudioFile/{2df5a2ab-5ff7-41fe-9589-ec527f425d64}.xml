@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="AudioFile" id="{2df5a2ab-5ff7-41fe-9589-ec527f425d64}">
+		<property name="assetPath">
+			<value>flutie8211-bomb-and-echo-3-590449(1).mp3</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>48</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>6.1440000000000001</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{48d8b6ce-137d-4128-bcb0-1062e608e7a5}</destination>
+		</relationship>
+	</object>
+</objects>

@@ -1,4 +1,5 @@
 using Features.ScreenShakeModule;
+using FMODUnity;
 using Features.VfxModule;
 using UnityEngine;
 
@@ -38,6 +39,9 @@ namespace Features.ExplosionModule.Configuration {
         [SerializeField] private ScreenShakeProfile _shake;
         [Tooltip("The shake is full at the centre and fades to nothing at this distance from the camera, m.")]
         [SerializeField, Min(0.1f)] private float _shakeDistance = 25f;
+        [Header("Sound")]
+        [Tooltip("The FMOD event played where it goes off, on each peer by itself. Empty: no sound.")]
+        [SerializeField] private EventReference _sound;
 
         public string DisplayName => _displayName;
         public float Radius => _radius;
@@ -52,6 +56,7 @@ namespace Features.ExplosionModule.Configuration {
         public float GroundFlatRadius => _groundFlatRadius;
         public ScreenShakeProfile Shake => _shake;
         public float ShakeDistance => _shakeDistance;
+        public EventReference Sound => _sound;
 
         // One of the ground effects at random; null when there is none.
         public VfxDefinition PickGroundEffect() =>

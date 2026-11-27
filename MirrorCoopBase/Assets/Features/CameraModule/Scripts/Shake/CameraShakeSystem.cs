@@ -49,9 +49,13 @@ namespace Features.CameraModule.Scripts.Shake {
                 return;
 
             _cameraShakeSampler.Advance(_cameraShakeModel, Time.deltaTime);
+            float scale = _cameraShakeModel.StrengthScale;
+            if (scale <= 0f)
+                return;
+
             CameraShakePose pose = _cameraShakeSampler.Sample(_cameraShakeModel);
-            pivot.localRotation *= Quaternion.Euler(pose.EulerDegrees);
-            pivot.localPosition += pose.Offset;
+            pivot.localRotation *= Quaternion.Euler(pose.EulerDegrees * scale);
+            pivot.localPosition += pose.Offset * scale;
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode) =>

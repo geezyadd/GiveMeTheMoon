@@ -1,3 +1,4 @@
+using Features.AudioModule;
 using Features.CameraModule.Scripts.Services;
 using Features.ExplosionModule.Configuration;
 using Features.ScreenShakeModule;
@@ -5,21 +6,23 @@ using Features.VfxModule;
 using UnityEngine;
 
 namespace Features.ExplosionModule {
-    // Plays the preset's effect at the centre and shakes this peer's camera, fully at the centre and less with the
+    // Plays the preset's effect and sound at the centre and shakes this peer's camera, fully at the centre and less with the
     // camera's distance, to nothing at the preset's shake distance. An explosion that went off on wide flat ground
     // (ExplosionGroundProbe) plays one of the preset's ground effects, at random, on the surface instead of the air one.
     public sealed class ExplosionEffects : IExplosionEffects {
         private readonly IVfxService _vfxService;
         private readonly IScreenShakeService _screenShakeService;
         private readonly IGameCameraService _gameCameraService;
+        private readonly IAudioService _audioService;
         private readonly ExplosionConfiguration _configuration;
         private readonly ExplosionGroundProbe _groundProbe = new();
 
         public ExplosionEffects(IVfxService vfxService, IScreenShakeService screenShakeService, IGameCameraService gameCameraService,
-                                ExplosionConfiguration configuration) {
+                                IAudioService audioService, ExplosionConfiguration configuration) {
             _vfxService = vfxService;
             _screenShakeService = screenShakeService;
             _gameCameraService = gameCameraService;
+            _audioService = audioService;
             _configuration = configuration;
         }
 
@@ -30,6 +33,8 @@ namespace Features.ExplosionModule {
                 _vfxService.Play(groundEffect, groundPoint, Quaternion.identity, preset.GroundEffectScale);
             else if (preset.Effect != null)
                 _vfxService.Play(preset.Effect, center, Quaternion.identity, preset.EffectScale);
+
+            _audioService.PlayOneShot(preset.Sound, center);
 
             if (preset.Shake != null)
                 _screenShakeService.Shake(preset.Shake, ShakeStrength(center, preset));

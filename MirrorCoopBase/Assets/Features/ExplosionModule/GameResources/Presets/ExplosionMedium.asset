@@ -52,3 +52,10 @@ MonoBehaviour:
   _groundFlatRadius: 2.5
   _shake: {fileID: 11400000, guid: e806a1e324f3c6c43abfd30b89c24ce4, type: 2}
   _shakeDistance: 25
+  _sound:
+    Guid:
+      Data1: 385127100
+      Data2: 1262943970
+      Data3: -1938174056
+      Data4: 1339537802
+    Path: event:/Weapon/explosion_mid

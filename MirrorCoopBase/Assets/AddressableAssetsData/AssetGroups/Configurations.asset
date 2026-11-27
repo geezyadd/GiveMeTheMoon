@@ -35,6 +35,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 30fc362311f06fb40b49c8c725062944
+    m_Address: SettingsWindowConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3100fd9ec0da35642a247beab427210c
     m_Address: ShipHullHudConfiguration_Default
     m_ReadOnly: 0
@@ -115,6 +120,16 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 785683e05b804ac5b06babf48bf6f571
+    m_Address: AmbienceConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 82ad434445f94224cbd7e0e43793933c
+    m_Address: InventoryConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 85127772f40dadc4abcc8a9d83523177
     m_Address: ShipRockImpactConfiguration_Default
     m_ReadOnly: 0
@@ -127,6 +142,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8b0d3f5a2c9e4d7f8a1b2c3d4e5f6071
     m_Address: ShipRunConfig_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9305bf30fac942b9bf502bf2f2ea09db
+    m_Address: SettingsCatalog_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -170,6 +190,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: acd99fc29ae64340873e0f9df35d69ff
+    m_Address: VideoSettingsConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ae144bf2cfcc83e41911d615c268f231
     m_Address: ShopCatalog_Default
     m_ReadOnly: 0
@@ -207,6 +232,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d1e2f3a4b5c64755d6e7f8091a2b3c4d
     m_Address: ShipAccumulativeStatsConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d9b30ae71cc847d686354dc2827f1c47
+    m_Address: SavingSystemConfiguration_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Features.GameFlowStateMachineModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.States;
+using Features.LoadingScreenModule.Contracts;
 using Features.MvpModule;
 using Game.Connection;
 using UnityEngine;
@@ -13,6 +14,8 @@ namespace Features.MenuModule.Scripts {
         private readonly IGameFlowStateMachineService _gameFlowStateMachine;
         private readonly ConnectionRejectModel _connectionRejectModel;
         private readonly IConnectionRejectMessages _connectionRejectMessages;
+        private readonly ILoadingScreenService _loadingScreen;
+        private readonly ConnectionConfig _connectionConfig;
         private bool _isBusy;
 
         public MenuSessionPresenter(
@@ -20,7 +23,11 @@ namespace Features.MenuModule.Scripts {
             ISteamLobbyService steamLobby,
             IGameFlowStateMachineService gameFlowStateMachine,
             ConnectionRejectModel connectionRejectModel,
-            IConnectionRejectMessages connectionRejectMessages) {
+            IConnectionRejectMessages connectionRejectMessages,
+            ILoadingScreenService loadingScreen,
+            ConnectionConfig connectionConfig) {
+            _loadingScreen = loadingScreen;
+            _connectionConfig = connectionConfig;
             _connectionSession = connectionSession;
             _steamLobby = steamLobby;
             _gameFlowStateMachine = gameFlowStateMachine;
@@ -108,8 +115,12 @@ namespace Features.MenuModule.Scripts {
             SetInteractable(false);
             SetStatus("Connecting...");
 
+            // The lobby gets a dark hold to settle; a failure uncovers the menu at once.
+            float holdSeconds = 0f;
             try {
+                await _loadingScreen.FadeInAsync();
                 await operation();
+                holdSeconds = _connectionConfig.LoadingScreenHoldSeconds;
                 if (_steamLobby.CurrentLobbyId.HasValue)
                     SetStatus($"Steam lobby {_steamLobby.CurrentLobbyId.Value}");
                 else
@@ -122,6 +133,7 @@ namespace Features.MenuModule.Scripts {
             finally {
                 _isBusy = false;
                 SetInteractable(true);
+                _loadingScreen.FadeOut(holdSeconds);
             }
         }
 

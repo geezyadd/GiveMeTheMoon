@@ -1,6 +1,8 @@
 using Features.PlayerReplicaModule.Installers;
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts;
+using Features.CoroutineRunnerModule;
+using Features.LoadingScreenModule;
 using Features.CrewInviteModule.Scripts.Installers;
 using Features.EmoteModule;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -10,6 +12,7 @@ using Features.FlightFieldModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.Installers;
 using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts;
+using Features.InventoryModule.Scripts;
 using Features.PlayerLifeModule.Scripts.Installers;
 using Features.PlayerProfileModule.Scripts;
 using Features.ShipDamageModule.Scripts;
@@ -21,6 +24,8 @@ using Features.SpaceHazeModule.Scripts.Installers;
 using Features.TargetModule.Installers;
 using Features.ExplosionModule.Installers;
 using Features.ScreenShakeModule;
+using Features.AudioModule;
+using Features.SettingsModule;
 using Features.VfxModule;
 using Features.StagePresetModule.Scripts.Installers;
 using Features.TooltipModule.Scripts.Installers;
@@ -31,6 +36,8 @@ using Zenject;
 namespace Features.GameCoreModule.Scripts.Installers {
     public sealed class GlobalSceneInstaller : MonoInstaller<GlobalSceneInstaller> {
         public override void InstallBindings() {
+            CoroutineRunnerModuleInstaller.Install(Container);
+            LoadingScreenModuleInstaller.Install(Container);
             GameFlowStateMachineModuleInstaller.Install(Container);
             InputModuleInstaller.Install(Container);
             CharacterMovableModuleInstaller.Install(Container);
@@ -38,9 +45,12 @@ namespace Features.GameCoreModule.Scripts.Installers {
             TargetModuleInstaller.Install(Container);
             VfxModuleInstaller.Install(Container);
             ScreenShakeModuleInstaller.Install(Container);
+            AudioModuleInstaller.Install(Container);
+            SettingsModuleInstaller.Install(Container);
             ExplosionModuleInstaller.Install(Container);
             CameraModuleInstaller.Install(Container);
             GrabModuleInstaller.Install(Container);
+            InventoryModuleInstaller.Install(Container);
             ShipModuleInstaller.Install(Container);
             ShipImpactModuleInstaller.Install(Container);
             ShipDamageModuleInstaller.Install(Container);
@@ -62,6 +72,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
 #endif
             Container.BindInterfacesTo<GameplaySessionLifecycle>().AsSingle();
             Container.BindInterfacesTo<SessionDroppedMenuSystem>().AsSingle();
+            Container.BindInterfacesTo<AmbienceSystem>().AsSingle();
             Container.BindInterfacesTo<FieldNetworkedPrefabSystem>().AsSingle();
             Container.BindInterfacesTo<ExplosionNetworkChannelSystem>().AsSingle();
         }

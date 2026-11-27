@@ -1,18 +1,30 @@
 using System;
 using System.Collections.Generic;
+using Features.AudioModule;
 using Features.GameCoreModule.Contracts;
 using Mirror;
 
 namespace Features.GrabModule.Scripts {
     // Applies every hand's held item to the item object on this peer: hold pose, physics and follow.
     // An item that is not spawned here yet stays pending and is picked up as soon as it appears.
+    // A holder also carries items (its inventory): a carried item outside the hand is stowed, so a hand switching
+    // between carried items never lets one go; it is loose only once it is neither held nor carried.
+    // An item that comes into a hand by a change of that hand plays its equip sound on this peer, once it is attached.
     public sealed class HeldItemRegistry : IGameplaySession {
+        private readonly IAudioService _audioService;
         private readonly List<HeldItem> _held = new List<HeldItem>(8);
+        private readonly List<HeldItem> _carried = new List<HeldItem>(16);
 
-        // An item left a hand on this peer and is loose again (the ship's deck catches one let go in flight).
+        // An item left a hand or a carrier on this peer and is loose again (the ship's deck catches one let go in
+        // flight). A stow is not a release.
         public event Action<Grabbable> OnItemReleased;
 
-        public void Hold(GrabController holder, uint itemNetId) {
+        public HeldItemRegistry(IAudioService audioService) =>
+            _audioService = audioService;
+
+        // playsEquipSound: the hand changed to this item now (pickup, slot switch); false for the state a peer finds
+        // when the hand appears, so a joining player hears nothing for what others already hold.
+        public void Hold(GrabController holder, uint itemNetId, bool playsEquipSound) {
             int index = IndexOf(holder);
             if (index >= 0 && _held[index].ItemNetId == itemNetId)
                 return;
@@ -20,7 +32,7 @@ namespace Features.GrabModule.Scripts {
             if (index >= 0)
                 ReleaseAt(index);
 
-            HeldItem held = new HeldItem(holder, itemNetId);
+            HeldItem held = new HeldItem(holder, itemNetId) { PlaysEquipSound = playsEquipSound };
             _held.Add(held);
             TryAttach(held, true);
         }
@@ -29,6 +41,31 @@ namespace Features.GrabModule.Scripts {
             int index = IndexOf(holder);
             if (index >= 0)
                 ReleaseAt(index);
+        }
+
+        // Everything the holder carries now (0 = an empty slot); items no longer in it drop unless a hand holds them.
+        public void SetCarried(GrabController holder, IReadOnlyList<uint> itemNetIds) {
+            for (int i = _carried.Count - 1; i >= 0; i--) {
+                HeldItem carried = _carried[i];
+                if (carried.Holder == holder && Contains(itemNetIds, carried.ItemNetId) == false)
+                    StopCarryingAt(i);
+            }
+
+            for (int i = 0; i < itemNetIds.Count; i++) {
+                uint itemNetId = itemNetIds[i];
+                if (itemNetId == 0 || IndexOfCarried(holder, itemNetId) >= 0)
+                    continue;
+
+                HeldItem carried = new HeldItem(holder, itemNetId);
+                _carried.Add(carried);
+                TryAttachCarried(carried, true);
+            }
+        }
+
+        public void ClearCarried(GrabController holder) {
+            for (int i = _carried.Count - 1; i >= 0; i--)
+                if (_carried[i].Holder == holder)
+                    StopCarryingAt(i);
         }
 
         public bool TryGetItem(GrabController holder, out Grabbable item) {
@@ -46,9 +83,21 @@ namespace Features.GrabModule.Scripts {
 
                 held.Item.FollowHolder();
             }
+
+            for (int i = 0; i < _carried.Count; i++) {
+                HeldItem carried = _carried[i];
+                if (carried.Item == null && TryAttachCarried(carried, false) == false)
+                    continue;
+
+                if (carried.Item.IsStowed)
+                    carried.Item.FollowHolder();
+            }
         }
 
         public void CleanupGameplay() {
+            for (int i = _carried.Count - 1; i >= 0; i--)
+                StopCarryingAt(i);
+
             for (int i = _held.Count - 1; i >= 0; i--)
                 ReleaseAt(i);
         }
@@ -72,7 +121,36 @@ namespace Features.GrabModule.Scripts {
             held.Item = item;
             item.Stopped += OnItemStopped;
             item.ApplyHold(held.Holder.ArmPoint);
+            PlayEquipSoundOnce(held);
             return true;
+        }
+
+        // A carried item claimed by a new carrier moves to it; an older claim waits as pending, as for the hand.
+        private bool TryAttachCarried(HeldItem carried, bool isNewClaim) {
+            if (TryResolveItem(carried.ItemNetId, out Grabbable item) == false)
+                return false;
+
+            int previous = IndexOfCarried(item);
+            if (previous >= 0 && isNewClaim == false)
+                return false;
+
+            if (previous >= 0)
+                DetachCarried(_carried[previous]);
+
+            carried.Item = item;
+            item.Stopped += OnCarriedItemStopped;
+            if (IndexOf(item) < 0)
+                item.ApplyStow(carried.Holder.ArmPoint);
+
+            return true;
+        }
+
+        private void PlayEquipSoundOnce(HeldItem held) {
+            if (held.PlaysEquipSound == false)
+                return;
+
+            held.PlaysEquipSound = false;
+            _audioService.PlayOneShot(held.Item.EquipSound, held.Item.transform.position);
         }
 
         private void ReleaseAt(int index) {
@@ -82,13 +160,42 @@ namespace Features.GrabModule.Scripts {
                 return;
 
             held.Item.Stopped -= OnItemStopped;
-            held.Item.ApplyRelease();
-            OnItemReleased?.Invoke(held.Item);
+            LetGo(held.Item);
+        }
+
+        private void StopCarryingAt(int index) {
+            HeldItem carried = _carried[index];
+            _carried.RemoveAt(index);
+            if (carried.Item == null)
+                return;
+
+            carried.Item.Stopped -= OnCarriedItemStopped;
+            if (IndexOf(carried.Item) < 0)
+                Release(carried.Item);
+        }
+
+        // Out of the hand: a carried item is stowed with its carrier, anything else is loose.
+        private void LetGo(Grabbable item) {
+            int carried = IndexOfCarried(item);
+            if (carried >= 0)
+                item.ApplyStow(_carried[carried].Holder.ArmPoint);
+            else
+                Release(item);
+        }
+
+        private void Release(Grabbable item) {
+            item.ApplyRelease();
+            OnItemReleased?.Invoke(item);
         }
 
         private void Detach(HeldItem held) {
             held.Item.Stopped -= OnItemStopped;
             held.Item = null;
+        }
+
+        private void DetachCarried(HeldItem carried) {
+            carried.Item.Stopped -= OnCarriedItemStopped;
+            carried.Item = null;
         }
 
         // The item is gone under the hand (installed, or its scene unloaded): the server empties that hand.
@@ -102,6 +209,19 @@ namespace Features.GrabModule.Scripts {
             item.Stopped -= OnItemStopped;
             if (held.Holder != null)
                 held.Holder.ServerForgetHeld(held.ItemNetId);
+        }
+
+        // A stowed item is gone (despawned, its scene unloaded): the server empties its slot.
+        private void OnCarriedItemStopped(Grabbable item) {
+            int index = IndexOfCarried(item);
+            if (index < 0)
+                return;
+
+            HeldItem carried = _carried[index];
+            _carried.RemoveAt(index);
+            item.Stopped -= OnCarriedItemStopped;
+            if (carried.Holder != null)
+                carried.Holder.ServerForgetCarried(carried.ItemNetId);
         }
 
         private int IndexOf(GrabController holder) {
@@ -120,6 +240,33 @@ namespace Features.GrabModule.Scripts {
             }
 
             return -1;
+        }
+
+        private int IndexOfCarried(GrabController holder, uint itemNetId) {
+            for (int i = 0; i < _carried.Count; i++) {
+                if (_carried[i].Holder == holder && _carried[i].ItemNetId == itemNetId)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private int IndexOfCarried(Grabbable item) {
+            for (int i = 0; i < _carried.Count; i++) {
+                if (_carried[i].Item == item)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private static bool Contains(IReadOnlyList<uint> itemNetIds, uint itemNetId) {
+            for (int i = 0; i < itemNetIds.Count; i++) {
+                if (itemNetIds[i] == itemNetId)
+                    return true;
+            }
+
+            return false;
         }
 
         private static bool TryResolveItem(uint itemNetId, out Grabbable item) {
@@ -148,6 +295,7 @@ namespace Features.GrabModule.Scripts {
             public GrabController Holder { get; }
             public uint ItemNetId { get; }
             public Grabbable Item { get; set; }
+            public bool PlaysEquipSound { get; set; }
         }
     }
 }

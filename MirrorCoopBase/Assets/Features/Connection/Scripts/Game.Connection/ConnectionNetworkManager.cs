@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Features.GameCoreModule.Contracts;
+using Features.LoadingScreenModule.Contracts;
 using Features.SceneLoaderModule.Scripts;
 using Mirror;
 using UnityEngine;
@@ -37,6 +38,7 @@ namespace Game.Connection
 
         ConnectionSessionModel sessionModel;
         ConnectionNetworkEvents events;
+        ILoadingScreenService loadingScreen;
         ConnectionTransportSwitch transportSwitch;
         ConnectionSceneLoading sceneLoading;
         ConnectionSpawnPlacement spawnPlacement;
@@ -67,10 +69,12 @@ namespace Game.Connection
             ConnectionSessionModel connectionSessionModel,
             ConnectionSpawnModel spawnModel,
             ISessionJoinSpawn sessionJoinSpawn,
-            ConnectionNetworkEvents networkEvents)
+            ConnectionNetworkEvents networkEvents,
+            ILoadingScreenService loadingScreenService)
         {
             sessionModel = connectionSessionModel;
             events = networkEvents;
+            loadingScreen = loadingScreenService;
 
             maxConnections = connectionConfig.MaxConnections + TRANSPORT_HEADROOM_CONNECTIONS;
             everyoneReadyDelay = connectionConfig.EveryoneReadyDelay;
@@ -88,6 +92,8 @@ namespace Game.Connection
                 spawnPlacement,
                 persistentScene,
                 networkEvents,
+                loadingScreenService,
+                connectionConfig.LoadingScreenHoldSeconds,
                 everyoneReadyDelay,
                 OnClientSceneChanged,
                 StopSessionAndReturnToMenu,
@@ -303,6 +309,11 @@ namespace Game.Connection
             catch (Exception exception)
             {
                 Debug.LogException(exception);
+            }
+            finally
+            {
+                // A drop can come in the middle of a covered map change; the menu must not stay covered.
+                loadingScreen.FadeOut();
             }
         }
 

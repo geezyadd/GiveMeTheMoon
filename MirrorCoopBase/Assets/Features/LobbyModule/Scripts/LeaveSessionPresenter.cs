@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Features.GameFlowStateMachineModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.States;
+using Features.LoadingScreenModule.Contracts;
 using Features.MvpModule;
 using Game.Connection;
 using UnityEngine;
@@ -10,13 +11,16 @@ namespace Features.LobbyModule.Scripts {
     public sealed class LeaveSessionPresenter : PresenterBehaviour<LeaveSessionViewBase> {
         private readonly IConnectionSessionService _connectionSession;
         private readonly IGameFlowStateMachineService _gameFlowStateMachine;
+        private readonly ILoadingScreenService _loadingScreen;
         private bool _isBusy;
 
         public LeaveSessionPresenter(
             IConnectionSessionService connectionSession,
-            IGameFlowStateMachineService gameFlowStateMachine) {
+            IGameFlowStateMachineService gameFlowStateMachine,
+            ILoadingScreenService loadingScreen) {
             _connectionSession = connectionSession;
             _gameFlowStateMachine = gameFlowStateMachine;
+            _loadingScreen = loadingScreen;
         }
 
         protected override void OnViewSet() {
@@ -39,6 +43,7 @@ namespace Features.LobbyModule.Scripts {
                 View.SetInteractable(false);
 
             try {
+                await _loadingScreen.FadeInAsync();
                 await _connectionSession.StopToMenuAsync();
                 await _gameFlowStateMachine.EnterAsync<MenuGameFlowState>();
             }
@@ -46,6 +51,7 @@ namespace Features.LobbyModule.Scripts {
                 Debug.LogException(exception);
             }
             finally {
+                _loadingScreen.FadeOut();
                 _isBusy = false;
                 if (View != null && View.IsViewDisposed == false)
                     View.SetInteractable(true);

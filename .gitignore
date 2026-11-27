@@ -83,6 +83,14 @@ InitTestScene*.unity*
 /MirrorCoopBase/[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 /MirrorCoopBase/[Aa]ssets/[Ss]ceneDependencyCache*
 
+# FMOD for Unity: per-machine editor cache, regenerated from the banks
+/MirrorCoopBase/[Aa]ssets/Plugins/FMOD/Cache/
+/MirrorCoopBase/[Aa]ssets/Plugins/FMOD/Cache.meta
+
+# FMOD Studio project: local caches and per-user layout
+**/.cache/
+**/.user/
+
 # OS files
 .DS_Store
 Thumbs.db

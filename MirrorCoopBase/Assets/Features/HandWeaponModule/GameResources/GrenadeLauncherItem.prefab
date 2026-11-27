@@ -363,6 +363,14 @@ MonoBehaviour:
   _rb: {fileID: 4189683464166000711}
   _networkBody: {fileID: 5908444334707755993}
   _outline: {fileID: 4309657303601795300}
+  _canStoreInInventory: 1
+  _equipSound:
+    Guid:
+      Data1: 852142886
+      Data2: 1220935045
+      Data3: 1678730679
+      Data4: 1536826568
+    Path: event:/Weapon/weapon_equip
 --- !u!114 &2192727742419377178
 MonoBehaviour:
   m_ObjectHideFlags: 0

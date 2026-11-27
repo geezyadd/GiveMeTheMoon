@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _id: pistol
   _displayName: Pistol
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 71d4187fd2f5ca048a7508aff2812324, type: 3}
   _description: A handheld pistol. One strong shot breaks a small rock or pops a
     balloon; a player it strikes is pushed. Grab it and press the left mouse button.
   _price: 150

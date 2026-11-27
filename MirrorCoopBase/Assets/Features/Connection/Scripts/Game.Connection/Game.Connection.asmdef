@@ -9,7 +9,8 @@
         "GUID:c4e8a71b2f9d4e6a8b0c1d2e3f4a5b6c",
         "GUID:68bd7fdb68ef2684e982e8a9825b18a5",
         "GUID:627104647b9c04b4ebb8978a92ecac63",
-        "GUID:d3b0c1a2e4f54a6b9c8d7e6f5a4b3c21"
+        "GUID:d3b0c1a2e4f54a6b9c8d7e6f5a4b3c21",
+        "Features.LoadingScreenModule.Contracts"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

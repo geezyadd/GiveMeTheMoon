@@ -6,6 +6,7 @@ namespace Features.ScreenShakeModule {
         public override void InstallBindings() {
             Container.Bind<IScreenShakeService>().To<ScreenShakeService>().AsSingle();
             Container.BindInterfacesTo<ScreenShakeSystem>().AsSingle();
+            Container.BindInterfacesTo<ScreenShakeStrengthSettingApplier>().AsSingle();
         }
     }
 }

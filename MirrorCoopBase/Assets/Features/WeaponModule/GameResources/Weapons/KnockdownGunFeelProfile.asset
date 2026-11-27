@@ -63,3 +63,17 @@ MonoBehaviour:
   _impactFlashSeconds: 0.07
   _impactFlashMinSizeShare: 0.7
   _targetFlashSeconds: 0.08
+  _shotSound:
+    Guid:
+      Data1: -1016447937
+      Data2: 1308823673
+      Data3: 152181379
+      Data4: -1055700004
+    Path: event:/Weapon/blaster_shot
+  _impactSound:
+    Guid:
+      Data1: 581350424
+      Data2: 1093109429
+      Data3: -412241536
+      Data4: -839728563
+    Path: event:/Weapon/blaster_hit

@@ -61,3 +61,17 @@ MonoBehaviour:
   _impactFlashSeconds: 0.07
   _impactFlashMinSizeShare: 0.7
   _targetFlashSeconds: 0.08
+  _shotSound:
+    Guid:
+      Data1: 2140454266
+      Data2: 1286531267
+      Data3: -485504593
+      Data4: 69321797
+    Path: event:/Weapon/rocket_launch
+  _impactSound:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
