@@ -10,7 +10,8 @@ using Zenject;
 
 namespace Features.ConstellationModule.Scripts.Systems {
     // Debug only: the debug window's "Constellations" section, one button per catalog constellation and "Hide", for the
-    // whole crew's sky. Registered on the host only (the server writes the sky); a pure client gets no section.
+    // whole crew's sky. Only the host may press them (the server writes the sky); on a pure client they stay greyed out
+    // with the host-only hint, like the other host-only debug actions.
     public sealed class ConstellationDebugSystem : IInitializable, IDisposable {
         private const string SHOW_DESCRIPTION_FORMAT = "Reveals {0} on every player's sky: its stars light up and its lines are drawn one after another. Picked while shown, it fades out and plays again.";
         private const string HIDE_LABEL = "Hide";
@@ -30,12 +31,9 @@ namespace Features.ConstellationModule.Scripts.Systems {
             _debugActionRegistry = debugActionRegistry;
         }
 
-        // The lobby is loaded after the host has started its server, so a peer that is not the server here never
-        // becomes one while this lobby lives.
+        // Registered always: the lobby scene is loaded before the host starts its server, so whether this peer is the
+        // server is asked when a button is drawn, not here.
         public void Initialize() {
-            if (NetworkServer.active == false)
-                return;
-
             foreach (ConstellationDefinition constellation in _constellationCatalog.Constellations)
                 RegisterShow(constellation);
             _registrations.Add(_debugActionRegistry.Register(new DebugActionDefinition(DebugSections.CONSTELLATIONS, HIDE_LABEL, HIDE_DESCRIPTION, ReadHideUnavailableReason, _constellationService.ServerHide)));
@@ -52,11 +50,15 @@ namespace Features.ConstellationModule.Scripts.Systems {
             _registrations.Add(_debugActionRegistry.Register(new DebugActionDefinition(DebugSections.CONSTELLATIONS, constellation.DisplayName, description, ReadShowUnavailableReason, () => _constellationService.ServerShow(constellation.Id))));
         }
 
-        private string ReadShowUnavailableReason() =>
-            null;
+        private static string ReadShowUnavailableReason() =>
+            NetworkServer.active ? null : DebugActionReasons.HOST_ONLY;
 
-        private string ReadHideUnavailableReason() =>
-            _constellationRevealModel.HasShown ? null : NOTHING_SHOWN_REASON;
+        private string ReadHideUnavailableReason() {
+            if (NetworkServer.active == false)
+                return DebugActionReasons.HOST_ONLY;
+
+            return _constellationRevealModel.HasShown ? null : NOTHING_SHOWN_REASON;
+        }
     }
 }
 #endif
