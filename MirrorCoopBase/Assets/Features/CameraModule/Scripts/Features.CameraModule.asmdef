@@ -10,7 +10,8 @@
         "GUID:4307f53044263cf4b835bd812fc161a4",
         "GUID:0d8beb7f090555447a6cf5ce9e54dbb4",
         "GUID:640d4f6813af4f238a5dd7d4725fed78",
-        "Features.ScreenShakeModule"
+        "Features.ScreenShakeModule",
+        "Features.SettingsModule.Data"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

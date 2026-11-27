@@ -16,7 +16,7 @@ MonoBehaviour:
   _label: Anti-aliasing (MSAA)
   _defaultOptionId: 4x
   _options:
-  - _id: off
+  - _id: 'off'
     _label: Off
   - _id: 2x
     _label: 2x

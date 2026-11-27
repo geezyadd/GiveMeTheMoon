@@ -160,6 +160,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: acd99fc29ae64340873e0f9df35d69ff
+    m_Address: VideoSettingsConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ab5f30df93e09bb49a8bbf02156f0871
     m_Address: FieldTargetCatalog_Default
     m_ReadOnly: 0

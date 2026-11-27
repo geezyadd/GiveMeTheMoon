@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10ca519c1b884d6eb557e539fc0c7f5c, type: 3}
+  m_Name: VideoSettingsConfiguration_Default
+  m_EditorClassIdentifier: 
+  _windowModes:
+  - _optionId: fullscreen_window
+    _mode: 1
+  - _optionId: exclusive_fullscreen
+    _mode: 0
+  - _optionId: windowed
+    _mode: 3
+  _antiAliasing:
+  - _optionId: 'off'
+    _samples: 1
+  - _optionId: 2x
+    _samples: 2
+  - _optionId: 4x
+    _samples: 4
+  - _optionId: 8x
+    _samples: 8
+  _shadowLevels:
+  - _optionId: 'off'
+    _shadowmapResolution: 1024
+    _shadowDistance: 0
+    _cascadeCount: 1
+  - _optionId: low
+    _shadowmapResolution: 1024
+    _shadowDistance: 30
+    _cascadeCount: 2
+  - _optionId: medium
+    _shadowmapResolution: 2048
+    _shadowDistance: 50
+    _cascadeCount: 4
+  - _optionId: high
+    _shadowmapResolution: 4096
+    _shadowDistance: 80
+    _cascadeCount: 4
+  _unlimitedFrameRateOptionId: unlimited

@@ -108,7 +108,7 @@ types.
      `Features.CrewInviteModule.Data`, `Features.StagePresetModule.Data`, `Features.FlightFieldModule.Contracts`,
      `Features.WeaponModule.Contracts`, `Features.CameraModule.Contracts`, `Features.EffectPoolModule` (no references),
      `Features.DebugModule.Contracts`, `Features.SonarModule.Contracts`, `Features.SonarModule.Data`,
-     `Features.PoolModule` (no references), `Features.ScreenShakeModule`,
+     `Features.PoolModule` (no references),
      `Features.SpaceHazeModule.Data`, `Features.AttackModule.Contracts`, `Features.ExplosionModule.Contracts`,
      `Features.EmoteModule.Contracts`, `Features.EmoteModule.Data` (no references), `Features.CoroutineRunnerModule`,
      `Features.LoadingScreenModule.Contracts` (no references), `Features.SettingsModule.Data` (no references); third-party
@@ -116,7 +116,9 @@ types.
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
      `Features.SpaceHazeModule`, `Features.ActiveRagdollModule` (FloatingController),
-     `Features.TargetModule`, `Features.VfxModule` (PoolModule), `Features.LoadingScreenModule`.
+     `Features.TargetModule`, `Features.VfxModule` (PoolModule), `Features.LoadingScreenModule`,
+     `Features.ScreenShakeModule` (SettingsModule.Data), `Features.SettingsModule` (the video settings and the settings
+     window; see its file).
   3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.PlayerReplicaModule`,
      `Features.PlayerAnimationModule`.
   4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`,
@@ -151,7 +153,7 @@ types.
 | [AttackModule](MirrorCoopBase/Assets/Features/AttackModule/AGENTS.md) | attacks of any ragdoll body (the slap): the attack as data, its timing, presses, aim, the limb's reach and where it lands |
 | [EmoteModule](MirrorCoopBase/Assets/Features/EmoteModule/AGENTS.md) | the emote wheel (hold G, pick with the mouse, release) and the player's emotes, played through the animator on every peer from the replica packets |
 | [LoadingScreenModule](MirrorCoopBase/Assets/Features/LoadingScreenModule/AGENTS.md) | the screen that covers scene changes: fade in / fade out with an action after, on host / join, lobby ↔ game, leave to the menu |
-| [SettingsModule](MirrorCoopBase/Assets/Features/SettingsModule/AGENTS.md) | the player's local settings: a definition asset per setting, their catalog and `SettingsModel` with change events (being built) |
+| [SettingsModule](MirrorCoopBase/Assets/Features/SettingsModule/AGENTS.md) | the player's local settings: a definition asset per setting, their catalog, `SettingsModel` with change events, the appliers (each in the module it changes), the settings window (being built) |
 | [CoroutineRunnerModule](MirrorCoopBase/Assets/Features/CoroutineRunnerModule/AGENTS.md) | `ICoroutineRunner`: plain classes run coroutines from one object in GlobalScene |
 | [VfxModule](MirrorCoopBase/Assets/Features/VfxModule/AGENTS.md) | pooled visual effects (ported from FLEXUS): an effect as a `VfxDefinition`, particle systems now, VFX Graph when its package is in |
 | [ScreenShakeModule](MirrorCoopBase/Assets/Features/ScreenShakeModule/AGENTS.md) | screen shake through the Cinemachine noise, the strongest shake wins (ported from FLEXUS); explosions only for now |

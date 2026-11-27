@@ -18,6 +18,7 @@ using Features.GrabModule.Scripts.Hold;
 using Features.MvpModule;
 using Features.PlayerLifeModule.Scripts.Generated;
 using Features.PlayerProfileModule.Data.Generated;
+using Features.PlayerProfileModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Core;
 using Features.ShopModule.Scripts.Data;
@@ -48,6 +49,9 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<GameCameraModel>().AsSingle();
             Container.Bind<CameraCarryTurnModel>().AsSingle();
             Container.Bind<CameraShakeModel>().AsSingle();
+            Container.Bind<CameraLookSettingsModel>().AsSingle();
+            Container.Bind<CameraFieldOfViewModel>().AsSingle();
+            Container.Bind<PlayerNameplateVisibilityModel>().AsSingle();
             Container.Bind<Features.ScreenShakeModule.ScreenShakeModel>().AsSingle();
             Container.Bind<IShipRunBindingModel>().To<ShipRunBindingModel>().AsSingle();
             Container.Bind<IShipClientBindingModel>().To<ShipClientBindingModel>().AsSingle();

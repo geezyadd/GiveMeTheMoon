@@ -16,7 +16,7 @@ MonoBehaviour:
   _label: Shadow quality
   _defaultOptionId: medium
   _options:
-  - _id: off
+  - _id: 'off'
     _label: Off
   - _id: low
     _label: Low

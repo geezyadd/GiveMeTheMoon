@@ -3,7 +3,12 @@
 The player's settings of this machine (local, not networked): video, controls, gameplay. Being built stage by stage
 (2026-11-27); this file describes what exists now.
 
-## Data (`Features.SettingsModule.Data`, layer 1, no module references)
+## Assemblies
+- `Features.SettingsModule.Data` (layer 1, no module references): definitions, catalog, model, keys.
+- `Features.SettingsModule` (layer 2; Zenject, URP, SettingsModule.Data): the video appliers
+  (`SettingsModuleInstaller`, called from `GlobalSceneInstaller`).
+
+## Data
 - A setting is one `SettingDefinition` asset (key, label, default) of one kind:
   - `ToggleSettingDefinition`: on / off;
   - `SliderSettingDefinition`: minimum, maximum, step, value text format; the value is in the units the player sees
@@ -37,7 +42,27 @@ The player's settings of this machine (local, not networked): video, controls, g
 | `gameplay.screen_shake` | slider 0–100 %, step 5 | 50 (today's strength) |
 | `gameplay.nameplates` | toggle | on |
 
-Nothing applies these values yet: the game behaves as before.
+The defaults are what the game had before the settings, so with the defaults it looks and plays the same.
+
+## Appliers
+Each applier only subscribes to `SettingsModel` and changes its own thing, applies the current value at startup
+(GlobalScene, before the menu) and on every change; none knows the window or another applier. They live in the
+module they change:
+| Settings | Applier | Where |
+|---|---|---|
+| window mode, resolution | `DisplayModeSettingsApplier`: `Screen.SetResolution`; an empty or unsupported resolution keeps the startup one | SettingsModule (`Scripts/Video`) |
+| VSync, FPS limit | `FrameRateSettingsApplier`: `QualitySettings.vSyncCount`, `Application.targetFrameRate` (ignored by the engine while VSync is on); the startup values come back on dispose | SettingsModule |
+| shadows, MSAA, render scale | `RenderPipelineSettingsApplier`: on a runtime copy of the URP asset set as the quality level's pipeline (changing `PC_RPAsset` itself in the editor would write the asset file); the project's asset comes back on dispose. Shadows "off" = shadow distance 0 (`supportsMainLightShadows` has no public setter) | SettingsModule |
+| field of view, mouse sensitivity, invert Y, camera shake | `CameraFieldOfViewSettingApplier`, `CameraLookSettingsApplier`, `CameraShakeStrengthSettingApplier` | CameraModule (see its file) |
+| screen shake (explosions) | `ScreenShakeStrengthSettingApplier` | ScreenShakeModule |
+| player names | `NameplateSettingApplier` | PlayerProfileModule |
+
+`VideoSettingsConfiguration` (`VideoSettingsConfiguration_Default`, bound in `ConfigurationInstaller`) says what the
+video options mean: window modes, MSAA samples, shadow levels (off: distance 0; low: 1024, 30 m, 2 cascades; medium =
+the project's 2048, 50 m, 4 cascades; high: 4096, 80 m, 4 cascades), the "unlimited" FPS option.
+
+The screen shake slider is a multiple of its default: `SliderSettingDefinition.ScaleToDefault` / 
+`SettingsModel.GetSliderScaleToDefault` (50 % = 1x, 100 % = 2x, 0 = off).
 
 ## New setting
 A definition asset in `Definitions/`, an entry in `SettingsCatalog_Default`, a key in `SettingKeys` if a module reads
@@ -46,5 +71,8 @@ it.
 ## Tests (`Features.SettingsModule.Editor.Tests`)
 - `SettingsModelTests`: defaults, change events only on a real change, slider clamp and step, choice options, reset of
   one setting, wrong kind / unknown key / duplicate key.
+- `SettingsModelTests` also: scale to default, `ResolutionOptionId`, copying the values of another model.
+- `VideoSettingsGuardTests`: every window mode, MSAA, shadow and FPS option of the definitions means something in
+  `VideoSettingsConfiguration`.
 - `SettingsCatalogGuardTests`: the catalog asset at its address has no empty entries, unique keys, labels, a
   definition for every `SettingKeys` key, slider defaults in range and on a step, choice defaults among the options.

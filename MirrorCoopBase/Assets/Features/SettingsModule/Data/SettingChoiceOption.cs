@@ -8,6 +8,11 @@ namespace Features.SettingsModule.Data {
         [SerializeField] private string _id;
         [SerializeField] private string _label;
 
+        public SettingChoiceOption(string id, string label) {
+            _id = id;
+            _label = label;
+        }
+
         public string Id => _id;
         public string Label => _label;
     }

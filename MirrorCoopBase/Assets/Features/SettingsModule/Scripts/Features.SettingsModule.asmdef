@@ -1,0 +1,19 @@
+{
+    "name": "Features.SettingsModule",
+    "rootNamespace": "Features.SettingsModule",
+    "references": [
+        "Zenject",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Features.SettingsModule.Data"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

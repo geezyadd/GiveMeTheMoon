@@ -1,6 +1,7 @@
 using Features.CameraModule.Contracts;
 using Features.CameraModule.Scripts.Models;
 using Features.CameraModule.Scripts.Services;
+using Features.CameraModule.Scripts.Settings;
 using Features.CameraModule.Scripts.Shake;
 using Features.GameCoreModule.Contracts;
 using Zenject;
@@ -18,6 +19,10 @@ namespace Features.CameraModule.Scripts {
             Container.Bind<ICameraShakeService>().To<CameraShakeService>().AsSingle();
             Container.Bind<ICameraShakeSampler>().To<CameraShakeSampler>().AsSingle();
             Container.BindInterfacesTo<CameraShakeSystem>().AsSingle();
+            Container.BindInterfacesTo<CameraFieldOfViewSystem>().AsSingle();
+            Container.BindInterfacesTo<CameraLookSettingsApplier>().AsSingle();
+            Container.BindInterfacesTo<CameraFieldOfViewSettingApplier>().AsSingle();
+            Container.BindInterfacesTo<CameraShakeStrengthSettingApplier>().AsSingle();
         }
     }
 }

@@ -52,7 +52,8 @@
         "Features.CoroutineRunnerModule",
         "Features.LoadingScreenModule",
         "Features.LoadingScreenModule.Contracts",
-        "Features.SettingsModule.Data"
+        "Features.SettingsModule.Data",
+        "Features.SettingsModule"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

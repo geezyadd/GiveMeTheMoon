@@ -31,6 +31,11 @@ namespace Features.SettingsModule.Data {
             return Mathf.Clamp(snapped, _minimum, _maximum);
         }
 
+        // The value as a multiple of the default: for settings whose default is "as authored" (the screen shake), so
+        // the default is 1, twice the default is 2 and 0 is 0.
+        public float ScaleToDefault(float value) =>
+            _defaultValue > 0f ? value / _defaultValue : 0f;
+
         public override void WriteDefault(SettingsModel model) =>
             model.SetSlider(Key, _defaultValue);
     }

@@ -11,6 +11,9 @@ namespace Features.SettingsModule.Data {
 
         public IReadOnlyList<SettingChoiceOption> Options => _options;
 
+        public override IReadOnlyList<SettingChoiceOption> GetOptions() =>
+            _options;
+
         public override bool AcceptsOption(string optionId) {
             foreach (SettingChoiceOption option in _options)
                 if (option.Id == optionId)

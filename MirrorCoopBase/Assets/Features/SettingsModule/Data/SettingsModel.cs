@@ -49,6 +49,10 @@ namespace Features.SettingsModule.Data {
             return _sliderValues[key];
         }
 
+        // The slider's value as a multiple of its default (see SliderSettingDefinition.ScaleToDefault).
+        public float GetSliderScaleToDefault(string key) =>
+            GetDefinition<SliderSettingDefinition>(key).ScaleToDefault(_sliderValues[key]);
+
         public string GetChoice(string key) {
             GetDefinition<ChoiceSettingDefinitionBase>(key);
             return _choiceValues[key];
@@ -76,6 +80,35 @@ namespace Features.SettingsModule.Data {
 
         public void ResetToDefault(string key) =>
             GetDefinition(key).WriteDefault(this);
+
+        // Takes the other model's value of every setting both have (a settings window's draft and the live model).
+        public void CopyValuesFrom(SettingsModel other) {
+            foreach (SettingDefinition definition in _definitions)
+                if (other.Contains(definition.Key))
+                    CopyValueFrom(other, definition.Key);
+        }
+
+        public void CopyValueFrom(SettingsModel other, string key) {
+            if (_toggleValues.ContainsKey(key))
+                SetToggle(key, other.GetToggle(key));
+            else if (_sliderValues.ContainsKey(key))
+                SetSlider(key, other.GetSlider(key));
+            else if (_choiceValues.ContainsKey(key))
+                SetChoice(key, other.GetChoice(key));
+        }
+
+        public bool HasSameValue(SettingsModel other, string key) =>
+            _toggleValues.TryGetValue(key, out bool toggle) ? toggle == other.GetToggle(key)
+            : _sliderValues.TryGetValue(key, out float slider) ? Math.Abs(slider - other.GetSlider(key)) < 0.0001f
+            : _choiceValues.TryGetValue(key, out string choice) && choice == other.GetChoice(key);
+
+        public bool HasSameValues(SettingsModel other) {
+            foreach (SettingDefinition definition in _definitions)
+                if (HasSameValue(other, definition.Key) == false)
+                    return false;
+
+            return true;
+        }
 
         private void AddDefinition(SettingDefinition definition) {
             if (definition == null)

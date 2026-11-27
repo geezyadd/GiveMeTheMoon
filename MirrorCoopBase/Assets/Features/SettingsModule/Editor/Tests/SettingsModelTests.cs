@@ -75,6 +75,27 @@ namespace Features.SettingsModule.Editor.Tests {
             Assert.That(model.GetSlider(SLIDER_KEY), Is.EqualTo(0f));
         }
 
+        [TestCase(0f, 0f)]
+        [TestCase(50f, 1f)]
+        [TestCase(100f, 2f)]
+        public void GetSliderScaleToDefault_IsValueOverDefault(float value, float expected) {
+            SettingsModel model = new(_catalog);
+
+            model.SetSlider(SLIDER_KEY, value);
+
+            Assert.That(model.GetSliderScaleToDefault(SLIDER_KEY), Is.EqualTo(expected).Within(0.0001f));
+        }
+
+        [Test]
+        public void ResolutionOptionId_FormatsAndParses() {
+            Assert.That(ResolutionOptionId.Format(1920, 1080), Is.EqualTo("1920x1080"));
+            Assert.That(ResolutionOptionId.TryParse("2560x1440", out int width, out int height), Is.True);
+            Assert.That((width, height), Is.EqualTo((2560, 1440)));
+            Assert.That(ResolutionOptionId.TryParse(string.Empty, out _, out _), Is.False);
+            Assert.That(ResolutionOptionId.TryParse("1920", out _, out _), Is.False);
+            Assert.That(ResolutionOptionId.TryParse("ax1080", out _, out _), Is.False);
+        }
+
         [Test]
         public void SetChoice_RejectsUnknownOption() {
             SettingsModel model = new(_catalog);
@@ -105,6 +126,23 @@ namespace Features.SettingsModule.Editor.Tests {
             Assert.That(model.GetSlider(SLIDER_KEY), Is.EqualTo(50f));
             Assert.That(model.GetToggle(TOGGLE_KEY), Is.False);
             Assert.That(changedKeys, Is.EqualTo(new[] { SLIDER_KEY }));
+        }
+
+        [Test]
+        public void CopyValuesFrom_TakesEveryValue_AndHasSameValuesSeesIt() {
+            SettingsModel live = new(_catalog);
+            SettingsModel draft = new(_catalog);
+            draft.SetToggle(TOGGLE_KEY, false);
+            draft.SetSlider(SLIDER_KEY, 80f);
+            draft.SetChoice(CHOICE_KEY, "low");
+            Assert.That(live.HasSameValues(draft), Is.False);
+            Assert.That(live.HasSameValue(draft, RESOLUTION_KEY), Is.True);
+
+            live.CopyValuesFrom(draft);
+
+            Assert.That(live.HasSameValues(draft), Is.True);
+            Assert.That(live.GetSlider(SLIDER_KEY), Is.EqualTo(80f));
+            Assert.That(live.GetChoice(CHOICE_KEY), Is.EqualTo("low"));
         }
 
         [Test]

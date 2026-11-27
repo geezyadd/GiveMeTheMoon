@@ -22,6 +22,7 @@ using Features.ShipModule.Scripts.Throttle;
 using Features.ShopModule.Scripts.Configurations;
 using Features.SonarModule.Scripts.Configurations;
 using Features.SettingsModule.Data;
+using Features.SettingsModule.Video;
 using Features.SpaceHazeModule.Scripts.Configurations;
 using Features.StagePresetModule.Scripts.Configurations;
 using Features.WeaponModule.Scripts.Definitions;
@@ -78,6 +79,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<WeaponHitRuleConfiguration>(Address.Configurations.WeaponHitRuleConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ExplosionConfiguration>(Address.Configurations.ExplosionConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<SettingsCatalog>(Address.Configurations.SettingsCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<VideoSettingsConfiguration>(Address.Configurations.VideoSettingsConfiguration_Default).AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                         Container.BindConfigurationFromAddressables<Features.ShipModule.Scripts.Debug.WeaponDebugTargetConfiguration>(Address.Configurations.WeaponDebugTargetConfiguration_Default).AsSingle();
 #endif
