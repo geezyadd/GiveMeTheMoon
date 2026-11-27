@@ -33,7 +33,7 @@ namespace Features.ShipModule.Scripts.Overboard {
 
         [Header("Loose items")]
         [Tooltip("Linear damping of a loose item drifting outside the safe space: its speed fades to a slow drift.")]
-        [SerializeField, Min(0f)] private float _itemDriftLinearDamping = 0.6f;
+        [SerializeField, Min(0f)] private float _itemDriftLinearDamping = 1.2f;
         [Tooltip("Angular damping of a drifting item: its spin fades.")]
         [SerializeField, Min(0f)] private float _itemDriftAngularDamping = 0.4f;
         [Tooltip("A drifting item farther than this from the ship and the nearest overboard area is removed, meters.")]
