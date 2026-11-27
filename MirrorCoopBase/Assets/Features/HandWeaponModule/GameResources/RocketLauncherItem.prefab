@@ -363,6 +363,7 @@ MonoBehaviour:
   _rb: {fileID: 4189683464166000711}
   _networkBody: {fileID: 5908444334707755993}
   _outline: {fileID: 4309657303601795300}
+  _canStoreInInventory: 1
 --- !u!114 &2192727742419377178
 MonoBehaviour:
   m_ObjectHideFlags: 0

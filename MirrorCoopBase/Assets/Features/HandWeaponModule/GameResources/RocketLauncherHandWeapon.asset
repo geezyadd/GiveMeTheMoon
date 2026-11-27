@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _id: rocket-launcher
   _displayName: Rocket launcher
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 1903104c8173fb7439cff6943bffd885, type: 3}
   _description: Fires a rocket straight ahead; it goes off where it strikes or after
     3.5 s.
   _price: 400

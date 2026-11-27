@@ -15,6 +15,11 @@ namespace Features.InputModule.Realization.Scripts.Generated {
         public InputDefaultActions Reload { get; set; }
         public InputDefaultActions ToggleCursor { get; set; }
         public InputDefaultActions Emote { get; set; }
+        public InputDefaultActions SelectSlot1 { get; set; }
+        public InputDefaultActions SelectSlot2 { get; set; }
+        public InputDefaultActions SelectSlot3 { get; set; }
+        public InputDefaultActions SelectSlot4 { get; set; }
+        public InputVector2Actions SelectSlotScroll { get; set; }
         public InputDefaultActions CloseWindow { get; set; }
         public InputDefaultActions SpectatePrev { get; set; }
         public InputDefaultActions SpectateNext { get; set; }

@@ -12,7 +12,8 @@ namespace Features.GrabModule.Scripts {
     // The local player's side of interaction: one aim per frame, one highlight, and one handler for the interact
     // button, so a press either uses an interactable or grabs an item, never both. A hold target is held until the
     // button is released or the crosshair leaves it. A held control is moved by the mouse, with the view locked, until
-    // the button is released, the player is blocked or the server gives the control away.
+    // the button is released, the player is blocked or the server gives the control away. The release button (drop or
+    // throw) is the inventory's: it calls ReleaseHeld for a drop.
     public sealed class LocalPlayerInteraction : NetworkBehaviour {
         [SerializeField] private GrabController _grab;
         [SerializeField] private UseController _use;
@@ -51,7 +52,6 @@ namespace Features.GrabModule.Scripts {
 
         public override void OnStartLocalPlayer() {
             _input.Grab.Performed += Interact;
-            _input.Release.Performed += ReleaseHeld;
             _input.Grab.Canceled += EndInteract;
             _input.Look.VectorChangedPerformed += MoveHeldControl;
             _use.OnHoldProgressChanged += OnHoldProgressChanged;
@@ -59,7 +59,6 @@ namespace Features.GrabModule.Scripts {
 
         public override void OnStopLocalPlayer() {
             _input.Grab.Performed -= Interact;
-            _input.Release.Performed -= ReleaseHeld;
             _input.Grab.Canceled -= EndInteract;
             _input.Look.VectorChangedPerformed -= MoveHeldControl;
             _use.OnHoldProgressChanged -= OnHoldProgressChanged;
@@ -182,7 +181,7 @@ namespace Features.GrabModule.Scripts {
                     usable = interactable;
             }
 
-            bool canGrab = grabbable != null && grabbable.CanBeGrabbed && _grab.IsHolding == false;
+            bool canGrab = grabbable != null && grabbable.CanBeGrabbed && _grab.CanTake(grabbable);
             return new InteractionTarget(canGrab ? grabbable : null, usable, lookedAt);
         }
 

@@ -12,6 +12,7 @@ using Features.FlightFieldModule.Scripts;
 using Features.GameFlowStateMachineModule.Scripts.Installers;
 using Features.GrabModule.Scripts;
 using Features.InputModule.Realization.Scripts;
+using Features.InventoryModule.Scripts;
 using Features.PlayerLifeModule.Scripts.Installers;
 using Features.PlayerProfileModule.Scripts;
 using Features.ShipDamageModule.Scripts;
@@ -45,6 +46,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             ExplosionModuleInstaller.Install(Container);
             CameraModuleInstaller.Install(Container);
             GrabModuleInstaller.Install(Container);
+            InventoryModuleInstaller.Install(Container);
             ShipModuleInstaller.Install(Container);
             ShipImpactModuleInstaller.Install(Container);
             ShipDamageModuleInstaller.Install(Container);

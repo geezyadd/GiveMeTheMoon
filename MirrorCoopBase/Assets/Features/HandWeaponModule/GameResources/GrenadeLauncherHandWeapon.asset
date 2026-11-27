@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _id: grenade-launcher
   _displayName: Grenade launcher
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: f0b3dd34623e5e742a60ad41bdc40e65, type: 3}
   _description: Lobs grenades along an arc; they bounce and go off after 2 s or on
     a body.
   _price: 300

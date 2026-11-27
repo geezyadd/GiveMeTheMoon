@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _id: wrench
   _displayName: Wrench
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 1da191843fe6f0e4c85268c814bd3edf, type: 3}
   _description: 'Repairs broken modules: hold it, look at a broken module and hold
     the use key.'
   _price: 150
