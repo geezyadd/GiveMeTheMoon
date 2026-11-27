@@ -1,4 +1,5 @@
 using Features.AssetLoaderModule.Scripts.Installers;
+using Features.SavingSystemModule;
 using Features.SceneLoaderModule.Scripts.Installers;
 using Zenject;
 
@@ -9,6 +10,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             AssetLoaderServiceModuleInstaller.Install(Container);
             ConfigurationInstaller.Install(Container);
             SceneLoaderServiceModuleInstaller.Install(Container);
+            SavingSystemModuleInstaller.Install(Container);
         }
     }
 }
