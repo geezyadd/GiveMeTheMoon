@@ -45,5 +45,8 @@ MonoBehaviour:
   _knockdownMinShare: 0.2
   _effect: {fileID: 11400000, guid: c54970ca018971746a2383c0de184e83, type: 2}
   _effectScale: 1
+  _groundEffect: {fileID: 11400000, guid: e13b48b49205e9440bed4b77c7d62602, type: 2}
+  _groundEffectScale: 1
+  _groundFlatRadius: 2.5
   _shake: {fileID: 11400000, guid: e806a1e324f3c6c43abfd30b89c24ce4, type: 2}
   _shakeDistance: 25

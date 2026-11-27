@@ -47,6 +47,17 @@ explosion during the flight's world shift is not moved with the world; a wave re
   off) and their `...Vfx` definitions (prewarm 1, max 6, life 0.5..6 s); `ScreenShake_ExplosionSmall/Medium/Large`
   (amplitude 0.45 / 0.7 / 1.0, frequency 1, 0.3 / 0.35 / 0.45 s); shake distances 15 / 25 / 40 m. The pack itself sits
   in `Assets/GabrielAguiarProductions` (imported by the user; not yet moved under `Global/Packages`).
+- **Ground or air look** (2026-11-27, `demo/ground-explosion`): `ExplosionEffects.Play` asks `ExplosionGroundProbe`
+  whether the explosion went off on the ground: a surface on the configuration's `Ground Layers` (Default, Ground,
+  FieldRock) at most `Ground Probe Distance` (1 m) under the centre, leaning at most `Ground Max Slope Degrees` (40)
+  there, and 8 rays on a ring of the preset's `Ground Flat Radius` (Small / Medium / Large: 1.5 / 2.5 / 4 m) all finding
+  the surface within `Ground Flat Tolerance` (0.6 m: the rock islands are uneven by ~0.4 m) of that height. Then the
+  preset's `Ground Effect` plays on the surface point; in the air, near an edge, on a slope or a small thing the air
+  `Effect` plays at the centre. A grenade or rocket that struck the ground goes off on it; one that timed out in the air
+  or struck a player (the centre is high above the ground) stays in the air; the lobby mine (0.3 m over the ground) gets
+  the ground look too. Each peer decides by itself, like the rest of the look. Ground looks: `ExplosionGroundSmall /
+  Medium / Large` (+ `...Vfx`), the pack's `vfx_StylizedExplosion_v1_S/M/L` with a `ParticleSystemVfx` (Play Once);
+  the pack's v2..v4 are the alternatives. Tests: `ExplosionGroundProbeTests`.
 - `IExplosionService` / `ExplosionService`: `ServerExplode(centre, preset)`, server only. Sends `ExplosionMessage`
   (centre, preset index) to every client with `NetworkServer.SendToAll`; a server without a local client runs the
   wave itself.

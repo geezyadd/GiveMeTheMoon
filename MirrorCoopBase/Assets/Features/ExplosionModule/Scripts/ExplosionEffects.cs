@@ -6,20 +6,28 @@ using UnityEngine;
 
 namespace Features.ExplosionModule {
     // Plays the preset's effect at the centre and shakes this peer's camera, fully at the centre and less with the
-    // camera's distance, to nothing at the preset's shake distance.
+    // camera's distance, to nothing at the preset's shake distance. An explosion that went off on wide flat ground
+    // (ExplosionGroundProbe) plays the preset's ground effect on the surface instead of the air one.
     public sealed class ExplosionEffects : IExplosionEffects {
         private readonly IVfxService _vfxService;
         private readonly IScreenShakeService _screenShakeService;
         private readonly IGameCameraService _gameCameraService;
+        private readonly ExplosionConfiguration _configuration;
+        private readonly ExplosionGroundProbe _groundProbe = new();
 
-        public ExplosionEffects(IVfxService vfxService, IScreenShakeService screenShakeService, IGameCameraService gameCameraService) {
+        public ExplosionEffects(IVfxService vfxService, IScreenShakeService screenShakeService, IGameCameraService gameCameraService,
+                                ExplosionConfiguration configuration) {
             _vfxService = vfxService;
             _screenShakeService = screenShakeService;
             _gameCameraService = gameCameraService;
+            _configuration = configuration;
         }
 
         public void Play(Vector3 center, ExplosionPreset preset) {
-            if (preset.Effect != null)
+            if (preset.GroundEffect != null
+                && _groundProbe.TryFindGround(center, preset.GroundFlatRadius, _configuration.Ground, out Vector3 groundPoint))
+                _vfxService.Play(preset.GroundEffect, groundPoint, Quaternion.identity, preset.GroundEffectScale);
+            else if (preset.Effect != null)
                 _vfxService.Play(preset.Effect, center, Quaternion.identity, preset.EffectScale);
 
             if (preset.Shake != null)

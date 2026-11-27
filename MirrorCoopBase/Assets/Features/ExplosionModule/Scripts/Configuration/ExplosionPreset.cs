@@ -28,6 +28,12 @@ namespace Features.ExplosionModule.Configuration {
         [SerializeField] private VfxDefinition _effect;
         [Tooltip("The effect's size; 1 is its prefab's own.")]
         [SerializeField, Min(0.01f)] private float _effectScale = 1f;
+        [Tooltip("The effect played instead when it goes off on wide flat ground. Empty: always the effect above.")]
+        [SerializeField] private VfxDefinition _groundEffect;
+        [Tooltip("The ground effect's size; 1 is its prefab's own.")]
+        [SerializeField, Min(0.01f)] private float _groundEffectScale = 1f;
+        [Tooltip("The ground must be flat this far around the centre, m, for the ground effect: nearer an edge the effect above plays.")]
+        [SerializeField, Min(0f)] private float _groundFlatRadius = 2f;
         [Tooltip("The screen shake of a player who sees it go off.")]
         [SerializeField] private ScreenShakeProfile _shake;
         [Tooltip("The shake is full at the centre and fades to nothing at this distance from the camera, m.")]
@@ -42,6 +48,9 @@ namespace Features.ExplosionModule.Configuration {
         public float KnockdownMinShare => _knockdownMinShare;
         public VfxDefinition Effect => _effect;
         public float EffectScale => _effectScale;
+        public VfxDefinition GroundEffect => _groundEffect;
+        public float GroundEffectScale => _groundEffectScale;
+        public float GroundFlatRadius => _groundFlatRadius;
         public ScreenShakeProfile Shake => _shake;
         public float ShakeDistance => _shakeDistance;
 
