@@ -113,7 +113,8 @@ types.
      `Features.EmoteModule.Contracts`, `Features.EmoteModule.Data` (no references), `Features.CoroutineRunnerModule`,
      `Features.LoadingScreenModule.Contracts` (no references), `Features.SettingsModule.Data` (no references),
      `Features.SavingSystemModule.Contracts`, `Features.AudioModule` (Zenject, FMODUnity),
-     `Features.ConstellationModule.Data` (NetworkModel); third-party
+     `Features.ConstellationModule.Data` (NetworkModel), `Features.BehaviourTreeModule` (Zenject; its `.Network`
+     (Mirror) and `.Editor` assemblies are in its file); third-party
      `QuickOutline` also has its own asmdef (the unused `Mini Mapa(Radar)` pack was deleted on 2026-10-25).
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
@@ -179,6 +180,7 @@ types.
 | [PlayerProfileModule](MirrorCoopBase/Assets/Features/PlayerProfileModule/AGENTS.md) | player names and nameplates |
 | [TooltipModule](MirrorCoopBase/Assets/Features/TooltipModule/AGENTS.md) | interaction tooltips |
 | [GameCoreModule](MirrorCoopBase/Assets/Features/GameCoreModule/AGENTS.md) | composition root (installers), shared contracts, scenes |
+| [BehaviourTreeModule](MirrorCoopBase/Assets/Features/BehaviourTreeModule/AGENTS.md) | code-built behaviour trees for future enemies: the tree, its nodes and fluent builder, a single-player and a server-only Mirror runner, the BT Inspector editor window |
 | [MatrixModule](MirrorCoopBase/Assets/Features/MatrixModule/AGENTS.md) | generic grid with shape insert and A* path finding |
 | [Loop tests](MirrorCoopBase/Assets/Tests/PlayMode/LoopSmoke/AGENTS.md) | `LoopSmokeTest` and its checks, the ride test, the soak test, adding a loop test check |
 | [Two-player test](MirrorCoopBase/Assets/Tests/Coop/AGENTS.md) | `CoopTwoProcessTest` with a real second client process |
