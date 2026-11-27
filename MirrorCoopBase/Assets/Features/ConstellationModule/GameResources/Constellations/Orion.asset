@@ -17,27 +17,35 @@ MonoBehaviour:
   - _name: Betelgeuse
     _rightAscensionDegrees: 88.79294
     _declinationDegrees: 7.40706
+    _magnitude: 0.45
   - _name: Bellatrix
     _rightAscensionDegrees: 81.28276
     _declinationDegrees: 6.3497
+    _magnitude: 1.64
   - _name: Meissa
     _rightAscensionDegrees: 83.78449
     _declinationDegrees: 9.93416
+    _magnitude: 3.39
   - _name: Mintaka
     _rightAscensionDegrees: 83.00167
     _declinationDegrees: -0.29909
+    _magnitude: 2.25
   - _name: Alnilam
     _rightAscensionDegrees: 84.05339
     _declinationDegrees: -1.20192
+    _magnitude: 1.69
   - _name: Alnitak
     _rightAscensionDegrees: 85.18969
     _declinationDegrees: -1.94257
+    _magnitude: 1.74
   - _name: Saiph
     _rightAscensionDegrees: 86.93912
     _declinationDegrees: -9.66961
+    _magnitude: 2.07
   - _name: Rigel
     _rightAscensionDegrees: 78.63447
     _declinationDegrees: -8.20164
+    _magnitude: 0.18
   _lines:
   - _fromStar: 2
     _toStar: 0

@@ -12,7 +12,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a49972fdbb9405049a01cf0a61b5a3cf, type: 3}
   m_Name: ConstellationHighlightConfiguration_Default
   m_EditorClassIdentifier: 
-  _starRadiusDegrees: 0.6
-  _starColor: {r: 2.5, g: 2.3, b: 2, a: 1}
-  _lineColor: {r: 0.25, g: 0.35, b: 0.55, a: 1}
-  _lineGapDegrees: 0.9
+  _referenceMagnitude: 1
+  _magnitudeSizeExponent: 0.5
+  _magnitudeBrightnessExponent: 0.5
+  _starScaleRange: {x: 0.35, y: 2}
+  _starBrightnessRange: {x: 0.35, y: 2}
+  _starColor: {r: 0.95, g: 0.97, b: 1, a: 1}
+  _coreRadiusDegrees: 0.04
+  _coreIntensity: 8
+  _haloRadiusDegrees: 0.55
+  _haloIntensity: 0.3
+  _spikeLengthDegrees: 1.4
+  _spikeWidthDegrees: 0.015
+  _spikeIntensity: 1.6
+  _spikeAngleDegrees: 15
+  _twinkleAmount: 0.08
+  _twinkleSpeed: 0.7
+  _lineColor: {r: 0.45, g: 0.62, b: 1, a: 1}
+  _lineWidthPixels: 8
+  _lineIntensity: 1.3
+  _lineGlowIntensity: 0.18
+  _lineGapDegrees: 0.3
+  _lineEndFadeDegrees: 0.25
