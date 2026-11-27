@@ -1,6 +1,7 @@
 using System;
 using FMOD.Studio;
 using FMODUnity;
+using UnityEngine;
 using STOP_MODE = FMOD.Studio.STOP_MODE;
 
 namespace Features.AudioModule {
@@ -30,6 +31,19 @@ namespace Features.AudioModule {
         public void Start() {
             if (_isDisposed == false && _instance.isValid())
                 _instance.start();
+        }
+
+        // Puts a 3D event at a world point; its spatializer in FMOD Studio sets how far it is heard. Call it before Start
+        // and every frame while its source moves. A 2D event ignores it.
+        public void SetPosition(Vector3 position) {
+            if (_isDisposed == false && _instance.isValid())
+                _instance.set3DAttributes(RuntimeUtils.To3DAttributes(position));
+        }
+
+        // The instance's own volume, 0..1 on top of the event's mix.
+        public void SetVolume(float volume) {
+            if (_isDisposed == false && _instance.isValid())
+                _instance.setVolume(volume);
         }
 
         // fadeOut: lets the event's own fade (AHDSR release) play out; false cuts it at once.

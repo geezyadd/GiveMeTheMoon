@@ -110,7 +110,7 @@ types.
      `Features.DebugModule.Contracts`, `Features.SonarModule.Contracts`, `Features.SonarModule.Data`,
      `Features.PoolModule` (no references),
      `Features.SpaceHazeModule.Data`, `Features.AttackModule.Contracts`, `Features.ExplosionModule.Contracts`,
-     `Features.EmoteModule.Contracts`, `Features.EmoteModule.Data` (no references), `Features.CoroutineRunnerModule`,
+     `Features.EmoteModule.Contracts`, `Features.EmoteModule.Data` (FMODUnity), `Features.CoroutineRunnerModule`,
      `Features.LoadingScreenModule.Contracts` (no references), `Features.SettingsModule.Data` (no references),
      `Features.SavingSystemModule.Contracts`, `Features.AudioModule` (Zenject, FMODUnity),
      `Features.ConstellationModule.Data` (NetworkModel); third-party

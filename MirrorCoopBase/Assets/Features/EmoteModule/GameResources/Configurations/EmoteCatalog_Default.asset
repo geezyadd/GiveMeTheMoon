@@ -63,3 +63,10 @@ MonoBehaviour:
     _triggerName: EmoteFlair
     _clip: {fileID: -203655887218126122, guid: b55183db32eab5846a5c0ddd7fbcbc58, type: 3}
     _introClip: {fileID: -203655887218126122, guid: be65668643da31442880b75ef5ceed31, type: 3}
+  _music:
+    Guid:
+      Data1: 61582586
+      Data2: 1324697599
+      Data3: 290824863
+      Data4: -1228575025
+    Path: event:/Music/dance_music

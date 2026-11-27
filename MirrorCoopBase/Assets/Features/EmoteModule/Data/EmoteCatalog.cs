@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FMODUnity;
 using UnityEngine;
 
 namespace Features.EmoteModule.Data {
@@ -9,8 +10,11 @@ namespace Features.EmoteModule.Data {
         menuName = "Configurations/EmoteModule/" + nameof(EmoteCatalog))]
     public sealed class EmoteCatalog : ScriptableObject {
         [SerializeField] private List<EmoteEntry> _emotes = new();
+        [Tooltip("The FMOD event (a loop) that plays from a player while they emote, heard near them. Empty: silence.")]
+        [SerializeField] private EventReference _music;
 
         public IReadOnlyList<EmoteEntry> Emotes => _emotes;
+        public EventReference Music => _music;
 
         public void SetEmotes(IEnumerable<EmoteEntry> emotes) {
             _emotes.Clear();

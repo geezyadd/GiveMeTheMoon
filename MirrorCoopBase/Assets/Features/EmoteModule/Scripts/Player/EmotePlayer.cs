@@ -1,3 +1,4 @@
+using Features.AudioModule;
 using Features.CharacterMovableModule.Scripts;
 using Features.EmoteModule.Contracts;
 using Features.EmoteModule.Data;
@@ -14,6 +15,9 @@ namespace Features.EmoteModule.Player {
     // longer simulated). A copy also stops as soon as the owner's packets say the owner's emote no longer plays, so it
     // never keeps an emote the owner stopped, whatever it missed. The owner's emote stops on any game flow change
     // (a scene change, the lobby, the menu), so nobody carries a dance into the next scene.
+    // While an emote plays, the catalog's music plays from the body on this peer (the event's spatializer sets how
+    // far it is heard); a new emote over the one that plays keeps it going, a stop fades it out. While it plays the body
+    // is a MusicDuckSources source, so the session music gives way near it.
     public sealed class EmotePlayer : MonoBehaviour {
         [SerializeField] private PlayerAnimationDriver _driver;
         [SerializeField] private CharacterMovableBase _movable;
@@ -25,6 +29,9 @@ namespace Features.EmoteModule.Player {
         private EmoteCatalog _catalog;
         private IGameFlowStateMachineService _gameFlow;
         private IEmotePlays _playSource;
+        private SoundInstance _music;
+        private MusicDuckSources _duckSources;
+        private bool _isMusicOn;
         private int[] _triggers = new int[0];
         private int _playingTrigger;
         private bool _isPlaying;
@@ -38,8 +45,11 @@ namespace Features.EmoteModule.Player {
         public bool IsPlaying => _isPlaying;
 
         [Inject]
-        private void Construct(EmoteCatalog catalog, IGameFlowStateMachineService gameFlow) {
+        private void Construct(EmoteCatalog catalog, IGameFlowStateMachineService gameFlow, IAudioService audioService,
+            MusicDuckSources duckSources) {
+            _duckSources = duckSources;
             _catalog = catalog;
+            _music = audioService.CreateInstance(catalog.Music);
             _gameFlow = gameFlow;
             _gameFlow.StateExited += HandleGameFlowStateExited;
             _triggers = new int[catalog.Emotes.Count];
@@ -56,6 +66,9 @@ namespace Features.EmoteModule.Player {
         private void OnDestroy() {
             if (_gameFlow != null)
                 _gameFlow.StateExited -= HandleGameFlowStateExited;
+
+            _music?.Dispose();
+            _duckSources?.Remove(transform);
         }
 
         private void HandleGameFlowStateExited(System.Type _) {
@@ -75,6 +88,9 @@ namespace Features.EmoteModule.Player {
 
             if (_playSource != null && _playCounter.Step(isAvailable, _playSource.EmoteCount))
                 Play(_playSource.EmoteIndex);
+
+            if (_isPlaying)
+                _music?.SetPosition(transform.position);
         }
 
         private void Play(int index) {
@@ -87,12 +103,28 @@ namespace Features.EmoteModule.Player {
             _driver.Play(_triggers[index]);
             _playingTrigger = _triggers[index];
             _isPlaying = true;
+            StartMusic();
+        }
+
+        // Once per run of emotes: a new emote over the one that plays keeps the music going. After a stop the music
+        // starts again even if its fade-out is still playing.
+        private void StartMusic() {
+            if (_music == null || _isMusicOn)
+                return;
+
+            _isMusicOn = true;
+            _music.SetPosition(transform.position);
+            _music.Start();
+            _duckSources.Add(transform);
         }
 
         // A trigger not taken yet (the emote set this frame) is taken back too, so it does not start after the stop.
         // With the animator off nothing is sent to it: an animator turned off goes back to its default states.
         private void Stop() {
             _isPlaying = false;
+            _isMusicOn = false;
+            _music?.Stop();
+            _duckSources?.Remove(transform);
             if (_driver.CanPlay == false)
                 return;
 

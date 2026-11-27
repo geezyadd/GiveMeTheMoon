@@ -20,6 +20,8 @@ already gets. Users now:
 - GrabModule: `Grabbable.EquipSound` where an item comes into a hand (pickup or taken out of an inventory slot), played
   by `HeldItemRegistry` on every peer from the hand model's change. The four hand weapons use `weapon_equip`; any other
   item gets one by setting the field.
+- EmoteModule: `EmoteCatalog.Music` (`event:/Music/dance_music`, a loop) plays from a player's body while they emote,
+  on every peer that simulates the body (`EmotePlayer`), so it is heard near the dancer.
 
 ## FMOD
 - The FMOD for Unity integration is in `Assets/Plugins/FMOD` (assembly `FMODUnity`); the FMOD Studio project is
@@ -38,9 +40,15 @@ GameCore's `GlobalSceneInstaller`.
   `PlayOneShot2D(sound)` (no position: the event should have no spatializer in FMOD Studio). An empty reference plays
   nothing.
 - `SoundInstance` (`IAudioService.CreateInstance(sound)`): a long sound (music, ambience, loops) around one FMOD
-  `EventInstance`: `Start`, `Stop(fadeOut)`, `IsPlaying`. Its owner must `Dispose` it: that stops it with its fade and
+  `EventInstance`: `Start`, `Stop(fadeOut)`, `IsPlaying`, `SetVolume(0..1)`, `SetPosition(point)` (a 3D event's place, set before `Start` and every frame while
+  its source moves). Its owner must `Dispose` it: that stops it with its fade and
   releases the instance. An empty reference gives an instance that does nothing.
 - `Ambience/AmbienceConfiguration` (`GameResources/Configurations/AmbienceConfiguration_Default`, Addressables group
   `Configurations`, bound in `ConfigurationInstaller`): `SessionMusic` (`event:/Music/tension_music`). GameCore's
   `AmbienceSystem` (bound in `GlobalSceneInstaller`) starts it on entering `SessionGameFlowState` (the lobby comes first)
   and stops it on leaving to the menu; it keeps playing in the game scene. It disposes the instance with the container.
+  **Ducking (temporary, in code):** while a `MusicDuckSources` source is within `Duck Radius` (15 m) of `Camera.main`,
+  the session music goes down to `Ducked Volume` (0: silent) at `Duck Speed` (2 per second) and comes back after. Its only
+  source now is a dancing player (`EmotePlayer`). The radius is separate from the dance event's FMOD distance; a
+  sidechain in the FMOD mixer should replace this later.
+- `MusicDuckSources` (plain, bound in `AudioModuleInstaller`): the transforms the session music gives way near.

@@ -20,10 +20,11 @@ were not played in a session or with two players yet.
 - `Features.EmoteModule.Contracts` (layer 1; no references): `IEmotePlays` (`IsAvailable`, `EmoteCount`,
   `EmoteIndex`): where a player's emote plays come from on this peer. PlayerReplicaModule reads the owner's through it
   for the body state packet.
-- `Features.EmoteModule.Data` (layer 1; no references): the catalog, so the animator builder
+- `Features.EmoteModule.Data` (layer 1; references FMODUnity for the music): the catalog, so the animator builder
   (`Features.PlayerAnimationModule.Editor`) can make the Emote layer from it without referencing this module.
 - `Features.EmoteModule` (layer 4; references `EmoteModule.Contracts`, `EmoteModule.Data`, `PlayerAnimationModule`,
-  `PlayerReplicaModule`, `CharacterMovableModule`, `CameraModule`, `GameFlowStateMachineModule`, `MvpModule`, Input,
+  `PlayerReplicaModule`, `CharacterMovableModule`, `CameraModule`, `GameFlowStateMachineModule`, `MvpModule`,
+  `AudioModule`, FMODUnity, Input,
   Mirror, Zenject, `UnityEngine.UI`). `EmoteModuleInstaller` (installed in `GlobalSceneInstaller`) binds
   `EmoteWheelSystem`; `EmoteWheelModel` is bound in `DataInstaller`, the window in `WindowsModuleInstaller`.
 - `Features.EmoteModule.Editor`: `EmoteAssetsBuilder`. Tests: `Features.EmoteModule.Editor.Tests`.
@@ -69,6 +70,12 @@ were not played in a session or with two players yet.
   air (`PlayerAnimationDriver.IsFlying`) stops it: the emote's trigger is reset and `EmoteStop` fires. **No stop
   message:** a copy's walk input comes from the owner's packets (`PacketMovementControls`), its jumps from the jump
   counter in them and its ground from its own sensor, so every peer sees the same movement and stops the emote itself.
+- Dance music: `EmoteCatalog.Music` (`event:/Music/dance_music`) is one `SoundInstance` per `EmotePlayer`, started on
+  a play (a new emote over the one that plays keeps it going), moved to the body every frame while the emote plays,
+  stopped with its fade on the stop, disposed with the player. While it plays the body is in `MusicDuckSources`, so the
+  session music goes down near it (see AudioModule). Nothing goes over the network: every peer plays it from
+  its own copy of the body. How far it is heard is the event's spatializer in FMOD Studio (min/max distance); without
+  one the event is 2D and everybody hears every dancer at full volume. Two dancers play two unsynced copies.
 - `EmotePlayCounter` (pure): the count to plays, as the slap's `AttackPressCounter`.
 - Editor: `EmoteAssetsBuilder` (Tools > Emotes > Build Emote Assets) creates the catalog, the configuration and the
   window prefab once (existing ones are left as they are), puts them in their Addressables groups, adds

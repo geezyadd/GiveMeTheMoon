@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="AudioFile" id="{8cd963ab-6ebd-439d-902b-c7a91f8c3fee}">
+		<property name="assetPath">
+			<value>freesound_community-boom-break-126_2-106413.mp3</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>24</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>3.7440000000000002</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{48d8b6ce-137d-4128-bcb0-1062e608e7a5}</destination>
+		</relationship>
+	</object>
+</objects>

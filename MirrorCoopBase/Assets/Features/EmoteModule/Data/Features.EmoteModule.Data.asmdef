@@ -1,7 +1,9 @@
 {
     "name": "Features.EmoteModule.Data",
     "rootNamespace": "Features.EmoteModule.Data",
-    "references": [],
+    "references": [
+        "FMODUnity"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

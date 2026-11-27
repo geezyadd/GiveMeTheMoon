@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="AudioFile" id="{fcfd2d53-eb92-4ca2-996c-a3f5befdfd07}">
+		<property name="assetPath">
+			<value>alien_i_trust-loop-pack-link-in-bio-breakbeat-loop-125-bpm-336979.mp3</value>
+		</property>
+		<property name="isStreaming">
+			<value>true</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>44.0999985</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>15.386122448979592</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{48d8b6ce-137d-4128-bcb0-1062e608e7a5}</destination>
+		</relationship>
+	</object>
+</objects>
