@@ -82,6 +82,11 @@ model's bounds.
 - The turret tiers have no magazine (capacity 0): they never run out.
 - `WeaponFeelProfile` got `RecoilKickMeters` / `RecoilKickDegrees` (a single shot's kick, `RecoilKick`), `ShotShake` (the holder's view kick per shot of a single-shot weapon). `HandGunFeel` is the feel presenter of a gun in the hand (a muzzle flash per shot, kick, tracer, impact, view kick).
 - `IWeaponCatalogIndexService` (`WeaponCatalogIndexService`) gives a weapon's catalog index **by id**: in a player build a scene spawn prefab holds its own copy of a definition, apart from the Addressables catalog's (a reference match threw `KeyNotFoundException` on the coop client). The turret station uses it too.
+- Impact effect (2026-11-27): `WeaponFeelProfile.ImpactEffect` (a `VfxDefinition`, + `ImpactEffectScale`) is played by
+  `HandGunFeel` through `IVfxService` where a shot strikes, turned up along the surface normal, in place of the
+  `ImpactBursts` sparks / chips / dust / flash (those stay for a profile without one and for the turrets). The pistol
+  and the knockdown gun use `PistolImpactVfx` (`GameResources/Weapons/PistolImpact.prefab`: the user's
+  `vfx_pistol_impact` from the GabrielAguiarProductions pack with a `ParticleSystemVfx`, Play Once; pool 4..16, 3 s).
 - `HeldWeaponReadinessModel` (bound in `DataInstaller`, local): the local player's weapon in hand for the HUD ring around the crosshair (`HeldWeaponReadinessView` in `GameHudWindow`, LobbyModule).
 
 ## Tests
