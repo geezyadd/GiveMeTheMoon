@@ -200,6 +200,14 @@ in open space. Code in `Scripts/Overboard/`, numbers in `ShipOverboardConfigurat
   slider, x1..x10, `Debug/ShipOverboardDebugSystem`); the ragdoll turns smoothly to fly head first (PlayerBodyModule). The fall kill
   skips a drifter (`IShipOverboardQuery`). Ends also on death (`ShipRunRiderService.ServerReleaseRider`). Not restored
   on a rejoin.
+- **Loose items drift too** (`ShipOverboardItemSystem`, server, every 0.2 s, rule `ShipOverboardRule.DecideItem`, since
+  2026-11-27): a grabbable item nobody holds and the server's physics moves (not held, not pinned deck cargo, not
+  installed: not kinematic) that is outside every safe space (the ship's volume, in flight or standing, and any
+  `OverboardArea`) loses its gravity and gets `ItemDriftLinearDamping` / `ItemDriftAngularDamping` (0.6 / 0.4), so its
+  speed fades to a slow drift; one thrown off the flying ship hangs where it was and falls behind. Right over a floor or
+  the deck again after `MinDriftSecondsBeforeCapture` it gets its gravity and damping back; farther than
+  `ItemMaxDistanceMeters` (100 m) from the ship and every area it is removed (`NetworkServer.Destroy`, also a scene
+  item such as the lobby's weapons, and the helm if it is thrown away). Nothing synced: clients see it by its network body.
 - Not done yet: the "man overboard" sonar contact.
 
 ## Cargo on the deck

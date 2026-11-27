@@ -175,6 +175,36 @@ namespace Features.ShipModule.Scripts.Editor.Tests {
         public void WhenDrifterIsWithinLimits_ThenItDriftsOn() =>
             Assert.AreEqual(ShipOverboardDecision.None, _rule.Decide(Drifting(isRiding: false, isInVolume: false, LONG_ENOUGH_SECONDS, NEAR_SHIP_METERS)));
 
+        [Test]
+        public void WhenLooseItemIsInSafeSpace_ThenItStaysAsItIs() =>
+            Assert.AreEqual(ShipOverboardItemDecision.None, _rule.DecideItem(new ShipOverboardItemState(false, true, true, 0f, 0f)));
+
+        [Test]
+        public void WhenLooseItemLeavesSafeSpace_ThenItBeginsToDrift() =>
+            Assert.AreEqual(ShipOverboardItemDecision.BeginDrift, _rule.DecideItem(new ShipOverboardItemState(false, false, false, 0f, 3f)));
+
+        [Test]
+        public void WhenDriftingItemIsOverFloorLongEnough_ThenItsDriftEnds() =>
+            Assert.AreEqual(ShipOverboardItemDecision.EndDrift,
+                _rule.DecideItem(new ShipOverboardItemState(true, true, true, LONG_ENOUGH_SECONDS, 0f)));
+
+        [Test]
+        public void WhenDriftingItemIsOverFloorTooSoon_ThenItDriftsOn() =>
+            Assert.AreEqual(ShipOverboardItemDecision.None, _rule.DecideItem(new ShipOverboardItemState(true, true, true, 0f, 0f)));
+
+        [Test]
+        public void WhenDriftingItemIsFartherThanLimit_ThenItIsRemoved() {
+            float tooFar = _configuration.ItemMaxDistanceMeters + 1f;
+
+            Assert.AreEqual(ShipOverboardItemDecision.Remove,
+                _rule.DecideItem(new ShipOverboardItemState(true, false, false, LONG_ENOUGH_SECONDS, tooFar)));
+        }
+
+        [Test]
+        public void WhenDriftingItemIsWithinLimit_ThenItDriftsOn() =>
+            Assert.AreEqual(ShipOverboardItemDecision.None,
+                _rule.DecideItem(new ShipOverboardItemState(true, false, false, LONG_ENOUGH_SECONDS, NEAR_SHIP_METERS)));
+
         private static ShipOverboardState Aboard(bool isFlying, bool hasRidden, bool isRiding, bool isInVolume) =>
             new ShipOverboardState(isFlying, false, hasRidden, isRiding, isInVolume, 0f, 0f);
 

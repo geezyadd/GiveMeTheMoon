@@ -58,6 +58,7 @@ namespace Features.ShipModule.Scripts {
             Container.Bind<IShipOverboardQuery>().To<ShipOverboardQuery>().AsSingle();
             Container.BindInterfacesTo<ShipOverboardEventBus>().AsSingle();
             Container.BindInterfacesTo<ShipOverboardSystem>().AsSingle();
+            Container.BindInterfacesTo<ShipOverboardItemSystem>().AsSingle();
         }
 
         // Editor / development builds decorate the config's flight length with the debug length the harness sets.

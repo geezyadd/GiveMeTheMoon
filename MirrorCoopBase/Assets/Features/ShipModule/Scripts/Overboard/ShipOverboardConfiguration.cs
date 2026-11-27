@@ -31,7 +31,18 @@ namespace Features.ShipModule.Scripts.Overboard {
         [Tooltip("A player drifting longer than this away from the areas is put back at the return point, seconds.")]
         [SerializeField, Min(0f)] private float _areaMaxDriftSeconds = 60f;
 
+        [Header("Loose items")]
+        [Tooltip("Linear damping of a loose item drifting outside the safe space: its speed fades to a slow drift.")]
+        [SerializeField, Min(0f)] private float _itemDriftLinearDamping = 0.6f;
+        [Tooltip("Angular damping of a drifting item: its spin fades.")]
+        [SerializeField, Min(0f)] private float _itemDriftAngularDamping = 0.4f;
+        [Tooltip("A drifting item farther than this from the ship and the nearest overboard area is removed, meters.")]
+        [SerializeField, Min(0f)] private float _itemMaxDistanceMeters = 100f;
+
         public CharacterDriftSettings Drift => _drift;
+        public float ItemDriftLinearDamping => _itemDriftLinearDamping;
+        public float ItemDriftAngularDamping => _itemDriftAngularDamping;
+        public float ItemMaxDistanceMeters => _itemMaxDistanceMeters;
         public float AreaMaxDistanceMeters => _areaMaxDistanceMeters;
         public float AreaMaxDriftSeconds => _areaMaxDriftSeconds;
         public float VolumeEdgeMeters => _volumeEdgeMeters;

@@ -7,5 +7,6 @@ namespace Features.ShipModule.Scripts.Overboard {
         public bool IsInArea(Bounds floor, Vector3 point);
         public bool IsOverFloor(Bounds floor, Vector3 point);
         public ShipOverboardDecision Decide(in ShipOverboardState state);
+        public ShipOverboardItemDecision DecideItem(in ShipOverboardItemState state);
     }
 }
