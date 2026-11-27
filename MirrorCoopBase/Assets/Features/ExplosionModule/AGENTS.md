@@ -45,7 +45,7 @@ explosion during the flight's world shift is not moved with the world; a wave re
 - Looks (`GameResources/Effects`): `ExplosionAirSmall/Medium/Large` (prefab variants of the pack's
   `vfx_StylizedExplosion_360_v1_S/M/L` with a `ParticleSystemVfx`; the pack's root system loops, `Play Once` turns it
   off) and their `...Vfx` definitions (prewarm 1, max 6, life 0.5..6 s); `ScreenShake_ExplosionSmall/Medium/Large`
-  (amplitude 0.45 / 0.7 / 1.0, frequency 1, 0.3 / 0.35 / 0.45 s); shake distances 15 / 25 / 40 m. The pack itself sits
+  (amplitude 2.5 / 4 / 6 since 2026-11-27: at 0.45 / 0.7 / 1.0 the `6D Shake` noise moved the view by ~0.1 degree and nobody saw it; frequency 1, 0.3 / 0.35 / 0.45 s); shake distances 15 / 25 / 40 m. The pack itself sits
   in `Assets/GabrielAguiarProductions` (imported by the user; not yet moved under `Global/Packages`).
 - **Ground or air look** (2026-11-27, `demo/ground-explosion`): `ExplosionEffects.Play` asks `ExplosionGroundProbe`
   whether the explosion went off on the ground: a surface on the configuration's `Ground Layers` (Default, Ground,
