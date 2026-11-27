@@ -120,7 +120,8 @@ types.
   3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.PlayerReplicaModule`,
      `Features.PlayerAnimationModule`.
   4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`,
-     `Features.MovingPlatformModule`, `Features.AttackModule`, `Features.ExplosionModule`, `Features.EmoteModule`.
+     `Features.MovingPlatformModule`, `Features.AttackModule`, `Features.ExplosionModule`, `Features.EmoteModule`,
+     `Features.InventoryModule`.
   5. `Features.WeaponModule` (since 2026-11-26: it uses the input, the camera, the movement's control block and the
      explosions), `Features.PlayerBodyModule`, `Features.ShipImpactModule`, `Features.ShipDamageModule`, `Features.PlayerLifeModule`.
   6. `Features.HandWeaponModule`, `Features.TurretModule`, `Features.LobbyModule` (Ship, Grab, GameFlow, Mvp, Connection,
@@ -160,6 +161,7 @@ types.
 | [StagePresetModule](MirrorCoopBase/Assets/Features/StagePresetModule/AGENTS.md) | playtest stage presets |
 | [ShopModule](MirrorCoopBase/Assets/Features/ShopModule/AGENTS.md) | the station shop, the crew wallet, buying back a dead crewmate |
 | [GrabModule](MirrorCoopBase/Assets/Features/GrabModule/AGENTS.md) | interaction: aim, grab, use, hold to use |
+| [InventoryModule](MirrorCoopBase/Assets/Features/InventoryModule/AGENTS.md) | the player's inventory: 4 slots for hand weapons and tools, the selected slot in the hand, keys 1–4 and the wheel, Q drop / throw, the HUD bar |
 | [CameraModule](MirrorCoopBase/Assets/Features/CameraModule/AGENTS.md) | the camera and the camera shake |
 | [PlayerLifeModule](MirrorCoopBase/Assets/Features/PlayerLifeModule/AGENTS.md) | death, damage, spectator |
 | [Connection](MirrorCoopBase/Assets/Features/Connection/AGENTS.md) | connection, authentication, joining a running session |

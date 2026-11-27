@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _id: hammer
   _displayName: Hammer
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: a7cceef95c4d0704397ef1542bb4c8b5, type: 3}
   _description: 'Patches hull breaches: hold it, look at a breach and hold the use
     key.'
   _price: 150

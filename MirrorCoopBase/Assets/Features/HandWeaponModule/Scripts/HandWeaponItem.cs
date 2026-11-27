@@ -1,3 +1,4 @@
+using Features.GrabModule.Scripts;
 using Features.WeaponModule.Scripts.Core;
 using Features.WeaponModule.Scripts.Definitions;
 using Features.WeaponModule.Scripts.Feel;
@@ -8,8 +9,8 @@ namespace Features.HandWeaponModule.Scripts {
     // A grabbable item as a weapon of its definition, and the item's feel bound once. The feel's effects live in a
     // frame of their own in the item's scene, so a tracer does not swing with the hand that fired it. While held, the
     // weapon model (the pose root, with the muzzle) is placed in the view or the hand; let go, it is back on the item.
-    // Its capabilities (a magazine) are components on the item.
-    public sealed class HandWeaponItem : MonoBehaviour, IWeapon {
+    // Its capabilities (a magazine) are components on the item. An inventory slot shows the definition's icon or name.
+    public sealed class HandWeaponItem : MonoBehaviour, IWeapon, IInventoryItemDisplay {
         private const string FEEL_FRAME_NAME = "HandWeaponFeelFrame";
 
         [SerializeField] private HandWeaponDefinition _definition;
@@ -21,6 +22,8 @@ namespace Features.HandWeaponModule.Scripts {
         public WeaponDefinition Definition => _definition.Weapon;
         public IWeaponFeelPresenter Feel { get; private set; }
         public bool IsUsable => true;
+        public Sprite InventoryIcon => _definition.Icon;
+        public string InventoryName => _definition.DisplayName;
 
         private void Awake() {
             Feel = GetComponent<IWeaponFeelPresenter>();

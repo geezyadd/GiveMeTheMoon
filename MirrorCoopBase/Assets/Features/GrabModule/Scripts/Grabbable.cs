@@ -4,19 +4,29 @@ using Mirror;
 using UnityEngine;
 
 namespace Features.GrabModule.Scripts {
-    // An item a player can carry. Who holds it lives in the holder's PlayerHand model; HeldItemRegistry applies that
-    // state here, so the item has no synced hold state of its own.
+    // An item a player can carry. Who holds it lives in the holder's PlayerHand model and what a player carries
+    // stowed in their inventory model; HeldItemRegistry applies that state here, so the item has no synced hold state
+    // of its own. A stowed item is held out of sight: hidden, without collisions, following its carrier.
     public sealed class Grabbable : NetworkBehaviour {
         [SerializeField] private Rigidbody _rb;
         [SerializeField] private NetworkRigidbodyUnreliable _networkBody;
         [SerializeField] private Outline _outline;
+        [Tooltip("The item can be kept in an inventory slot (hand weapons, tools); off for ship modules.")]
+        [SerializeField] private bool _canStoreInInventory;
 
+        private StowedItemVisibility _stowedVisibility;
         private Transform _holdPoint;
         private bool _isHeld;
+        private bool _isStowed;
 
         internal event Action<Grabbable> Stopped;
 
         public bool CanBeGrabbed => _isHeld == false;
+        public bool CanStoreInInventory => _canStoreInInventory;
+        public bool IsStowed => _isStowed;
+
+        private void Awake() =>
+            _stowedVisibility = new StowedItemVisibility(GetComponentsInChildren<Renderer>(true), GetComponentsInChildren<Collider>(true));
 
         public override void OnStopServer() =>
             Stopped?.Invoke(this);
@@ -49,7 +59,22 @@ namespace Features.GrabModule.Scripts {
             _outline.enabled = hovered && CanBeGrabbed;
         }
 
+        // A thrown item: its velocity right after it left the hand, on the server that simulates it.
+        [Server]
+        public void ServerLaunch(Vector3 velocity) {
+            if (_rb != null && _rb.isKinematic == false)
+                _rb.linearVelocity = velocity;
+        }
+
+        [Server]
+        public void ServerMoveTo(Vector3 position) {
+            transform.position = position;
+            if (_rb != null)
+                _rb.position = position;
+        }
+
         internal void ApplyHold(Transform holdPoint) {
+            ShowIfStowed();
             _isHeld = true;
             _holdPoint = holdPoint;
             SetHovered(false);
@@ -65,7 +90,15 @@ namespace Features.GrabModule.Scripts {
             FollowHolder();
         }
 
+        // Held out of sight by a carrier; the follow keeps it with them so it comes out at the hand.
+        internal void ApplyStow(Transform holdPoint) {
+            ApplyHold(holdPoint);
+            _isStowed = true;
+            _stowedVisibility.Hide();
+        }
+
         internal void ApplyRelease() {
+            ShowIfStowed();
             _isHeld = false;
             _holdPoint = null;
             ApplyLoosePhysics();
@@ -82,6 +115,14 @@ namespace Features.GrabModule.Scripts {
                 _rb.position = position;
                 _rb.rotation = rotation;
             }
+        }
+
+        private void ShowIfStowed() {
+            if (_isStowed == false)
+                return;
+
+            _isStowed = false;
+            _stowedVisibility.Show();
         }
     }
 }

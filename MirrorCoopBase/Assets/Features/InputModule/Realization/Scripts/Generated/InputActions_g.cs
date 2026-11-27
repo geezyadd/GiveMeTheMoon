@@ -190,6 +190,51 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SelectSlot1"",
+                    ""type"": ""Button"",
+                    ""id"": ""e1d0438e-11ef-4b92-9b69-1195db529632"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SelectSlot2"",
+                    ""type"": ""Button"",
+                    ""id"": ""d629c03d-ed48-410b-ae6d-964365d0c68d"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SelectSlot3"",
+                    ""type"": ""Button"",
+                    ""id"": ""b6305e95-f8dd-4577-a261-786ffe74da7b"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SelectSlot4"",
+                    ""type"": ""Button"",
+                    ""id"": ""6b77decb-4e6a-4b78-8454-d21e27155e10"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SelectSlotScroll"",
+                    ""type"": ""Value"",
+                    ""id"": ""d34d5b10-3b56-42c5-a8ea-f039f2a810c2"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
@@ -412,6 +457,61 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""action"": ""Emote"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a6587de4-a687-45bb-af01-c62be99ae8ac"",
+                    ""path"": ""<Keyboard>/1"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and Mouse"",
+                    ""action"": ""SelectSlot1"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8575429a-ea8a-4d52-bad6-8f5523f626a8"",
+                    ""path"": ""<Keyboard>/2"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and Mouse"",
+                    ""action"": ""SelectSlot2"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8871cba5-69b2-4048-9779-4385245e35b0"",
+                    ""path"": ""<Keyboard>/3"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and Mouse"",
+                    ""action"": ""SelectSlot3"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e751f9ad-044d-4c67-94b4-1f494580b10f"",
+                    ""path"": ""<Keyboard>/4"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and Mouse"",
+                    ""action"": ""SelectSlot4"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""9ce54d16-c1ef-46be-9a70-15f19011b3f7"",
+                    ""path"": ""<Mouse>/scroll"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and Mouse"",
+                    ""action"": ""SelectSlotScroll"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -518,6 +618,11 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         m_MovementMap_Reload = m_MovementMap.FindAction("Reload", throwIfNotFound: true);
         m_MovementMap_ToggleCursor = m_MovementMap.FindAction("ToggleCursor", throwIfNotFound: true);
         m_MovementMap_Emote = m_MovementMap.FindAction("Emote", throwIfNotFound: true);
+        m_MovementMap_SelectSlot1 = m_MovementMap.FindAction("SelectSlot1", throwIfNotFound: true);
+        m_MovementMap_SelectSlot2 = m_MovementMap.FindAction("SelectSlot2", throwIfNotFound: true);
+        m_MovementMap_SelectSlot3 = m_MovementMap.FindAction("SelectSlot3", throwIfNotFound: true);
+        m_MovementMap_SelectSlot4 = m_MovementMap.FindAction("SelectSlot4", throwIfNotFound: true);
+        m_MovementMap_SelectSlotScroll = m_MovementMap.FindAction("SelectSlotScroll", throwIfNotFound: true);
         // UiMap
         m_UiMap = asset.FindActionMap("UiMap", throwIfNotFound: true);
         m_UiMap_CloseWindow = m_UiMap.FindAction("CloseWindow", throwIfNotFound: true);
@@ -618,6 +723,11 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_MovementMap_Reload;
     private readonly InputAction m_MovementMap_ToggleCursor;
     private readonly InputAction m_MovementMap_Emote;
+    private readonly InputAction m_MovementMap_SelectSlot1;
+    private readonly InputAction m_MovementMap_SelectSlot2;
+    private readonly InputAction m_MovementMap_SelectSlot3;
+    private readonly InputAction m_MovementMap_SelectSlot4;
+    private readonly InputAction m_MovementMap_SelectSlotScroll;
     /// <summary>
     /// Provides access to input actions defined in input action map "MovementMap".
     /// </summary>
@@ -673,6 +783,26 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "MovementMap/Emote".
         /// </summary>
         public InputAction @Emote => m_Wrapper.m_MovementMap_Emote;
+        /// <summary>
+        /// Provides access to the underlying input action "MovementMap/SelectSlot1".
+        /// </summary>
+        public InputAction @SelectSlot1 => m_Wrapper.m_MovementMap_SelectSlot1;
+        /// <summary>
+        /// Provides access to the underlying input action "MovementMap/SelectSlot2".
+        /// </summary>
+        public InputAction @SelectSlot2 => m_Wrapper.m_MovementMap_SelectSlot2;
+        /// <summary>
+        /// Provides access to the underlying input action "MovementMap/SelectSlot3".
+        /// </summary>
+        public InputAction @SelectSlot3 => m_Wrapper.m_MovementMap_SelectSlot3;
+        /// <summary>
+        /// Provides access to the underlying input action "MovementMap/SelectSlot4".
+        /// </summary>
+        public InputAction @SelectSlot4 => m_Wrapper.m_MovementMap_SelectSlot4;
+        /// <summary>
+        /// Provides access to the underlying input action "MovementMap/SelectSlotScroll".
+        /// </summary>
+        public InputAction @SelectSlotScroll => m_Wrapper.m_MovementMap_SelectSlotScroll;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -732,6 +862,21 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @Emote.started += instance.OnEmote;
             @Emote.performed += instance.OnEmote;
             @Emote.canceled += instance.OnEmote;
+            @SelectSlot1.started += instance.OnSelectSlot1;
+            @SelectSlot1.performed += instance.OnSelectSlot1;
+            @SelectSlot1.canceled += instance.OnSelectSlot1;
+            @SelectSlot2.started += instance.OnSelectSlot2;
+            @SelectSlot2.performed += instance.OnSelectSlot2;
+            @SelectSlot2.canceled += instance.OnSelectSlot2;
+            @SelectSlot3.started += instance.OnSelectSlot3;
+            @SelectSlot3.performed += instance.OnSelectSlot3;
+            @SelectSlot3.canceled += instance.OnSelectSlot3;
+            @SelectSlot4.started += instance.OnSelectSlot4;
+            @SelectSlot4.performed += instance.OnSelectSlot4;
+            @SelectSlot4.canceled += instance.OnSelectSlot4;
+            @SelectSlotScroll.started += instance.OnSelectSlotScroll;
+            @SelectSlotScroll.performed += instance.OnSelectSlotScroll;
+            @SelectSlotScroll.canceled += instance.OnSelectSlotScroll;
         }
 
         /// <summary>
@@ -776,6 +921,21 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @Emote.started -= instance.OnEmote;
             @Emote.performed -= instance.OnEmote;
             @Emote.canceled -= instance.OnEmote;
+            @SelectSlot1.started -= instance.OnSelectSlot1;
+            @SelectSlot1.performed -= instance.OnSelectSlot1;
+            @SelectSlot1.canceled -= instance.OnSelectSlot1;
+            @SelectSlot2.started -= instance.OnSelectSlot2;
+            @SelectSlot2.performed -= instance.OnSelectSlot2;
+            @SelectSlot2.canceled -= instance.OnSelectSlot2;
+            @SelectSlot3.started -= instance.OnSelectSlot3;
+            @SelectSlot3.performed -= instance.OnSelectSlot3;
+            @SelectSlot3.canceled -= instance.OnSelectSlot3;
+            @SelectSlot4.started -= instance.OnSelectSlot4;
+            @SelectSlot4.performed -= instance.OnSelectSlot4;
+            @SelectSlot4.canceled -= instance.OnSelectSlot4;
+            @SelectSlotScroll.started -= instance.OnSelectSlotScroll;
+            @SelectSlotScroll.performed -= instance.OnSelectSlotScroll;
+            @SelectSlotScroll.canceled -= instance.OnSelectSlotScroll;
         }
 
         /// <summary>
@@ -1122,6 +1282,41 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnEmote(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SelectSlot1" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSelectSlot1(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SelectSlot2" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSelectSlot2(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SelectSlot3" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSelectSlot3(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SelectSlot4" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSelectSlot4(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "SelectSlotScroll" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnSelectSlotScroll(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UiMap" which allows adding and removing callbacks.

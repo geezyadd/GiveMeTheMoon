@@ -7,6 +7,7 @@ using Features.CharacterMovableModule.Scripts.PlayerStats;
 using Features.FlightFieldModule.Scripts.Configuration;
 using Features.FlightFieldModule.Scripts.Structures;
 using Features.GrabModule.Scripts;
+using Features.InventoryModule.Scripts;
 using Features.LobbyModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
 using Features.PlayerProfileModule.Scripts;
@@ -57,6 +58,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<PlayerDamageConfiguration>(Address.Configurations.PlayerDamageConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<PlayerLifeConfiguration>(Address.Configurations.PlayerLifeConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<GrabConfiguration>(Address.Configurations.GrabConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<InventoryConfiguration>(Address.Configurations.InventoryConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<PlayerNameplateConfiguration>(Address.Configurations.PlayerNameplateConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ModuleCatalog>(Address.Configurations.ModuleCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ShipStationCatalog>(Address.Configurations.ShipStationCatalog_Default).AsSingle();

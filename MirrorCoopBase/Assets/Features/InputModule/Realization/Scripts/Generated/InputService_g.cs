@@ -20,6 +20,11 @@ namespace Features.InputModule.Realization.Scripts.Generated {
         public InputDefaultActions Reload { get; set; } = new();
         public InputDefaultActions ToggleCursor { get; set; } = new();
         public InputDefaultActions Emote { get; set; } = new();
+        public InputDefaultActions SelectSlot1 { get; set; } = new();
+        public InputDefaultActions SelectSlot2 { get; set; } = new();
+        public InputDefaultActions SelectSlot3 { get; set; } = new();
+        public InputDefaultActions SelectSlot4 { get; set; } = new();
+        public InputVector2Actions SelectSlotScroll { get; set; } = new();
         public InputDefaultActions CloseWindow { get; set; } = new();
         public InputDefaultActions SpectatePrev { get; set; } = new();
         public InputDefaultActions SpectateNext { get; set; } = new();
@@ -153,6 +158,39 @@ namespace Features.InputModule.Realization.Scripts.Generated {
             if(context.started)Emote.Started?.Invoke();
             if(context.performed)Emote.Performed?.Invoke();
             if(context.canceled)Emote.Canceled?.Invoke();
+        }
+        public void OnSelectSlot1(InputAction.CallbackContext context)
+         {
+            if(context.started)SelectSlot1.Started?.Invoke();
+            if(context.performed)SelectSlot1.Performed?.Invoke();
+            if(context.canceled)SelectSlot1.Canceled?.Invoke();
+        }
+        public void OnSelectSlot2(InputAction.CallbackContext context)
+         {
+            if(context.started)SelectSlot2.Started?.Invoke();
+            if(context.performed)SelectSlot2.Performed?.Invoke();
+            if(context.canceled)SelectSlot2.Canceled?.Invoke();
+        }
+        public void OnSelectSlot3(InputAction.CallbackContext context)
+         {
+            if(context.started)SelectSlot3.Started?.Invoke();
+            if(context.performed)SelectSlot3.Performed?.Invoke();
+            if(context.canceled)SelectSlot3.Canceled?.Invoke();
+        }
+        public void OnSelectSlot4(InputAction.CallbackContext context)
+         {
+            if(context.started)SelectSlot4.Started?.Invoke();
+            if(context.performed)SelectSlot4.Performed?.Invoke();
+            if(context.canceled)SelectSlot4.Canceled?.Invoke();
+        }
+        public void OnSelectSlotScroll(InputAction.CallbackContext context)
+         {
+            if(context.started)SelectSlotScroll.Started?.Invoke();
+            if(context.performed)SelectSlotScroll.Performed?.Invoke();
+            if(context.canceled)SelectSlotScroll.Canceled?.Invoke();
+            if(context.started)SelectSlotScroll.VectorChangedStarted?.Invoke(context.ReadValue<Vector2>());
+            if(context.performed)SelectSlotScroll.VectorChangedPerformed?.Invoke(context.ReadValue<Vector2>());
+            if(context.canceled)SelectSlotScroll.VectorChangedCanceled?.Invoke(context.ReadValue<Vector2>());
         }
         public void OnCloseWindow(InputAction.CallbackContext context)
          {

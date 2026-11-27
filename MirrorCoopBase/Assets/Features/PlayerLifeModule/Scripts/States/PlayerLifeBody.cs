@@ -100,7 +100,7 @@ namespace Features.PlayerLifeModule.Scripts {
 
         [Server]
         public void ServerApplyDeath() {
-            _heldItemRelease.ServerReleaseHeld();
+            _heldItemRelease.ServerDropEverything();
             _shipRiderRelease.ServerReleaseRider(netIdentity);
         }
 
