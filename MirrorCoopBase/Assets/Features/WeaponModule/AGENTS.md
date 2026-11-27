@@ -64,7 +64,7 @@ ported, on purpose).
 |---|---|---|---|---|
 | Pistol (`pistol`) | single shot, 3 / s (was 0.5 / s, 2026-11-26) | unlimited | ray, 12 damage, FieldRock + PlayerRagdoll + Default + Ground (was FieldRock only) | pushed 8 m/s |
 | Knockdown gun (`knockdown-gun`) | single shot, 1 / s | unlimited | ray, 4 damage, 60 m | pushed 14 m/s, limp 2.5 s |
-| Grenade launcher (`grenade-launcher`) | single shot, 1.25 / s | unlimited | `GrenadeProjectile`: 18 m/s, ballistic, bounces (`GrenadeBounce`), goes off after 2 s or on a moving body | `ExplosionMedium` |
+| Grenade launcher (`grenade-launcher`) | single shot, 1.25 / s | unlimited | `GrenadeProjectile`: 18 m/s, ballistic, goes off at the first thing it strikes (since 2026-11-27; it bounced on `GrenadeBounce` until then) or after 2 s | `ExplosionMedium` |
 | Rocket launcher (`rocket-launcher`) | single shot, 1 / s | unlimited | `RocketProjectile`: 28 m/s straight, goes off on any impact or after 3.5 s | `ExplosionLarge` |
 
 Every hand weapon's magazine is unlimited (capacity 0) since 2026-11-26 on the user's request; the magazine, its

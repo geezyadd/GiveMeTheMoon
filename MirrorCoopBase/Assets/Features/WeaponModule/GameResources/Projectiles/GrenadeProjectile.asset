@@ -16,6 +16,7 @@ MonoBehaviour:
   _speed: 18
   _usesGravity: 1
   _lifetimeSeconds: 2
-  _explodesOnImpact: 0
+  _explodesOnImpact: 1
   _explodesOnBodyImpact: 1
   _explosion: {fileID: 11400000, guid: 55d7170c0c36e444885221b2a5a82ca5, type: 2}
+  _prewarmCount: 4
