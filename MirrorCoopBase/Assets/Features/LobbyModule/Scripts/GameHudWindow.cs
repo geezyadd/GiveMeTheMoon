@@ -3,7 +3,7 @@ using Features.MvpModule;
 using Zenject;
 
 namespace Features.LobbyModule.Scripts {
-    public sealed class GameHudWindow : FocusableWindowBehaviour, IInitializable, IDisposable {
+    public sealed class GameHudWindow : FocusableWindowBehaviour, IBackgroundWindow, IInitializable, IDisposable {
         public GameHudWindow(
             IWindowsFactory windowsFactory,
             IWindowsComponentsFinderService windowsComponentsFinderService,

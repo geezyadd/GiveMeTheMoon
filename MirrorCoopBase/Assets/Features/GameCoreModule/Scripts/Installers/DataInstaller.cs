@@ -27,6 +27,7 @@ using Features.ShopModule.Scripts.Generated;
 using Features.SonarModule.Data;
 using Features.SonarModule.Data.Generated;
 using Features.SettingsModule.Data;
+using Features.SettingsModule.UI;
 using Features.SpaceHazeModule.Data;
 using Features.StagePresetModule.Data;
 using Features.StagePresetModule.Data.Generated;
@@ -62,6 +63,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<Features.WeaponModule.Scripts.Core.WeaponModel>().AsSingle();
             Container.Bind<SpectatorModel>().AsSingle();
             Container.Bind<SettingsModel>().AsSingle();
+            Container.Bind<SettingsDraftModel>().AsSingle();
             Container.Bind<ShopVisitModel>().AsSingle();
             Container.Bind<DeadCrewModel>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

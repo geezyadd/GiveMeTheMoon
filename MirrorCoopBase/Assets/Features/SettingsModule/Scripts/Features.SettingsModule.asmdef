@@ -5,7 +5,12 @@
         "Zenject",
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.RenderPipelines.Core.Runtime",
-        "Features.SettingsModule.Data"
+        "Features.SettingsModule.Data",
+        "Features.MvpModule",
+        "UnityEngine.UI",
+        "InputModuleRalization",
+        "InputModule",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -1,12 +1,13 @@
 # SettingsModule
 
-The player's settings of this machine (local, not networked): video, controls, gameplay. Being built stage by stage
-(2026-11-27); this file describes what exists now.
+The player's settings of this machine (local, not networked): video, controls, gameplay. Built 2026-11-27; saves are not
+here yet (see Data).
 
 ## Assemblies
 - `Features.SettingsModule.Data` (layer 1, no module references): definitions, catalog, model, keys.
-- `Features.SettingsModule` (layer 2; Zenject, URP, SettingsModule.Data): the video appliers
-  (`SettingsModuleInstaller`, called from `GlobalSceneInstaller`).
+- `Features.SettingsModule` (layer 2; Zenject, URP, Mvp, UI, Input, SettingsModule.Data): the video appliers, the
+  settings window and its service (`SettingsModuleInstaller`, called from `GlobalSceneInstaller`; the window is
+  registered in `WindowsModuleInstaller`).
 
 ## Data
 - A setting is one `SettingDefinition` asset (key, label, default) of one kind:
@@ -63,6 +64,37 @@ the project's 2048, 50 m, 4 cascades; high: 4096, 80 m, 4 cascades), the "unlimi
 
 The screen shake slider is a multiple of its default: `SliderSettingDefinition.ScaleToDefault` / 
 `SettingsModel.GetSliderScaleToDefault` (50 % = 1x, 100 % = 2x, 0 = off).
+
+## Settings window (`Scripts/UI`)
+- `SettingsWindow` (prefab `GameResources/Prefabs/SettingsWindow`, Windows group) is opened through
+  `ISettingsWindowService` by the main menu (`MenuSettingsView` button in `MenuWindow`) and the pause menu
+  (LobbyModule). Esc asks it to close (`SettingsWindowEscapeSystem`).
+- The window edits a draft: `SettingsDraftModel` (bound in `DataInstaller`) is a second `SettingsModel`; it takes the
+  live values when the window opens. Apply copies the draft into the live model (the appliers react), Cancel takes
+  the live values back, Reset tab writes the open tab's defaults into the draft. Apply is clickable only while the
+  draft differs.
+- Back / Esc with unapplied changes shows the "unapplied changes" popup: Save applies and closes, Cancel drops the
+  changes and closes, Esc goes back to the window.
+- A window mode or resolution change asks "Keep these display settings?" (`DisplaySettingsConfirmation`): without
+  Keep within `SettingsWindowConfiguration.DisplayConfirmSeconds` (15) the old values come back into the live model
+  and the draft.
+- Rows: base prefabs in `Prefabs/Elements` (`SettingToggle`, `SettingSlider` with its value text, `SettingChoice` with
+  < value >, `SettingHeader`, `SettingsTabButton`); each setting is a prefab variant in `Prefabs/Settings` that only
+  sets its definition, dropped into its tab's container in the window. A row's presenter shows the draft value and
+  writes the player's change into the draft. The window finds a tab's settings (for Reset tab) from the rows under
+  the tab's container. The Audio tab is empty until the sound step.
+- New setting in the window: a variant of the base row with the definition, dropped into the tab's container.
+
+## Keyboard / gamepad navigation (`Scripts/UI/Focus`)
+Built on `FocusablesService` / `WindowFocusSystem` (MvpModule), which had no elements before:
+`SelectableFocusableElement` (on every button, toggle and slider of the settings and pause windows) is a window's
+`IFocusableElement`. While its window is not the focused one, uGUI navigation does not reach it (navigation mode
+None; the mouse still works); when the window gets the focus, `DefaultElementSelection` selects the element marked
+default (the first Video row, Continue) in the UI event system. Arrows / WASD / the gamepad stick and d-pad move
+between controls, Enter / the gamepad's south button press them, left / right move a selected slider (the default
+actions of `InputSystemUIInputModule`). Checked in the editor only through selection; a real gamepad was not tried.
+Known limits: a popup's buttons are not selected when it shows; Esc is the keyboard only (`UiMap.CloseWindow` has no
+gamepad binding), so a gamepad cannot open the pause menu.
 
 ## New setting
 A definition asset in `Definitions/`, an entry in `SettingsCatalog_Default`, a key in `SettingKeys` if a module reads
