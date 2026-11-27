@@ -21,6 +21,7 @@ namespace Features.EmoteModule.Player {
         public bool IsAvailable => _movable.isOwned || _copy.IsSimulating;
         public byte EmoteCount => _movable.isOwned ? _ownCount : _copy.ShownEmoteCount;
         public byte EmoteIndex => _movable.isOwned ? _ownIndex : _copy.ShownEmoteIndex;
+        public bool IsEmoting => _movable.isOwned ? _player.IsPlaying : _copy.ShownIsEmoting;
 
         [Inject]
         private void Construct(EmoteWheelModel wheelModel) {

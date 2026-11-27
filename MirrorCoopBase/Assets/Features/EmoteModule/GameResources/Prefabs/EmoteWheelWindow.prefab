@@ -305,6 +305,7 @@ GameObject:
   - component: {fileID: 7813406065974110861}
   - component: {fileID: 5146981012103352077}
   - component: {fileID: 8518123798216177855}
+  - component: {fileID: 6045662771784091823}
   m_Layer: 5
   m_Name: SectorTemplate
   m_TagString: Untagged
@@ -377,6 +378,14 @@ MonoBehaviour:
   _contentRadius: 150
   _normalColor: {r: 0, g: 0, b: 0, a: 0.55}
   _highlightedColor: {r: 1, g: 0.8, b: 0.3, a: 0.85}
+--- !u!222 &6045662771784091823
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2806636179190327074}
+  m_CullTransparentMesh: 1
 --- !u!1 &5559954834314365440
 GameObject:
   m_ObjectHideFlags: 0

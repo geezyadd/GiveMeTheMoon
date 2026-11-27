@@ -12,9 +12,9 @@ the same way as the slap: an emote count and the emote's index ride the body sta
 emote on its own copy of the body. An emote stops at once when the body starts to move.
 
 ## Status
-Built on `demo/emote-wheel` (2026-11-27). The four emotes (Wave, Dance, Point, Laugh) are placeholders: they reuse
-existing clips (`PlayerSlap`, the KevinIglesias idles and talk) and have no icons, so the wheel shows their names. Not
-checked in Play mode or with two players yet.
+Built on `demo/emote-wheel` (2026-11-27). The ten emotes are four KevinIglesias dances and six Mixamo ones (all looping,
+the Flair with a start clip before its loop) and have no icons; their names are just the numbers 1–10 (longer names ran out of the sectors). The wheel and its highlight were checked in Play mode; the emotes
+were not played in a session or with two players yet.
 
 ## Assemblies
 - `Features.EmoteModule.Contracts` (layer 1; no references): `IEmotePlays` (`IsAvailable`, `EmoteCount`,
@@ -32,10 +32,14 @@ checked in Play mode or with two players yet.
 - `Data/EmoteCatalog` (Addressables `EmoteCatalog_Default`, bound in `ConfigurationInstaller`;
   `GameResources/Configurations/EmoteCatalog_Default.asset`): the list of `EmoteEntry`: `Display Name` (shown when
   there is no icon), `Icon` (Sprite, may be empty), `Trigger Name` (the animator trigger and the Emote layer's state of
-  the same name; must be unique and not clash with `Forward`, `Fly`, `Slap`, `EmoteStop`) and `Clip` (what the animator
-  builder puts on that state). An emote's **index** in the list is what goes over the network. Placeholders: Wave
-  `EmoteWave` (`PlayerSlap`), Dance `EmoteDance` (`HumanM@Idle01-Idle02`), Point `EmotePoint` (`HumanM@Idle02`), Laugh
-  `EmoteLaugh` (`HumanM@Talk01`).
+  the same name; must be unique and not clash with `Forward`, `Fly`, `Slap`, `EmoteStop`) `Clip` (what the animator
+  builder puts on that state) and `Intro Clip` (optional: played once before `Clip`, going on to it at its end with no
+  blend; for a move with a start and a loop). An emote's **index** in the list is what goes over the network. Now (names 1–10 in this order): Kevin Dance 1, 2, 3, 6
+  (`EmoteDance1`–`3`, `EmoteDance6`, clips `Global/Packages/KevinIglesias/HumanAnimations/Animations/Male/Social/Dance/Steps/HumanM@Dance01`–`03`, `06`),
+  then Hip Hop, Twerk, Breakdance, Freezes, Pose and Flair (`EmoteHipHop`, `EmoteTwerk`, `EmoteBreakdance`,
+  `EmoteFreezes`, `EmotePose`, `EmoteFlair`; clips in `Global/Packages/Mixamo/Dances/`, Flair = `FlairStart` then
+  `FlairLoop`). The Mixamo files are imported as Humanoid (avatar from the file), root rotation and position baked into
+  the pose, Loop Time on except `FlairStart`.
 - `EmoteWheelConfiguration` (Addressables `EmoteWheelConfiguration_Default`, bound in `ConfigurationInstaller`):
   `Pointer Radius` 120 and `Dead Zone Radius` 35, in the look input's units (mouse pixels).
 - `EmoteWheelRule` (pure): `PickSector` (the sector a pointer offset is in, the first one centred at the top, then
@@ -77,11 +81,13 @@ Built by `PlayerAnimatorBuilder` (PlayerAnimationModule) from the catalog; never
   or a laugh moves the hips and the legs too; the `Slap` layer stays above it, so a slap still shows on the upper body.
 - States: `Empty` (default, a blend tree with no motions, as in the slap layer) and one state per catalog emote, named
   by its trigger.
-- Parameters: one trigger per emote (`EmoteWave`, `EmoteDance`, `EmotePoint`, `EmoteLaugh`) and `EmoteStop`
+- Parameters: one trigger per emote (its `Trigger Name`) and `EmoteStop`
   (`PlayerAnimatorParameters.EmoteStopName`).
 - Transitions: Any State → emote on its trigger (no exit time, can transition to itself, so a new emote replaces the
-  one that plays); emote → `Empty` at its exit time; emote → `Empty` on `EmoteStop` (no exit time). Durations are the
-  editor's defaults.
+  one that plays); a one-shot emote → `Empty` at its exit time (a looping
+  one, a dance, plays on until it is stopped); emote → `Empty` on `EmoteStop` (no exit time). An emote with an intro clip: Any State → `<Trigger>Intro`,
+  which goes to the emote's state at its end (exit time 1, no blend) or to `Empty` on `EmoteStop`. Other durations are
+  the editor's defaults.
 
 ### Where the real clips go
 1. Put the clip anywhere in the project (our own clips: `PlayerAnimationModule/GameResources/Animations/`; a pack's
@@ -90,11 +96,11 @@ Built by `PlayerAnimatorBuilder` (PlayerAnimationModule) from the catalog; never
    (set the `Icon` too, if there is one). A new emote is a new entry with its own `Trigger Name`.
 3. Run Tools > Animation > Build Player Animator (or Tools > Emotes > Build Emote Assets). The controller is rebuilt in
    place; an emote without a clip gets the idle.
-A looping clip still goes back to `Empty` after one loop (the exit time); an emote that should loop until the player
-moves needs its exit transition changed in `PlayerAnimatorBuilder.AddEmoteLayer`.
+A looping clip (Loop Time on) plays until the player moves (`EmoteStop`); a one-shot clip goes back to `Empty` when it
+ends.
 
 ## Known limits
-- Not checked in Play mode: the wheel's look, the pointer's feel, the placeholder clips on the ragdoll, and whether the
+- Not checked in Play mode: the pointer's feel, the dances on the ragdoll, and whether the
   `Empty` blend tree of a whole body layer leaves the locomotion alone as the slap layer's does.
 - A seated player's copy is not simulated (the seat holds it), so the others do not see a seated player's emote.
 - The catalog's order is the network's emote index: reordering it while players are connected mixes emotes up.

@@ -12,7 +12,7 @@ and follows the pose; how the pose is turned (the look, flying head first) stays
 ## Status
 Being built on `demo/active-ragdoll`. Parameters: `Forward`, `Fly`, `Slap`, `EmoteStop` and one trigger per emote of
 the emote catalog ([EmoteModule](../EmoteModule/AGENTS.md)). The clips are the KevinIglesias idle, walk and fall and our
-own `PlayerSlap`; no jump, sprint or seated clips yet; the emotes' clips are placeholders. Every player sees every slap
+own `PlayerSlap`; no jump, sprint or seated clips yet; the emotes are KevinIglesias and Mixamo dances. Every player sees every slap
 and every emote: their counts ride the replica packets (AttackModule, EmoteModule).
 
 ## Assembly
@@ -64,7 +64,9 @@ constants, to build the Emote layer from the emote catalog).
   last pose (and with written defaults pulls the body to its rest pose). `Emote` (override, no mask, weight 1):
   `Empty` (default, a blend tree with no motions, as in `Slap`) and one state per emote of the emote catalog, named by
   its trigger, playing the catalog entry's clip (the idle without one); Any State goes to an emote on its trigger (no
-  exit time, can go to itself), the emote goes back to `Empty` at its exit time or on `EmoteStop` (no exit time); the
+  exit time, can go to itself), a one-shot emote goes back to `Empty` at its exit time, a
+  looping one (a dance) plays on, both go back on `EmoteStop` (no exit time); an emote with an intro clip goes
+  through a `<Trigger>Intro` state first, which goes on to the emote at its end with no blend; the
   contract and where the real clips go are in [EmoteModule](../EmoteModule/AGENTS.md). Whole body because an emote
   stops as soon as the player walks, jumps or is in the air, and the `Slap` layer above it still shows a slap on the
   upper body. `Slap` (override, mask

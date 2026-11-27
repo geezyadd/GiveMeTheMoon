@@ -13,6 +13,8 @@ namespace Features.EmoteModule.Data {
         [SerializeField] private string _triggerName;
         [Tooltip("The clip the animator builder (Tools > Animation > Build Player Animator) puts on the emote's state.")]
         [SerializeField] private AnimationClip _clip;
+        [Tooltip("Optional: a clip played once before the clip above (the start of a move whose clip then loops); empty: the clip above starts at once.")]
+        [SerializeField] private AnimationClip _introClip;
 
         public EmoteEntry(string displayName, string triggerName, AnimationClip clip) {
             _displayName = displayName;
@@ -24,5 +26,6 @@ namespace Features.EmoteModule.Data {
         public Sprite Icon => _icon;
         public string TriggerName => _triggerName;
         public AnimationClip Clip => _clip;
+        public AnimationClip IntroClip => _introClip;
     }
 }

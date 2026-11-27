@@ -35,6 +35,7 @@ namespace Features.PlayerAnimationModule.Editor {
         private const string LocomotionState = "Locomotion";
         private const string FallState = "Fall";
         private const string EmptyState = "Empty";
+        private const string IntroSuffix = "Intro";
 
         [MenuItem("Tools/Animation/Build Player Animator")]
         public static void BuildAndAssign() {
@@ -106,8 +107,10 @@ namespace Features.PlayerAnimationModule.Editor {
         // the legs too. The slap layer stays above it, so a slap during an emote still shows on the upper body.
         // Empty, a blend tree with no motions, by default (as in the slap layer); each emote's state plays the clip its
         // catalog entry names (the idle without one), entered from any state by its trigger (no exit time, so a new
-        // emote replaces the one that plays, the same one starts again); back to Empty at its exit time, or at once on
-        // EmoteStop. The transitions keep the editor's default exit time and duration.
+        // emote replaces the one that plays, the same one starts again); a one-shot clip goes back to Empty at its exit
+        // time, a looping one (a dance) plays on; both go back at once on EmoteStop. An emote with an intro clip enters an
+        // intro state first, which plays once and goes on to the clip at its end with no blend (the clips are cut to join).
+        // The other transitions keep the editor's default exit time and duration.
         private static void AddEmoteLayer(AnimatorController controller, IReadOnlyList<EmoteEntry> emotes) {
             controller.AddLayer(PlayerAnimatorParameters.EmoteLayerName);
             AnimatorControllerLayer[] layers = controller.layers;
@@ -133,12 +136,32 @@ namespace Features.PlayerAnimationModule.Editor {
                 AnimatorState state = machine.AddState(trigger);
                 state.motion = emote.Clip != null ? emote.Clip : LoadClip(IdleClipPath);
 
-                AnimatorStateTransition start = machine.AddAnyStateTransition(state);
+                // With an intro clip the trigger enters the intro, which runs to its end and goes straight on to the
+                // emote's clip; the intro stops on EmoteStop too.
+                AnimatorState entry = state;
+                if (emote.IntroClip != null) {
+                    entry = machine.AddState(trigger + IntroSuffix);
+                    entry.motion = emote.IntroClip;
+                    AnimatorStateTransition next = entry.AddTransition(state);
+                    next.hasExitTime = true;
+                    next.exitTime = 1f;
+                    next.hasFixedDuration = true;
+                    next.duration = 0f;
+
+                    AnimatorStateTransition stopIntro = entry.AddTransition(empty);
+                    stopIntro.AddCondition(AnimatorConditionMode.If, 0f, PlayerAnimatorParameters.EmoteStopName);
+                    stopIntro.hasExitTime = false;
+                }
+
+                AnimatorStateTransition start = machine.AddAnyStateTransition(entry);
                 start.AddCondition(AnimatorConditionMode.If, 0f, trigger);
                 start.hasExitTime = false;
                 start.canTransitionToSelf = true;
 
-                state.AddTransition(empty, true);
+                // A looping clip (a dance) plays until EmoteStop; a one-shot one goes back to Empty when it ends.
+                if (state.motion is AnimationClip { isLooping: false })
+                    state.AddTransition(empty, true);
+
                 AnimatorStateTransition stop = state.AddTransition(empty);
                 stop.AddCondition(AnimatorConditionMode.If, 0f, PlayerAnimatorParameters.EmoteStopName);
                 stop.hasExitTime = false;

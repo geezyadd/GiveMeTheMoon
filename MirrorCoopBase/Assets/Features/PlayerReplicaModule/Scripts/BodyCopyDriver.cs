@@ -63,6 +63,9 @@ namespace Features.PlayerReplicaModule {
         public byte ShownEmoteCount => _isDriving ? _delayBuffer.Current.EmoteCount : (byte)0;
         public byte ShownEmoteIndex => _isDriving ? _delayBuffer.Current.EmoteIndex : (byte)0;
 
+        // Whether the owner's emote plays in the packet the copy shows now; false while not driving.
+        public bool ShownIsEmoting => _isDriving && _delayBuffer.Current.Has(BodyStateFlags.Emoting);
+
         private void OnEnable() {
             _channel.OnPacketAccepted += OnPacketAccepted;
             _channel.OnPlaced += OnPlaced;

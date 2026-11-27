@@ -96,6 +96,8 @@ namespace Features.EmoteModule.Editor {
 
             GameObject template = NewUiObject("SectorTemplate", sectors.transform);
             Stretch(template.GetComponent<RectTransform>());
+            // Added explicitly: without a CanvasRenderer the ring piece is never drawn.
+            template.AddComponent<CanvasRenderer>();
             EmoteSectorGraphic graphic = template.AddComponent<EmoteSectorGraphic>();
             graphic.raycastTarget = false;
             EmoteWheelSector sector = template.AddComponent<EmoteWheelSector>();

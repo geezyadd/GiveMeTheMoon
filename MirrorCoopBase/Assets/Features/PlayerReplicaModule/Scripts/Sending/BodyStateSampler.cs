@@ -71,6 +71,8 @@ namespace Features.PlayerReplicaModule.Sending {
                 flags |= BodyStateFlags.JumpHeld;
             if (_movable.IsSupported)
                 flags |= BodyStateFlags.Grounded;
+            if (_emotePlays != null && _emotePlays.IsEmoting)
+                flags |= BodyStateFlags.Emoting;
 
             return flags;
         }
