@@ -14,7 +14,8 @@ files). `DeleteFile` removes a file from disk and its data from memory at once.
 Data goes through Newtonsoft JSON: save plain data classes (public fields or properties). Unity types such as
 `Vector3` are not covered by any converter here.
 
-Nothing uses the module yet: it is bound in DI and waits for its first caller.
+The first caller is SettingsModule (`SettingsSaveSystem`, 2026-11-27): it runs `LoadFiles` at GlobalScene start and
+saves the player settings into `settings.sav`. Move `LoadFiles` to a shared startup step when a second module saves.
 
 ## Files
 - Folder: `Application.persistentDataPath/<SaveFolderName>/<SteamID>/`, one `<fileName>.sav` per file. Without an

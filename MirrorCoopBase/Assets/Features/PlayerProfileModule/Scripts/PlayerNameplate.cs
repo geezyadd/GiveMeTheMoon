@@ -15,16 +15,19 @@ namespace Features.PlayerProfileModule.Scripts {
         private PlayerNameplateConfiguration _playerNameplateConfiguration;
         private IPlayerNameplateLayout _playerNameplateLayout;
         private IGameCameraService _gameCameraService;
+        private PlayerNameplateVisibilityModel _visibilityModel;
         private IReadOnlyPlayerProfileModel _profile;
 
         [Inject]
         private void InjectDependencies(
             PlayerNameplateConfiguration playerNameplateConfiguration,
             IPlayerNameplateLayout playerNameplateLayout,
-            IGameCameraService gameCameraService) {
+            IGameCameraService gameCameraService,
+            PlayerNameplateVisibilityModel visibilityModel) {
             _playerNameplateConfiguration = playerNameplateConfiguration;
             _playerNameplateLayout = playerNameplateLayout;
             _gameCameraService = gameCameraService;
+            _visibilityModel = visibilityModel;
         }
 
         private void OnEnable() =>
@@ -65,7 +68,7 @@ namespace Features.PlayerProfileModule.Scripts {
             Transform cameraTransform = renderingCamera.transform;
             float distance = Vector3.Distance(transform.position, cameraTransform.position);
             float alpha = _playerNameplateLayout.CalculateAlpha(distance);
-            bool isVisible = _bodyRenderer.enabled && alpha > 0f;
+            bool isVisible = _visibilityModel.AreShown && _bodyRenderer.enabled && alpha > 0f;
             if (_text.enabled != isVisible)
                 _text.enabled = isVisible;
 

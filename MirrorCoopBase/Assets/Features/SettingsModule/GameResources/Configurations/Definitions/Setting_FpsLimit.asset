@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7763c29d87a476b9cdfc1ea47a24171, type: 3}
+  m_Name: Setting_FpsLimit
+  m_EditorClassIdentifier: 
+  _key: video.fps_limit
+  _label: FPS limit
+  _defaultOptionId: unlimited
+  _options:
+  - _id: 30
+    _label: 30
+  - _id: 60
+    _label: 60
+  - _id: 120
+    _label: 120
+  - _id: 144
+    _label: 144
+  - _id: unlimited
+    _label: Unlimited

@@ -53,7 +53,9 @@
         "Features.EmoteModule.Data",
         "Features.CoroutineRunnerModule",
         "Features.LoadingScreenModule",
-        "Features.LoadingScreenModule.Contracts"
+        "Features.LoadingScreenModule.Contracts",
+        "Features.SettingsModule.Data",
+        "Features.SettingsModule"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

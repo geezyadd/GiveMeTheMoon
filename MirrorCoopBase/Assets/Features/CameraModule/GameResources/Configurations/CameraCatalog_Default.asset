@@ -14,10 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _startupCameraId: TPCamera
   _defaultBlendSeconds: 0.45
-  _lookSensitivity: 0.18
   _minPitch: -70
   _maxPitch: 70
-  _invertY: 0
+  _thirdPersonFieldOfViewOffset: 20
   _fpCameraPrefab: {fileID: 1189232536859529701, guid: f47d66d69667c9242a8f1135e0c1ee32, type: 3}
   _tpCameraPrefab: {fileID: 7386267856119321941, guid: e95aa210c0b374740be7e49bdbb25eec, type: 3}
   _cameraRootPrefab: {fileID: 1100000000000000001, guid: 10342e17e7ba4aaaa2ef86ebecff98b8, type: 3}

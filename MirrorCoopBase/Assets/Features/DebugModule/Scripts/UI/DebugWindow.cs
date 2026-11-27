@@ -3,7 +3,7 @@ using Features.MvpModule;
 using Zenject;
 
 namespace Features.DebugModule.Scripts.UI {
-    public sealed class DebugWindow : FocusableWindowBehaviour, IInitializable, IDisposable {
+    public sealed class DebugWindow : FocusableWindowBehaviour, IBackgroundWindow, IInitializable, IDisposable {
         public DebugWindow(
             IWindowsFactory windowsFactory,
             IWindowsComponentsFinderService windowsComponentsFinderService,

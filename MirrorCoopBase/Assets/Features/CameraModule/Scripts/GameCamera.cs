@@ -38,6 +38,16 @@ namespace Features.CameraModule.Scripts {
             LockFollowToTarget();
         }
 
+        public void SetFieldOfView(float degrees) {
+            CinemachineCamera camera = VirtualCamera;
+            if (camera == null)
+                return;
+
+            LensSettings lens = camera.Lens;
+            lens.FieldOfView = degrees;
+            camera.Lens = lens;
+        }
+
         public void SetPriority(int value) {
             CinemachineCamera camera = VirtualCamera;
             if (camera == null)

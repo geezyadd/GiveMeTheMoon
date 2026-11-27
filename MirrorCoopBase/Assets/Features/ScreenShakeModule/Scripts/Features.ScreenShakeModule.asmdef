@@ -3,7 +3,8 @@
     "rootNamespace": "Features.ScreenShakeModule",
     "references": [
         "Zenject",
-        "Unity.Cinemachine"
+        "Unity.Cinemachine",
+        "Features.SettingsModule.Data"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

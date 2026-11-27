@@ -24,6 +24,7 @@ using Features.SpaceHazeModule.Scripts.Installers;
 using Features.TargetModule.Installers;
 using Features.ExplosionModule.Installers;
 using Features.ScreenShakeModule;
+using Features.SettingsModule;
 using Features.VfxModule;
 using Features.StagePresetModule.Scripts.Installers;
 using Features.TooltipModule.Scripts.Installers;
@@ -43,6 +44,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             TargetModuleInstaller.Install(Container);
             VfxModuleInstaller.Install(Container);
             ScreenShakeModuleInstaller.Install(Container);
+            SettingsModuleInstaller.Install(Container);
             ExplosionModuleInstaller.Install(Container);
             CameraModuleInstaller.Install(Container);
             GrabModuleInstaller.Install(Container);

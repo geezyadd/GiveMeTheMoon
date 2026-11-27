@@ -35,6 +35,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 30fc362311f06fb40b49c8c725062944
+    m_Address: SettingsWindowConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3100fd9ec0da35642a247beab427210c
     m_Address: ShipHullHudConfiguration_Default
     m_ReadOnly: 0
@@ -130,6 +135,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9305bf30fac942b9bf502bf2f2ea09db
+    m_Address: SettingsCatalog_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 99c26e9f08bf4ed2a7b914e40570ac6e
     m_Address: ReplicaConfiguration_Default
     m_ReadOnly: 0
@@ -167,6 +177,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: abd9dae1f011a414f81a354c37ab0fee
     m_Address: FieldRockDurabilityConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: acd99fc29ae64340873e0f9df35d69ff
+    m_Address: VideoSettingsConfiguration_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

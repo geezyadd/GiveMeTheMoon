@@ -59,6 +59,20 @@ namespace Features.ScreenShakeModule.Editor.Tests {
             Assert.IsEmpty(model.Shakes);
         }
 
+        [TestCase(0f, 0f)]
+        [TestCase(1f, 0.9f)]
+        [TestCase(2f, 1.8f)]
+        public void WhenTheStrengthScaleIsSet_ThenTheShownAmplitudeIsMultipliedByIt(float scale, float expected) {
+            ScreenShakeModel model = new ScreenShakeModel { StrengthScale = scale };
+            RecordingShaker shaker = new RecordingShaker();
+            model.AddShaker(shaker);
+            new ScreenShakeService(model).Shake(CreateProfile(1f, 2f, 1f));
+
+            Step(model, 0.1f);
+
+            Assert.AreEqual(expected, shaker.Amplitude, 0.01f);
+        }
+
         private ScreenShakeProfile CreateProfile(float amplitude, float frequency, float duration) {
             ScreenShakeProfile profile = ScriptableObject.CreateInstance<ScreenShakeProfile>();
             var serialized = new UnityEditor.SerializedObject(profile);
