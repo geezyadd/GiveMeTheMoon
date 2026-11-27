@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Ophiuchus
+  m_EditorClassIdentifier: 
+  _id: ophiuchus
+  _displayName: Ophiuchus
+  _stars:
+  - _name: Rasalhague
+    _rightAscensionDegrees: 263.73363
+    _declinationDegrees: 12.56003
+    _magnitude: 2.08
+  - _name: Kappa Oph
+    _rightAscensionDegrees: 254.41486
+    _declinationDegrees: 9.37495
+    _magnitude: 3.19
+  - _name: Yed Prior
+    _rightAscensionDegrees: 243.58641
+    _declinationDegrees: -3.69432
+    _magnitude: 2.73
+  - _name: Yed Posterior
+    _rightAscensionDegrees: 244.58037
+    _declinationDegrees: -4.69251
+    _magnitude: 3.23
+  - _name: Zeta Oph
+    _rightAscensionDegrees: 249.28971
+    _declinationDegrees: -10.56715
+    _magnitude: 2.54
+  - _name: Sabik
+    _rightAscensionDegrees: 257.59453
+    _declinationDegrees: -15.72491
+    _magnitude: 2.43
+  - _name: Cebalrai
+    _rightAscensionDegrees: 265.86814
+    _declinationDegrees: 4.5673
+    _magnitude: 2.76
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 4
+  - _fromStar: 4
+    _toStar: 5
+  - _fromStar: 5
+    _toStar: 6
+  - _fromStar: 6
+    _toStar: 0

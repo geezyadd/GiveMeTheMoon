@@ -9,7 +9,7 @@ namespace Features.ConstellationModule.Editor.Tests {
     // The synced lobby sky names a constellation by its id, so every catalog constellation has one and no two share it.
     public sealed class ConstellationCatalogGuardTests {
         private const string ORION = "orion";
-        private const string BIG_DIPPER = "big_dipper";
+        private const string LEO = "leo";
 
         private ConstellationCatalog _catalog;
 
@@ -28,9 +28,9 @@ namespace Features.ConstellationModule.Editor.Tests {
         [Test]
         public void WhenAnIdIsLookedUp_ThenItFindsItsConstellation() {
             Assert.IsTrue(_catalog.TryFindIndex(ORION, out int orion));
-            Assert.IsTrue(_catalog.TryFindIndex(BIG_DIPPER, out int bigDipper));
+            Assert.IsTrue(_catalog.TryFindIndex(LEO, out int leo));
             Assert.AreEqual(ORION, _catalog.Constellations[orion].Id);
-            Assert.AreEqual(BIG_DIPPER, _catalog.Constellations[bigDipper].Id);
+            Assert.AreEqual(LEO, _catalog.Constellations[leo].Id);
         }
     }
 }

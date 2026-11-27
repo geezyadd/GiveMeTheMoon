@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Virgo
+  m_EditorClassIdentifier: 
+  _id: virgo
+  _displayName: Virgo
+  _stars:
+  - _name: Zavijava
+    _rightAscensionDegrees: 177.67383
+    _declinationDegrees: 1.76472
+    _magnitude: 3.59
+  - _name: Zaniah
+    _rightAscensionDegrees: 184.97648
+    _declinationDegrees: -0.66679
+    _magnitude: 4.6
+  - _name: Porrima
+    _rightAscensionDegrees: 190.41518
+    _declinationDegrees: -1.44937
+    _magnitude: 3.44
+  - _name: Minelauva
+    _rightAscensionDegrees: 193.90087
+    _declinationDegrees: 3.39747
+    _magnitude: 3.39
+  - _name: Vindemiatrix
+    _rightAscensionDegrees: 195.54416
+    _declinationDegrees: 10.95915
+    _magnitude: 2.85
+  - _name: Heze
+    _rightAscensionDegrees: 203.6733
+    _declinationDegrees: -0.59582
+    _magnitude: 3.38
+  - _name: Spica
+    _rightAscensionDegrees: 201.29825
+    _declinationDegrees: -11.16132
+    _magnitude: 0.98
+  - _name: Theta Vir
+    _rightAscensionDegrees: 197.48754
+    _declinationDegrees: -5.53892
+    _magnitude: 4.4
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 4
+  - _fromStar: 3
+    _toStar: 5
+  - _fromStar: 5
+    _toStar: 6
+  - _fromStar: 6
+    _toStar: 7
+  - _fromStar: 7
+    _toStar: 2

@@ -142,7 +142,7 @@ types.
 | [HandWeaponModule](MirrorCoopBase/Assets/Features/HandWeaponModule/AGENTS.md) | weapons carried in the hand: the pistol, the knockdown gun, the grenade and rocket launchers |
 | [SonarModule](MirrorCoopBase/Assets/Features/SonarModule/AGENTS.md) | the navigator's sonar console on the radar |
 | [SpaceHazeModule](MirrorCoopBase/Assets/Features/SpaceHazeModule/AGENTS.md) | the dark space haze: how far the crew sees by eye |
-| [ConstellationModule](MirrorCoopBase/Assets/Features/ConstellationModule/AGENTS.md) | constellations highlighted over the skybox's painted stars in the lobby (Orion, the Big Dipper), picked by the host (debug window) and revealed star by star on every peer from a shared synced model, the constellation as data, where the painted sky lies |
+| [ConstellationModule](MirrorCoopBase/Assets/Features/ConstellationModule/AGENTS.md) | constellations highlighted over the skybox's painted stars in the lobby (17 figures in a band around the horizon, Dec -20..+32 deg), picked by the host (debug window) and revealed star by star on every peer from a shared synced model, the constellation as data, where the painted sky lies |
 | [PlayerReplicaModule](MirrorCoopBase/Assets/Features/PlayerReplicaModule/AGENTS.md) | player body sync by state and input, the only one: packet stream, simulated copies with soft correction, carriers, the server's moves of a body |
 | [ActiveRagdollModule](MirrorCoopBase/Assets/Features/ActiveRagdollModule/AGENTS.md) | physical bodies that follow an animation, for any creature (being built) |
 | [PlayerBodyModule](MirrorCoopBase/Assets/Features/PlayerBodyModule/AGENTS.md) | the body the player walks with: the player's own body is the active ragdoll pushed by the movement (being built) |

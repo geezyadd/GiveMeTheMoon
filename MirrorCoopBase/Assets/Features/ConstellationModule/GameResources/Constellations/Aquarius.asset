@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Aquarius
+  m_EditorClassIdentifier: 
+  _id: aquarius
+  _displayName: Aquarius
+  _stars:
+  - _name: Albali
+    _rightAscensionDegrees: 311.91897
+    _declinationDegrees: -9.49578
+    _magnitude: 3.78
+  - _name: Sadalsuud
+    _rightAscensionDegrees: 322.88972
+    _declinationDegrees: -5.57118
+    _magnitude: 2.9
+  - _name: Sadalmelik
+    _rightAscensionDegrees: 331.44598
+    _declinationDegrees: -0.31985
+    _magnitude: 2.95
+  - _name: Sadachbia
+    _rightAscensionDegrees: 335.41406
+    _declinationDegrees: -1.38733
+    _magnitude: 3.86
+  - _name: Zeta Aqr
+    _rightAscensionDegrees: 337.20753
+    _declinationDegrees: -0.02005
+    _magnitude: 4.3
+  - _name: Eta Aqr
+    _rightAscensionDegrees: 338.83888
+    _declinationDegrees: -0.11737
+    _magnitude: 4.02
+  - _name: Lambda Aqr
+    _rightAscensionDegrees: 343.15361
+    _declinationDegrees: -7.57967
+    _magnitude: 3.76
+  - _name: Skat
+    _rightAscensionDegrees: 343.66256
+    _declinationDegrees: -15.82083
+    _magnitude: 3.27
+  - _name: Pi Aqr
+    _rightAscensionDegrees: 336.31939
+    _declinationDegrees: 1.37741
+    _magnitude: 4.78
+  - _name: Ancha
+    _rightAscensionDegrees: 334.20848
+    _declinationDegrees: -7.78329
+    _magnitude: 4.17
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 4
+  - _fromStar: 4
+    _toStar: 5
+  - _fromStar: 5
+    _toStar: 6
+  - _fromStar: 6
+    _toStar: 7
+  - _fromStar: 4
+    _toStar: 8
+  - _fromStar: 2
+    _toStar: 9

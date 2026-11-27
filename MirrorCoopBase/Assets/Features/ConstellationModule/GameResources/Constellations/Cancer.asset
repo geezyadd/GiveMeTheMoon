@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Cancer
+  m_EditorClassIdentifier: 
+  _id: cancer
+  _displayName: Cancer
+  _stars:
+  - _name: Iota Cnc
+    _rightAscensionDegrees: 131.67404
+    _declinationDegrees: 28.75958
+    _magnitude: 4.03
+  - _name: Asellus Borealis
+    _rightAscensionDegrees: 130.82144
+    _declinationDegrees: 21.4685
+    _magnitude: 4.66
+  - _name: Asellus Australis
+    _rightAscensionDegrees: 131.17125
+    _declinationDegrees: 18.15431
+    _magnitude: 3.94
+  - _name: Acubens
+    _rightAscensionDegrees: 134.62176
+    _declinationDegrees: 11.8577
+    _magnitude: 4.26
+  - _name: Tarf
+    _rightAscensionDegrees: 124.12884
+    _declinationDegrees: 9.18554
+    _magnitude: 3.53
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 3
+  - _fromStar: 2
+    _toStar: 4

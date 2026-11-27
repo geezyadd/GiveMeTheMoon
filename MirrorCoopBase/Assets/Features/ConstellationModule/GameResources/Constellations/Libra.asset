@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Libra
+  m_EditorClassIdentifier: 
+  _id: libra
+  _displayName: Libra
+  _stars:
+  - _name: Zubenelgenubi
+    _rightAscensionDegrees: 222.71964
+    _declinationDegrees: -16.04178
+    _magnitude: 2.75
+  - _name: Zubeneschamali
+    _rightAscensionDegrees: 229.25172
+    _declinationDegrees: -9.38291
+    _magnitude: 2.61
+  - _name: Zubenelhakrabi
+    _rightAscensionDegrees: 233.88158
+    _declinationDegrees: -14.78954
+    _magnitude: 3.91
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 0

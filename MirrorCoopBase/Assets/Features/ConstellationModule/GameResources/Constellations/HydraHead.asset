@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: HydraHead
+  m_EditorClassIdentifier: 
+  _id: hydra_head
+  _displayName: Hydra
+  _stars:
+  - _name: Delta Hya
+    _rightAscensionDegrees: 129.41352
+    _declinationDegrees: 5.70374
+    _magnitude: 4.13
+  - _name: Minchir
+    _rightAscensionDegrees: 129.68932
+    _declinationDegrees: 3.34144
+    _magnitude: 4.45
+  - _name: Eta Hya
+    _rightAscensionDegrees: 130.806
+    _declinationDegrees: 3.39865
+    _magnitude: 4.27
+  - _name: Rho Hya
+    _rightAscensionDegrees: 132.10807
+    _declinationDegrees: 5.83759
+    _magnitude: 4.33
+  - _name: Ashlesha
+    _rightAscensionDegrees: 131.69379
+    _declinationDegrees: 6.41881
+    _magnitude: 3.49
+  - _name: Zeta Hya
+    _rightAscensionDegrees: 133.84792
+    _declinationDegrees: 5.94545
+    _magnitude: 3.1
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 4
+  - _fromStar: 4
+    _toStar: 0
+  - _fromStar: 4
+    _toStar: 5

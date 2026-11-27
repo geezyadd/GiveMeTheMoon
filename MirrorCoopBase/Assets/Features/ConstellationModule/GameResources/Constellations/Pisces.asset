@@ -1,0 +1,90 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Pisces
+  m_EditorClassIdentifier: 
+  _id: pisces
+  _displayName: Pisces
+  _stars:
+  - _name: Gamma Psc
+    _rightAscensionDegrees: 349.29706
+    _declinationDegrees: 3.28242
+    _magnitude: 3.7
+  - _name: Kappa Psc
+    _rightAscensionDegrees: 351.73379
+    _declinationDegrees: 1.2549
+    _magnitude: 4.92
+  - _name: Lambda Psc
+    _rightAscensionDegrees: 355.51073
+    _declinationDegrees: 1.77889
+    _magnitude: 4.49
+  - _name: Iota Psc
+    _rightAscensionDegrees: 354.99048
+    _declinationDegrees: 5.62305
+    _magnitude: 4.13
+  - _name: Theta Psc
+    _rightAscensionDegrees: 351.99114
+    _declinationDegrees: 6.37866
+    _magnitude: 4.28
+  - _name: Omega Psc
+    _rightAscensionDegrees: 359.82898
+    _declinationDegrees: 6.86248
+    _magnitude: 4.02
+  - _name: Delta Psc
+    _rightAscensionDegrees: 12.17122
+    _declinationDegrees: 7.58472
+    _magnitude: 4.43
+  - _name: Epsilon Psc
+    _rightAscensionDegrees: 15.73527
+    _declinationDegrees: 7.89033
+    _magnitude: 4.26
+  - _name: Nu Psc
+    _rightAscensionDegrees: 25.35772
+    _declinationDegrees: 5.48762
+    _magnitude: 4.44
+  - _name: Alrescha
+    _rightAscensionDegrees: 30.51177
+    _declinationDegrees: 2.76374
+    _magnitude: 3.82
+  - _name: Torcular
+    _rightAscensionDegrees: 26.34847
+    _declinationDegrees: 9.15774
+    _magnitude: 4.29
+  - _name: Alpherg
+    _rightAscensionDegrees: 22.87087
+    _declinationDegrees: 15.34582
+    _magnitude: 3.83
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 4
+  - _fromStar: 4
+    _toStar: 0
+  - _fromStar: 3
+    _toStar: 5
+  - _fromStar: 5
+    _toStar: 6
+  - _fromStar: 6
+    _toStar: 7
+  - _fromStar: 7
+    _toStar: 8
+  - _fromStar: 8
+    _toStar: 9
+  - _fromStar: 9
+    _toStar: 10
+  - _fromStar: 10
+    _toStar: 11

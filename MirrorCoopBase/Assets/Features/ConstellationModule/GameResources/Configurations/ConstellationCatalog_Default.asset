@@ -13,16 +13,20 @@ MonoBehaviour:
   m_Name: ConstellationCatalog_Default
   m_EditorClassIdentifier: 
   _constellations:
-  - {fileID: 11400000, guid: 466ecb97966ee6b419e536c671cb02c9, type: 2}
-  - {fileID: 11400000, guid: 1392f763e6ff438fa46291b100d38f6d, type: 2}
-  - {fileID: 11400000, guid: 38c37e8ffaec440bba370d39827ce8e5, type: 2}
-  - {fileID: 11400000, guid: 2d239b48b8b24a888d12ec3d0b295aae, type: 2}
-  - {fileID: 11400000, guid: a325e784001f4c029c39a577020c7669, type: 2}
-  - {fileID: 11400000, guid: 57ea8be7ea254c9491bff0aae8470f8f, type: 2}
-  - {fileID: 11400000, guid: a5ca30ce25bc46a2b89b5d4b6b5378a5, type: 2}
-  - {fileID: 11400000, guid: cd6fc7e3b57d4b66a7040503461b1c90, type: 2}
+  - {fileID: 11400000, guid: d09a11362bb74db18d141c4ba8861640, type: 2}
+  - {fileID: 11400000, guid: 61f9948e0c7d4fd69c6e32aff2376bed, type: 2}
+  - {fileID: 11400000, guid: 62defbf1d84b44538049122f7187bb21, type: 2}
   - {fileID: 11400000, guid: db450a3f6b2740f3a6e0842e7ab32801, type: 2}
+  - {fileID: 11400000, guid: 466ecb97966ee6b419e536c671cb02c9, type: 2}
   - {fileID: 11400000, guid: e98407cb6c7f41e3a6d51ad5c440ded8, type: 2}
-  - {fileID: 11400000, guid: 1edc314706264d8fb75d52ece17edc1d, type: 2}
+  - {fileID: 11400000, guid: 3554f7958e4e4e5da6bd62fc83edbfc4, type: 2}
+  - {fileID: 11400000, guid: 023491ef72da45c0b40f020afbead0a0, type: 2}
+  - {fileID: 11400000, guid: 729c904b0f7146d987e23b8578664c00, type: 2}
+  - {fileID: 11400000, guid: a5ca30ce25bc46a2b89b5d4b6b5378a5, type: 2}
+  - {fileID: 11400000, guid: 032c4ef0945d4e8f8da7579f8d2692a8, type: 2}
+  - {fileID: 11400000, guid: 6e8ab7957e1742d098da89658d7099b2, type: 2}
+  - {fileID: 11400000, guid: 3c128c3309654246b74c18c0adf5176d, type: 2}
+  - {fileID: 11400000, guid: 6b46fe3f8d82440bb037459abfa0d1ef, type: 2}
+  - {fileID: 11400000, guid: d75d97b024e3410fb222f915ac1f2256, type: 2}
+  - {fileID: 11400000, guid: 8cdb43ce624c49e18b94e0dbad57842e, type: 2}
   - {fileID: 11400000, guid: 8f55456ff178475c8293abd13040b08f, type: 2}
-  - {fileID: 11400000, guid: 73e1da770e534cb0833d1f45a6779a3c, type: 2}
