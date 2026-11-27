@@ -19,6 +19,7 @@ namespace Features.InputModule.Realization.Scripts.Generated {
         public InputDefaultActions Release { get; set; } = new();
         public InputDefaultActions Reload { get; set; } = new();
         public InputDefaultActions ToggleCursor { get; set; } = new();
+        public InputDefaultActions Emote { get; set; } = new();
         public InputDefaultActions CloseWindow { get; set; } = new();
         public InputDefaultActions SpectatePrev { get; set; } = new();
         public InputDefaultActions SpectateNext { get; set; } = new();
@@ -146,6 +147,12 @@ namespace Features.InputModule.Realization.Scripts.Generated {
             if(context.started)ToggleCursor.Started?.Invoke();
             if(context.performed)ToggleCursor.Performed?.Invoke();
             if(context.canceled)ToggleCursor.Canceled?.Invoke();
+        }
+        public void OnEmote(InputAction.CallbackContext context)
+         {
+            if(context.started)Emote.Started?.Invoke();
+            if(context.performed)Emote.Performed?.Invoke();
+            if(context.canceled)Emote.Canceled?.Invoke();
         }
         public void OnCloseWindow(InputAction.CallbackContext context)
          {
