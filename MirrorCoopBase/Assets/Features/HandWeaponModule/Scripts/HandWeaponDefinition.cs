@@ -13,14 +13,18 @@ namespace Features.HandWeaponModule.Scripts {
         [SerializeField] private long _price;
         [SerializeField] private HandWeaponItem _itemPrefab;
         [SerializeField] private WeaponDefinition _weapon;
-        [Tooltip("A press is reported as held at least this long, so every other peer sees even a short click.")]
-        [SerializeField, Min(0f)] private float _minTriggerReportSeconds = 0.25f;
         [Tooltip("What the crosshair's ray can rest on; the shot flies from the muzzle to that point. Use the weapon's hit layers.")]
         [SerializeField] private LayerMask _crosshairLayers;
-        [Tooltip("Where the weapon sits in its holder's own first-person view, in the view's frame (right, up, forward).")]
-        [SerializeField] private Vector3 _viewOffset;
-        [Tooltip("Where the weapon sits from the holder's arm point when seen in the hand (third person, other players).")]
-        [SerializeField] private Vector3 _handOffset;
+        [Tooltip("The point of the weapon the hand holds (the middle of the grip), in the weapon model's frame (right, up, forward): it sits in the holder's palm.")]
+        [SerializeField] private Vector3 _gripOffset;
+        [Tooltip("A crosshair point closer than this to the hand, m, (the barrel pressed to the floor or a player) makes the weapon aim along the view instead.")]
+        [SerializeField, Min(0f)] private float _minAimDistance = 1.5f;
+        [Tooltip("The holder sends where the weapon points at most this often, s, so other players see it turn with the view.")]
+        [SerializeField, Min(0f)] private float _aimSendIntervalSeconds = 0.05f;
+        [Tooltip("The holder sends a new aim only once it turned at least this many degrees from the last one sent.")]
+        [SerializeField, Min(0f)] private float _aimSendMinDegrees = 1f;
+        [Tooltip("Seconds other players' view of the weapon takes to catch up with the received aim.")]
+        [SerializeField, Min(0f)] private float _remoteAimSmoothingSeconds = 0.08f;
 
         public string Id => _id;
         public string DisplayName => _displayName;
@@ -29,9 +33,11 @@ namespace Features.HandWeaponModule.Scripts {
         public long Price => _price;
         public HandWeaponItem ItemPrefab => _itemPrefab;
         public WeaponDefinition Weapon => _weapon;
-        public float MinTriggerReportSeconds => _minTriggerReportSeconds;
         public LayerMask CrosshairLayers => _crosshairLayers;
-        public Vector3 ViewOffset => _viewOffset;
-        public Vector3 HandOffset => _handOffset;
+        public Vector3 GripOffset => _gripOffset;
+        public float MinAimDistance => _minAimDistance;
+        public float AimSendIntervalSeconds => _aimSendIntervalSeconds;
+        public float AimSendMinDegrees => _aimSendMinDegrees;
+        public float RemoteAimSmoothingSeconds => _remoteAimSmoothingSeconds;
     }
 }

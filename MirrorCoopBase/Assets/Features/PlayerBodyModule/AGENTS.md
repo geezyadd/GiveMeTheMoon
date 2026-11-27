@@ -107,3 +107,11 @@ one raised to the minimum along its motion, a still one toward the head).
   pass through the player's own body), leaves it asleep, gives the animator the player's controller (`PlayerAnimatorBuilder.LoadOrBuild`) and wires `PlayerRagdollBody` (with the player's `BodyCopyDriver` and `CharacterDrift`) and `PlayerAnimationDriver`. It also points every component's `_bodyRenderer` field (the nameplate) at the model's skinned mesh, sets the
   animator to always animate (the pose is needed while the owner's model is not drawn) and wires
   `OwnBodyHider` with every renderer of the model. Running it again rebuilds it.
+
+## Shots
+`PlayerWeaponImpactReaction` (on `DummyPlayer`, next to `PlayerExplosionReaction`, same ragdoll / knockdown / movable
+references) is the player's `IWeaponImpactReceiver` (WeaponModule): parts = the ragdoll limbs, then the capsule body;
+on every peer a shot pushes the struck limb by the weapon's push speed at the struck point, every limb by a share
+(`Body Share` 0.25, `Knockdown Body Share` 0.6 for a shot that knocks down) and a knockdown shot makes the ragdoll limp
+for its time (`RagdollKnockdown`; `PlayerExplosionReaction` keeps the walk off meanwhile). A shot on the capsule pushes
+the nearest limb. A seated player and a sleeping ragdoll are left alone.

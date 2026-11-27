@@ -1,6 +1,7 @@
 using System;
 using Features.CameraModule.Scripts.Models;
 using Features.GameCoreModule.Contracts;
+using Features.ScreenShakeModule;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.LowLevel;
@@ -16,6 +17,7 @@ namespace Features.CameraModule.Scripts.Services {
 
         private readonly GameCameraModel _model;
         private readonly CameraCatalog _catalog;
+        private readonly ScreenShakeModel _screenShakeModel;
 
         private Transform _root;
         private Camera _output;
@@ -27,9 +29,10 @@ namespace Features.CameraModule.Scripts.Services {
 
         public event Action LookApplied;
 
-        public GameCameraService(GameCameraModel model, CameraCatalog catalog) {
+        public GameCameraService(GameCameraModel model, CameraCatalog catalog, ScreenShakeModel screenShakeModel) {
             _model = model;
             _catalog = catalog;
+            _screenShakeModel = screenShakeModel;
         }
 
         public string ActiveId => _model.ActiveId;
@@ -220,6 +223,10 @@ namespace Features.CameraModule.Scripts.Services {
 
             GameCamera camera = UnityEngine.Object.Instantiate(prefab, _root);
             camera.name = id;
+            // A camera with a screen shaker shows the screen shake (ScreenShakeModule: explosions).
+            if (camera.TryGetComponent(out CameraShaker shaker))
+                shaker.Bind(_screenShakeModel);
+
             Register(camera);
         }
 

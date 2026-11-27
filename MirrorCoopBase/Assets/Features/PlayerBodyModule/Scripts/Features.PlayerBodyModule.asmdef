@@ -18,7 +18,8 @@
         "Features.TargetModule",
         "InputModule",
         "InputModuleRalization",
-        "Features.ExplosionModule.Contracts"
+        "Features.ExplosionModule.Contracts",
+        "Features.WeaponModule.Contracts"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -19,6 +19,8 @@ using Features.SonarModule.Scripts.Installers;
 using Features.SpaceHazeModule.Scripts.Installers;
 using Features.TargetModule.Installers;
 using Features.ExplosionModule.Installers;
+using Features.ScreenShakeModule;
+using Features.VfxModule;
 using Features.StagePresetModule.Scripts.Installers;
 using Features.TooltipModule.Scripts.Installers;
 using Features.WeaponModule.Scripts;
@@ -33,6 +35,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             CharacterMovableModuleInstaller.Install(Container);
             PlayerReplicaModuleInstaller.Install(Container);
             TargetModuleInstaller.Install(Container);
+            VfxModuleInstaller.Install(Container);
+            ScreenShakeModuleInstaller.Install(Container);
             ExplosionModuleInstaller.Install(Container);
             CameraModuleInstaller.Install(Container);
             GrabModuleInstaller.Install(Container);

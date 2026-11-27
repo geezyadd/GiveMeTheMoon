@@ -165,6 +165,15 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""Reload"",
+                    ""type"": ""Button"",
+                    ""id"": ""c4d5e6f7-0819-4a2b-9c3d-4e5f60718293"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""ToggleCursor"",
                     ""type"": ""Button"",
                     ""id"": ""a7b8c9d0-e1f2-4a3b-8c4d-5e6f708192a3"",
@@ -353,6 +362,17 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
+                    ""id"": ""d5e6f708-192a-4b3c-8d4e-5f6071829304"",
+                    ""path"": ""<Keyboard>/r"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard and Mouse"",
+                    ""action"": ""Reload"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
                     ""id"": ""3a4b5c6d-7e8f-901a-2b3c-4d5e6f708193"",
                     ""path"": ""<Keyboard>/q"",
                     ""interactions"": """",
@@ -475,6 +495,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         m_MovementMap_Grab = m_MovementMap.FindAction("Grab", throwIfNotFound: true);
         m_MovementMap_Fire = m_MovementMap.FindAction("Fire", throwIfNotFound: true);
         m_MovementMap_Release = m_MovementMap.FindAction("Release", throwIfNotFound: true);
+        m_MovementMap_Reload = m_MovementMap.FindAction("Reload", throwIfNotFound: true);
         m_MovementMap_ToggleCursor = m_MovementMap.FindAction("ToggleCursor", throwIfNotFound: true);
         // UiMap
         m_UiMap = asset.FindActionMap("UiMap", throwIfNotFound: true);
@@ -573,6 +594,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_MovementMap_Grab;
     private readonly InputAction m_MovementMap_Fire;
     private readonly InputAction m_MovementMap_Release;
+    private readonly InputAction m_MovementMap_Reload;
     private readonly InputAction m_MovementMap_ToggleCursor;
     /// <summary>
     /// Provides access to input actions defined in input action map "MovementMap".
@@ -617,6 +639,10 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "MovementMap/Release".
         /// </summary>
         public InputAction @Release => m_Wrapper.m_MovementMap_Release;
+        /// <summary>
+        /// Provides access to the underlying input action "MovementMap/Reload".
+        /// </summary>
+        public InputAction @Reload => m_Wrapper.m_MovementMap_Reload;
         /// <summary>
         /// Provides access to the underlying input action "MovementMap/ToggleCursor".
         /// </summary>
@@ -671,6 +697,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @Release.started += instance.OnRelease;
             @Release.performed += instance.OnRelease;
             @Release.canceled += instance.OnRelease;
+            @Reload.started += instance.OnReload;
+            @Reload.performed += instance.OnReload;
+            @Reload.canceled += instance.OnReload;
             @ToggleCursor.started += instance.OnToggleCursor;
             @ToggleCursor.performed += instance.OnToggleCursor;
             @ToggleCursor.canceled += instance.OnToggleCursor;
@@ -709,6 +738,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @Release.started -= instance.OnRelease;
             @Release.performed -= instance.OnRelease;
             @Release.canceled -= instance.OnRelease;
+            @Reload.started -= instance.OnReload;
+            @Reload.performed -= instance.OnReload;
+            @Reload.canceled -= instance.OnReload;
             @ToggleCursor.started -= instance.OnToggleCursor;
             @ToggleCursor.performed -= instance.OnToggleCursor;
             @ToggleCursor.canceled -= instance.OnToggleCursor;
@@ -1037,6 +1069,13 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnRelease(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Reload" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnReload(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "ToggleCursor" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>

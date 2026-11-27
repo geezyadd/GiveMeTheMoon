@@ -6,7 +6,7 @@ using NUnit.Framework;
 using UnityEngine;
 
 namespace Features.WeaponModule.Editor.Tests {
-    // Every shot the fire mode births is shown; only the holding peer reports target hits.
+    // The fire mode births the shots, the delivery says where each one lands, and a launch only leaves the muzzle.
     public sealed class WeaponShooterTests {
         private const float SHOTS_PER_SECOND = 20f;
         private const ulong TARGET_ID = 9UL;
@@ -16,15 +16,11 @@ namespace Features.WeaponModule.Editor.Tests {
 
         private WeaponDefinition _weapon;
         private RecordingWeaponFeel _feel;
-        private RecordingHitReporter _reporter;
-        private FixedWeaponHolder _holder;
 
         [SetUp]
         public void SetUp() {
             _weapon = ScriptableObject.CreateInstance<WeaponDefinition>();
             _feel = new RecordingWeaponFeel();
-            _reporter = new RecordingHitReporter();
-            _holder = new FixedWeaponHolder { IsTriggerHeld = true };
         }
 
         [TearDown]
@@ -32,53 +28,39 @@ namespace Features.WeaponModule.Editor.Tests {
             Object.DestroyImmediate(_weapon);
 
         [Test]
-        public void WhenOwnerHoldsTriggerForOneSecond_ThenEveryShotIsShownAndEveryTargetHitReported() {
-            WeaponShooter shooter = CreateShooter(new ReportedShotOutcomes(_feel, _reporter));
+        public void WhenTriggerIsHeldForOneSecond_ThenTheFireModesShotsAreBornAndTheFeelShowsFiring() {
+            WeaponShooter shooter = CreateShooter(new HitscanDelivery(0f, new TargetEverywhereRaycast(TARGET_ID), new SequenceWeaponRandom(MIDDLE_OF_RANGE)));
 
-            AdvanceOneSecond(shooter);
+            int shots = 0;
+            for (int frame = 0; frame < FRAMES; frame++)
+                shots += shooter.Advance(true, FRAME_SECONDS, _feel);
 
-            Assert.AreEqual(SHOTS_PER_SECOND, _feel.Shots, 1f);
-            Assert.AreEqual(_feel.Shots, _reporter.Reports);
+            Assert.AreEqual(SHOTS_PER_SECOND, shots, 1f);
             Assert.IsTrue(_feel.IsFiring);
         }
 
         [Test]
-        public void WhenAnotherPeerReplaysTheFire_ThenShotsShowButNothingIsReported() {
-            WeaponShooter shooter = CreateShooter(new ShownShotOutcomes(_feel));
+        public void WhenARayShotIsFired_ThenItsOutcomeIsTheStruckTarget() {
+            WeaponShooter shooter = CreateShooter(new HitscanDelivery(0f, new TargetEverywhereRaycast(TARGET_ID), new SequenceWeaponRandom(MIDDLE_OF_RANGE)));
 
-            AdvanceOneSecond(shooter);
+            WeaponShotOutcome outcome = shooter.Fire(Vector3.zero, Vector3.forward, 0);
 
-            Assert.Greater(_feel.Shots, 0);
-            Assert.AreEqual(0, _reporter.Reports);
+            Assert.IsTrue(outcome.IsTargetHit);
+            Assert.AreEqual(TARGET_ID, outcome.TargetId);
         }
 
         [Test]
-        public void WhenAnotherPeerReplaysShotsOnASurfaceThatShowsImpacts_ThenEveryStrikeIsShown() {
-            RecordingImpactFeedback impactFeedback = new RecordingImpactFeedback();
-            WeaponShooter shooter = new WeaponShooter(
-                _weapon,
-                new AutoFireMode(0f, 0f, SHOTS_PER_SECOND),
-                new HitscanDelivery(0f, new TargetEverywhereRaycast(TARGET_ID, impactFeedback), new SequenceWeaponRandom(MIDDLE_OF_RANGE)),
-                _feel,
-                new ShownShotOutcomes(_feel));
+        public void WhenALaunchIsFired_ThenItStrikesNothingAndLeavesAlongTheAim() {
+            WeaponShooter shooter = CreateShooter(new LaunchDelivery(0f, new SequenceWeaponRandom(MIDDLE_OF_RANGE)));
 
-            AdvanceOneSecond(shooter);
+            WeaponShotOutcome outcome = shooter.Fire(Vector3.zero, Vector3.forward, 0);
 
-            Assert.Greater(impactFeedback.Impacts, 0);
-            Assert.AreEqual(_feel.Shots, impactFeedback.Impacts);
+            Assert.IsFalse(outcome.IsImpact);
+            Assert.IsFalse(outcome.IsTargetHit);
+            Assert.Greater(Vector3.Dot((outcome.EndPoint - outcome.Shot.Origin).normalized, Vector3.forward), 0.999f);
         }
 
-        private void AdvanceOneSecond(WeaponShooter shooter) {
-            for (int frame = 0; frame < FRAMES; frame++)
-                shooter.Advance(_holder, FRAME_SECONDS);
-        }
-
-        private WeaponShooter CreateShooter(IShotOutcomeReceiver outcomes) =>
-            new WeaponShooter(
-                _weapon,
-                new AutoFireMode(0f, 0f, SHOTS_PER_SECOND),
-                new HitscanDelivery(0f, new TargetEverywhereRaycast(TARGET_ID), new SequenceWeaponRandom(MIDDLE_OF_RANGE)),
-                _feel,
-                outcomes);
+        private WeaponShooter CreateShooter(IShotDelivery delivery) =>
+            new WeaponShooter(_weapon, new AutoFireMode(0f, 0f, SHOTS_PER_SECOND), delivery);
     }
 }

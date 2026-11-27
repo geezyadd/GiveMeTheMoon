@@ -78,6 +78,8 @@ GameObject:
   - component: {fileID: 5197233016674642156}
   - component: {fileID: 8830971749667782243}
   - component: {fileID: 1714120081177050516}
+  - component: {fileID: 7185294456933218277}
+  - component: {fileID: 1039691336111523414}
   m_Layer: 0
   m_Name: DummyPlayer
   m_TagString: Untagged
@@ -461,6 +463,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _grab: {fileID: 7209845104136634493}
   _weaponSync: {fileID: 6948430025197362347}
+  _grip: {fileID: 1039691336111523414}
 --- !u!114 &8419845104136634501
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -745,6 +748,43 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _rider: {fileID: 8209845104136634494}
+--- !u!114 &7185294456933218277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6de013cad8f8c843ae32aba3ea69add, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _identity: {fileID: 8912313244057681703}
+  _ragdoll: {fileID: 334446075228949800}
+  _knockdown: {fileID: 6423245533352839334}
+  _movable: {fileID: 2109845104136634489}
+  _bodyShare: 0.25
+  _knockdownBodyShare: 0.6
+--- !u!114 &1039691336111523414
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1091338388048282597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b17da6ee11021cc46851d048e2fb5b21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _reach: {fileID: 1884149545872864412}
+  _upperArm: {fileID: 4291772493261611107}
+  _lowerArm: {fileID: 2752218414304252258}
+  _hand: {fileID: 4198790387351131566}
+  _fingers: {fileID: 5434198419766341581}
+  _palmShare: 0.5
+  _reachShare: 0.85
 --- !u!1 &1653071117312433485
 GameObject:
   m_ObjectHideFlags: 0

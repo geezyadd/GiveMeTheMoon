@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42f6dc0d93476494f8b397b9175563fb, type: 3}
+  m_Name: RocketProjectile
+  m_EditorClassIdentifier: 
+  _prefab: {fileID: 5263962892575995149, guid: 2f7d6badb648b5e4d8db9b5749185491, type: 3}
+  _speed: 28
+  _usesGravity: 0
+  _lifetimeSeconds: 3.5
+  _explodesOnImpact: 1
+  _explodesOnBodyImpact: 1
+  _explosion: {fileID: 11400000, guid: 05711f9ecbf9a9343833e7069b1bdd48, type: 2}

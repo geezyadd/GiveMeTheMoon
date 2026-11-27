@@ -79,6 +79,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "Reload",
+                    "type": "Button",
+                    "id": "c4d5e6f7-0819-4a2b-9c3d-4e5f60718293",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "ToggleCursor",
                     "type": "Button",
                     "id": "a7b8c9d0-e1f2-4a3b-8c4d-5e6f708192a3",
@@ -262,6 +271,17 @@
                     "processors": "",
                     "groups": "Touchscreen",
                     "action": "Fire",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d5e6f708-192a-4b3c-8d4e-5f6071829304",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard and Mouse",
+                    "action": "Reload",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

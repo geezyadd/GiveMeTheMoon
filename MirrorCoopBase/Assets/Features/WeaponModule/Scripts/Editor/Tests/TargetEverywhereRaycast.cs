@@ -13,7 +13,7 @@ namespace Features.WeaponModule.Editor.Tests {
             _impactFeedback = impactFeedback;
         }
 
-        public bool TryRaycast(Vector3 origin, Vector3 direction, float maxDistance, out WeaponRaycastHit hit) {
+        public bool TryRaycast(Vector3 origin, Vector3 direction, float maxDistance, uint ignoredReceiverId, out WeaponRaycastHit hit) {
             hit = new WeaponRaycastHit(origin + direction, -direction, hasTarget: true, _targetId, _impactFeedback);
             return true;
         }

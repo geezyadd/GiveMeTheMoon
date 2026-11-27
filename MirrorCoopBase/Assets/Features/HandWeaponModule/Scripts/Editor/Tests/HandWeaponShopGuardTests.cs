@@ -15,12 +15,12 @@ using Zenject;
 
 namespace Features.HandWeaponModule.Editor.Tests {
     // Guards the hand weapons the shop sells as data: every item can be held and fires a catalog weapon, and the
-    // pistol keeps its rules: one strong shot that breaks a small rock or pops any balloon, then a 2 s cooldown.
+    // pistol keeps its rules: one strong shot that breaks a small rock or pops any balloon, then a 1/3 s cooldown.
     public sealed class HandWeaponShopGuardTests {
         private const string PISTOL_ID = "pistol";
-        private const float PISTOL_COOLDOWN_SECONDS = 2f;
-        private const float FRAME_SECONDS = 0.05f;
-        private const float EARLY_PRESS_SECONDS = 1.5f;
+        private const float PISTOL_COOLDOWN_SECONDS = 1f / 3f;
+        private const float FRAME_SECONDS = 0.01f;
+        private const float EARLY_PRESS_SECONDS = 0.2f;
 
         private ShopCatalog _shopCatalog;
 
@@ -34,7 +34,7 @@ namespace Features.HandWeaponModule.Editor.Tests {
             foreach (HandWeaponDefinition handWeapon in _shopCatalog.HandWeapons) {
                 HandWeaponItem item = handWeapon.ItemPrefab;
                 Assert.IsNotNull(item, $"{handWeapon.name} has no item prefab.");
-                Assert.AreSame(handWeapon, item.Definition, $"The item {item.name} points to another hand weapon than {handWeapon.name}.");
+                Assert.AreSame(handWeapon, item.HandDefinition, $"The item {item.name} points to another hand weapon than {handWeapon.name}.");
                 Assert.IsNotNull(item.GetComponent<Grabbable>(), $"The item of {handWeapon.name} has no {nameof(Grabbable)}.");
                 Assert.IsNotNull(item.GetComponent<NetworkIdentity>(), $"The item of {handWeapon.name} has no {nameof(NetworkIdentity)}.");
                 Assert.IsNotNull(item.GetComponent<IWeaponFeelPresenter>(), $"The item of {handWeapon.name} has no weapon feel.");
@@ -57,7 +57,7 @@ namespace Features.HandWeaponModule.Editor.Tests {
         }
 
         [Test]
-        public void WhenPistolIsPressedAgainWithinTwoSeconds_ThenTheShotIsBlocked() {
+        public void WhenPistolIsPressedAgainWithinItsCooldown_ThenTheShotIsBlocked() {
             IWeaponFireMode fireMode = CreatePistolFireMode();
             Assert.AreEqual(1, fireMode.Advance(true, FRAME_SECONDS), "The first press did not fire.");
             Run(fireMode, false, EARLY_PRESS_SECONDS);
@@ -66,7 +66,7 @@ namespace Features.HandWeaponModule.Editor.Tests {
         }
 
         [Test]
-        public void WhenPistolIsPressedAgainAfterTwoSeconds_ThenItFires() {
+        public void WhenPistolIsPressedAgainAfterItsCooldown_ThenItFires() {
             IWeaponFireMode fireMode = CreatePistolFireMode();
             fireMode.Advance(true, FRAME_SECONDS);
             Run(fireMode, false, PISTOL_COOLDOWN_SECONDS);
@@ -95,7 +95,7 @@ namespace Features.HandWeaponModule.Editor.Tests {
         private IWeaponFireMode CreatePistolFireMode() {
             WeaponDefinition weapon = FindPistol().Weapon;
             Assert.IsInstanceOf<SingleShotFireModeDefinition>(weapon.FireMode, "The pistol does not fire one shot per press.");
-            Assert.AreEqual(1f / PISTOL_COOLDOWN_SECONDS, weapon.ShotsPerSecond, 0.0001f, "The pistol's cooldown is not 2 s.");
+            Assert.AreEqual(1f / PISTOL_COOLDOWN_SECONDS, weapon.ShotsPerSecond, 0.0001f, "The pistol's cooldown is not 1/3 s.");
             return weapon.FireMode.CreateFireMode(weapon.ShotsPerSecond);
         }
 

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42f6dc0d93476494f8b397b9175563fb, type: 3}
+  m_Name: GrenadeProjectile
+  m_EditorClassIdentifier: 
+  _prefab: {fileID: 8773552752732476524, guid: 2243ae4e91ce2884585fd10075369b2e, type: 3}
+  _speed: 18
+  _usesGravity: 1
+  _lifetimeSeconds: 2
+  _explodesOnImpact: 0
+  _explodesOnBodyImpact: 1
+  _explosion: {fileID: 11400000, guid: 55d7170c0c36e444885221b2a5a82ca5, type: 2}

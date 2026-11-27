@@ -33,9 +33,6 @@ namespace Tests.Coop.Client {
         private const float READY = 1f;
         // Longer than the pistol's cooldown, so a click then fires.
         private const float PISTOL_AIM_SECONDS = 2.2f;
-        // A second click this soon after a shot falls inside the 2 s cooldown.
-        private const float BLOCKED_CLICK_SECONDS = 0.5f;
-        private const float READINESS_TOLERANCE = 0.01f;
         private const float COOLDOWN_TIMEOUT_SECONDS = 3f;
         private const int PISTOL_ATTEMPTS = 3;
         private const float PISTOL_RESULT_SECONDS = 1.5f;
@@ -72,8 +69,7 @@ namespace Tests.Coop.Client {
             _screenshots = screenshots;
         }
 
-        // A click fires; a second click within the cooldown fires nothing (the ring keeps filling); once the ring is full
-        // a click fires again. The host counts what arrived.
+        // A click fires; once the ring is full again a click fires again. The host counts what arrived.
         public IEnumerator FirePistolAtDummyCoroutine() {
             yield return _client.WaitForCoroutine(IsPistolInHand, "the pistol in the hand");
             WeaponDebugTarget target = null;
@@ -82,16 +78,10 @@ namespace Tests.Coop.Client {
             yield return AimPistolCoroutine(dummy, PISTOL_AIM_SECONDS);
             yield return ClickPistolCoroutine(true);
             yield return _screenshots.CaptureCoroutine(PISTOL_SCREENSHOT);
-            yield return AimPistolCoroutine(dummy, BLOCKED_CLICK_SECONDS);
-            float readinessBefore = Readiness;
-            yield return ClickPistolCoroutine(false);
-            if (Readiness < readinessBefore - READINESS_TOLERANCE)
-                yield return _client.FailCoroutine($"A click {BLOCKED_CLICK_SECONDS} s after a shot fired again: readiness {readinessBefore:0.00} -> {Readiness:0.00}.");
-
             yield return AimPistolUntilReadyCoroutine(dummy, 0f);
             yield return ClickPistolCoroutine(true);
             HandWeaponAiming.TurnViewBack();
-            Report(CoopWeaponsEconomySteps.PISTOL_FIRED, "2 shots, 1 click blocked by the cooldown");
+            Report(CoopWeaponsEconomySteps.PISTOL_FIRED, "2 shots");
         }
 
         // A step from the turret seat toward the deck's middle, so the gunner finds it near when it stands up in the

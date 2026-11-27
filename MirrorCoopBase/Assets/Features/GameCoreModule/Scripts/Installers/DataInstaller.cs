@@ -46,12 +46,14 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<GameCameraModel>().AsSingle();
             Container.Bind<CameraCarryTurnModel>().AsSingle();
             Container.Bind<CameraShakeModel>().AsSingle();
+            Container.Bind<Features.ScreenShakeModule.ScreenShakeModel>().AsSingle();
             Container.Bind<IShipRunBindingModel>().To<ShipRunBindingModel>().AsSingle();
             Container.Bind<IShipClientBindingModel>().To<ShipClientBindingModel>().AsSingle();
             Container.Bind<ShipRiderKeyModel>().AsSingle();
             Container.Bind<HoveredInteractableModel>().AsSingle();
             Container.Bind<HoldUseModel>().AsSingle();
             Container.Bind<HeldWeaponReadinessModel>().AsSingle();
+            Container.Bind<Features.WeaponModule.Scripts.Core.WeaponModel>().AsSingle();
             Container.Bind<SpectatorModel>().AsSingle();
             Container.Bind<ShopVisitModel>().AsSingle();
             Container.Bind<DeadCrewModel>().AsSingle();

@@ -44,7 +44,9 @@
         "GUID:84d200891cb1452b8e9b453e7052d1af",
         "GUID:e1f9bee6f64241b39869855bd2cc955a",
         "Features.ExplosionModule",
-        "Features.ExplosionModule.Contracts"
+        "Features.ExplosionModule.Contracts",
+        "Features.VfxModule",
+        "Features.ScreenShakeModule"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

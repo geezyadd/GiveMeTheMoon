@@ -1,0 +1,17 @@
+{
+    "name": "Features.ScreenShakeModule",
+    "rootNamespace": "Features.ScreenShakeModule",
+    "references": [
+        "Zenject",
+        "Unity.Cinemachine"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
