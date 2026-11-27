@@ -1,65 +1,73 @@
 using System.Collections.Generic;
+using Features.WeaponModule.Scripts.Definitions;
 using UnityEngine;
+using Zenject;
 
 namespace Features.WeaponModule.Scripts.Projectiles {
-    // The projectiles of every kind on this peer, kept for reuse: no Instantiate or Destroy while firing. They live
-    // under one root kept across scene changes; if it is gone anyway (play mode ended), the pool starts over.
-    public sealed class ProjectilePool {
+    // The projectiles of every kind on this peer, kept for reuse: one pool per prefab, prewarmed at start for every
+    // projectile in the weapon catalog, so firing does not instantiate. They live under one root kept across scene
+    // changes; if it is gone anyway (play mode ended), the pools start over.
+    public sealed class ProjectilePool : IInitializable {
         private const string ROOT_NAME = "Projectiles";
 
-        private readonly Dictionary<Projectile, Stack<Projectile>> _freeByPrefab = new();
-        private readonly Dictionary<Projectile, Projectile> _prefabByProjectile = new();
-        private readonly List<Projectile> _active = new();
+        private readonly WeaponCatalog _weaponCatalog;
+        private readonly Dictionary<Projectile, ProjectilePrefabPool> _poolByPrefab = new();
+        private readonly List<ProjectilePrefabPool> _pools = new();
         private Transform _root;
 
-        public IReadOnlyList<Projectile> Active => _active;
+        public ProjectilePool(WeaponCatalog weaponCatalog) =>
+            _weaponCatalog = weaponCatalog;
 
-        public Projectile Get(Projectile prefab) {
-            EnsureRoot();
-            if (_freeByPrefab.TryGetValue(prefab, out Stack<Projectile> free) == false) {
-                free = new Stack<Projectile>();
-                _freeByPrefab.Add(prefab, free);
+        public IReadOnlyList<ProjectilePrefabPool> Pools => _pools;
+
+        public void Initialize() {
+            foreach (WeaponDefinition weapon in _weaponCatalog.Weapons) {
+                ProjectileDefinition projectile = weapon != null ? weapon.Projectile : null;
+                if (projectile != null && projectile.Prefab != null)
+                    GetPool(projectile.Prefab).PrewarmUpTo(projectile.PrewarmCount);
             }
-
-            Projectile projectile = free.Count > 0 ? free.Pop() : Create(prefab);
-            _active.Add(projectile);
-            return projectile;
         }
 
-        public void Release(Projectile projectile) {
-            if (_active.Remove(projectile) == false)
-                return;
+        public Projectile Get(Projectile prefab) =>
+            GetPool(prefab).Take();
 
-            projectile.OnDespawned();
-            if (_prefabByProjectile.TryGetValue(projectile, out Projectile prefab))
-                _freeByPrefab[prefab].Push(projectile);
+        // An active projectile always has its definition, so it knows the pool it came from.
+        public void Release(Projectile projectile) {
+            if (projectile.Definition != null && _poolByPrefab.TryGetValue(projectile.Definition.Prefab, out ProjectilePrefabPool pool))
+                pool.Return(projectile);
         }
 
         public bool TryFindActive(ulong id, out Projectile projectile) {
-            for (int i = 0; i < _active.Count; i++)
-                if (_active[i].Id == id) {
-                    projectile = _active[i];
-                    return true;
-                }
+            for (int p = 0; p < _pools.Count; p++) {
+                IReadOnlyList<Projectile> active = _pools[p].ActiveProjectiles;
+                for (int i = 0; i < active.Count; i++)
+                    if (active[i].Id == id) {
+                        projectile = active[i];
+                        return true;
+                    }
+            }
 
             projectile = null;
             return false;
         }
 
-        private Projectile Create(Projectile prefab) {
-            Projectile projectile = Object.Instantiate(prefab, _root);
-            projectile.gameObject.SetActive(false);
-            _prefabByProjectile.Add(projectile, prefab);
-            return projectile;
+        private ProjectilePrefabPool GetPool(Projectile prefab) {
+            EnsureRoot();
+            if (_poolByPrefab.TryGetValue(prefab, out ProjectilePrefabPool pool) == false) {
+                pool = new ProjectilePrefabPool(prefab, _root);
+                _poolByPrefab.Add(prefab, pool);
+                _pools.Add(pool);
+            }
+
+            return pool;
         }
 
         private void EnsureRoot() {
             if (_root != null)
                 return;
 
-            _freeByPrefab.Clear();
-            _prefabByProjectile.Clear();
-            _active.Clear();
+            _poolByPrefab.Clear();
+            _pools.Clear();
             _root = new GameObject(ROOT_NAME).transform;
             // A scene change (lobby -> game) must not take projectiles in flight with it.
             if (Application.isPlaying)

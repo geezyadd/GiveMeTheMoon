@@ -10,7 +10,7 @@ pool only plays, stops and asks whether the effect is still alive. Effects are l
 network; each peer plays an effect where it sees the thing happen.
 
 ## Assembly
-`Features.VfxModule` (layer 1; references Zenject and, optionally, `Unity.VisualEffectGraph.Runtime`). Bindings:
+`Features.VfxModule` (layer 1; references Zenject, `Features.PoolModule` and, optionally, `Unity.VisualEffectGraph.Runtime`). Bindings:
 `VfxModuleInstaller`, called from GameCore's `GlobalSceneInstaller`. No configuration asset: every effect is its own
 `VfxDefinition`.
 
@@ -27,7 +27,7 @@ network; each peer plays an effect where it sees the thing happen.
   `Attach(definition, target)` for one that follows a transform (`VfxHandle.Stop`, safe against a reused instance).
 - `VfxPoolRegistry`: one `VfxPool` per definition, made on its first play (prewarmed then), under one root kept across
   scene changes (DontDestroyOnLoad); a root gone with play mode starts the pools over.
-- `VfxPool` / `VfxInstance`: a free instance or a new one up to the max, past it the oldest free-standing one is reused;
+- `VfxPool` (a `PoolBase` from PoolModule) / `VfxInstance`: a free instance or a new one up to the max, past it the oldest free-standing one is reused;
   an instance goes back once it is older than the min lifetime and nothing of it is alive, or past the max lifetime.
 - `VfxSystem` (`ILateTickable`): ages every playing effect once a frame.
 

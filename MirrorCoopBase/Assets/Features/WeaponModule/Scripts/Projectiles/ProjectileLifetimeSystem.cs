@@ -10,11 +10,15 @@ namespace Features.WeaponModule.Scripts.Projectiles {
         public ProjectileLifetimeSystem(ProjectilePool pool) =>
             _pool = pool;
 
+        // A projectile that ends in its step goes back to its pool at once, so each list is walked from its end.
         public void FixedTick() {
-            IReadOnlyList<Projectile> projectiles = _pool.Active;
-            for (int i = projectiles.Count - 1; i >= 0; i--)
-                if (i < projectiles.Count)
-                    projectiles[i].Tick(Time.fixedDeltaTime);
+            IReadOnlyList<ProjectilePrefabPool> pools = _pool.Pools;
+            for (int p = 0; p < pools.Count; p++) {
+                IReadOnlyList<Projectile> projectiles = pools[p].ActiveProjectiles;
+                for (int i = projectiles.Count - 1; i >= 0; i--)
+                    if (i < projectiles.Count)
+                        projectiles[i].Tick(Time.fixedDeltaTime);
+            }
         }
     }
 }

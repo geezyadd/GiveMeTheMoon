@@ -3,6 +3,7 @@
     "rootNamespace": "Features.VfxModule",
     "references": [
         "Zenject",
+        "Features.PoolModule",
         "Unity.VisualEffectGraph.Runtime"
     ],
     "includePlatforms": [],

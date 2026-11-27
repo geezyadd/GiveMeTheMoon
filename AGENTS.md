@@ -108,13 +108,13 @@ types.
      `Features.CrewInviteModule.Data`, `Features.StagePresetModule.Data`, `Features.FlightFieldModule.Contracts`,
      `Features.WeaponModule.Contracts`, `Features.CameraModule.Contracts`, `Features.EffectPoolModule` (no references),
      `Features.DebugModule.Contracts`, `Features.SonarModule.Contracts`, `Features.SonarModule.Data`,
-     `Features.VfxModule`, `Features.ScreenShakeModule`,
+     `Features.PoolModule` (no references), `Features.ScreenShakeModule`,
      `Features.SpaceHazeModule.Data`, `Features.AttackModule.Contracts`, `Features.ExplosionModule.Contracts`; third-party
      `QuickOutline` also has its own asmdef (the unused `Mini Mapa(Radar)` pack was deleted on 2026-10-25).
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
      `Features.SpaceHazeModule`, `Features.ActiveRagdollModule` (FloatingController),
-     `Features.TargetModule`.
+     `Features.TargetModule`, `Features.VfxModule` (PoolModule).
   3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.PlayerReplicaModule`,
      `Features.PlayerAnimationModule`.
   4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`,
@@ -167,6 +167,7 @@ types.
 | [Loop tests](MirrorCoopBase/Assets/Tests/PlayMode/LoopSmoke/AGENTS.md) | `LoopSmokeTest` and its checks, the ride test, the soak test, adding a loop test check |
 | [Two-player test](MirrorCoopBase/Assets/Tests/Coop/AGENTS.md) | `CoopTwoProcessTest` with a real second client process |
 | `Features.AddressablesConstantGeneratorModule` | `Address_g.cs`; editor tools and tests load a configuration at its address with `AddressableConfigurationLoader` in `Features.AddressablesConstantGeneratorModule.EditorLoading` |
+| `Features.PoolModule` | `PoolBase<T>` (ported from FLEXUS): free / active items, prewarm, a maximum past which an active item is taken back (`GetRecycleIndex`; `int.MaxValue` for items that must never be taken while in use), `Forget` and `IsAlive` for items destroyed from outside; `VfxPool` and `ProjectilePrefabPool` are built on it |
 | `Features.EffectPoolModule` | `SelfDisablingEffectPool<TEffect>` over `ISelfDisablingEffect`, the pool of effects that disable themselves when over; the rock break and the rock impact effects use it |
 | `Features.CharacterMovableModule` | player movement; it pushes an `IMovableBody` (`CapsuleMovableBody`: the player's rigidbody, floating controller and carrier rider by default, another body through `CharacterMovableBase.SetDrivenBody`; `DrivenBody`, `ActiveControls` and `ShownLookYaw` are what the network copy and the body's owner read; `IsHeld`, set by a ship seat, stops the walk and makes a non-capsule body follow the capsule;
 `IsKnockedDown`, set by PlayerBodyModule's explosion reaction while the ragdoll lies limp, stops the walk and the jump); a jump reaches its takeoff speed over a short push of the legs (`JumpPush`, stat `JumpPushSeconds` 0.07 s since 2026-11-26, was one physics step), with the gravity of the push taken off so the height stays; the body simulation takes its controls through `IMovementControls` (`KeyboardMovementControls`: keyboard and camera for the player's own body; `PacketMovementControls` in PlayerReplicaModule for remote copies; attack presses are not movement controls: see AttackModule's `IAttackPresses`); tests: `Features.CharacterMovableModule.Editor.Tests` |

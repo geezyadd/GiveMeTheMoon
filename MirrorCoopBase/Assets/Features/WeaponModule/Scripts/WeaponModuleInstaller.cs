@@ -22,7 +22,7 @@ namespace Features.WeaponModule.Scripts {
             Container.Bind<IWeaponCatalogIndexService>().To<WeaponCatalogIndexService>().AsSingle();
             Container.Bind<IWeaponService>().To<WeaponService>().AsSingle();
             Container.BindInterfacesTo<WeaponSystem>().AsSingle();
-            Container.Bind<ProjectilePool>().AsSingle();
+            Container.BindInterfacesAndSelfTo<ProjectilePool>().AsSingle();
             Container.Bind<IProjectileSpawner>().To<ProjectileSpawner>().AsSingle();
             Container.BindInterfacesTo<ProjectileLifetimeSystem>().AsSingle();
             Container.Bind<WeaponShotPresenter>().AsSingle();

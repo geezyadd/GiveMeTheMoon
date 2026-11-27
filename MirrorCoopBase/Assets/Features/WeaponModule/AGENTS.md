@@ -46,11 +46,12 @@ ported, on purpose).
   `ImpactKnockdownSeconds` (limp time; 0 only pushes). `WeaponImpactReceiverRegistry` (`IWeaponImpactReceiverRegistry`
   + `IWeaponImpactLookup`) lists the receivers on each peer; every peer applies the impact to its own copy of the
   body, like the explosion wave.
-- **Projectiles** (`Projectiles/`, FLEXUS's pool shape): `ProjectileDefinition` (prefab, speed, gravity on = ballistic
+- **Projectiles** (`Projectiles/`): `ProjectileDefinition` (prefab, speed, gravity on = ballistic
   and bouncing / off = straight at constant speed, lifetime, goes off on any impact or only on a moving body, the
-  `ExplosionPreset`), `Projectile` (a Rigidbody flown by Unity physics; ignores the shooter's body and the weapon's
-  colliders, `WeaponHolderColliders`), `ProjectilePool` (per prefab, no Instantiate while firing, rebuilt when its root
-  went away with a scene), `ProjectileLifetimeSystem` (`IFixedTickable`), `ProjectileSpawner`. The **server's**
+  `ExplosionPreset`, prewarm count), `Projectile` (a Rigidbody flown by Unity physics; ignores the shooter's body and the weapon's
+  colliders, `WeaponHolderColliders`), `ProjectilePool` (one `ProjectilePrefabPool` per prefab, a `PoolBase` from
+  PoolModule; every projectile of the `WeaponCatalog` is prewarmed at start; no maximum, so a projectile in flight is
+  never taken back and the pool grows instead; rebuilt when its root went away with a scene), `ProjectileLifetimeSystem` (`IFixedTickable`), `ProjectileSpawner`. The **server's**
   projectile is the real one: where it ends, `IExplosionService.ServerExplode(..., showsEffect: false)` sets off the
   wave on every peer and `RpcProjectileEnded` ends the other peers' copies (a copy flies from the same launch). Every
   projectile that ends on a peer, the server's or a copy (by itself or by that message), plays the explosion's look

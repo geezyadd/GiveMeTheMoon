@@ -20,6 +20,8 @@ namespace Features.WeaponModule.Scripts.Definitions {
         [Tooltip("It goes off when it strikes a moving body (a player's ragdoll, a loose item), even if it bounces off the rest.")]
         [SerializeField] private bool _explodesOnBodyImpact = true;
         [SerializeField] private ExplosionPreset _explosion;
+        [Tooltip("Projectiles of this prefab made at start, so the first shots do not instantiate; more are made when all are in flight.")]
+        [SerializeField, Min(0)] private int _prewarmCount = 4;
 
         public Projectile Prefab => _prefab;
         public float Speed => _speed;
@@ -28,5 +30,6 @@ namespace Features.WeaponModule.Scripts.Definitions {
         public bool ExplodesOnImpact => _explodesOnImpact;
         public bool ExplodesOnBodyImpact => _explodesOnBodyImpact;
         public ExplosionPreset Explosion => _explosion;
+        public int PrewarmCount => _prewarmCount;
     }
 }
