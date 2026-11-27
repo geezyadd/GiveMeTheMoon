@@ -110,12 +110,13 @@ types.
      `Features.DebugModule.Contracts`, `Features.SonarModule.Contracts`, `Features.SonarModule.Data`,
      `Features.PoolModule` (no references), `Features.ScreenShakeModule`,
      `Features.SpaceHazeModule.Data`, `Features.AttackModule.Contracts`, `Features.ExplosionModule.Contracts`,
-     `Features.EmoteModule.Contracts`, `Features.EmoteModule.Data` (no references); third-party
+     `Features.EmoteModule.Contracts`, `Features.EmoteModule.Data` (no references), `Features.CoroutineRunnerModule`,
+     `Features.LoadingScreenModule.Contracts` (no references); third-party
      `QuickOutline` also has its own asmdef (the unused `Mini Mapa(Radar)` pack was deleted on 2026-10-25).
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
      `Features.SpaceHazeModule`, `Features.ActiveRagdollModule` (FloatingController),
-     `Features.TargetModule`, `Features.VfxModule` (PoolModule).
+     `Features.TargetModule`, `Features.VfxModule` (PoolModule), `Features.LoadingScreenModule`.
   3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.PlayerReplicaModule`,
      `Features.PlayerAnimationModule`.
   4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`,
@@ -149,6 +150,8 @@ types.
 | [TargetModule](MirrorCoopBase/Assets/Features/TargetModule/AGENTS.md) | targets any system can find and act on (`Hittable`, `LookAt`), their registry and the hit event reactions listen to |
 | [AttackModule](MirrorCoopBase/Assets/Features/AttackModule/AGENTS.md) | attacks of any ragdoll body (the slap): the attack as data, its timing, presses, aim, the limb's reach and where it lands |
 | [EmoteModule](MirrorCoopBase/Assets/Features/EmoteModule/AGENTS.md) | the emote wheel (hold G, pick with the mouse, release) and the player's emotes, played through the animator on every peer from the replica packets |
+| [LoadingScreenModule](MirrorCoopBase/Assets/Features/LoadingScreenModule/AGENTS.md) | the screen that covers scene changes: fade in / fade out with an action after, on host / join, lobby ↔ game, leave to the menu |
+| [CoroutineRunnerModule](MirrorCoopBase/Assets/Features/CoroutineRunnerModule/AGENTS.md) | `ICoroutineRunner`: plain classes run coroutines from one object in GlobalScene |
 | [VfxModule](MirrorCoopBase/Assets/Features/VfxModule/AGENTS.md) | pooled visual effects (ported from FLEXUS): an effect as a `VfxDefinition`, particle systems now, VFX Graph when its package is in |
 | [ScreenShakeModule](MirrorCoopBase/Assets/Features/ScreenShakeModule/AGENTS.md) | screen shake through the Cinemachine noise, the strongest shake wins (ported from FLEXUS); explosions only for now |
 | [ExplosionModule](MirrorCoopBase/Assets/Features/ExplosionModule/AGENTS.md) | explosions as presets (small, medium, large): a wave spreading from the centre throws items and knocks ragdolls down for a while; the service, the receivers, the lobby test mine |

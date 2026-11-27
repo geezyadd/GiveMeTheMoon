@@ -48,7 +48,10 @@
         "Features.VfxModule",
         "Features.ScreenShakeModule",
         "Features.EmoteModule",
-        "Features.EmoteModule.Data"
+        "Features.EmoteModule.Data",
+        "Features.CoroutineRunnerModule",
+        "Features.LoadingScreenModule",
+        "Features.LoadingScreenModule.Contracts"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

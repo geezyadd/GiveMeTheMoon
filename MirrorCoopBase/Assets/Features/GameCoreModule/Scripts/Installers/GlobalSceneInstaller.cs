@@ -1,6 +1,8 @@
 using Features.PlayerReplicaModule.Installers;
 using Features.CameraModule.Scripts;
 using Features.CharacterMovableModule.Scripts;
+using Features.CoroutineRunnerModule;
+using Features.LoadingScreenModule;
 using Features.CrewInviteModule.Scripts.Installers;
 using Features.EmoteModule;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -31,6 +33,8 @@ using Zenject;
 namespace Features.GameCoreModule.Scripts.Installers {
     public sealed class GlobalSceneInstaller : MonoInstaller<GlobalSceneInstaller> {
         public override void InstallBindings() {
+            CoroutineRunnerModuleInstaller.Install(Container);
+            LoadingScreenModuleInstaller.Install(Container);
             GameFlowStateMachineModuleInstaller.Install(Container);
             InputModuleInstaller.Install(Container);
             CharacterMovableModuleInstaller.Install(Container);

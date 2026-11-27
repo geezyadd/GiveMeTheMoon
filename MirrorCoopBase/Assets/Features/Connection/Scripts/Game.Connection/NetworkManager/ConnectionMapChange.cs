@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Features.LoadingScreenModule.Contracts;
 using Mirror;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -18,6 +19,8 @@ namespace Game.Connection
         private readonly ConnectionSpawnPlacement _spawnPlacement;
         private readonly ConnectionPersistentScene _persistentScene;
         private readonly ConnectionNetworkEvents _events;
+        private readonly ILoadingScreenService _loadingScreen;
+        private readonly float _loadingScreenHoldSeconds;
         private readonly float _everyoneReadyDelay;
         private readonly Action _clientSceneChanged;
         private readonly Action _loadFailed;
@@ -34,6 +37,8 @@ namespace Game.Connection
             ConnectionSpawnPlacement spawnPlacement,
             ConnectionPersistentScene persistentScene,
             ConnectionNetworkEvents events,
+            ILoadingScreenService loadingScreen,
+            float loadingScreenHoldSeconds,
             float everyoneReadyDelay,
             Action clientSceneChanged,
             Action loadFailed,
@@ -45,6 +50,8 @@ namespace Game.Connection
             _spawnPlacement = spawnPlacement;
             _persistentScene = persistentScene;
             _events = events;
+            _loadingScreen = loadingScreen;
+            _loadingScreenHoldSeconds = loadingScreenHoldSeconds;
             _everyoneReadyDelay = everyoneReadyDelay;
             _clientSceneChanged = clientSceneChanged;
             _loadFailed = loadFailed;
@@ -195,6 +202,10 @@ namespace Game.Connection
                 // registered are dropped. Pause the inbox for the whole load, including
                 // the wait, and resume only after they are registered.
                 BeginSceneLoadPause();
+                // The map loads only once the loading screen covers it; MapReady uncovers it.
+                bool covered = false;
+                _loadingScreen.FadeIn(() => covered = true);
+                yield return new WaitUntil(() => covered);
                 yield return new WaitForSeconds(0.1f);
                 _events.RaiseMapUnloading(SceneManager.GetActiveScene().name);
             }
@@ -314,6 +325,7 @@ namespace Game.Connection
             if (NetworkServer.active)
                 NetworkServer.isLoadingScene = false;
             _events.RaiseMapReady();
+            _loadingScreen.FadeOut(_loadingScreenHoldSeconds);
         }
     }
 }
