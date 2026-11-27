@@ -210,6 +210,15 @@ in open space. Code in `Scripts/Overboard/`, numbers in `ShipOverboardConfigurat
   item such as the lobby's weapons, and the helm if it is thrown away). Nothing synced: clients see it by its network body.
 - Not done yet: the "man overboard" sonar contact.
 
+## The station pad's ground
+`StationPad.prefab` (every station; the first one is the instance in `GameScene`) stands on floating rock islands like
+the lobby (2026-11-27; it was a flat 20 x 42 m `Deck` box): `RockIslands/Island_Main` covers the old deck's footprint
+(x -11..11, z -14.5..30, about 280 PolyOne rocks laid flat side up, top at 0.4 m with dips of at most 0.4 m and no holes,
+an uneven rim and rocks hanging below), and six far islands (the lobby's, copied) stand 40-65 m away, 17-22 m below or
+25-31 m above the pad so they stay out of the ship's approach. Every rock has a MeshCollider of its own shape on
+`Ground` and all of them (about 500) are the pad's `OverboardArea` floors. `GameScene`'s old ground planes and step cube
+are gone. The ship's landing point, the kiosk, the delivery pad and the terminal are unchanged.
+
 ## Cargo on the deck
 The flying deck is moved by code, not by physics, so it carries the grabbable items on it itself (`ShipDeckCargo`, run
 by `ShipBase.LateUpdate` on every peer):
