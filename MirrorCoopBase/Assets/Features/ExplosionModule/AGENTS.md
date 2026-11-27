@@ -11,7 +11,8 @@ themselves. Kinds of explosions (small, medium, large...) are data: presets in o
 
 ## Status
 Built on `demo/explosion` (2026-11-26). Since 2026-11-27 an explosion looks like the GabrielAguiarProductions air
-explosion (VfxModule) and shakes the screen (ScreenShakeModule); the see-through stand-in sphere is gone. No sound, no
+explosion (VfxModule) and shakes the screen (ScreenShakeModule); the see-through stand-in sphere is gone. Since 2026-11-27 it plays the preset's
+FMOD sound through AudioModule (all three presets on `event:/Weapon/explosion_mid` for now). No
 damage, no cover behind walls. Known limits: the centre is a world point, so an
 explosion during the flight's world shift is not moved with the world; a wave reaches a receiver by its centre only.
 
@@ -20,7 +21,7 @@ explosion during the flight's world shift is not moved with the world; a wave re
   upward share, knockdown seconds, `VelocityAt(point)`), `IExplosionReceiver` (centre, parts, `ReceiveExplosion`),
   `IExplosionReceiverRegistry`. Receivers in other modules reference only this.
 - `Features.ExplosionModule` (layer 4; references Mirror, Zenject, Contracts, `DebugModule.Contracts`, `CameraModule`,
-  `TargetModule`, `VfxModule`, `ScreenShakeModule`). Bindings: `ExplosionModuleInstaller`, called from GameCore's
+  `TargetModule`, `VfxModule`, `ScreenShakeModule`, `AudioModule`, `FMODUnity`). Bindings: `ExplosionModuleInstaller`, called from GameCore's
   `GlobalSceneInstaller`; the configuration is bound in `ConfigurationInstaller`
   (`Address.Configurations.ExplosionConfiguration_Default`).
 
@@ -29,7 +30,7 @@ explosion during the flight's world shift is not moved with the world; a wave re
   change right at the centre, m/s), falloff curve (share of the centre speed by distance / radius), upward share,
   knockdown seconds, knockdown min share (farther than this share a ragdoll is only pushed), and its look: the effect
   (`VfxDefinition`), the effect's scale, the screen shake profile and the shake distance (full at the centre, nothing
-  this far from the camera). Presets in `GameResources/Presets` (radius, wave speed, centre speed,
+  this far from the camera), and its sound (an FMOD `EventReference`, played at the centre; empty: none). Presets in `GameResources/Presets` (radius, wave speed, centre speed,
   knockdown): Small (3 m, 25 m/s, 15 m/s, 1.5 s), Medium (5 m, 30 m/s, 22 m/s, 2.5 s), Large (9 m, 35 m/s, 32 m/s,
   3.5 s); centre speeds were 10 / 15 / 22 until 2026-11-26.
 - `Configuration/ExplosionConfiguration` (`GameResources/Configurations/ExplosionConfiguration_Default`, Addressables
@@ -38,7 +39,7 @@ explosion during the flight's world shift is not moved with the world; a wave re
   own: by reference alone no projectile or mine explosion was sent, fixed 2026-11-27, `ExplosionConfigurationTests`), the layers whose loose
   rigidbodies are thrown, the debug distance.
 - **The look is local, never over the network.** `IExplosionEffects` / `ExplosionEffects` plays the preset's effect at
-  the centre and the shake (strength 1 - camera distance / shake distance). A projectile's explosion (grenade,
+  the centre, its sound (`IAudioService.PlayOneShot` at the centre) and the shake (strength 1 - camera distance / shake distance). A projectile's explosion (grenade,
   rocket: WeaponModule's `ProjectileSpawner`) shows it on every peer where that peer's own projectile ends (the
   server's or a copy) and asks the server's wave with `showsEffect: false`; any other explosion (the lobby mine, the
   debug buttons) shows it when its wave starts (`ExplosionMessage.ShowsEffect`).

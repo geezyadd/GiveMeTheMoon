@@ -1,5 +1,6 @@
 using Features.CameraModule.Contracts;
 using Features.VfxModule;
+using FMODUnity;
 using UnityEngine;
 
 namespace Features.WeaponModule.Scripts.Definitions {
@@ -96,6 +97,12 @@ namespace Features.WeaponModule.Scripts.Definitions {
         [SerializeField, Range(0f, 1f)] private float _impactFlashMinSizeShare;
         [SerializeField, Min(0f)] private float _targetFlashSeconds;
 
+        [Header("Sound")]
+        [Tooltip("The FMOD event every peer plays at the muzzle on each shot. Empty: no sound.")]
+        [SerializeField] private EventReference _shotSound;
+        [Tooltip("The FMOD event every peer plays where a shot strikes a surface. Empty: no sound (a projectile's explosion has its own).")]
+        [SerializeField] private EventReference _impactSound;
+
         public float BarrelSpinDegreesPerSecond => _barrelSpinDegreesPerSecond;
         public Color MuzzleFlashColor => _muzzleFlashColor;
         public float MuzzleFlashSize => _muzzleFlashSize;
@@ -147,5 +154,7 @@ namespace Features.WeaponModule.Scripts.Definitions {
         public float ImpactFlashSeconds => _impactFlashSeconds;
         public float ImpactFlashMinSizeShare => _impactFlashMinSizeShare;
         public float TargetFlashSeconds => _targetFlashSeconds;
+        public EventReference ShotSound => _shotSound;
+        public EventReference ImpactSound => _impactSound;
     }
 }

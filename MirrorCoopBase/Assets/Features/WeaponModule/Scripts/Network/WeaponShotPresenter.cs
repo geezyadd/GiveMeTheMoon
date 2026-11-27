@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.AudioModule;
 using Features.WeaponModule.Contracts;
 using Features.WeaponModule.Scripts.Definitions;
 using Features.WeaponModule.Scripts.Impacts;
@@ -8,7 +9,7 @@ using Features.WeaponModule.Scripts.Projectiles;
 using UnityEngine;
 
 namespace Features.WeaponModule.Scripts.Network {
-    // Shows one shot on one peer, once: the weapon's feel (flash, kick, tracer, impact), the struck surface's own
+    // Shows one shot on one peer, once: the weapon's feel (flash, kick, tracer, impact) and sounds, the struck surface's own
     // feedback, the struck body's reaction and, on a peer that is not the server, a copy of the projectile it launched.
     public sealed class WeaponShotPresenter {
         // A received shot's end point lies on the struck surface; the ray looking for it goes this far past it.
@@ -16,15 +17,18 @@ namespace Features.WeaponModule.Scripts.Network {
 
         private readonly IWeaponImpactLookup _impactLookup;
         private readonly IProjectileSpawner _projectileSpawner;
+        private readonly IAudioService _audioService;
 
-        public WeaponShotPresenter(IWeaponImpactLookup impactLookup, IProjectileSpawner projectileSpawner) {
+        public WeaponShotPresenter(IWeaponImpactLookup impactLookup, IProjectileSpawner projectileSpawner, IAudioService audioService) {
             _impactLookup = impactLookup;
             _projectileSpawner = projectileSpawner;
+            _audioService = audioService;
         }
 
         public void Present(WeaponDefinition weapon, IWeaponFeel feel, in WeaponShotOutcome outcome, ulong projectileId, bool spawnsCopy,
                             IReadOnlyList<Collider> ignoredByProjectile) {
             feel?.PresentShot(outcome);
+            PlaySounds(weapon.FeelProfile, outcome);
             if (outcome.ImpactFeedback != null)
                 outcome.ImpactFeedback.PresentImpact(outcome.EndPoint, outcome.Normal);
 
@@ -43,6 +47,15 @@ namespace Features.WeaponModule.Scripts.Network {
             WeaponShot shot = new WeaponShot(weapon.Id, message.Origin, message.Direction, weapon.RangeMeters);
             return WeaponShotOutcome.CreateReceived(shot, message.EndPoint, message.Normal, message.IsImpact, message.IsTargetHit,
                 message.TargetId, feedback, message.HasReceiver, message.ReceiverId, message.ReceiverPartIndex);
+        }
+
+        private void PlaySounds(WeaponFeelProfile profile, in WeaponShotOutcome outcome) {
+            if (profile == null)
+                return;
+
+            _audioService.PlayOneShot(profile.ShotSound, outcome.Shot.Origin);
+            if (outcome.IsImpact)
+                _audioService.PlayOneShot(profile.ImpactSound, outcome.EndPoint);
         }
 
         private void PushReceiver(WeaponDefinition weapon, in WeaponShotOutcome outcome, Vector3 direction) {

@@ -24,6 +24,12 @@ go in flight with it), and `Grabbable.ApplyLoosePhysics` is the one place that g
 (the server simulates it, a client's network body moves it); the release and the ship's deck use it. A stow is not a
 release: it fires nothing.
 
+**Equip sound.** `Grabbable.EquipSound` (an FMOD event, empty = none) plays through AudioModule's `IAudioService` where
+the item comes into a hand: pickup or taken out of an inventory slot. `GrabController` passes `playsEquipSound` to
+`HeldItemRegistry.Hold` only for a change of its `PlayerHand` model, not for the state found when the hand binds, so a
+joining player hears nothing for what others already hold; an item not spawned yet plays it once it attaches. Nothing
+extra goes over the network. The asmdef references `Features.AudioModule` and `FMODUnity`.
+
 Seats and the helm are in [ShipModule](../ShipModule/AGENTS.md).
 
 **Aim on a moving deck.** `InteractionAim` casts its ray where the physics has the player: it adds how far the

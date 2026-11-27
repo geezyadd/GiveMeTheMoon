@@ -9,7 +9,9 @@
         "Features.CameraModule",
         "Features.TargetModule",
         "Features.VfxModule",
-        "Features.ScreenShakeModule"
+        "Features.ScreenShakeModule",
+        "Features.AudioModule",
+        "FMODUnity"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

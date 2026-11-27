@@ -110,6 +110,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 785683e05b804ac5b06babf48bf6f571
+    m_Address: AmbienceConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 82ad434445f94224cbd7e0e43793933c
     m_Address: InventoryConfiguration_Default
     m_ReadOnly: 0

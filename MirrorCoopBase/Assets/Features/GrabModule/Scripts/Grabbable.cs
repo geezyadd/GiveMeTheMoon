@@ -1,5 +1,6 @@
 using System;
 using Features.GameCoreModule.Contracts;
+using FMODUnity;
 using Mirror;
 using UnityEngine;
 
@@ -13,6 +14,8 @@ namespace Features.GrabModule.Scripts {
         [SerializeField] private Outline _outline;
         [Tooltip("The item can be kept in an inventory slot (hand weapons, tools); off for ship modules.")]
         [SerializeField] private bool _canStoreInInventory;
+        [Tooltip("The FMOD event every peer plays where the item comes into a hand (picked up or taken out of a slot). Empty: no sound.")]
+        [SerializeField] private EventReference _equipSound;
 
         private StowedItemVisibility _stowedVisibility;
         private Transform _holdPoint;
@@ -24,6 +27,7 @@ namespace Features.GrabModule.Scripts {
         public bool CanBeGrabbed => _isHeld == false;
         public bool CanStoreInInventory => _canStoreInInventory;
         public bool IsStowed => _isStowed;
+        public EventReference EquipSound => _equipSound;
 
         private void Awake() =>
             _stowedVisibility = new StowedItemVisibility(GetComponentsInChildren<Renderer>(true), GetComponentsInChildren<Collider>(true));

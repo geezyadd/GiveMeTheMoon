@@ -49,6 +49,8 @@
         "Features.ExplosionModule.Contracts",
         "Features.VfxModule",
         "Features.ScreenShakeModule",
+        "Features.AudioModule",
+        "FMODUnity",
         "Features.EmoteModule",
         "Features.EmoteModule.Data",
         "Features.CoroutineRunnerModule",

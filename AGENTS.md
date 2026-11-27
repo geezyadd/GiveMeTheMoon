@@ -33,8 +33,8 @@ The loop runs from start to end, but it does not match the design yet:
 - players can join or come back in the lobby or while the ship stands at a station (`Build`); in flight, in a wreck,
   while the map changes and with a full crew they are turned away with a reason the menu shows (see "Player data and
   rejoin");
-- there is no sound at all: every sound, its clips, `AudioSource` hooks and settings were removed on 2026-10-27
-  (sound comes back as a separate later step); the only VFX are the weapons', the rock break and the rock impact
+- sound: everything from before was removed on 2026-10-27; since 2026-11-27 sound comes back through FMOD and
+  [AudioModule](MirrorCoopBase/Assets/Features/AudioModule/AGENTS.md), one-shots so far (explosions, hand weapon shots and hits, picking up a hand weapon); the only VFX are the weapons', the rock break and the rock impact
   effects.
 
 The per-module status (modules, slots, station drops, stats and hull in
@@ -111,7 +111,8 @@ types.
      `Features.PoolModule` (no references), `Features.ScreenShakeModule`,
      `Features.SpaceHazeModule.Data`, `Features.AttackModule.Contracts`, `Features.ExplosionModule.Contracts`,
      `Features.EmoteModule.Contracts`, `Features.EmoteModule.Data` (no references), `Features.CoroutineRunnerModule`,
-     `Features.LoadingScreenModule.Contracts` (no references), `Features.SavingSystemModule.Contracts`; third-party
+     `Features.LoadingScreenModule.Contracts` (no references), `Features.SavingSystemModule.Contracts`,
+     `Features.AudioModule` (Zenject, FMODUnity); third-party
      `QuickOutline` also has its own asmdef (the unused `Mini Mapa(Radar)` pack was deleted on 2026-10-25).
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
@@ -156,6 +157,7 @@ types.
 | [SavingSystemModule](MirrorCoopBase/Assets/Features/SavingSystemModule/AGENTS.md) | local save files by ID: commit to encrypted `.sav` files per Steam user, load, delete; Steam Auto-Cloud (PC only) |
 | [CoroutineRunnerModule](MirrorCoopBase/Assets/Features/CoroutineRunnerModule/AGENTS.md) | `ICoroutineRunner`: plain classes run coroutines from one object in GlobalScene |
 | [VfxModule](MirrorCoopBase/Assets/Features/VfxModule/AGENTS.md) | pooled visual effects (ported from FLEXUS): an effect as a `VfxDefinition`, particle systems now, VFX Graph when its package is in |
+| [AudioModule](MirrorCoopBase/Assets/Features/AudioModule/AGENTS.md) | sounds through FMOD: `IAudioService`, one-shots at a point or with no position; who plays what (being built) |
 | [ScreenShakeModule](MirrorCoopBase/Assets/Features/ScreenShakeModule/AGENTS.md) | screen shake through the Cinemachine noise, the strongest shake wins (ported from FLEXUS); explosions only for now |
 | [ExplosionModule](MirrorCoopBase/Assets/Features/ExplosionModule/AGENTS.md) | explosions as presets (small, medium, large): a wave spreading from the centre throws items and knocks ragdolls down for a while; the service, the receivers, the lobby test mine |
 | [MovingPlatformModule](MirrorCoopBase/Assets/Features/MovingPlatformModule/AGENTS.md) | riding moving carriers (`CarrierRider`, used by the ship's deck too) and the lobby's test platform flying around a circle, its start / stop button |

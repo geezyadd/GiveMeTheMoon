@@ -110,13 +110,13 @@ namespace Features.GrabModule.Scripts {
         }
 
         protected override void BindCallbacks() {
-            Bound.OnHeldItemNetIdChanged += ApplyHeldItem;
-            ApplyHeldItem();
+            Bound.OnHeldItemNetIdChanged += ApplyChangedHeldItem;
+            ApplyHeldItem(false);
         }
 
         protected override void ReleaseCallbacks() {
             if (Bound != null)
-                Bound.OnHeldItemNetIdChanged -= ApplyHeldItem;
+                Bound.OnHeldItemNetIdChanged -= ApplyChangedHeldItem;
 
             _heldItems.Release(this);
         }
@@ -139,12 +139,15 @@ namespace Features.GrabModule.Scripts {
         private bool IsStoredItem(Grabbable item) =>
             _storage != null && item.CanStoreInInventory;
 
-        private void ApplyHeldItem() {
+        private void ApplyChangedHeldItem() =>
+            ApplyHeldItem(true);
+
+        private void ApplyHeldItem(bool playsEquipSound) {
             uint itemNetId = Bound.HeldItemNetId;
             if (itemNetId == 0)
                 _heldItems.Release(this);
             else
-                _heldItems.Hold(this, itemNetId);
+                _heldItems.Hold(this, itemNetId, playsEquipSound);
         }
     }
 }

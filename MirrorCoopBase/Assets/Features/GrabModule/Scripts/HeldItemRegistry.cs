@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Features.AudioModule;
 using Features.GameCoreModule.Contracts;
 using Mirror;
 
@@ -8,7 +9,9 @@ namespace Features.GrabModule.Scripts {
     // An item that is not spawned here yet stays pending and is picked up as soon as it appears.
     // A holder also carries items (its inventory): a carried item outside the hand is stowed, so a hand switching
     // between carried items never lets one go; it is loose only once it is neither held nor carried.
+    // An item that comes into a hand by a change of that hand plays its equip sound on this peer, once it is attached.
     public sealed class HeldItemRegistry : IGameplaySession {
+        private readonly IAudioService _audioService;
         private readonly List<HeldItem> _held = new List<HeldItem>(8);
         private readonly List<HeldItem> _carried = new List<HeldItem>(16);
 
@@ -16,7 +19,12 @@ namespace Features.GrabModule.Scripts {
         // flight). A stow is not a release.
         public event Action<Grabbable> OnItemReleased;
 
-        public void Hold(GrabController holder, uint itemNetId) {
+        public HeldItemRegistry(IAudioService audioService) =>
+            _audioService = audioService;
+
+        // playsEquipSound: the hand changed to this item now (pickup, slot switch); false for the state a peer finds
+        // when the hand appears, so a joining player hears nothing for what others already hold.
+        public void Hold(GrabController holder, uint itemNetId, bool playsEquipSound) {
             int index = IndexOf(holder);
             if (index >= 0 && _held[index].ItemNetId == itemNetId)
                 return;
@@ -24,7 +32,7 @@ namespace Features.GrabModule.Scripts {
             if (index >= 0)
                 ReleaseAt(index);
 
-            HeldItem held = new HeldItem(holder, itemNetId);
+            HeldItem held = new HeldItem(holder, itemNetId) { PlaysEquipSound = playsEquipSound };
             _held.Add(held);
             TryAttach(held, true);
         }
@@ -113,6 +121,7 @@ namespace Features.GrabModule.Scripts {
             held.Item = item;
             item.Stopped += OnItemStopped;
             item.ApplyHold(held.Holder.ArmPoint);
+            PlayEquipSoundOnce(held);
             return true;
         }
 
@@ -134,6 +143,14 @@ namespace Features.GrabModule.Scripts {
                 item.ApplyStow(carried.Holder.ArmPoint);
 
             return true;
+        }
+
+        private void PlayEquipSoundOnce(HeldItem held) {
+            if (held.PlaysEquipSound == false)
+                return;
+
+            held.PlaysEquipSound = false;
+            _audioService.PlayOneShot(held.Item.EquipSound, held.Item.transform.position);
         }
 
         private void ReleaseAt(int index) {
@@ -278,6 +295,7 @@ namespace Features.GrabModule.Scripts {
             public GrabController Holder { get; }
             public uint ItemNetId { get; }
             public Grabbable Item { get; set; }
+            public bool PlaysEquipSound { get; set; }
         }
     }
 }
