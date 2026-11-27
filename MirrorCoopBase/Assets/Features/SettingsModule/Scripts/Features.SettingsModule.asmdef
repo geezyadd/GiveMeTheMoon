@@ -1,0 +1,26 @@
+{
+    "name": "Features.SettingsModule",
+    "rootNamespace": "Features.SettingsModule",
+    "references": [
+        "Zenject",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Features.SettingsModule.Data",
+        "Features.MvpModule",
+        "UnityEngine.UI",
+        "InputModuleRalization",
+        "InputModule",
+        "Unity.InputSystem",
+        "Features.SavingSystemModule.Contracts",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

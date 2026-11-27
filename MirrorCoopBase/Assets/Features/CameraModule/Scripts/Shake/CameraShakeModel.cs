@@ -8,6 +8,9 @@ namespace Features.CameraModule.Scripts.Shake {
 
         public IReadOnlyList<CameraShakeOneShot> OneShots => _oneShots;
         public IReadOnlyList<CameraShakeContinuous> ContinuousShakes => _continuousShakes;
+        // The player's screen shake setting: every shake's pose is multiplied by it (1 = as authored, 0 = off).
+        public float StrengthScale { get; set; } = 1f;
+
         public bool IsEmpty => _oneShots.Count == 0 && _continuousShakes.Count == 0;
 
         public void AddOneShot(CameraShakeOneShot shake) =>

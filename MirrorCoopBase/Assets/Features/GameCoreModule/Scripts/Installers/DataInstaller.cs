@@ -20,6 +20,7 @@ using Features.InventoryModule.Scripts.Generated;
 using Features.MvpModule;
 using Features.PlayerLifeModule.Scripts.Generated;
 using Features.PlayerProfileModule.Data.Generated;
+using Features.PlayerProfileModule.Scripts;
 using Features.ShipModule.Scripts;
 using Features.ShopModule.Scripts.Core;
 using Features.ShopModule.Scripts.Data;
@@ -27,6 +28,8 @@ using Features.ShipModule.Scripts.Generated;
 using Features.ShopModule.Scripts.Generated;
 using Features.SonarModule.Data;
 using Features.SonarModule.Data.Generated;
+using Features.SettingsModule.Data;
+using Features.SettingsModule.UI;
 using Features.SpaceHazeModule.Data;
 using Features.StagePresetModule.Data;
 using Features.StagePresetModule.Data.Generated;
@@ -49,6 +52,9 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<GameCameraModel>().AsSingle();
             Container.Bind<CameraCarryTurnModel>().AsSingle();
             Container.Bind<CameraShakeModel>().AsSingle();
+            Container.Bind<CameraLookSettingsModel>().AsSingle();
+            Container.Bind<CameraFieldOfViewModel>().AsSingle();
+            Container.Bind<PlayerNameplateVisibilityModel>().AsSingle();
             Container.Bind<Features.ScreenShakeModule.ScreenShakeModel>().AsSingle();
             Container.Bind<IShipRunBindingModel>().To<ShipRunBindingModel>().AsSingle();
             Container.Bind<IShipClientBindingModel>().To<ShipClientBindingModel>().AsSingle();
@@ -59,6 +65,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<HeldWeaponReadinessModel>().AsSingle();
             Container.Bind<Features.WeaponModule.Scripts.Core.WeaponModel>().AsSingle();
             Container.Bind<SpectatorModel>().AsSingle();
+            Container.Bind<SettingsModel>().AsSingle();
+            Container.Bind<SettingsDraftModel>().AsSingle();
             Container.Bind<ShopVisitModel>().AsSingle();
             Container.Bind<DeadCrewModel>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

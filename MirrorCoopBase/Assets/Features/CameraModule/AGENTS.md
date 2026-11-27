@@ -29,5 +29,18 @@ The game camera and the camera shake. Read the [root AGENTS.md](../../../../AGEN
 | Turning with a carrier | `CameraCarryTurnModel` (bound in `DataInstaller`): the local player's `CarrierRider` adds the yaw its carrier (a moving platform) turned each frame, as drawn; `CameraLookDriver.Tick` adds it to the rig's yaw on every look path, so the view turns with what the player stands on (the player body itself never turns) |
 | Camera shake | **only through `ICameraShakeService`** (contracts in `CameraModule/Contracts/`, assembly `Features.CameraModule.Contracts`; core in `CameraModule/Scripts/Shake/`). A shake is one `CameraShakeProfile` asset (degrees, roll share, metres, seconds, frequency, fade power, length scaled by strength); a new source brings its own profile asset, no code in the camera. One-shot: `AddShake(profile, strength)`, one entry per profile in `CameraShakeModel` (bound in `DataInstaller`): a stronger shake of that profile restarts it, a weaker one is ignored while the current one is still stronger, different profiles add up; it fades as (1 - age / length) ^ power and stays in the model at zero (no allocation per hit). Continuous: `BeginShake(profile)` returns an `ICameraShakeHandle` (`SetIntensity` eases over the profile's seconds, `Stop` removes it). `CameraShakeSampler` (pure, tested in `CameraShakeTests`) moves every shake on and sums them (Perlin noise per axis); `CameraShakeSystem` applies the sum to the look pivot in `LookApplied` and clears the model on `CleanupGameplay` / `RestartGameplay` and every scene load. Sources: rock impacts (`ShipImpactCameraShakeSystem`), the minigun (`MinigunFeel`) |
 
+## Player settings
+The camera reads the player's settings only through its own models; the appliers in `Scripts/Settings/` are the only
+code that reads `SettingsModel` (`Features.SettingsModule.Data`):
+- `CameraLookSettingsModel` (bound in `DataInstaller`): mouse sensitivity and invert Y, read by `CameraLookDriver`
+  (they were `CameraCatalog` fields before 2026-11-27); `CameraLookSettingsApplier`.
+- `CameraFieldOfViewModel` (bound in `DataInstaller`): the first-person field of view; `CameraFieldOfViewSystem` sets it
+  on the FP camera and adds `CameraCatalog.ThirdPersonFieldOfViewOffset` (20) for the TP camera, on a change and on
+  every camera that registers (`GameCameraModel.OnCameraRegistered`); `CameraFieldOfViewSettingApplier`. Defaults
+  60 / 80 as the prefabs had.
+- `CameraShakeModel.StrengthScale`: `CameraShakeSystem` multiplies the summed pose by it (0 = no shake);
+  `CameraShakeStrengthSettingApplier` sets it from the screen shake setting (default 50 % = 1x). The turret keeps its
+  own look sensitivity (`ShipTurretDefinition`).
+
 ## Tests
 - `Features.CameraModule.Editor.Tests` (`CameraShakeTests`: a weaker shake of one profile never cuts a stronger one, a stronger one restarts it, two profiles add up, a continuous + a one-shot shake sum, a one-shot fades to zero, a length scaled by strength, the continuous intensity eases over the profile's seconds, stop and clear)

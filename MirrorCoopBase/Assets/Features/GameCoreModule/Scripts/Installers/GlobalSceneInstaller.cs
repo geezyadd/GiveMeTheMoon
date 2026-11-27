@@ -25,6 +25,7 @@ using Features.TargetModule.Installers;
 using Features.ExplosionModule.Installers;
 using Features.ScreenShakeModule;
 using Features.AudioModule;
+using Features.SettingsModule;
 using Features.VfxModule;
 using Features.StagePresetModule.Scripts.Installers;
 using Features.TooltipModule.Scripts.Installers;
@@ -45,6 +46,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             VfxModuleInstaller.Install(Container);
             ScreenShakeModuleInstaller.Install(Container);
             AudioModuleInstaller.Install(Container);
+            SettingsModuleInstaller.Install(Container);
             ExplosionModuleInstaller.Install(Container);
             CameraModuleInstaller.Install(Container);
             GrabModuleInstaller.Install(Container);

@@ -5,6 +5,7 @@ namespace Features.PlayerProfileModule.Scripts {
         public override void InstallBindings() {
             Container.BindInterfacesTo<PlayerNameSanitizer>().AsSingle();
             Container.BindInterfacesTo<PlayerNameplateLayout>().AsSingle();
+            Container.BindInterfacesTo<NameplateSettingApplier>().AsSingle();
         }
     }
 }

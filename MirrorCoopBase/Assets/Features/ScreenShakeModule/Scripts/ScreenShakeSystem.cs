@@ -21,7 +21,7 @@ namespace Features.ScreenShakeModule {
             if (strongest == null)
                 ApplyToShakers(0f, 0f);
             else
-                ApplyToShakers(strongest.Amplitude, strongest.Profile.Frequency);
+                ApplyToShakers(strongest.Amplitude * _model.StrengthScale, strongest.Profile.Frequency);
         }
 
         private ActiveScreenShake UpdateShakes(float deltaTime) {

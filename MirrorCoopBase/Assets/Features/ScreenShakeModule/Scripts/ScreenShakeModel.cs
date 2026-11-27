@@ -9,6 +9,10 @@ namespace Features.ScreenShakeModule {
         public IReadOnlyList<ICameraShaker> Shakers => _shakers;
         public IReadOnlyList<ActiveScreenShake> Shakes => _shakes;
 
+        // The player's screen shake setting: the amplitude every camera shows is multiplied by it (1 = as authored,
+        // 0 = off).
+        public float StrengthScale { get; set; } = 1f;
+
         public void AddShaker(ICameraShaker shaker) {
             if (_shakers.Contains(shaker) == false)
                 _shakers.Add(shaker);

@@ -108,17 +108,18 @@ types.
      `Features.CrewInviteModule.Data`, `Features.StagePresetModule.Data`, `Features.FlightFieldModule.Contracts`,
      `Features.WeaponModule.Contracts`, `Features.CameraModule.Contracts`, `Features.EffectPoolModule` (no references),
      `Features.DebugModule.Contracts`, `Features.SonarModule.Contracts`, `Features.SonarModule.Data`,
-     `Features.PoolModule` (no references), `Features.ScreenShakeModule`,
+     `Features.PoolModule` (no references),
      `Features.SpaceHazeModule.Data`, `Features.AttackModule.Contracts`, `Features.ExplosionModule.Contracts`,
      `Features.EmoteModule.Contracts`, `Features.EmoteModule.Data` (no references), `Features.CoroutineRunnerModule`,
-     `Features.LoadingScreenModule.Contracts` (no references), `Features.SavingSystemModule.Contracts`,
-     `Features.AudioModule` (Zenject, FMODUnity); third-party
+     `Features.LoadingScreenModule.Contracts` (no references), `Features.SettingsModule.Data` (no references),
+     `Features.SavingSystemModule.Contracts`, `Features.AudioModule` (Zenject, FMODUnity); third-party
      `QuickOutline` also has its own asmdef (the unused `Mini Mapa(Radar)` pack was deleted on 2026-10-25).
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
      `Features.SpaceHazeModule`, `Features.ActiveRagdollModule` (FloatingController),
      `Features.TargetModule`, `Features.VfxModule` (PoolModule), `Features.LoadingScreenModule`,
-     `Features.SavingSystemModule`.
+     `Features.SavingSystemModule`, `Features.ScreenShakeModule` (SettingsModule.Data), `Features.SettingsModule` (the video
+     settings and the settings window; see its file).
   3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.PlayerReplicaModule`,
      `Features.PlayerAnimationModule`.
   4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`,
@@ -155,6 +156,8 @@ types.
 | [EmoteModule](MirrorCoopBase/Assets/Features/EmoteModule/AGENTS.md) | the emote wheel (hold G, pick with the mouse, release) and the player's emotes, played through the animator on every peer from the replica packets |
 | [LoadingScreenModule](MirrorCoopBase/Assets/Features/LoadingScreenModule/AGENTS.md) | the screen that covers scene changes: fade in / fade out with an action after, on host / join, lobby ↔ game, leave to the menu |
 | [SavingSystemModule](MirrorCoopBase/Assets/Features/SavingSystemModule/AGENTS.md) | local save files by ID: commit to encrypted `.sav` files per Steam user, load, delete; Steam Auto-Cloud (PC only) |
+| [SettingsModule](MirrorCoopBase/Assets/Features/SettingsModule/AGENTS.md) | the player's local settings: a definition asset per setting, their catalog, `SettingsModel` with change events, the appliers (each in the module it changes), the settings window with tabs, keyboard / gamepad navigation of windows |
+| Pause menu (LobbyModule, `Scripts/Pause`) | Esc in the lobby and the game: Continue, Settings, Leave (the `LeaveSessionView` moved here from the HUD); the game goes on, the local player's movement and look are off and the cursor is free while it is open; Esc closes an open shop / sonar / emote wheel / settings window first (`PauseMenuEscapeSystem`; windows that stay open the whole session implement `IBackgroundWindow`: the HUD, the debug overlay) |
 | [CoroutineRunnerModule](MirrorCoopBase/Assets/Features/CoroutineRunnerModule/AGENTS.md) | `ICoroutineRunner`: plain classes run coroutines from one object in GlobalScene |
 | [VfxModule](MirrorCoopBase/Assets/Features/VfxModule/AGENTS.md) | pooled visual effects (ported from FLEXUS): an effect as a `VfxDefinition`, particle systems now, VFX Graph when its package is in |
 | [AudioModule](MirrorCoopBase/Assets/Features/AudioModule/AGENTS.md) | sounds through FMOD: `IAudioService`, one-shots at a point or with no position; who plays what (being built) |

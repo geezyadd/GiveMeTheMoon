@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,6 +19,8 @@ namespace Features.CameraModule.Scripts.Models {
 
         public IReadOnlyDictionary<string, GameCamera> Cameras => _cameras;
 
+        public event Action<GameCamera> OnCameraRegistered;
+
         public bool TryGet(string id, out GameCamera camera) {
             if (string.IsNullOrEmpty(id)) {
                 camera = null;
@@ -32,6 +35,7 @@ namespace Features.CameraModule.Scripts.Models {
                 return;
 
             _cameras[camera.Id] = camera;
+            OnCameraRegistered?.Invoke(camera);
         }
 
         internal void Unregister(GameCamera camera) {

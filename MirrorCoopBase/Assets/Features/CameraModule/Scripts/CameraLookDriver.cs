@@ -13,6 +13,7 @@ namespace Features.CameraModule.Scripts {
         private readonly CursorModel _cursorModel;
         private readonly CameraLookLockModel _cameraLookLockModel;
         private readonly CameraCarryTurnModel _cameraCarryTurnModel;
+        private readonly CameraLookSettingsModel _lookSettingsModel;
 
         public static bool DebugPitchOverride;
         public static float DebugPitch;
@@ -32,13 +33,15 @@ namespace Features.CameraModule.Scripts {
             CameraCatalog catalog,
             CursorModel cursorModel,
             CameraLookLockModel cameraLookLockModel,
-            CameraCarryTurnModel cameraCarryTurnModel) {
+            CameraCarryTurnModel cameraCarryTurnModel,
+            CameraLookSettingsModel lookSettingsModel) {
             _input = input;
             _model = model;
             _catalog = catalog;
             _cursorModel = cursorModel;
             _cameraLookLockModel = cameraLookLockModel;
             _cameraCarryTurnModel = cameraCarryTurnModel;
+            _lookSettingsModel = lookSettingsModel;
         }
 
         public void Initialize() {
@@ -106,8 +109,8 @@ namespace Features.CameraModule.Scripts {
             Vector2 look = _cameraLookLockModel.IsLocked ? Vector2.zero : _pendingLook;
             _pendingLook = Vector2.zero;
             if (look.sqrMagnitude > 0.000001f) {
-                float sensitivity = _catalog != null ? _catalog.LookSensitivity : 0.18f;
-                float invert = _catalog != null && _catalog.InvertY ? 1f : -1f;
+                float sensitivity = _lookSettingsModel.LookSensitivity;
+                float invert = _lookSettingsModel.InvertY ? 1f : -1f;
                 _yaw += look.x * sensitivity;
                 _pitch += look.y * sensitivity * invert;
 
