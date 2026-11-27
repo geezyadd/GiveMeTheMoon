@@ -11,6 +11,7 @@ using Features.InventoryModule.Scripts;
 using Features.LobbyModule.Scripts;
 using Features.PlayerLifeModule.Scripts;
 using Features.PlayerProfileModule.Scripts;
+using Features.SavingSystemModule;
 using Features.ShipDamageModule.Scripts.Damage;
 using Features.ShipImpactModule.Scripts;
 using Features.ShipModule.Scripts;
@@ -78,6 +79,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<WeaponCatalog>(Address.Configurations.WeaponCatalog_Default).AsSingle();
             Container.BindConfigurationFromAddressables<WeaponHitRuleConfiguration>(Address.Configurations.WeaponHitRuleConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<ExplosionConfiguration>(Address.Configurations.ExplosionConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<SavingSystemConfiguration>(Address.Configurations.SavingSystemConfiguration_Default).AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                         Container.BindConfigurationFromAddressables<Features.ShipModule.Scripts.Debug.WeaponDebugTargetConfiguration>(Address.Configurations.WeaponDebugTargetConfiguration_Default).AsSingle();
 #endif
