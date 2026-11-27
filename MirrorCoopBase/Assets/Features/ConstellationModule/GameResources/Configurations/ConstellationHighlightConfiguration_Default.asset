@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a49972fdbb9405049a01cf0a61b5a3cf, type: 3}
+  m_Name: ConstellationHighlightConfiguration_Default
+  m_EditorClassIdentifier: 
+  _starRadiusDegrees: 0.6
+  _starColor: {r: 2.5, g: 2.3, b: 2, a: 1}
+  _lineColor: {r: 0.25, g: 0.35, b: 0.55, a: 1}
+  _lineGapDegrees: 0.9

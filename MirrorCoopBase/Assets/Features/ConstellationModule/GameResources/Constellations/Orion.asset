@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Orion
+  m_EditorClassIdentifier: 
+  _displayName: Orion
+  _stars:
+  - _name: Betelgeuse
+    _rightAscensionDegrees: 88.79294
+    _declinationDegrees: 7.40706
+  - _name: Bellatrix
+    _rightAscensionDegrees: 81.28276
+    _declinationDegrees: 6.3497
+  - _name: Meissa
+    _rightAscensionDegrees: 83.78449
+    _declinationDegrees: 9.93416
+  - _name: Mintaka
+    _rightAscensionDegrees: 83.00167
+    _declinationDegrees: -0.29909
+  - _name: Alnilam
+    _rightAscensionDegrees: 84.05339
+    _declinationDegrees: -1.20192
+  - _name: Alnitak
+    _rightAscensionDegrees: 85.18969
+    _declinationDegrees: -1.94257
+  - _name: Saiph
+    _rightAscensionDegrees: 86.93912
+    _declinationDegrees: -9.66961
+  - _name: Rigel
+    _rightAscensionDegrees: 78.63447
+    _declinationDegrees: -8.20164
+  _lines:
+  - _fromStar: 2
+    _toStar: 0
+  - _fromStar: 2
+    _toStar: 1
+  - _fromStar: 0
+    _toStar: 5
+  - _fromStar: 1
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 4
+  - _fromStar: 4
+    _toStar: 5
+  - _fromStar: 5
+    _toStar: 6
+  - _fromStar: 3
+    _toStar: 7
