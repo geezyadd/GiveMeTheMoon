@@ -2,6 +2,8 @@ using Features.MvpModule;
 using Features.AddressablesConstantsGenerator.Generated;
 using Features.PlayerReplicaModule.Configuration;
 using Features.CameraModule.Scripts;
+using Features.ConstellationModule.Scripts.Configurations;
+using Features.ConstellationModule.Scripts.Definitions;
 using Features.ExplosionModule.Configuration;
 using Features.AudioModule.Ambience;
 using Features.CharacterMovableModule.Scripts.PlayerStats;
@@ -88,6 +90,9 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.BindConfigurationFromAddressables<VideoSettingsConfiguration>(Address.Configurations.VideoSettingsConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<SettingsWindowConfiguration>(Address.Configurations.SettingsWindowConfiguration_Default).AsSingle();
             Container.BindConfigurationFromAddressables<SavingSystemConfiguration>(Address.Configurations.SavingSystemConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ConstellationCatalog>(Address.Configurations.ConstellationCatalog_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<ConstellationHighlightConfiguration>(Address.Configurations.ConstellationHighlightConfiguration_Default).AsSingle();
+            Container.BindConfigurationFromAddressables<CelestialSkyFrameConfiguration>(Address.Configurations.CelestialSkyFrameConfiguration_LobbySky).AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                         Container.BindConfigurationFromAddressables<Features.ShipModule.Scripts.Debug.WeaponDebugTargetConfiguration>(Address.Configurations.WeaponDebugTargetConfiguration_Default).AsSingle();
 #endif

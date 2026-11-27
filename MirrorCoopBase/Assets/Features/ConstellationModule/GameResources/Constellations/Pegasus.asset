@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Pegasus
+  m_EditorClassIdentifier: 
+  _id: pegasus
+  _displayName: Pegasus
+  _stars:
+  - _name: Alpheratz
+    _rightAscensionDegrees: 2.09692
+    _declinationDegrees: 29.09043
+    _magnitude: 2.07
+  - _name: Scheat
+    _rightAscensionDegrees: 345.94357
+    _declinationDegrees: 28.08279
+    _magnitude: 2.44
+  - _name: Markab
+    _rightAscensionDegrees: 346.19022
+    _declinationDegrees: 15.20527
+    _magnitude: 2.49
+  - _name: Algenib
+    _rightAscensionDegrees: 3.30896
+    _declinationDegrees: 15.18359
+    _magnitude: 2.83
+  - _name: Homam
+    _rightAscensionDegrees: 340.3655
+    _declinationDegrees: 10.83136
+    _magnitude: 3.41
+  - _name: Biham
+    _rightAscensionDegrees: 332.54994
+    _declinationDegrees: 6.19786
+    _magnitude: 3.52
+  - _name: Enif
+    _rightAscensionDegrees: 326.04648
+    _declinationDegrees: 9.87501
+    _magnitude: 2.38
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 0
+  - _fromStar: 2
+    _toStar: 4
+  - _fromStar: 4
+    _toStar: 5
+  - _fromStar: 5
+    _toStar: 6

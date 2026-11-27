@@ -1,0 +1,105 @@
+using UnityEngine;
+
+namespace Features.ConstellationModule.Scripts.Configurations {
+    // The look of a highlighted constellation: each star like a bright star photographed through a telescope (a small
+    // core, a soft halo, four thin diffraction spikes) and glowing lines of the figure between them. Star sizes are
+    // given for a star of the reference magnitude; brighter stars are drawn larger and brighter, fainter ones smaller.
+    [CreateAssetMenu(fileName = nameof(ConstellationHighlightConfiguration) + "_Default", menuName = "Configurations/Constellation/" + nameof(ConstellationHighlightConfiguration))]
+    public sealed class ConstellationHighlightConfiguration : ScriptableObject {
+        [Header("Magnitude")]
+        [Tooltip("A star of this visual magnitude is drawn at the sizes and brightness below.")]
+        [SerializeField] private float _referenceMagnitude = 1f;
+        [Tooltip("How strongly the drawn size follows the star's light: size = flux ^ this (0.5 = size grows with the square root of the light; 0 = every star the same size).")]
+        [SerializeField] private float _magnitudeSizeExponent = 0.5f;
+        [Tooltip("How strongly the drawn brightness follows the star's light: brightness = flux ^ this.")]
+        [SerializeField] private float _magnitudeBrightnessExponent = 0.5f;
+        [Tooltip("Smallest and largest size factor a star may get from its magnitude.")]
+        [SerializeField] private Vector2 _starScaleRange = new(0.35f, 2f);
+        [Tooltip("Smallest and largest brightness factor a star may get from its magnitude.")]
+        [SerializeField] private Vector2 _starBrightnessRange = new(0.35f, 2f);
+
+        [Header("Star")]
+        [Tooltip("Tint of every layer of a star; the layers' intensities below set how bright it is.")]
+        [ColorUsage(false, true)]
+        [SerializeField] private Color _starColor = new(0.95f, 0.97f, 1f, 1f);
+        [Tooltip("Angular radius of the bright core (Gaussian width), in degrees.")]
+        [SerializeField] private float _coreRadiusDegrees = 0.04f;
+        [Tooltip("Brightness of the core's centre; well above 1, so the scene's Bloom (threshold 1) gives it a tight glow.")]
+        [SerializeField] private float _coreIntensity = 8f;
+        [Tooltip("Angular radius at which the soft halo fades out, in degrees.")]
+        [SerializeField] private float _haloRadiusDegrees = 0.55f;
+        [Tooltip("Brightness of the halo's centre; keep it low so the star stays a point of light, not a disc.")]
+        [SerializeField] private float _haloIntensity = 0.3f;
+        [Tooltip("Length of each of the four diffraction spikes from the star's centre, in degrees.")]
+        [SerializeField] private float _spikeLengthDegrees = 1f;
+        [Tooltip("Width of a spike at the star's centre, in degrees; it tapers to nothing at the spike's end.")]
+        [SerializeField] private float _spikeWidthDegrees = 0.015f;
+        [Tooltip("Brightness of a spike at the star's centre; it fades towards the spike's end.")]
+        [SerializeField] private float _spikeIntensity = 1.3f;
+        [Tooltip("Turn of the spike cross from an upright '+', in degrees, clockwise on screen.")]
+        [SerializeField] private float _spikeAngleDegrees = 15f;
+        [Tooltip("Share by which a star's brightness flickers up and down (0 = no twinkle); the halo and spikes swing about twice as much as the core.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _twinkleAmount = 0.3f;
+        [Tooltip("Speed of the twinkle's slowest wave, in radians per second; the two faster waves follow it.")]
+        [SerializeField] private float _twinkleSpeed = 3f;
+
+        [Header("Line")]
+        [Tooltip("Tint of the figure's lines; the line intensity below sets how bright they are.")]
+        [ColorUsage(false, true)]
+        [SerializeField] private Color _lineColor = new(0.45f, 0.62f, 1f, 1f);
+        [Tooltip("Full width of a line's glowing strip on screen, in pixels; the strip fades softly towards its edges.")]
+        [SerializeField] private float _lineWidthPixels = 3f;
+        [Tooltip("Brightness of a line's thin core; a little above 1, so the Bloom gives the line a faint halo.")]
+        [SerializeField] private float _lineIntensity = 0.06f;
+        [Tooltip("Brightness of the soft glow around a line's thin core, filling the whole strip.")]
+        [SerializeField] private float _lineGlowIntensity = 0.008f;
+        [Tooltip("A line stops this far from a reference-magnitude star, in degrees (scaled with the star's drawn size), so it does not run into the core.")]
+        [SerializeField] private float _lineGapDegrees = 0.3f;
+        [Tooltip("A line fades in over this angle at each of its ends, in degrees.")]
+        [SerializeField] private float _lineEndFadeDegrees = 0.25f;
+
+        [Header("Reveal")]
+        [Tooltip("How long a star takes to light up when the reveal reaches it, in seconds.")]
+        [SerializeField] private float _starFadeInSeconds = 0.3f;
+        [Tooltip("How far a lighting star flashes past its full brightness halfway through its fade-in (0 = no flash, 0.5 = half again as bright).")]
+        [SerializeField] private float _starFlashOvershoot = 0.5f;
+        [Tooltip("How fast a line is drawn from its first star to its second, in degrees of sky per second.")]
+        [SerializeField] private float _lineDrawDegreesPerSecond = 15f;
+        [Tooltip("Pause after a star has lit up, before the next line starts, in seconds.")]
+        [SerializeField] private float _pauseBetweenStepsSeconds = 0.1f;
+        [Tooltip("How long the whole figure (stars and lines together) takes to fade out when it is hidden or another one is picked, in seconds.")]
+        [SerializeField] private float _fadeOutSeconds = 0.8f;
+        [Tooltip("After a switch the new figure's reveal starts this long after the old figure starts fading, in seconds. Picking the shown figure again waits for the whole fade-out instead.")]
+        [SerializeField] private float _switchRevealDelaySeconds = 0.3f;
+
+        public float ReferenceMagnitude => _referenceMagnitude;
+        public float MagnitudeSizeExponent => _magnitudeSizeExponent;
+        public float MagnitudeBrightnessExponent => _magnitudeBrightnessExponent;
+        public Vector2 StarScaleRange => _starScaleRange;
+        public Vector2 StarBrightnessRange => _starBrightnessRange;
+        public Color StarColor => _starColor;
+        public float CoreRadiusDegrees => _coreRadiusDegrees;
+        public float CoreIntensity => _coreIntensity;
+        public float HaloRadiusDegrees => _haloRadiusDegrees;
+        public float HaloIntensity => _haloIntensity;
+        public float SpikeLengthDegrees => _spikeLengthDegrees;
+        public float SpikeWidthDegrees => _spikeWidthDegrees;
+        public float SpikeIntensity => _spikeIntensity;
+        public float SpikeAngleDegrees => _spikeAngleDegrees;
+        public float TwinkleAmount => _twinkleAmount;
+        public float TwinkleSpeed => _twinkleSpeed;
+        public Color LineColor => _lineColor;
+        public float LineWidthPixels => _lineWidthPixels;
+        public float LineIntensity => _lineIntensity;
+        public float LineGlowIntensity => _lineGlowIntensity;
+        public float LineGapDegrees => _lineGapDegrees;
+        public float LineEndFadeDegrees => _lineEndFadeDegrees;
+        public float StarFadeInSeconds => _starFadeInSeconds;
+        public float StarFlashOvershoot => _starFlashOvershoot;
+        public float LineDrawDegreesPerSecond => _lineDrawDegreesPerSecond;
+        public float PauseBetweenStepsSeconds => _pauseBetweenStepsSeconds;
+        public float FadeOutSeconds => _fadeOutSeconds;
+        public float SwitchRevealDelaySeconds => _switchRevealDelaySeconds;
+    }
+}

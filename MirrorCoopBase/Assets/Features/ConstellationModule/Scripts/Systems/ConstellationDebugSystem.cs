@@ -1,0 +1,67 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using System;
+using System.Collections.Generic;
+using Features.ConstellationModule.Data;
+using Features.ConstellationModule.Scripts.Core;
+using Features.ConstellationModule.Scripts.Definitions;
+using Features.DebugModule.Contracts;
+using Mirror;
+using Zenject;
+
+namespace Features.ConstellationModule.Scripts.Systems {
+    // Debug only: the debug window's "Constellations" section, "Show all", one button per catalog constellation and
+    // "Hide", for the whole crew's sky. Only the host may press them (the server writes the sky); on a pure client they stay greyed out
+    // with the host-only hint, like the other host-only debug actions.
+    public sealed class ConstellationDebugSystem : IInitializable, IDisposable {
+        private const string SHOW_DESCRIPTION_FORMAT = "Reveals {0} on every player's sky: its stars light up and its lines are drawn one after another. Picked while shown, it fades out and plays again.";
+        private const string SHOW_ALL_LABEL = "Show all";
+        private const string SHOW_ALL_DESCRIPTION = "Reveals every constellation of the catalog at once on every player's sky, each star by star and line by line. Pressed while they are shown, they fade out and play again.";
+        private const string HIDE_LABEL = "Hide";
+        private const string HIDE_DESCRIPTION = "Fades the shown constellations out on every player's sky.";
+        private const string NOTHING_SHOWN_REASON = "No constellation is shown.";
+
+        private readonly ConstellationRevealModel _constellationRevealModel;
+        private readonly ConstellationCatalog _constellationCatalog;
+        private readonly IConstellationService _constellationService;
+        private readonly IDebugActionRegistry _debugActionRegistry;
+        private readonly List<IDisposable> _registrations = new();
+
+        public ConstellationDebugSystem(ConstellationRevealModel constellationRevealModel, ConstellationCatalog constellationCatalog, IConstellationService constellationService, IDebugActionRegistry debugActionRegistry) {
+            _constellationRevealModel = constellationRevealModel;
+            _constellationCatalog = constellationCatalog;
+            _constellationService = constellationService;
+            _debugActionRegistry = debugActionRegistry;
+        }
+
+        // Registered always: the lobby scene is loaded before the host starts its server, so whether this peer is the
+        // server is asked when a button is drawn, not here.
+        public void Initialize() {
+            _registrations.Add(_debugActionRegistry.Register(new DebugActionDefinition(DebugSections.CONSTELLATIONS, SHOW_ALL_LABEL, SHOW_ALL_DESCRIPTION, ReadShowUnavailableReason, _constellationService.ServerShowAll)));
+            foreach (ConstellationDefinition constellation in _constellationCatalog.Constellations)
+                RegisterShow(constellation);
+            _registrations.Add(_debugActionRegistry.Register(new DebugActionDefinition(DebugSections.CONSTELLATIONS, HIDE_LABEL, HIDE_DESCRIPTION, ReadHideUnavailableReason, _constellationService.ServerHide)));
+        }
+
+        public void Dispose() {
+            foreach (IDisposable registration in _registrations)
+                registration.Dispose();
+            _registrations.Clear();
+        }
+
+        private void RegisterShow(ConstellationDefinition constellation) {
+            string description = string.Format(SHOW_DESCRIPTION_FORMAT, constellation.DisplayName);
+            _registrations.Add(_debugActionRegistry.Register(new DebugActionDefinition(DebugSections.CONSTELLATIONS, constellation.DisplayName, description, ReadShowUnavailableReason, () => _constellationService.ServerShow(constellation.Id))));
+        }
+
+        private static string ReadShowUnavailableReason() =>
+            NetworkServer.active ? null : DebugActionReasons.HOST_ONLY;
+
+        private string ReadHideUnavailableReason() {
+            if (NetworkServer.active == false)
+                return DebugActionReasons.HOST_ONLY;
+
+            return _constellationRevealModel.HasShown ? null : NOTHING_SHOWN_REASON;
+        }
+    }
+}
+#endif

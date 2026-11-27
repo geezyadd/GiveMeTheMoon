@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Gemini
+  m_EditorClassIdentifier: 
+  _id: gemini
+  _displayName: Gemini
+  _stars:
+  - _name: Castor
+    _rightAscensionDegrees: 113.64943
+    _declinationDegrees: 31.88828
+    _magnitude: 1.98
+  - _name: Tau Gem
+    _rightAscensionDegrees: 107.78458
+    _declinationDegrees: 30.2448
+    _magnitude: 4.4
+  - _name: Mebsuta
+    _rightAscensionDegrees: 100.98303
+    _declinationDegrees: 25.13113
+    _magnitude: 3.06
+  - _name: Tejat
+    _rightAscensionDegrees: 95.74011
+    _declinationDegrees: 22.51358
+    _magnitude: 2.87
+  - _name: Propus
+    _rightAscensionDegrees: 93.7194
+    _declinationDegrees: 22.50679
+    _magnitude: 3.32
+  - _name: Pollux
+    _rightAscensionDegrees: 116.32896
+    _declinationDegrees: 28.0262
+    _magnitude: 1.16
+  - _name: Upsilon Gem
+    _rightAscensionDegrees: 113.98036
+    _declinationDegrees: 26.89496
+    _magnitude: 4.06
+  - _name: Wasat
+    _rightAscensionDegrees: 110.03075
+    _declinationDegrees: 21.98232
+    _magnitude: 3.52
+  - _name: Mekbuda
+    _rightAscensionDegrees: 106.02721
+    _declinationDegrees: 20.5703
+    _magnitude: 4.01
+  - _name: Alhena
+    _rightAscensionDegrees: 99.42796
+    _declinationDegrees: 16.39928
+    _magnitude: 1.93
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 4
+  - _fromStar: 1
+    _toStar: 6
+  - _fromStar: 6
+    _toStar: 5
+  - _fromStar: 6
+    _toStar: 7
+  - _fromStar: 7
+    _toStar: 8
+  - _fromStar: 8
+    _toStar: 9

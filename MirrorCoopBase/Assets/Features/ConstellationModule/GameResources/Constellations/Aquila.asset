@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Aquila
+  m_EditorClassIdentifier: 
+  _id: aquila
+  _displayName: Aquila
+  _stars:
+  - _name: Tarazed
+    _rightAscensionDegrees: 296.56491
+    _declinationDegrees: 10.61326
+    _magnitude: 2.72
+  - _name: Altair
+    _rightAscensionDegrees: 297.69583
+    _declinationDegrees: 8.86832
+    _magnitude: 0.76
+  - _name: Alshain
+    _rightAscensionDegrees: 298.8283
+    _declinationDegrees: 6.40676
+    _magnitude: 3.71
+  - _name: Delta Aql
+    _rightAscensionDegrees: 291.37648
+    _declinationDegrees: 3.1154
+    _magnitude: 3.36
+  - _name: Lambda Aql
+    _rightAscensionDegrees: 286.56229
+    _declinationDegrees: -4.88235
+    _magnitude: 3.4
+  - _name: Okab
+    _rightAscensionDegrees: 286.35253
+    _declinationDegrees: 13.86348
+    _magnitude: 2.99
+  - _name: Epsilon Aql
+    _rightAscensionDegrees: 284.90526
+    _declinationDegrees: 15.06775
+    _magnitude: 4.02
+  - _name: Eta Aql
+    _rightAscensionDegrees: 298.11827
+    _declinationDegrees: 1.0056
+    _magnitude: 3.97
+  - _name: Theta Aql
+    _rightAscensionDegrees: 302.82611
+    _declinationDegrees: -0.82148
+    _magnitude: 3.21
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 1
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 4
+  - _fromStar: 3
+    _toStar: 5
+  - _fromStar: 5
+    _toStar: 6
+  - _fromStar: 2
+    _toStar: 7
+  - _fromStar: 7
+    _toStar: 8

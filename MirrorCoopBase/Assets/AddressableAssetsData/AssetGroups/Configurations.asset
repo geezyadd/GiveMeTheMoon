@@ -105,6 +105,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 79c16b0399099494d87b9e3b68c2b29b
+    m_Address: ConstellationHighlightConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7d8121f08b647804389790fba16e4cdf
     m_Address: WeaponCatalog_Default
     m_ReadOnly: 0
@@ -205,6 +210,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b6d603771d6883747bbf2b8f0c5347a2
+    m_Address: CelestialSkyFrameConfiguration_LobbySky
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c3dde0722651bd54caf061cf9ac2aed3
     m_Address: WalletConfiguration_Default
     m_ReadOnly: 0
@@ -232,6 +242,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d9cf553d4704c9c4f9707f99192c2f9e
     m_Address: ShipThrottleConfiguration_Default
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e921f1292c5640d698aa190838022327
+    m_Address: ConstellationCatalog_Default
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

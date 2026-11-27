@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Cetus
+  m_EditorClassIdentifier: 
+  _id: cetus
+  _displayName: Cetus
+  _stars:
+  - _name: Menkar
+    _rightAscensionDegrees: 45.56988
+    _declinationDegrees: 4.08974
+    _magnitude: 2.54
+  - _name: Lambda Cet
+    _rightAscensionDegrees: 44.92874
+    _declinationDegrees: 8.9074
+    _magnitude: 4.69
+  - _name: Mu Cet
+    _rightAscensionDegrees: 41.23774
+    _declinationDegrees: 10.11391
+    _magnitude: 4.28
+  - _name: Xi2 Cet
+    _rightAscensionDegrees: 37.04003
+    _declinationDegrees: 8.46002
+    _magnitude: 4.26
+  - _name: Kaffaljidhma
+    _rightAscensionDegrees: 40.82516
+    _declinationDegrees: 3.23582
+    _magnitude: 3.56
+  - _name: Delta Cet
+    _rightAscensionDegrees: 39.87062
+    _declinationDegrees: 0.32852
+    _magnitude: 4.05
+  - _name: Baten Kaitos
+    _rightAscensionDegrees: 27.86514
+    _declinationDegrees: -10.33504
+    _magnitude: 3.74
+  - _name: Theta Cet
+    _rightAscensionDegrees: 21.00603
+    _declinationDegrees: -8.18276
+    _magnitude: 3.61
+  - _name: Eta Cet
+    _rightAscensionDegrees: 17.14911
+    _declinationDegrees: -10.18329
+    _magnitude: 3.45
+  - _name: Iota Cet
+    _rightAscensionDegrees: 4.85687
+    _declinationDegrees: -8.8242
+    _magnitude: 3.54
+  - _name: Diphda
+    _rightAscensionDegrees: 10.89738
+    _declinationDegrees: -17.98661
+    _magnitude: 2.04
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 4
+  - _fromStar: 4
+    _toStar: 0
+  - _fromStar: 4
+    _toStar: 5
+  - _fromStar: 5
+    _toStar: 6
+  - _fromStar: 6
+    _toStar: 7
+  - _fromStar: 7
+    _toStar: 8
+  - _fromStar: 8
+    _toStar: 9
+  - _fromStar: 9
+    _toStar: 10
+  - _fromStar: 10
+    _toStar: 6

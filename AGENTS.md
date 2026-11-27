@@ -112,14 +112,15 @@ types.
      `Features.SpaceHazeModule.Data`, `Features.AttackModule.Contracts`, `Features.ExplosionModule.Contracts`,
      `Features.EmoteModule.Contracts`, `Features.EmoteModule.Data` (no references), `Features.CoroutineRunnerModule`,
      `Features.LoadingScreenModule.Contracts` (no references), `Features.SettingsModule.Data` (no references),
-     `Features.SavingSystemModule.Contracts`, `Features.AudioModule` (Zenject, FMODUnity); third-party
+     `Features.SavingSystemModule.Contracts`, `Features.AudioModule` (Zenject, FMODUnity),
+     `Features.ConstellationModule.Data` (NetworkModel); third-party
      `QuickOutline` also has its own asmdef (the unused `Mini Mapa(Radar)` pack was deleted on 2026-10-25).
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
      `Features.SpaceHazeModule`, `Features.ActiveRagdollModule` (FloatingController),
      `Features.TargetModule`, `Features.VfxModule` (PoolModule), `Features.LoadingScreenModule`,
      `Features.SavingSystemModule`, `Features.ScreenShakeModule` (SettingsModule.Data), `Features.SettingsModule` (the video
-     settings and the settings window; see its file).
+     settings and the settings window; see its file), `Features.ConstellationModule`.
   3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.PlayerReplicaModule`,
      `Features.PlayerAnimationModule`.
   4. `Features.ShipModule`, `Features.MenuModule` (GameFlow, Mvp, Connection), `Features.PlayerProfileModule`,
@@ -147,6 +148,7 @@ types.
 | [HandWeaponModule](MirrorCoopBase/Assets/Features/HandWeaponModule/AGENTS.md) | weapons carried in the hand: the pistol, the knockdown gun, the grenade and rocket launchers |
 | [SonarModule](MirrorCoopBase/Assets/Features/SonarModule/AGENTS.md) | the navigator's sonar console on the radar |
 | [SpaceHazeModule](MirrorCoopBase/Assets/Features/SpaceHazeModule/AGENTS.md) | the dark space haze: how far the crew sees by eye |
+| [ConstellationModule](MirrorCoopBase/Assets/Features/ConstellationModule/AGENTS.md) | constellations highlighted over the skybox's painted stars in the lobby (17 figures in a band around the horizon, Dec -20..+32 deg), picked by the host (debug window) and revealed star by star on every peer from a shared synced model, the constellation as data, where the painted sky lies |
 | [PlayerReplicaModule](MirrorCoopBase/Assets/Features/PlayerReplicaModule/AGENTS.md) | player body sync by state and input, the only one: packet stream, simulated copies with soft correction, carriers, the server's moves of a body |
 | [ActiveRagdollModule](MirrorCoopBase/Assets/Features/ActiveRagdollModule/AGENTS.md) | physical bodies that follow an animation, for any creature (being built) |
 | [PlayerBodyModule](MirrorCoopBase/Assets/Features/PlayerBodyModule/AGENTS.md) | the body the player walks with: the player's own body is the active ragdoll pushed by the movement (being built) |

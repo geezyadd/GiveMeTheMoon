@@ -1,0 +1,27 @@
+{
+    "name": "Features.ConstellationModule.Editor.Tests",
+    "rootNamespace": "Features.ConstellationModule.Editor.Tests",
+    "references": [
+        "GUID:39076d4e748b64043bf231e55fe7608e",
+        "GUID:f984bbca5a12436c840dda8f81ecec0b",
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3",
+        "GUID:5d6793be2d204514a9702ab824c001ed",
+        "GUID:03a835aea0a645a7b43f5f0c61e8d191"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,74 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Leo
+  m_EditorClassIdentifier: 
+  _id: leo
+  _displayName: Leo
+  _stars:
+  - _name: Rasalas
+    _rightAscensionDegrees: 148.1909
+    _declinationDegrees: 26.00695
+    _magnitude: 3.88
+  - _name: Epsilon Leo
+    _rightAscensionDegrees: 146.46244
+    _declinationDegrees: 23.77418
+    _magnitude: 2.96
+  - _name: Adhafera
+    _rightAscensionDegrees: 154.17257
+    _declinationDegrees: 23.41731
+    _magnitude: 3.43
+  - _name: Algieba
+    _rightAscensionDegrees: 154.99314
+    _declinationDegrees: 19.84149
+    _magnitude: 2.61
+  - _name: Eta Leo
+    _rightAscensionDegrees: 151.83314
+    _declinationDegrees: 16.76267
+    _magnitude: 3.49
+  - _name: Regulus
+    _rightAscensionDegrees: 152.09296
+    _declinationDegrees: 11.96721
+    _magnitude: 1.36
+  - _name: Chertan
+    _rightAscensionDegrees: 168.56002
+    _declinationDegrees: 15.42957
+    _magnitude: 3.33
+  - _name: Denebola
+    _rightAscensionDegrees: 177.26491
+    _declinationDegrees: 14.57206
+    _magnitude: 2.14
+  - _name: Zosma
+    _rightAscensionDegrees: 168.52709
+    _declinationDegrees: 20.52372
+    _magnitude: 2.56
+  _lines:
+  - _fromStar: 1
+    _toStar: 0
+  - _fromStar: 0
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 4
+  - _fromStar: 4
+    _toStar: 5
+  - _fromStar: 5
+    _toStar: 6
+  - _fromStar: 6
+    _toStar: 7
+  - _fromStar: 7
+    _toStar: 8
+  - _fromStar: 8
+    _toStar: 3
+  - _fromStar: 8
+    _toStar: 6

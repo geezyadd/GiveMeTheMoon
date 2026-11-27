@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Aries
+  m_EditorClassIdentifier: 
+  _id: aries
+  _displayName: Aries
+  _stars:
+  - _name: Bharani
+    _rightAscensionDegrees: 42.49597
+    _declinationDegrees: 27.26051
+    _magnitude: 3.61
+  - _name: Hamal
+    _rightAscensionDegrees: 31.79336
+    _declinationDegrees: 23.46242
+    _magnitude: 2.01
+  - _name: Sheratan
+    _rightAscensionDegrees: 28.66005
+    _declinationDegrees: 20.80803
+    _magnitude: 2.7
+  - _name: Mesarthim
+    _rightAscensionDegrees: 28.38256
+    _declinationDegrees: 19.29385
+    _magnitude: 4.75
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 3
