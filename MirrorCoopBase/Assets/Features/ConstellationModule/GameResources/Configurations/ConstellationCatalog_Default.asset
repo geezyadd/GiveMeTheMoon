@@ -15,3 +15,14 @@ MonoBehaviour:
   _constellations:
   - {fileID: 11400000, guid: 466ecb97966ee6b419e536c671cb02c9, type: 2}
   - {fileID: 11400000, guid: 1392f763e6ff438fa46291b100d38f6d, type: 2}
+  - {fileID: 11400000, guid: 38c37e8ffaec440bba370d39827ce8e5, type: 2}
+  - {fileID: 11400000, guid: 2d239b48b8b24a888d12ec3d0b295aae, type: 2}
+  - {fileID: 11400000, guid: a325e784001f4c029c39a577020c7669, type: 2}
+  - {fileID: 11400000, guid: 57ea8be7ea254c9491bff0aae8470f8f, type: 2}
+  - {fileID: 11400000, guid: a5ca30ce25bc46a2b89b5d4b6b5378a5, type: 2}
+  - {fileID: 11400000, guid: cd6fc7e3b57d4b66a7040503461b1c90, type: 2}
+  - {fileID: 11400000, guid: db450a3f6b2740f3a6e0842e7ab32801, type: 2}
+  - {fileID: 11400000, guid: e98407cb6c7f41e3a6d51ad5c440ded8, type: 2}
+  - {fileID: 11400000, guid: 1edc314706264d8fb75d52ece17edc1d, type: 2}
+  - {fileID: 11400000, guid: 8f55456ff178475c8293abd13040b08f, type: 2}
+  - {fileID: 11400000, guid: 73e1da770e534cb0833d1f45a6779a3c, type: 2}

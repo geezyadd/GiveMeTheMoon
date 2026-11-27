@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Cassiopeia
+  m_EditorClassIdentifier: 
+  _id: cassiopeia
+  _displayName: Cassiopeia
+  _stars:
+  - _name: Caph
+    _rightAscensionDegrees: 2.29452
+    _declinationDegrees: 59.14978
+    _magnitude: 2.28
+  - _name: Schedar
+    _rightAscensionDegrees: 10.12684
+    _declinationDegrees: 56.53733
+    _magnitude: 2.24
+  - _name: Gamma Cas
+    _rightAscensionDegrees: 14.1776
+    _declinationDegrees: 60.71671
+    _magnitude: 2.17
+  - _name: Ruchbah
+    _rightAscensionDegrees: 21.45396
+    _declinationDegrees: 60.23528
+    _magnitude: 2.66
+  - _name: Segin
+    _rightAscensionDegrees: 28.59886
+    _declinationDegrees: 63.6701
+    _magnitude: 3.35
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 4

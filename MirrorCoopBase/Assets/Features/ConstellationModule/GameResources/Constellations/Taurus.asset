@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Taurus
+  m_EditorClassIdentifier: 
+  _id: taurus
+  _displayName: Taurus
+  _stars:
+  - _name: Elnath
+    _rightAscensionDegrees: 81.57297
+    _declinationDegrees: 28.60745
+    _magnitude: 1.65
+  - _name: Ain
+    _rightAscensionDegrees: 67.15416
+    _declinationDegrees: 19.18043
+    _magnitude: 3.53
+  - _name: Secunda Hyadum
+    _rightAscensionDegrees: 65.73372
+    _declinationDegrees: 17.54251
+    _magnitude: 3.78
+  - _name: Prima Hyadum
+    _rightAscensionDegrees: 64.94835
+    _declinationDegrees: 15.62764
+    _magnitude: 3.65
+  - _name: Chamukuy
+    _rightAscensionDegrees: 67.16559
+    _declinationDegrees: 15.87088
+    _magnitude: 3.73
+  - _name: Aldebaran
+    _rightAscensionDegrees: 68.98016
+    _declinationDegrees: 16.5093
+    _magnitude: 0.87
+  - _name: Tianguan
+    _rightAscensionDegrees: 84.41119
+    _declinationDegrees: 21.14254
+    _magnitude: 2.97
+  - _name: Lambda Tau
+    _rightAscensionDegrees: 60.17
+    _declinationDegrees: 12.49026
+    _magnitude: 3.4
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 4
+  - _fromStar: 4
+    _toStar: 5
+  - _fromStar: 5
+    _toStar: 6
+  - _fromStar: 3
+    _toStar: 7

@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: Lyra
+  m_EditorClassIdentifier: 
+  _id: lyra
+  _displayName: Lyra
+  _stars:
+  - _name: Vega
+    _rightAscensionDegrees: 279.23474
+    _declinationDegrees: 38.78369
+    _magnitude: 0.03
+  - _name: Epsilon Lyr
+    _rightAscensionDegrees: 281.08488
+    _declinationDegrees: 39.67058
+    _magnitude: 5
+  - _name: Zeta1 Lyr
+    _rightAscensionDegrees: 281.19338
+    _declinationDegrees: 37.60529
+    _magnitude: 4.32
+  - _name: Sheliak
+    _rightAscensionDegrees: 282.51998
+    _declinationDegrees: 33.36267
+    _magnitude: 3.6
+  - _name: Sulafat
+    _rightAscensionDegrees: 284.73593
+    _declinationDegrees: 32.68956
+    _magnitude: 3.25
+  - _name: Delta2 Lyr
+    _rightAscensionDegrees: 283.62612
+    _declinationDegrees: 36.89863
+    _magnitude: 4.3
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 4
+  - _fromStar: 4
+    _toStar: 5
+  - _fromStar: 5
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 0

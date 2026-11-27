@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: CanisMajor
+  m_EditorClassIdentifier: 
+  _id: canis_major
+  _displayName: Canis Major
+  _stars:
+  - _name: Sirius
+    _rightAscensionDegrees: 101.28715
+    _declinationDegrees: -16.71612
+    _magnitude: -1.45
+  - _name: Mirzam
+    _rightAscensionDegrees: 95.67494
+    _declinationDegrees: -17.95592
+    _magnitude: 1.98
+  - _name: Muliphein
+    _rightAscensionDegrees: 105.93955
+    _declinationDegrees: -15.63329
+    _magnitude: 4.11
+  - _name: Omicron2 CMa
+    _rightAscensionDegrees: 105.75611
+    _declinationDegrees: -23.83326
+    _magnitude: 3.01
+  - _name: Wezen
+    _rightAscensionDegrees: 107.09785
+    _declinationDegrees: -26.3932
+    _magnitude: 1.83
+  - _name: Aludra
+    _rightAscensionDegrees: 111.02376
+    _declinationDegrees: -29.30311
+    _magnitude: 2.45
+  - _name: Adhara
+    _rightAscensionDegrees: 104.65645
+    _declinationDegrees: -28.97209
+    _magnitude: 1.5
+  - _name: Furud
+    _rightAscensionDegrees: 95.0783
+    _declinationDegrees: -30.06337
+    _magnitude: 3.02
+  _lines:
+  - _fromStar: 1
+    _toStar: 0
+  - _fromStar: 0
+    _toStar: 2
+  - _fromStar: 0
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 4
+  - _fromStar: 4
+    _toStar: 5
+  - _fromStar: 4
+    _toStar: 6
+  - _fromStar: 6
+    _toStar: 7

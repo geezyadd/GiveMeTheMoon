@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
+  m_Name: LittleDipper
+  m_EditorClassIdentifier: 
+  _id: little_dipper
+  _displayName: Little Dipper
+  _stars:
+  - _name: Polaris
+    _rightAscensionDegrees: 37.95456
+    _declinationDegrees: 89.26411
+    _magnitude: 2.13
+  - _name: Yildun
+    _rightAscensionDegrees: 263.05413
+    _declinationDegrees: 86.58646
+    _magnitude: 4.35
+  - _name: Epsilon UMi
+    _rightAscensionDegrees: 251.49381
+    _declinationDegrees: 82.03727
+    _magnitude: 4.22
+  - _name: Zeta UMi
+    _rightAscensionDegrees: 236.01444
+    _declinationDegrees: 77.7945
+    _magnitude: 4.27
+  - _name: Kochab
+    _rightAscensionDegrees: 222.67636
+    _declinationDegrees: 74.1555
+    _magnitude: 2.07
+  - _name: Pherkad
+    _rightAscensionDegrees: 230.18215
+    _declinationDegrees: 71.83402
+    _magnitude: 3
+  - _name: Eta UMi
+    _rightAscensionDegrees: 244.37352
+    _declinationDegrees: 75.75723
+    _magnitude: 4.96
+  _lines:
+  - _fromStar: 0
+    _toStar: 1
+  - _fromStar: 1
+    _toStar: 2
+  - _fromStar: 2
+    _toStar: 3
+  - _fromStar: 3
+    _toStar: 4
+  - _fromStar: 4
+    _toStar: 5
+  - _fromStar: 5
+    _toStar: 6
+  - _fromStar: 6
+    _toStar: 3
