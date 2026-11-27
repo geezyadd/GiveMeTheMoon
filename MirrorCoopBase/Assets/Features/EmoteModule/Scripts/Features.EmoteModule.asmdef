@@ -1,0 +1,28 @@
+{
+    "name": "Features.EmoteModule",
+    "rootNamespace": "Features.EmoteModule",
+    "references": [
+        "Features.EmoteModule.Contracts",
+        "Features.EmoteModule.Data",
+        "Features.PlayerAnimationModule",
+        "Features.PlayerReplicaModule",
+        "Features.CharacterMovableModule",
+        "Features.CameraModule",
+        "Features.GameFlowStateMachineModule",
+        "Features.MvpModule",
+        "InputModule",
+        "InputModuleRalization",
+        "Mirror",
+        "Zenject",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

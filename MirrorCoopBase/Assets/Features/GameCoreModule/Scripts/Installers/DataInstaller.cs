@@ -4,6 +4,7 @@ using Features.PlayerLifeModule.Scripts.Spectator;
 using Features.CharacterMovableModule.Scripts.Drift;
 using Features.CharacterMovableModule.Scripts.Models;
 using Features.CrewInviteModule.Data.Generated;
+using Features.EmoteModule;
 using Features.FlightFieldModule.Scripts.Decor;
 using Features.FlightFieldModule.Scripts.Network;
 using Features.FlightFieldModule.Scripts.Network.Generated;
@@ -85,6 +86,7 @@ namespace Features.GameCoreModule.Scripts.Installers {
             SonarConsoleModelInstaller.Install(Container);
             Container.Bind<SonarConsoleBindingModel>().AsSingle();
             Container.Bind<SonarScopeModel>().AsSingle();
+            Container.Bind<EmoteWheelModel>().AsSingle();
             Container.Bind<SonarMarkerScreenModel>().AsSingle();
             Container.Bind<SonarStationMarkerModel>().AsSingle();
             Container.Bind<SpaceHazeModel>().AsSingle();

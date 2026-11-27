@@ -46,7 +46,9 @@
         "Features.ExplosionModule",
         "Features.ExplosionModule.Contracts",
         "Features.VfxModule",
-        "Features.ScreenShakeModule"
+        "Features.ScreenShakeModule",
+        "Features.EmoteModule",
+        "Features.EmoteModule.Data"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

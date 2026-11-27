@@ -1,0 +1,14 @@
+{
+    "name": "Features.EmoteModule.Data",
+    "rootNamespace": "Features.EmoteModule.Data",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

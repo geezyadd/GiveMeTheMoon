@@ -71,6 +71,14 @@ namespace Features.PlayerReplicaModule.Editor.Tests {
         }
 
         [Test]
+        public void WhenTheOwnerEmoted_ThenThePacketGoesAtOnce() {
+            _schedule.MarkSent(Standing, START);
+            var emoted = new BodyStatePacket { EmoteCount = 1 };
+
+            Assert.IsTrue(IsDue(emoted, START));
+        }
+
+        [Test]
         public void WhenTheOwnerStartsOrStopsWalking_ThenThePacketGoesAtOnce() {
             _schedule.MarkSent(Standing, START);
             Assert.IsTrue(IsDue(Walking, START));

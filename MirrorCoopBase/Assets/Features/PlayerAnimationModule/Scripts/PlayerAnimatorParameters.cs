@@ -18,7 +18,14 @@ namespace Features.PlayerAnimationModule {
         // The slap layer's state that plays the slap.
         public const string SlapStateName = "Slap";
 
+        // The layer that shows an emote over the whole body; its states and triggers (one per emote) are named by the
+        // emote catalog's trigger names (EmoteModule's EmoteCatalog).
+        public const string EmoteLayerName = "Emote";
+        // Trigger: stop the emote that plays now (back to the Emote layer's empty state).
+        public const string EmoteStopName = "EmoteStop";
+
         public static readonly int Forward = Animator.StringToHash(ForwardName);
         public static readonly int Fly = Animator.StringToHash(FlyName);
+        public static readonly int EmoteStop = Animator.StringToHash(EmoteStopName);
     }
 }

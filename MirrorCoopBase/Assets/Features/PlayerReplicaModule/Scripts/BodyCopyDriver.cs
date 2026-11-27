@@ -59,6 +59,10 @@ namespace Features.PlayerReplicaModule {
         // The owner's attack count in the packet the copy shows now (see IAttackPresses); 0 while not driving.
         public byte ShownAttackCount => _isDriving ? _delayBuffer.Current.AttackCount : (byte)0;
 
+        // The owner's emote count and emote in the packet the copy shows now (see IEmotePlays); 0 while not driving.
+        public byte ShownEmoteCount => _isDriving ? _delayBuffer.Current.EmoteCount : (byte)0;
+        public byte ShownEmoteIndex => _isDriving ? _delayBuffer.Current.EmoteIndex : (byte)0;
+
         private void OnEnable() {
             _channel.OnPacketAccepted += OnPacketAccepted;
             _channel.OnPlaced += OnPlaced;

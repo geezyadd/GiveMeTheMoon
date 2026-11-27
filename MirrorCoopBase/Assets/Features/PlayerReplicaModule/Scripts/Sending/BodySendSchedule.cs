@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace Features.PlayerReplicaModule.Sending {
     // Decides when the owner sends its next state packet: at once when a control changes (walk pressed or released,
-    // sprint, jump, standing or flying, a jump), so copies learn of a start or a stop as early as possible; often while
-    // anything moves or the look turns; rarely while the body stands still, as a sign of life.
+    // sprint, jump, standing or flying, a jump, an attack, an emote), so copies learn of a start or a stop as early as
+    // possible; often while anything moves or the look turns; rarely while the body stands still, as a sign of life.
     public sealed class BodySendSchedule {
         private bool _hasSent;
         private double _lastSentAt;
@@ -31,6 +31,7 @@ namespace Features.PlayerReplicaModule.Sending {
             || fresh.States != _lastSent.States
             || fresh.JumpCount != _lastSent.JumpCount
             || fresh.AttackCount != _lastSent.AttackCount
+            || fresh.EmoteCount != _lastSent.EmoteCount
             || fresh.CarrierId != _lastSent.CarrierId;
 
         private bool IsActive(in BodyStatePacket fresh, float idleSpeed) =>

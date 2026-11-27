@@ -11,7 +11,9 @@ namespace Features.PlayerAnimationModule {
     //   and would shuffle); weak input is cut so the idle stays still; a held player (a seat) stands still.
     // - Fly: the body has been off the ground for the configured delay; never while held. The fall layer's weight
     //   fades in with it and out when it is off.
-    // - An action's trigger (an attack's, from the AttackModule's Attacker) fires through Play while the animator runs.
+    // - An action's trigger (an attack's, from the AttackModule's Attacker; an emote's, from the EmoteModule's
+    //   EmotePlayer) fires through Play while the animator runs; ResetTrigger takes back one not taken yet.
+    // IsWalking and IsFlying tell others what the last update saw (an emote stops on them).
     // Works only while the ragdoll is awake (its animator is on): the ragdoll samples the animator once a physics step
     // (AnimatedPoseSampler), so the values apply from the next step.
     public sealed class PlayerAnimationDriver : MonoBehaviour {
@@ -29,6 +31,12 @@ namespace Features.PlayerAnimationModule {
         // Whether the animator runs, so an action played now shows (the ragdoll is awake).
         public bool CanPlay => _animator != null && _animator.isActiveAndEnabled;
 
+        // The walk input was above the idle cutoff at the last update (Forward's target above 0).
+        public bool IsWalking { get; private set; }
+
+        // Fly was on at the last update.
+        public bool IsFlying { get; private set; }
+
         [Inject]
         private void Construct(PlayerAnimationConfiguration configuration) =>
             _configuration = configuration;
@@ -44,21 +52,32 @@ namespace Features.PlayerAnimationModule {
         private void Update() {
             if (_ragdoll == null || _animator == null || _animator.isActiveAndEnabled == false) {
                 _airborneDelay.Reset();
+                IsWalking = false;
+                IsFlying = false;
                 return;
             }
 
             float deltaTime = Time.deltaTime;
-            _animator.SetFloat(PlayerAnimatorParameters.Forward, ReadForward(), _configuration.ForwardDampingSeconds, deltaTime);
+            float forward = ReadForward();
+            IsWalking = forward > 0f;
+            _animator.SetFloat(PlayerAnimatorParameters.Forward, forward, _configuration.ForwardDampingSeconds, deltaTime);
             bool isInAir = _movable.IsHeld == false && _ground.IsGrounded == false;
             bool isFlying = _airborneDelay.Step(isInAir, _configuration.FlyDelaySeconds, deltaTime);
+            IsFlying = isFlying;
             _animator.SetBool(PlayerAnimatorParameters.Fly, isFlying);
             FadeFlyLayer(isFlying, deltaTime);
         }
 
-        // Fires an action's trigger (an attack's); nothing while the animator does not run.
+        // Fires an action's trigger (an attack's, an emote's); nothing while the animator does not run.
         public void Play(int triggerHash) {
             if (CanPlay)
                 _animator.SetTrigger(triggerHash);
+        }
+
+        // Takes back a trigger fired but not taken by a transition yet; nothing while the animator does not run.
+        public void ResetTrigger(int triggerHash) {
+            if (CanPlay)
+                _animator.ResetTrigger(triggerHash);
         }
 
         // The fall layer over the locomotion fades in while flying and out on the feet; at weight 0 it changes nothing.

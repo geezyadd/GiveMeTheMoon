@@ -6,7 +6,7 @@ here, not in the root file.
 ## The idea
 Every player's body is simulated on every peer. The owner simulates their own from the keyboard and about 30 times a
 second sends an unreliable, always complete state packet: position and velocity in the axes of the platform they
-stand on, walk input, look, flags, a jump counter and an attack counter. The server stamps when the owner took it and forwards it. Every
+stand on, walk input, look, flags, a jump counter, an attack counter and an emote counter with the emote's index. The server stamps when the owner took it and forwards it. Every
 other peer runs a dynamic copy of that body with the same controller, driven by the input from the last packet, so
 the copy keeps moving between packets and never waits for one. A copy lives a little in the past (the copy delay,
 0.1 s): a packet's controls and position apply together when the show time reaches its stamp, so the copy stops where
@@ -39,7 +39,8 @@ The body is the one the movement drives (`CharacterMovableBase.DrivenBody`): the
 
 ## Assembly
 `Features.PlayerReplicaModule` (layer 3; references Mirror, Mirror.Components, Zenject, `CharacterMovableModule`,
-`FloatingControllerModule`, `GameCoreModule.Contracts`, `DebugModule.Contracts`).
+`FloatingControllerModule`, `GameCoreModule.Contracts`, `DebugModule.Contracts`, `AttackModule.Contracts`,
+`EmoteModule.Contracts`).
 - `BodyCopyDriver` (on `DummyPlayer`, runs after the float probe and before the movement, so a packet's controls
   and the reconciled velocity apply on the step they are due): on a non-owner it holds the body still (kinematic)
   until the first packet, then makes it dynamic, turns on `FloatingController.SimulatesCopy` and gives
@@ -64,7 +65,7 @@ The body is the one the movement drives (`CharacterMovableBase.DrivenBody`): the
   (`CharacterMovableBase.SetRemoteLook`), so it turns at the same moment it walks.
 - `BodyStateChannel` (on `DummyPlayer`): the owner samples its body each physics step and sends a packet when
   `BodySendSchedule` says so (at once when a control changes: walk pressed or released, sprint, jump held, support, a
-  jump, an attack; `PacketRate` while anything moves or the look turns; `RestingPacketRate` while it stands); the
+  jump, an attack, an emote; `PacketRate` while anything moves or the look turns; `RestingPacketRate` while it stands); the
   command and the RPC go on the unreliable channel. The server stamps `ServerTime` = its time minus half the owner's
   round trip, keeps the packet for its own copy and forwards it to everyone else (the host's own player goes out from
   the server directly). Each non-owner keeps the newest packet (`Latest`) through `PacketSequenceFilter` and counts
@@ -78,7 +79,9 @@ The body is the one the movement drives (`CharacterMovableBase.DrivenBody`): the
 - `BodyStateChannelRegistry`: the channels spawned on this peer.
 - `Sending/`: `BodyStateSampler` (packet from the body, the owner's `IMovementControls`, the look, support and
   `CharacterMovableBase.JumpCount`, `AttackCount` from the player's `IAttackPresses` (AttackModule.Contracts, found on the channel's object; a copy
-  reads it back through `BodyCopyDriver.ShownAttackCount`, the count in the packet it shows now); on a carrier the position and velocity in its axes of the last step, the walk and
+  reads it back through `BodyCopyDriver.ShownAttackCount`, the count in the packet it shows now; `EmoteCount` and
+  `EmoteIndex` likewise from the player's `IEmotePlays` (EmoteModule.Contracts), read back through
+  `BodyCopyDriver.ShownEmoteCount` / `ShownEmoteIndex`); on a carrier the position and velocity in its axes of the last step, the walk and
   look in its heading, and its id as `CarrierId`), `BodySendSchedule`.
 - `Receiving/`: `PacketMovementControls`, `PacketDelayBuffer`, `CopyCarrierFrame`, `PlacementFence`, `BodyStateReceiveStats` + `BodyStateReceiveReport` (also counts snaps and averages the copy's error to the
   owner's packet, the distance the correction sees each physics step, with its largest value; the two-player test
@@ -100,6 +103,6 @@ The body is the one the movement drives (`CharacterMovableBase.DrivenBody`): the
   jumps, wrap), target extrapolation and its cap, horizontal share, vertical dead zone and cap, no overshoot, snap,
   velocity reconciliation per axis (and only slowing while the owner steers nothing), ground mismatch timer, send schedule (moving, idle, a change after idle), receive
   stats (with the error average and largest), packet input source (controls, jump presses from the counter, reset), delay buffer (waits, newest due one,
-  restart), the gentle pull while the owner stands, sending at once when a control changes (an attack too), the visual lag offset
+  restart), the gentle pull while the owner stands, sending at once when a control changes (an attack and an emote too), the visual lag offset
   (hide, tiny and huge jumps, fade, sum), the placement fence (old packets blocked, the move's packet and the
   ones after it pass, the wait runs out, the number wraps, clear).

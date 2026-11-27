@@ -1,13 +1,19 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Features.AddressablesConstantGeneratorModule.EditorLoading;
+using Features.AddressablesConstantsGenerator.Generated;
+using Features.EmoteModule.Data;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
 
 namespace Features.PlayerAnimationModule.Editor {
-    // Builds the player's animator controller from code, so it is never edited by hand. Three layers:
+    // Builds the player's animator controller from code, so it is never edited by hand. Four layers:
     // - Base Layer: Locomotion, a 1D blend by Forward from idle (0) to walking forward (1);
     // - Fly (override): only Fall; PlayerAnimationDriver fades the layer's weight in while Fly is on, out when off;
+    // - Emote (override, whole body, weight 1): Empty (an empty blend tree) and one state per emote of the emote
+    //   catalog, entered from any state by the emote's trigger, back to Empty at its exit time or on EmoteStop;
     // - Slap (override, upper body mask, weight 1): Empty (an empty blend tree), the Slap trigger goes to Slap, Slap
     //   goes back to Empty.
     // It also builds the upper body mask and, the first time, the slap clip (SlapClipDraft).
@@ -63,6 +69,7 @@ namespace Features.PlayerAnimationModule.Editor {
             controller.AddParameter(PlayerAnimatorParameters.ForwardName, AnimatorControllerParameterType.Float);
             controller.AddParameter(PlayerAnimatorParameters.FlyName, AnimatorControllerParameterType.Bool);
             controller.AddParameter(PlayerAnimatorParameters.SlapName, AnimatorControllerParameterType.Trigger);
+            controller.AddParameter(PlayerAnimatorParameters.EmoteStopName, AnimatorControllerParameterType.Trigger);
 
             AnimatorState locomotion = controller.CreateBlendTreeInController(LocomotionState, out BlendTree tree, 0);
             tree.blendType = BlendTreeType.Simple1D;
@@ -73,6 +80,7 @@ namespace Features.PlayerAnimationModule.Editor {
             controller.layers[0].stateMachine.defaultState = locomotion;
 
             AddFlyLayer(controller);
+            AddEmoteLayer(controller, LoadEmotes());
             AddSlapLayer(controller, upperBody);
         }
 
@@ -93,7 +101,58 @@ namespace Features.PlayerAnimationModule.Editor {
             machine.defaultState = fall;
         }
 
-        // The third layer, over the upper body (the legs keep walking or falling), at weight 1: Empty, a blend tree with
+        // The third layer, over the whole body (no mask) at weight 1: an emote stops as soon as the player walks, jumps
+        // or is in the air, so nothing else needs the legs while one plays, and a dance or a laugh moves the hips and
+        // the legs too. The slap layer stays above it, so a slap during an emote still shows on the upper body.
+        // Empty, a blend tree with no motions, by default (as in the slap layer); each emote's state plays the clip its
+        // catalog entry names (the idle without one), entered from any state by its trigger (no exit time, so a new
+        // emote replaces the one that plays, the same one starts again); back to Empty at its exit time, or at once on
+        // EmoteStop. The transitions keep the editor's default exit time and duration.
+        private static void AddEmoteLayer(AnimatorController controller, IReadOnlyList<EmoteEntry> emotes) {
+            controller.AddLayer(PlayerAnimatorParameters.EmoteLayerName);
+            AnimatorControllerLayer[] layers = controller.layers;
+            int layerIndex = layers.Length - 1;
+            AnimatorControllerLayer emoteLayer = layers[layerIndex];
+            emoteLayer.defaultWeight = 1f;
+            emoteLayer.blendingMode = AnimatorLayerBlendingMode.Override;
+            controller.layers = layers;
+
+            AnimatorStateMachine machine = emoteLayer.stateMachine;
+            AnimatorState empty = controller.CreateBlendTreeInController(EmptyState, out BlendTree _, layerIndex);
+            machine.defaultState = empty;
+
+            var names = new HashSet<string>();
+            foreach (EmoteEntry emote in emotes) {
+                string trigger = emote.TriggerName;
+                if (string.IsNullOrEmpty(trigger) || IsTaken(controller, trigger) || names.Add(trigger) == false) {
+                    Debug.LogError($"Animation: the emote {emote.DisplayName} needs a trigger name of its own (has '{trigger}').");
+                    continue;
+                }
+
+                controller.AddParameter(trigger, AnimatorControllerParameterType.Trigger);
+                AnimatorState state = machine.AddState(trigger);
+                state.motion = emote.Clip != null ? emote.Clip : LoadClip(IdleClipPath);
+
+                AnimatorStateTransition start = machine.AddAnyStateTransition(state);
+                start.AddCondition(AnimatorConditionMode.If, 0f, trigger);
+                start.hasExitTime = false;
+                start.canTransitionToSelf = true;
+
+                state.AddTransition(empty, true);
+                AnimatorStateTransition stop = state.AddTransition(empty);
+                stop.AddCondition(AnimatorConditionMode.If, 0f, PlayerAnimatorParameters.EmoteStopName);
+                stop.hasExitTime = false;
+            }
+        }
+
+        // An emote's trigger must not clash with the controller's own parameters (Forward, Slap, ...).
+        private static bool IsTaken(AnimatorController controller, string parameter) =>
+            controller.parameters.Any(existing => existing.name == parameter);
+
+        private static IReadOnlyList<EmoteEntry> LoadEmotes() =>
+            AddressableConfigurationLoader.Load<EmoteCatalog>(Address.Configurations.EmoteCatalog_Default).Emotes;
+
+        // The fourth layer, over the upper body (the legs keep walking or falling), at weight 1: Empty, a blend tree with
         // no motions, by default; the Slap trigger goes from Empty to Slap, Slap goes back to Empty at its exit time.
         // Both transitions have the editor's default exit time and duration.
         private static void AddSlapLayer(AnimatorController controller, AvatarMask upperBody) {
