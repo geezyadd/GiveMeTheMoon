@@ -108,12 +108,12 @@ namespace Features.ShipModule.Scripts.Overboard {
 
         // Back at the return point of the nearest area that has one (the lobby's); without one (a station) the player
         // goes onto the standing ship's deck.
+        // TEMPORARY (2026-11-27): the lobby's return is off, so a player blown far away in the lobby keeps drifting
+        // instead of being put back; the stations still put the player on the deck.
         private void ReturnToArea(ShipBase ship, ShipOverboardRider overboardRider) {
             Vector3 position = overboardRider.Position;
-            if (_overboardAreas.TryFindNearest(position, true, out OverboardArea area, out _)) {
-                overboardRider.ServerReturn(area.ReturnPose);
+            if (_overboardAreas.TryFindNearest(position, true, out _, out _))
                 return;
-            }
 
             if (ship != null && _shipDeckSpawnPoints.HasSpawnPoint) {
                 overboardRider.ServerReturn(_shipDeckSpawnPoints.TakeSpawnPose());

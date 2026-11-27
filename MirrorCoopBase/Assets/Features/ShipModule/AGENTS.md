@@ -191,7 +191,9 @@ in open space. Code in `Scripts/Overboard/`, numbers in `ShipOverboardConfigurat
     under it the gravity would pull the player off again) after `MinDriftSecondsBeforeCapture` the drift ends and it
     falls back onto the floor; past `AreaMaxDistanceMeters`
     (100 m from the nearest area) or `AreaMaxDriftSeconds` (60 s) it is put back (`IPlayerBodyPlacement.ServerPlace`)
-    at the nearest area's return point, else on the standing ship's deck spawn point; no death.
+    at the nearest area's return point, else on the standing ship's deck spawn point; no death. **Temporarily off in
+    the lobby (2026-11-27):** past the limit nothing happens when an area with a return point is found, so a player
+    blown far away there keeps drifting; the stations' deck return still works (`ShipOverboardSystem.ReturnToArea`).
 - **The drift** (`CharacterDrift`, CharacterMovableModule): each peer drifts the body it simulates: weightless
   (`IMovableBody.SetWeightless`), the movement neither walks nor jumps, the speed fades to a slow drift, the owner's
   move keys push it along the view (3 m/s² up to 4 m/s, times this peer's `DriftPushScaleModel.Scale`: the debug window's Player → "Drift speed"
