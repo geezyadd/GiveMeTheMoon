@@ -14,5 +14,8 @@ namespace Features.SettingsModule.Data {
         public const string INVERT_Y = "controls.invert_y";
         public const string SCREEN_SHAKE = "gameplay.screen_shake";
         public const string NAMEPLATES = "gameplay.nameplates";
+        public const string MASTER_VOLUME = "audio.master_volume";
+        public const string MUSIC_VOLUME = "audio.music_volume";
+        public const string SFX_VOLUME = "audio.sfx_volume";
     }
 }

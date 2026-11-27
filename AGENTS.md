@@ -112,14 +112,14 @@ types.
      `Features.SpaceHazeModule.Data`, `Features.AttackModule.Contracts`, `Features.ExplosionModule.Contracts`,
      `Features.EmoteModule.Contracts`, `Features.EmoteModule.Data` (no references), `Features.CoroutineRunnerModule`,
      `Features.LoadingScreenModule.Contracts` (no references), `Features.SettingsModule.Data` (no references),
-     `Features.SavingSystemModule.Contracts`, `Features.AudioModule` (Zenject, FMODUnity),
+     `Features.SavingSystemModule.Contracts`,
      `Features.ConstellationModule.Data` (NetworkModel); third-party
      `QuickOutline` also has its own asmdef (the unused `Mini Mapa(Radar)` pack was deleted on 2026-10-25).
   2. `Features.CharacterMovableModule` (Contracts, FloatingController, Address, Stats, Input),
      `Features.GameFlowStateMachineModule` (Contracts, SceneLoader), `Features.FlightFieldModule`,
      `Features.SpaceHazeModule`, `Features.ActiveRagdollModule` (FloatingController),
      `Features.TargetModule`, `Features.VfxModule` (PoolModule), `Features.LoadingScreenModule`,
-     `Features.SavingSystemModule`, `Features.ScreenShakeModule` (SettingsModule.Data), `Features.SettingsModule` (the video
+     `Features.SavingSystemModule`, `Features.ScreenShakeModule` (SettingsModule.Data), `Features.AudioModule`, `Features.SettingsModule` (the video
      settings and the settings window; see its file), `Features.ConstellationModule`.
   3. `Features.CameraModule`, `Features.GrabModule`, `Features.DebugModule`, `Features.PlayerReplicaModule`,
      `Features.PlayerAnimationModule`.

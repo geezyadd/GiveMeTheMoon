@@ -6,7 +6,8 @@ namespace Features.SettingsModule.UI {
     // The settings window's flow: the draft starts as the live values; Apply writes it into the live model, Cancel
     // takes the live values back, Reset tab puts the open tab's defaults into the draft. Closing with unapplied
     // changes asks first; a window mode or resolution change must be kept within the configured seconds. The live
-    // values are saved on Apply and again when a display change is kept or reverted.
+    // values are saved on Apply and again when a display change is kept or reverted. A setting that applies
+    // instantly (the volumes) goes into the live model and the save on every change, so it never waits for Apply.
     public sealed class SettingsWindowPresenter : PresenterBehaviour<SettingsWindowViewBase> {
         private readonly SettingsModel _liveModel;
         private readonly SettingsDraftModel _draft;
@@ -179,8 +180,14 @@ namespace Features.SettingsModule.UI {
             View.ShowUnsavedPopup(false);
         }
 
-        private void OnDraftValueChanged(string key) =>
+        private void OnDraftValueChanged(string key) {
+            if (_draft.Values.GetDefinition(key).AppliesInstantly && _draft.Values.HasSameValue(_liveModel, key) == false) {
+                _liveModel.CopyValueFrom(_draft.Values, key);
+                _settingsSaving.Save();
+            }
+
             RefreshApply();
+        }
 
         private void RefreshApply() =>
             View.SetApplyInteractable(HasUnappliedChanges);

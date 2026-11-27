@@ -3,7 +3,8 @@
     "rootNamespace": "Features.AudioModule",
     "references": [
         "Zenject",
-        "FMODUnity"
+        "FMODUnity",
+        "Features.SettingsModule.Data"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

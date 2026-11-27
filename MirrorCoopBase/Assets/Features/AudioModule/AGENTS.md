@@ -30,7 +30,7 @@ already gets. Users now:
   `FMODUnity` and `Features.AudioModule` in its asmdef.
 
 ## Assembly
-`Features.AudioModule` (layer 1; references Zenject, FMODUnity). Bindings: `AudioModuleInstaller`, called from
+`Features.AudioModule` (layer 2; references Zenject, FMODUnity, Features.SettingsModule.Data). Bindings: `AudioModuleInstaller`, called from
 GameCore's `GlobalSceneInstaller`.
 
 ## Parts
@@ -44,3 +44,8 @@ GameCore's `GlobalSceneInstaller`.
   `Configurations`, bound in `ConfigurationInstaller`): `SessionMusic` (`event:/Music/tension_music`). GameCore's
   `AmbienceSystem` (bound in `GlobalSceneInstaller`) starts it on entering `SessionGameFlowState` (the lobby comes first)
   and stops it on leaving to the menu; it keeps playing in the game scene. It disposes the instance with the container.
+- `SetBusVolume(busPath, volume)`: an FMOD Studio bus's volume (0–1); a bus the banks lack is warned about once.
+- `Volume/AudioVolumeSettingsApplier` (bound in `AudioModuleInstaller`): the settings `audio.master_volume`,
+  `audio.music_volume`, `audio.sfx_volume` (0–100 %) into the buses `bus:/All`, `bus:/All/Music`, `bus:/All/Sfx`; at
+  startup and on every change. Ambiance has no slider of its own and follows All. Renaming a group in FMOD Studio
+  means changing its path here.

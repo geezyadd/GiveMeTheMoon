@@ -46,6 +46,9 @@ The player's settings of this machine (local, not networked): video, controls, g
 | `controls.invert_y` | toggle | off |
 | `gameplay.screen_shake` | slider 0–100 %, step 5 | 50 (today's strength) |
 | `gameplay.nameplates` | toggle | on |
+| `audio.master_volume` | slider 0–100 %, step 5, applies instantly | 100 |
+| `audio.music_volume` | slider 0–100 %, step 5, applies instantly | 100 |
+| `audio.sfx_volume` | slider 0–100 %, step 5, applies instantly | 100 |
 
 The defaults are what the game had before the settings, so with the defaults it looks and plays the same.
 
@@ -61,6 +64,7 @@ module they change:
 | field of view, mouse sensitivity, invert Y, camera shake | `CameraFieldOfViewSettingApplier`, `CameraLookSettingsApplier`, `CameraShakeStrengthSettingApplier` | CameraModule (see its file) |
 | screen shake (explosions) | `ScreenShakeStrengthSettingApplier` | ScreenShakeModule |
 | player names | `NameplateSettingApplier` | PlayerProfileModule |
+| volumes | `AudioVolumeSettingsApplier`: each slider is the volume of an FMOD bus | AudioModule (see its file) |
 
 `VideoSettingsConfiguration` (`VideoSettingsConfiguration_Default`, bound in `ConfigurationInstaller`) says what the
 video options mean: window modes, MSAA samples, shadow levels (off: distance 0; low: 1024, 30 m, 2 cascades; medium =
@@ -77,6 +81,8 @@ The screen shake slider is a multiple of its default: `SliderSettingDefinition.S
   live values when the window opens. Apply copies the draft into the live model (the appliers react), Cancel takes
   the live values back, Reset tab writes the open tab's defaults into the draft. Apply is clickable only while the
   draft differs.
+- A definition with `AppliesInstantly` (the volumes) skips Apply: every change of its draft value goes straight into
+  the live model and the save, so it never counts as an unapplied change.
 - Back / Esc with unapplied changes shows the "unapplied changes" popup: Save applies and closes, Cancel drops the
   changes and closes, Esc goes back to the window.
 - A window mode or resolution change asks "Keep these display settings?" (`DisplaySettingsConfirmation`): without
@@ -86,7 +92,7 @@ The screen shake slider is a multiple of its default: `SliderSettingDefinition.S
   < value >, `SettingHeader`, `SettingsTabButton`); each setting is a prefab variant in `Prefabs/Settings` that only
   sets its definition, dropped into its tab's container in the window. A row's presenter shows the draft value and
   writes the player's change into the draft. The window finds a tab's settings (for Reset tab) from the rows under
-  the tab's container. The Audio tab is empty until the sound step.
+  the tab's container. The Audio tab has the three volume rows.
 - New setting in the window: a variant of the base row with the definition, dropped into the tab's container.
 
 ## Keyboard / gamepad navigation (`Scripts/UI/Focus`)

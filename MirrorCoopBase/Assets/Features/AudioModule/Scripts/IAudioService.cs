@@ -13,5 +13,9 @@ namespace Features.AudioModule {
 
         // A long sound its caller starts and stops itself; the caller disposes it to release the FMOD instance.
         public SoundInstance CreateInstance(EventReference sound);
+
+        // The volume of an FMOD Studio bus (a group of the mixer, e.g. "bus:/All/Music"): 0 is silent, 1 is as
+        // mixed. A bus the loaded banks do not have is reported once and skipped.
+        public void SetBusVolume(string busPath, float volume);
     }
 }
