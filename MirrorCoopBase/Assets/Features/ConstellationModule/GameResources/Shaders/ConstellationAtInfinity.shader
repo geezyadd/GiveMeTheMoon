@@ -119,17 +119,27 @@ Shader "Features/ConstellationModule/ConstellationAtInfinity" {
                 return _SpikeIntensity * taper * taper * (width / drawnWidth) * exp(-ratio * ratio);
             }
 
+            // Scintillation: three sines at unrelated rates, so the flicker never settles into a visible rhythm. The sum
+            // stays within -1..1; the phase keeps neighbouring stars apart.
+            float Twinkle(float phase) {
+                float t = _Time.y * _TwinkleSpeed + phase;
+                float wave = 0.5 * sin(t) + 0.3 * sin(t * 2.37 + phase * 1.7) + 0.2 * sin(t * 5.13 + phase * 3.1);
+                return 1.0 + _TwinkleAmount * wave;
+            }
+
+            // The whole star twinkles; the spikes and the halo swing a little more than the core, as through the air.
             half4 FragStar(float4 shape) {
                 float2 position = shape.xy;
                 float radius = length(position);
                 float pixel = max(fwidth(position.x), fwidth(position.y));
+                float twinkle = Twinkle(shape.w);
+                float outerTwinkle = twinkle * twinkle;
 
                 float coreRatio = radius / _CoreRadius;
-                float core = _CoreIntensity * exp(-coreRatio * coreRatio);
+                float core = _CoreIntensity * exp(-coreRatio * coreRatio) * twinkle;
                 float haloFade = saturate(1.0 - radius / _HaloRadius);
-                float twinkle = 1.0 + _TwinkleAmount * sin(_Time.y * _TwinkleSpeed + shape.w);
-                float halo = _HaloIntensity * haloFade * haloFade * haloFade * twinkle;
-                float spikes = Spike(position.x, position.y, pixel) + Spike(position.y, position.x, pixel);
+                float halo = _HaloIntensity * haloFade * haloFade * haloFade * outerTwinkle;
+                float spikes = (Spike(position.x, position.y, pixel) + Spike(position.y, position.x, pixel)) * outerTwinkle;
                 return _Color * ((core + halo + spikes) * shape.z);
             }
 

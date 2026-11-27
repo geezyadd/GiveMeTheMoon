@@ -15,22 +15,22 @@ MonoBehaviour:
   _referenceMagnitude: 1
   _magnitudeSizeExponent: 0.5
   _magnitudeBrightnessExponent: 0.5
-  _starScaleRange: {x: 0.35, y: 2}
-  _starBrightnessRange: {x: 0.35, y: 2}
+  _starScaleRange: {x: 1, y: 2}
+  _starBrightnessRange: {x: 1, y: 2}
   _starColor: {r: 0.95, g: 0.97, b: 1, a: 1}
   _coreRadiusDegrees: 0.04
   _coreIntensity: 8
   _haloRadiusDegrees: 0.55
   _haloIntensity: 0.3
-  _spikeLengthDegrees: 1.4
+  _spikeLengthDegrees: 1
   _spikeWidthDegrees: 0.015
-  _spikeIntensity: 1.6
+  _spikeIntensity: 1.3
   _spikeAngleDegrees: 15
-  _twinkleAmount: 0.08
-  _twinkleSpeed: 0.7
+  _twinkleAmount: 0.3
+  _twinkleSpeed: 3
   _lineColor: {r: 0.45, g: 0.62, b: 1, a: 1}
-  _lineWidthPixels: 8
-  _lineIntensity: 1.3
-  _lineGlowIntensity: 0.18
+  _lineWidthPixels: 3
+  _lineIntensity: 0.06
+  _lineGlowIntensity: 0.008
   _lineGapDegrees: 0.3
   _lineEndFadeDegrees: 0.25
