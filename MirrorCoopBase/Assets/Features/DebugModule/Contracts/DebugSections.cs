@@ -9,5 +9,6 @@ namespace Features.DebugModule.Contracts {
         public const string VIEW = "View";
         public const string NETWORK = "Network";
         public const string EXPLOSIONS = "Explosions";
+        public const string CONSTELLATIONS = "Constellations";
     }
 }

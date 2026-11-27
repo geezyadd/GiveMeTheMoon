@@ -10,11 +10,14 @@ namespace Features.ConstellationModule.Scripts.Core {
     // the painted stars wherever the camera stands.
     // Vertex streams: UV0 of a star is (shape x, shape y, brightness, twinkle phase), the shape in degrees of a
     // reference-magnitude star; UV0 of a line is (side -1..1, degrees from the line's start, line length in degrees,
-    // +1 at the start / -1 at the end) and UV1 the direction of the line's other end, so the shader can widen the line
-    // on screen.
-    public sealed class ConstellationMeshBuilder {
+    // +1 at the start / -1 at the end). UV1.xyz is the direction of a line's other end, so the shader can widen the line
+    // on screen (zero for a star); UV1.w is the reveal step: the star's index in the star list or the line's index in
+    // the line list, which picks the vertex's progress from the shader's per-step array.
+    public sealed class ConstellationMeshBuilder : IConstellationMeshBuilder {
         public const int STAR_SUBMESH = 0;
         public const int LINE_SUBMESH = 1;
+        // Matches MAX_REVEAL_STEPS in ConstellationAtInfinity.shader: the size of the per-step progress array.
+        public const int MAX_REVEAL_STEPS = 32;
 
         private const int SUBMESH_COUNT = 2;
         // The vertices lie around the object's origin, but the shader draws them at infinity: bounds this large keep
@@ -35,7 +38,7 @@ namespace Features.ConstellationModule.Scripts.Core {
         private readonly ConstellationHighlightConfiguration _constellationHighlightConfiguration;
         private readonly List<Vector3> _vertices = new();
         private readonly List<Vector4> _shapes = new();
-        private readonly List<Vector3> _otherLineEnds = new();
+        private readonly List<Vector4> _otherEndsAndSteps = new();
         private readonly List<int> _starIndices = new();
         private readonly List<int> _lineIndices = new();
         private readonly List<Vector3> _starDirections = new();
@@ -47,16 +50,18 @@ namespace Features.ConstellationModule.Scripts.Core {
         }
 
         public Mesh Build(ConstellationDefinition constellation) {
+            CheckStepCount(constellation, constellation.Stars.Count);
+            CheckStepCount(constellation, constellation.Lines.Count);
             Clear();
             for (int i = 0; i < constellation.Stars.Count; i++)
                 AddStar(constellation.Stars[i], i);
-            foreach (ConstellationLine line in constellation.Lines)
-                AddLine(GetStarIndex(constellation, line.FromStar), GetStarIndex(constellation, line.ToStar));
+            for (int i = 0; i < constellation.Lines.Count; i++)
+                AddLine(GetStarIndex(constellation, constellation.Lines[i].FromStar), GetStarIndex(constellation, constellation.Lines[i].ToStar), i);
 
             Mesh mesh = new() { name = constellation.name, hideFlags = HideFlags.DontSave };
             mesh.SetVertices(_vertices);
             mesh.SetUVs(0, _shapes);
-            mesh.SetUVs(1, _otherLineEnds);
+            mesh.SetUVs(1, _otherEndsAndSteps);
             mesh.subMeshCount = SUBMESH_COUNT;
             mesh.SetIndices(_starIndices, MeshTopology.Triangles, STAR_SUBMESH, calculateBounds: false);
             mesh.SetIndices(_lineIndices, MeshTopology.Triangles, LINE_SUBMESH, calculateBounds: false);
@@ -64,15 +69,13 @@ namespace Features.ConstellationModule.Scripts.Core {
             return mesh;
         }
 
-        private Vector3 GetWorldDirection(ConstellationStar star) {
-            double rightAscension = star.RightAscensionDegrees * Math.PI / 180.0;
-            double declination = star.DeclinationDegrees * Math.PI / 180.0;
-            Vector3 celestial = new(
-                (float)(Math.Cos(declination) * Math.Cos(rightAscension)),
-                (float)Math.Sin(declination),
-                (float)(Math.Cos(declination) * Math.Sin(rightAscension)));
-            return _celestialSkyFrameConfiguration.CelestialToWorld * celestial;
+        private static void CheckStepCount(ConstellationDefinition constellation, int count) {
+            if (count > MAX_REVEAL_STEPS)
+                throw new ArgumentOutOfRangeException(nameof(constellation), count, $"Constellation {constellation.name} has more than {MAX_REVEAL_STEPS} stars or lines, the shader's reveal step limit.");
         }
+
+        private Vector3 GetWorldDirection(ConstellationStar star) =>
+            _celestialSkyFrameConfiguration.CelestialToWorld * star.CelestialDirection;
 
         private static int GetStarIndex(ConstellationDefinition constellation, int index) {
             if (index < 0 || index >= constellation.Stars.Count)
@@ -83,7 +86,7 @@ namespace Features.ConstellationModule.Scripts.Core {
         private void Clear() {
             _vertices.Clear();
             _shapes.Clear();
-            _otherLineEnds.Clear();
+            _otherEndsAndSteps.Clear();
             _starIndices.Clear();
             _lineIndices.Clear();
             _starDirections.Clear();
@@ -111,7 +114,7 @@ namespace Features.ConstellationModule.Scripts.Core {
             foreach (Vector2 corner in QUAD_CORNERS) {
                 _vertices.Add((direction + (spikeRight * corner.x + spikeUp * corner.y) * extent).normalized);
                 _shapes.Add(new Vector4(corner.x * extentDegrees, corner.y * extentDegrees, brightness, twinklePhase));
-                _otherLineEnds.Add(Vector3.zero);
+                _otherEndsAndSteps.Add(new Vector4(0f, 0f, 0f, index));
             }
             foreach (int corner in QUAD_TRIANGLES)
                 _starIndices.Add(first + corner);
@@ -130,7 +133,7 @@ namespace Features.ConstellationModule.Scripts.Core {
 
         // A line ends short of each star by the gap scaled with that star's drawn size, so close stars (Orion's belt)
         // keep their lines; a line with no length left between the two gaps is skipped.
-        private void AddLine(int fromStar, int toStar) {
+        private void AddLine(int fromStar, int toStar, int lineIndex) {
             Vector3 from = _starDirections[fromStar];
             Vector3 to = _starDirections[toStar];
             float angle = Vector3.Angle(from, to);
@@ -143,18 +146,18 @@ namespace Features.ConstellationModule.Scripts.Core {
             Vector3 start = Vector3.Slerp(from, to, fromGap / angle);
             Vector3 end = Vector3.Slerp(to, from, toGap / angle);
             int first = _vertices.Count;
-            AddLineVertex(start, end, -1f, 0f, length, LINE_START);
-            AddLineVertex(start, end, 1f, 0f, length, LINE_START);
-            AddLineVertex(end, start, 1f, length, length, LINE_END);
-            AddLineVertex(end, start, -1f, length, length, LINE_END);
+            AddLineVertex(start, end, -1f, 0f, length, LINE_START, lineIndex);
+            AddLineVertex(start, end, 1f, 0f, length, LINE_START, lineIndex);
+            AddLineVertex(end, start, 1f, length, length, LINE_END, lineIndex);
+            AddLineVertex(end, start, -1f, length, length, LINE_END, lineIndex);
             foreach (int corner in QUAD_TRIANGLES)
                 _lineIndices.Add(first + corner);
         }
 
-        private void AddLineVertex(Vector3 direction, Vector3 otherEnd, float side, float alongDegrees, float lengthDegrees, float lineEnd) {
+        private void AddLineVertex(Vector3 direction, Vector3 otherEnd, float side, float alongDegrees, float lengthDegrees, float lineEnd, int lineIndex) {
             _vertices.Add(direction);
             _shapes.Add(new Vector4(side, alongDegrees, lengthDegrees, lineEnd));
-            _otherLineEnds.Add(otherEnd);
+            _otherEndsAndSteps.Add(new Vector4(otherEnd.x, otherEnd.y, otherEnd.z, lineIndex));
         }
     }
 }

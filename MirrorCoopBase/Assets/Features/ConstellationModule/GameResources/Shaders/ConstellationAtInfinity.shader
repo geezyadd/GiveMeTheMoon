@@ -1,7 +1,10 @@
-// A constellation highlight (ConstellationHighlightView) drawn at infinity, like the skybox: every vertex is a world
+// A constellation highlight (ConstellationFigureView) drawn at infinity, like the skybox: every vertex is a world
 // direction, the camera's position is ignored, and the depth sits on the far plane, so the figure never slides
 // against the painted stars and any world geometry hides it. Unlit, unfogged, added onto the sky.
 // One shader for both submeshes (ConstellationMeshBuilder): _IsLine picks the star look or the line look.
+// Reveal (ConstellationFigureView): _StepProgress holds, per submesh, each star's light (0 dark, 1 lit, a little more
+// while it flashes) or each line's drawn share (0..1), picked by the vertex's step index; _FigureAlpha fades the whole
+// figure out. A lit star and a fully drawn line look exactly as without the reveal.
 Shader "Features/ConstellationModule/ConstellationAtInfinity" {
     Properties {
         [HDR] _Color ("Color", Color) = (1, 1, 1, 1)
@@ -19,6 +22,7 @@ Shader "Features/ConstellationModule/ConstellationAtInfinity" {
         _LineIntensity ("Line Intensity", Float) = 1.3
         _LineGlowIntensity ("Line Glow Intensity", Float) = 0.18
         _LineEndFade ("Line End Fade (deg)", Float) = 0.25
+        _FigureAlpha ("Figure Alpha", Float) = 1
     }
     SubShader {
         Tags { "RenderType" = "Transparent" "Queue" = "Transparent" "RenderPipeline" = "UniversalPipeline" "IgnoreProjector" = "True" }
@@ -47,6 +51,8 @@ Shader "Features/ConstellationModule/ConstellationAtInfinity" {
             #define LINE_CORE_SHARPNESS 5.0
             #define LINE_GLOW_SHARPNESS 2.2
             #define MIN_CLIP_W 0.0001
+            // Matches ConstellationMeshBuilder.MAX_REVEAL_STEPS.
+            #define MAX_REVEAL_STEPS 32
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
@@ -64,20 +70,26 @@ Shader "Features/ConstellationModule/ConstellationAtInfinity" {
                 float _LineIntensity;
                 float _LineGlowIntensity;
                 float _LineEndFade;
+                float _FigureAlpha;
             CBUFFER_END
+
+            // Set per renderer from a property block, so it lives outside the material's constant buffer.
+            float _StepProgress[MAX_REVEAL_STEPS];
 
             struct Attributes {
                 float3 direction : POSITION;
                 // Star: shape position in degrees, brightness, twinkle phase. Line: side, degrees from the start,
                 // length in degrees, +1 at the start / -1 at the end (see ConstellationMeshBuilder).
                 float4 shape : TEXCOORD0;
-                // Line: direction of the line's other end. Unused by stars.
-                float3 otherEnd : TEXCOORD1;
+                // xyz: line: direction of the line's other end, zero for a star. w: the reveal step (star or line index).
+                float4 otherEndAndStep : TEXCOORD1;
             };
 
             struct Varyings {
                 float4 positionCS : SV_POSITION;
                 float4 shape : TEXCOORD0;
+                // The step's progress from _StepProgress: a star's light or a line's drawn share.
+                float reveal : TEXCOORD1;
             };
 
             float4 ProjectAtInfinity(float3 direction) {
@@ -102,10 +114,11 @@ Shader "Features/ConstellationModule/ConstellationAtInfinity" {
                 Varyings output;
                 float4 positionCS = ProjectAtInfinity(input.direction);
                 if (_IsLine > 0.5)
-                    positionCS = WidenLine(positionCS, input.otherEnd, input.shape.x, input.shape.w);
+                    positionCS = WidenLine(positionCS, input.otherEndAndStep.xyz, input.shape.x, input.shape.w);
                 positionCS.z = positionCS.w * FAR_PLANE_DEPTH;
                 output.positionCS = positionCS;
                 output.shape = input.shape;
+                output.reveal = _StepProgress[(int)(input.otherEndAndStep.w + 0.5)];
                 return output;
             }
 
@@ -128,7 +141,7 @@ Shader "Features/ConstellationModule/ConstellationAtInfinity" {
             }
 
             // The whole star twinkles; the spikes and the halo swing a little more than the core, as through the air.
-            half4 FragStar(float4 shape) {
+            half4 FragStar(float4 shape, float light) {
                 float2 position = shape.xy;
                 float radius = length(position);
                 float pixel = max(fwidth(position.x), fwidth(position.y));
@@ -140,21 +153,24 @@ Shader "Features/ConstellationModule/ConstellationAtInfinity" {
                 float haloFade = saturate(1.0 - radius / _HaloRadius);
                 float halo = _HaloIntensity * haloFade * haloFade * haloFade * outerTwinkle;
                 float spikes = (Spike(position.x, position.y, pixel) + Spike(position.y, position.x, pixel)) * outerTwinkle;
-                return _Color * ((core + halo + spikes) * shape.z);
+                return _Color * ((core + halo + spikes) * shape.z * light);
             }
 
-            half4 FragLine(float4 shape) {
+            // A line grows from its start: its head is a soft edge as long as the end fade, and it runs past the line's
+            // end once the line is fully drawn, so a drawn line is not dimmed by it.
+            half4 FragLine(float4 shape, float drawnShare) {
                 float core = shape.x * LINE_CORE_SHARPNESS;
                 float glow = shape.x * LINE_GLOW_SHARPNESS;
                 float endFade = saturate(shape.y / _LineEndFade) * saturate((shape.z - shape.y) / _LineEndFade);
+                float head = saturate((drawnShare * (shape.z + _LineEndFade) - shape.y) / _LineEndFade);
                 float profile = _LineIntensity * exp(-core * core) + _LineGlowIntensity * exp(-glow * glow);
-                return _Color * (profile * smoothstep(0.0, 1.0, endFade));
+                return _Color * (profile * smoothstep(0.0, 1.0, endFade) * head);
             }
 
             half4 Frag(Varyings input) : SV_Target {
                 if (_IsLine > 0.5)
-                    return FragLine(input.shape);
-                return FragStar(input.shape);
+                    return FragLine(input.shape, input.reveal) * _FigureAlpha;
+                return FragStar(input.shape, input.reveal) * _FigureAlpha;
             }
             ENDHLSL
         }

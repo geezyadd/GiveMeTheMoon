@@ -59,6 +59,20 @@ namespace Features.ConstellationModule.Scripts.Configurations {
         [Tooltip("A line fades in over this angle at each of its ends, in degrees.")]
         [SerializeField] private float _lineEndFadeDegrees = 0.25f;
 
+        [Header("Reveal")]
+        [Tooltip("How long a star takes to light up when the reveal reaches it, in seconds.")]
+        [SerializeField] private float _starFadeInSeconds = 0.3f;
+        [Tooltip("How far a lighting star flashes past its full brightness halfway through its fade-in (0 = no flash, 0.5 = half again as bright).")]
+        [SerializeField] private float _starFlashOvershoot = 0.5f;
+        [Tooltip("How fast a line is drawn from its first star to its second, in degrees of sky per second.")]
+        [SerializeField] private float _lineDrawDegreesPerSecond = 15f;
+        [Tooltip("Pause after a star has lit up, before the next line starts, in seconds.")]
+        [SerializeField] private float _pauseBetweenStepsSeconds = 0.1f;
+        [Tooltip("How long the whole figure (stars and lines together) takes to fade out when it is hidden or another one is picked, in seconds.")]
+        [SerializeField] private float _fadeOutSeconds = 0.8f;
+        [Tooltip("After a switch the new figure's reveal starts this long after the old figure starts fading, in seconds. Picking the shown figure again waits for the whole fade-out instead.")]
+        [SerializeField] private float _switchRevealDelaySeconds = 0.3f;
+
         public float ReferenceMagnitude => _referenceMagnitude;
         public float MagnitudeSizeExponent => _magnitudeSizeExponent;
         public float MagnitudeBrightnessExponent => _magnitudeBrightnessExponent;
@@ -81,5 +95,11 @@ namespace Features.ConstellationModule.Scripts.Configurations {
         public float LineGlowIntensity => _lineGlowIntensity;
         public float LineGapDegrees => _lineGapDegrees;
         public float LineEndFadeDegrees => _lineEndFadeDegrees;
+        public float StarFadeInSeconds => _starFadeInSeconds;
+        public float StarFlashOvershoot => _starFlashOvershoot;
+        public float LineDrawDegreesPerSecond => _lineDrawDegreesPerSecond;
+        public float PauseBetweenStepsSeconds => _pauseBetweenStepsSeconds;
+        public float FadeOutSeconds => _fadeOutSeconds;
+        public float SwitchRevealDelaySeconds => _switchRevealDelaySeconds;
     }
 }

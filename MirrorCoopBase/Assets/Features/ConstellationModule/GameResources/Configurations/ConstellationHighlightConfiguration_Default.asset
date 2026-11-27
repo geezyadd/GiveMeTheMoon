@@ -34,3 +34,9 @@ MonoBehaviour:
   _lineGlowIntensity: 0.008
   _lineGapDegrees: 0.3
   _lineEndFadeDegrees: 0.25
+  _starFadeInSeconds: 0.3
+  _starFlashOvershoot: 0.5
+  _lineDrawDegreesPerSecond: 15
+  _pauseBetweenStepsSeconds: 0.1
+  _fadeOutSeconds: 0.8
+  _switchRevealDelaySeconds: 0.3

@@ -48,7 +48,9 @@
         "Features.VfxModule",
         "Features.ScreenShakeModule",
         "Features.EmoteModule",
-        "Features.EmoteModule.Data"
+        "Features.EmoteModule.Data",
+        "GUID:39076d4e748b64043bf231e55fe7608e",
+        "GUID:f984bbca5a12436c840dda8f81ecec0b"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
