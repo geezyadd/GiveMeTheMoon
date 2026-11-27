@@ -27,6 +27,7 @@ using Features.SonarModule.Data;
 using Features.SonarModule.Data.Generated;
 using Features.SpaceHazeModule.Data;
 using Features.ConstellationModule.Data;
+using Features.ConstellationModule.Data.Generated;
 using Features.StagePresetModule.Data;
 using Features.StagePresetModule.Data.Generated;
 using Features.WeaponModule.Scripts.Readiness;
@@ -92,6 +93,8 @@ namespace Features.GameCoreModule.Scripts.Installers {
             Container.Bind<SonarStationMarkerModel>().AsSingle();
             Container.Bind<SpaceHazeModel>().AsSingle();
             Container.Bind<ConstellationRevealModel>().AsSingle();
+            ConstellationSkyModelInstaller.Install(Container);
+            Container.Bind<ConstellationSkyBindingModel>().AsSingle();
         }
     }
 }

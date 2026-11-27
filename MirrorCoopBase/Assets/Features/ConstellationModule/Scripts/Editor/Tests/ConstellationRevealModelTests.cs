@@ -5,6 +5,7 @@ namespace Features.ConstellationModule.Editor.Tests {
     public sealed class ConstellationRevealModelTests {
         private const int ORION = 0;
         private const int BIG_DIPPER = 1;
+        private const double START_TIME = 100d;
         private const float TOLERANCE = 0.001f;
 
         private int _figureChanges;
@@ -21,21 +22,31 @@ namespace Features.ConstellationModule.Editor.Tests {
         public void WhenAConstellationIsShownWithADelay_ThenItsRevealStartsBelowZero() {
             ConstellationRevealModel model = new();
 
-            model.Show(ORION, 0.3f);
-            model.Advance(0.1f);
+            model.Show(ORION, START_TIME + 0.3d, START_TIME);
+            model.SetTime(START_TIME + 0.1d);
 
             Assert.AreEqual(ORION, model.ShownConstellation);
             Assert.AreEqual(-0.2f, model.ShownRevealSeconds, TOLERANCE);
         }
 
         [Test]
+        public void WhenAConstellationWasShownLongAgo_ThenItsRevealIsAsFarAsTheTimeSinceItsStart() {
+            ConstellationRevealModel model = new();
+
+            model.Show(ORION, START_TIME, START_TIME);
+            model.SetTime(START_TIME + 60d);
+
+            Assert.AreEqual(60f, model.ShownRevealSeconds, TOLERANCE);
+            Assert.IsFalse(model.HasFading);
+        }
+
+        [Test]
         public void WhenAnotherConstellationIsShown_ThenTheOldOneFadesFromWhereItsRevealWas() {
             ConstellationRevealModel model = new();
-            model.Show(ORION, 0f);
-            model.Advance(2f);
+            model.Show(ORION, START_TIME, START_TIME);
 
-            model.Show(BIG_DIPPER, 0.3f);
-            model.Advance(0.5f);
+            model.Show(BIG_DIPPER, START_TIME + 2.3d, START_TIME + 2d);
+            model.SetTime(START_TIME + 2.5d);
 
             Assert.AreEqual(BIG_DIPPER, model.ShownConstellation);
             Assert.AreEqual(ORION, model.FadingConstellation);
@@ -44,14 +55,40 @@ namespace Features.ConstellationModule.Editor.Tests {
         }
 
         [Test]
-        public void WhenTheShownConstellationIsHidden_ThenItFadesAndNothingIsShown() {
+        public void WhenTheSameRevealIsToldAgain_ThenNothingChanges() {
             ConstellationRevealModel model = new();
-            model.Show(ORION, 0f);
+            model.Show(ORION, START_TIME, START_TIME);
             _figureChanges = 0;
             model.OnFiguresChanged += OnFiguresChanged;
 
-            model.Hide();
-            model.Hide();
+            model.Show(ORION, START_TIME, START_TIME);
+            model.OnFiguresChanged -= OnFiguresChanged;
+
+            Assert.AreEqual(0, _figureChanges);
+            Assert.IsFalse(model.HasFading);
+        }
+
+        [Test]
+        public void WhenTheShownConstellationIsReplayed_ThenItFadesAndIsShownAgain() {
+            ConstellationRevealModel model = new();
+            model.Show(ORION, START_TIME, START_TIME);
+
+            model.Show(ORION, START_TIME + 3.8d, START_TIME + 3d);
+
+            Assert.AreEqual(ORION, model.ShownConstellation);
+            Assert.AreEqual(ORION, model.FadingConstellation);
+            Assert.AreEqual(3f, model.FadingRevealSeconds, TOLERANCE);
+        }
+
+        [Test]
+        public void WhenTheShownConstellationIsHidden_ThenItFadesAndNothingIsShown() {
+            ConstellationRevealModel model = new();
+            model.Show(ORION, START_TIME, START_TIME);
+            _figureChanges = 0;
+            model.OnFiguresChanged += OnFiguresChanged;
+
+            model.Hide(START_TIME + 1d);
+            model.Hide(START_TIME + 1d);
             model.OnFiguresChanged -= OnFiguresChanged;
 
             Assert.IsFalse(model.HasShown);
@@ -62,8 +99,8 @@ namespace Features.ConstellationModule.Editor.Tests {
         [Test]
         public void WhenTheFadeEnds_ThenNoFigureFades() {
             ConstellationRevealModel model = new();
-            model.Show(ORION, 0f);
-            model.Hide();
+            model.Show(ORION, START_TIME, START_TIME);
+            model.Hide(START_TIME + 1d);
 
             model.EndFading();
 

@@ -5,8 +5,9 @@ using UnityEngine;
 using Zenject;
 
 namespace Features.ConstellationModule.Scripts.Views {
-    // Shows this peer's sky as ConstellationRevealModel says (nothing is synced): the shown constellation at its reveal
-    // time, and the one switched away from fading out as a whole on a figure of its own, so the two can cross-fade.
+    // Shows this peer's sky as ConstellationRevealModel says (filled from the synced sky): the shown constellation at
+    // its reveal time, and the one switched away from fading out as a whole on a figure of its own, so the two can
+    // cross-fade.
     public sealed class ConstellationHighlightView : MonoBehaviour {
         [SerializeField] private ConstellationFigureView _shownFigure;
         [SerializeField] private ConstellationFigureView _fadingFigure;

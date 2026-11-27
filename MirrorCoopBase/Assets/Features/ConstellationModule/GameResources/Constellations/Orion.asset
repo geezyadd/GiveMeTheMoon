@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 867676b4e52be334899d0c54b640967a, type: 3}
   m_Name: Orion
   m_EditorClassIdentifier: 
+  _id: orion
   _displayName: Orion
   _stars:
   - _name: Betelgeuse

@@ -8,6 +8,8 @@ namespace Features.ConstellationModule.Scripts.Installers {
             Container.Bind<IConstellationMeshBuilder>().To<ConstellationMeshBuilder>().AsSingle();
             Container.Bind<IConstellationRevealTimelineFactory>().To<ConstellationRevealTimelineFactory>().AsSingle();
             Container.Bind<IConstellationFadeRule>().To<ConstellationFadeRule>().AsSingle();
+            Container.Bind<IConstellationSkyStateRule>().To<ConstellationSkyStateRule>().AsSingle();
+            Container.Bind<IConstellationService>().To<ConstellationService>().AsSingle();
             Container.BindInterfacesTo<ConstellationRevealSystem>().AsSingle();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Container.BindInterfacesTo<ConstellationDebugSystem>().AsSingle();

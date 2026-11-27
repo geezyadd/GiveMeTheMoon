@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Features.ConstellationModule.Data;
 using UnityEngine;
 
 namespace Features.ConstellationModule.Scripts.Definitions {
@@ -8,5 +9,18 @@ namespace Features.ConstellationModule.Scripts.Definitions {
         [SerializeField] private ConstellationDefinition[] _constellations;
 
         public IReadOnlyList<ConstellationDefinition> Constellations => _constellations;
+
+        public bool TryFindIndex(string id, out int index) {
+            index = ConstellationRevealModel.NO_CONSTELLATION;
+            for (int i = 0; i < _constellations.Length; i++) {
+                if (_constellations[i].Id != id)
+                    continue;
+
+                index = i;
+                return true;
+            }
+
+            return false;
+        }
     }
 }
